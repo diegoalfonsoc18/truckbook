@@ -4,7 +4,7 @@ import React from "react";
 export default function Gastos() {
   return (
     <SafeAreaView>
-      <Text>Gastos</Text>
+      <Text> Hola soy Gastos</Text>
     </SafeAreaView>
   );
 }

@@ -1,10 +1,10 @@
 import { View, Text } from "react-native";
 import React from "react";
 
-export default function Ingresos() {
+export default function IngresosNavigation() {
   return (
     <View>
-      <Text>Hola soy Ingresos</Text>
+      <Text>IngresosNavigation</Text>
     </View>
   );
 }
