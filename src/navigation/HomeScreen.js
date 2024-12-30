@@ -8,7 +8,11 @@ const Tab = createBottomTabNavigator();
 export default function Navigation() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Main" component={MainNavigation} />
+      <Tab.Screen
+        name="Navigation.js"
+        component={MainNavigation}
+        /* options={{ headerShown: false }} */
+      />
     </Tab.Navigator>
   );
 }

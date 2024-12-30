@@ -11,7 +11,7 @@ export default function MainNavigation() {
       <Stack.Screen
         name="Main"
         component={MainScreen}
-        options={{ title: "Main" }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
