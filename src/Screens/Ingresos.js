@@ -1,10 +1,10 @@
-import { View, Text } from "react-native";
+import { SafeAreaView, Text } from "react-native";
 import React from "react";
 
 export default function Ingresos() {
   return (
-    <View>
+    <SafeAreaView>
       <Text>Hola soy Ingresos</Text>
-    </View>
+    </SafeAreaView>
   );
 }
