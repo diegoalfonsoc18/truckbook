@@ -4,7 +4,7 @@ import React from "react";
 export default function Main() {
   return (
     <SafeAreaView>
-      <Text>Hi I am a Main</Text>
+      <Text>Hola soy Home</Text>
     </SafeAreaView>
   );
 }
