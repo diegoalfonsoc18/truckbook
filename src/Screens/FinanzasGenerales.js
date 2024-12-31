@@ -4,7 +4,7 @@ import React from "react";
 export default function FinanzasGenerales() {
   return (
     <View>
-      <Text>FinanzasGenerales</Text>
+      <Text>Hola soy FinanzasGenerales</Text>
     </View>
   );
 }
