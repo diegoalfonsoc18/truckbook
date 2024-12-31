@@ -11,7 +11,7 @@ import React, { useState } from "react";
 const data = [
   { id: "1", title: "Combustible" },
   { id: "2", title: "Mantenimiento" },
-  { id: "3", title: "Peajes-Permiso" },
+  { id: "3", title: "Peajes-Permisos" },
   { id: "4", title: "SOAT" },
   { id: "5", title: "Seguros" },
   { id: "6", title: "Salario" },
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: "gray",
+    borderColor: "#cc0000",
     borderWidth: 1,
     marginTop: 10,
     paddingHorizontal: 10,
