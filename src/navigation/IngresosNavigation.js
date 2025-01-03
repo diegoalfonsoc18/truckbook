@@ -1,12 +1,15 @@
 import { View, Text } from "react-native";
 import React from "react";
-import Ingresos from "../Screens/Ingresos";
+import IngresosScreen from "../Screens/Ingresos";
 
 export default function IngresosNavigation() {
   return (
-    <tab.Navigator>
-      name="Ingresos" component={Ingresos}
-      /* options={{ headerShown: false }} */
-    </tab.Navigator>
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Ingresos"
+        component={IngresosScreen}
+        /* options={{ headerShown: false }} */
+      />
+    </Stack.Navigator>
   );
 }
