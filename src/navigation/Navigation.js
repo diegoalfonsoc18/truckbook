@@ -7,12 +7,21 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos";
 import IngresosNavigation from "../Screens/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
-
+import Home from "../Screens/Home";
 const Tab = createBottomTabNavigator();
 
 export default function MainNavigation() {
   return (
     <Tab.Navigator>
+      <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
+          tabBarLabel: "",
+          tabBarIcon: () => renderHome(),
+        }}
+        r
+      />
       <Tab.Screen
         name="Gastos"
         component={GastosNavigation}
@@ -41,6 +50,15 @@ export default function MainNavigation() {
   );
 }
 
+function renderHome() {
+  return (
+    <Image
+      source={require("../assets/homeIcon.png")}
+      style={{ width: 40, height: 40, top: 15 }}
+    />
+  );
+}
+
 function renderGastos() {
   return (
     <Image
@@ -63,7 +81,7 @@ function renderFinanzas() {
   return (
     <Image
       source={require("../assets/finanzasIcon.png")}
-      style={{ width: 55, height: 55, top: 15 }}
+      style={{ width: 50, height: 50, top: 15 }}
     />
   );
 }
