@@ -1,10 +1,10 @@
 import { View, Text, SafeAreaView } from "react-native";
 import React from "react";
 
-export default function Home() {
+export default function account() {
   return (
     <SafeAreaView>
-      <Text>Cual es tu camión?</Text>
+      <Text>account</Text>
     </SafeAreaView>
   );
 }
