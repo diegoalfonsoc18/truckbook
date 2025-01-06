@@ -8,7 +8,7 @@ import GastosNavigation from "../Screens/Gastos";
 import IngresosNavigation from "../Screens/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
 import Home from "../Screens/Home";
-import Account from "../Screens/account";
+import Account from "../Screens/Account";
 
 const Tab = createBottomTabNavigator();
 
