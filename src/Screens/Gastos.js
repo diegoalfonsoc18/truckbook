@@ -5,8 +5,11 @@ import {
   TextInput,
   StyleSheet,
   View,
+  Button,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const data = [
   { id: "1", title: "Combustible" },
@@ -20,12 +23,24 @@ const data = [
 
 export default function Gastos() {
   const [values, setValues] = useState({});
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
 
   const handleChange = (id, value) => {
     setValues({
       ...values,
       [id]: value,
     });
+  };
+
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === "ios");
+    setDate(currentDate);
+  };
+
+  const showDatepicker = () => {
+    setShow(true);
   };
 
   const renderItem = ({ item }) => (
@@ -43,6 +58,17 @@ export default function Gastos() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Button onPress={showDatepicker} title="Fecha" />
+      <Text style={styles.dateText}>{date.toLocaleDateString()}</Text>
+      {show && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={date}
+          mode="date"
+          display="default"
+          onChange={onChange}
+        />
+      )}
       <FlatList
         data={data}
         renderItem={renderItem}
@@ -66,6 +92,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
+    color: "#fff", // Cambia el color del texto para que sea visible sobre el fondo oscuro
   },
   input: {
     height: 40,
@@ -74,5 +101,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 10,
     backgroundColor: "#cc0",
+    borderRadius: 5, // Agrega esta línea para redondear los bordes del input
+  },
+  dateText: {
+    fontSize: 18,
+    textAlign: "center",
+    marginVertical: 10,
   },
 });
