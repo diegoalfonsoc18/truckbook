@@ -80,27 +80,28 @@ export default function Gastos() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: "#fff",
     flex: 1,
-    marginTop: 20,
   },
   item: {
     padding: 20,
+    color: "#000",
     marginVertical: 8,
     marginHorizontal: 16,
-    backgroundColor: "#2E4156",
+    //backgroundColor: "#3083FF",
     borderRadius: 10,
   },
   title: {
     fontSize: 18,
-    color: "#fff", // Cambia el color del texto para que sea visible sobre el fondo oscuro
+    color: "#ff", // Cambia el color del texto para que sea visible sobre el fondo oscuro
   },
   input: {
     height: 40,
-    borderColor: "#cc0000",
     borderWidth: 1,
+    borderColor: "#EBECF1",
     marginTop: 10,
     paddingHorizontal: 10,
-    backgroundColor: "#cc0",
+    //backgroundColor: "#EBECF1",
     borderRadius: 5, // Agrega esta línea para redondear los bordes del input
   },
   dateText: {

@@ -99,7 +99,7 @@ function renderAccount() {
   return (
     <Image
       source={require("../assets/accountIcon.png")}
-      style={{ width: 30, height: 30 }}
+      style={{ width: 30, height: 30, color: "#cc0000" }}
     />
   );
 }
