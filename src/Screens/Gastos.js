@@ -10,16 +10,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
-const data = [
-  { id: "1", title: "Combustible" },
-  { id: "2", title: "Mantenimiento" },
-  { id: "3", title: "Peajes-Permisos" },
-  { id: "4", title: "SOAT" },
-  { id: "5", title: "Seguros" },
-  { id: "6", title: "Salario" },
-  { id: "7", title: "Imprevistos" },
-];
+import { gastosData } from "../data";
 
 export default function Gastos() {
   const [values, setValues] = useState({});
@@ -27,10 +18,12 @@ export default function Gastos() {
   const [show, setShow] = useState(false);
 
   const handleChange = (id, value) => {
-    setValues({
-      ...values,
-      [id]: value,
-    });
+    if (!isNaN(value)) {
+      setValues({
+        ...values,
+        [id]: value,
+      });
+    }
   };
 
   const onChange = (event, selectedDate) => {
@@ -43,66 +36,77 @@ export default function Gastos() {
     setShow(true);
   };
 
-  const renderItem = ({ item }) => (
+  const formatDate = (date) => {
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const GastoItem = ({ item, value, onChange }) => (
     <View style={styles.item}>
       <Text style={styles.title}>{item.title}</Text>
       <TextInput
         style={styles.input}
         keyboardType="numeric"
         placeholder="Ingrese valor"
-        value={values[item.id] || ""}
-        onChangeText={(value) => handleChange(item.id, value)}
+        value={value}
+        onChangeText={(text) => onChange(item.id, text)}
       />
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Button onPress={showDatepicker} title="Fecha" />
-      <Text style={styles.dateText}>{date.toLocaleDateString()}</Text>
-      {show && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onChange}
-        />
-      )}
+      <Button onPress={showDatepicker} title="Seleccionar Fecha" />
+      <Text style={styles.dateText}>
+        Fecha seleccionada: {formatDate(date)}
+      </Text>
       <FlatList
-        data={data}
-        renderItem={renderItem}
+        data={gastosData}
+        renderItem={({ item }) => (
+          <GastoItem
+            item={item}
+            value={values[item.id] || ""}
+            onChange={handleChange}
+          />
+        )}
         keyExtractor={(item) => item.id}
       />
     </SafeAreaView>
   );
 }
 
+const COLORS = {
+  background: "#fff",
+  text: "#000",
+  inputBorder: "#EBECF1",
+  title: "#2E4156",
+};
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.background,
     flex: 1,
   },
   item: {
     padding: 20,
-    color: "#000",
     marginVertical: 8,
     marginHorizontal: 16,
-    //backgroundColor: "#3083FF",
     borderRadius: 10,
   },
   title: {
     fontSize: 18,
-    color: "#ff", // Cambia el color del texto para que sea visible sobre el fondo oscuro
+    color: COLORS.title,
   },
   input: {
     height: 40,
     borderWidth: 1,
-    borderColor: "#EBECF1",
+    borderColor: COLORS.inputBorder,
     marginTop: 10,
     paddingHorizontal: 10,
-    //backgroundColor: "#EBECF1",
-    borderRadius: 5, // Agrega esta línea para redondear los bordes del input
+    borderRadius: 5,
   },
   dateText: {
     fontSize: 18,
