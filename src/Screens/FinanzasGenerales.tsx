@@ -14,16 +14,16 @@ const data = [
 ];
 
 export default function FinanzasGenerales() {
-  const [values, setValues] = useState({});
+  const [values, setValues] = useState<{ [key: string]: string }>({});
 
-  const handleChange = (id, value) => {
+  const handleChange = (id: string, value: string) => {
     setValues({
       ...values,
       [id]: value,
     });
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: { id: string; title: string } }) => (
     <View style={styles.item}>
       <Text style={styles.title}>{item.title}</Text>
       <TextInput
@@ -61,15 +61,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    color: "#fff", // Cambia el color del texto para que sea visible sobre el fondo oscuro
+    color: "#fff",
   },
   input: {
     height: 40,
-    borderColor: "#cc0000",
+    borderColor: "#ccc",
     borderWidth: 1,
     marginTop: 10,
     paddingHorizontal: 10,
-    backgroundColor: "#cc0",
-    borderRadius: 5, // Agrega esta línea para redondear los bordes del input
+    backgroundColor: "#fff",
+    borderRadius: 5,
   },
 });

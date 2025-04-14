@@ -9,16 +9,33 @@ import {
   Platform,
 } from "react-native";
 import React, { useState } from "react";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { gastosData } from "../data";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { gastosData } from "../data/data";
+
+// Define la interfaz para los datos de gastos
+interface Gasto {
+  id: string;
+  title: string;
+}
+
+// Define las propiedades del componente GastoItem
+interface GastoItemProps {
+  item: Gasto;
+  value: string;
+  onChange: (id: string, value: string) => void;
+}
 
 export default function Gastos() {
-  const [values, setValues] = useState({});
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
+  // Tipar los estados
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [date, setDate] = useState<Date>(new Date());
+  const [show, setShow] = useState<boolean>(false);
 
-  const handleChange = (id, value) => {
-    if (!isNaN(value)) {
+  // Tipar la función handleChange
+  const handleChange = (id: string, value: string) => {
+    if (!isNaN(Number(value))) {
       setValues({
         ...values,
         [id]: value,
@@ -26,7 +43,8 @@ export default function Gastos() {
     }
   };
 
-  const onChange = (event, selectedDate) => {
+  // Tipar la función onChange
+  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === "ios");
     setDate(currentDate);
@@ -36,7 +54,8 @@ export default function Gastos() {
     setShow(true);
   };
 
-  const formatDate = (date) => {
+  // Tipar la función formatDate
+  const formatDate = (date: Date): string => {
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
@@ -44,7 +63,8 @@ export default function Gastos() {
     });
   };
 
-  const GastoItem = ({ item, value, onChange }) => (
+  // Componente GastoItem con tipos
+  const GastoItem: React.FC<GastoItemProps> = ({ item, value, onChange }) => (
     <View style={styles.item}>
       <Text style={styles.title}>{item.title}</Text>
       <TextInput
@@ -79,10 +99,10 @@ export default function Gastos() {
 }
 
 const COLORS = {
-  background: "#fff",
-  text: "#000",
+  background: "#393E46",
+  text: "#fff",
   inputBorder: "#EBECF1",
-  title: "#2E4156",
+  title: "#FAFF00",
 };
 
 const styles = StyleSheet.create({
@@ -102,15 +122,18 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
+    //borderWidth: 1,
+    backgroundColor: "#474b51",
+    //borderColor: COLORS.inputBorder,
     marginTop: 10,
     paddingHorizontal: 10,
-    borderRadius: 5,
+    borderRadius: 25,
+    color: COLORS.text,
   },
   dateText: {
     fontSize: 18,
     textAlign: "center",
     marginVertical: 10,
+    color: COLORS.text,
   },
 });

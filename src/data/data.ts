@@ -1,3 +1,8 @@
+export interface Gasto {
+  id: string;
+  title: string;
+}
+
 export const gastosData = [
   { id: "1", title: "Combustible" },
   { id: "2", title: "Mantenimiento" },
