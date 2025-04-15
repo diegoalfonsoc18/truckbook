@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos";
 import IngresosNavigation from "../Screens/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
+import { FontAwesome5 } from "@expo/vector-icons";
 import Home from "../Screens/Home";
 import Account from "../Screens/Account";
 
@@ -11,7 +12,19 @@ const Tab = createBottomTabNavigator();
 
 export default function MainNavigation() {
   return (
-    <Tab.Navigator initialRouteName="Home">
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: "absolute",
+          backgroundColor: "#393E46",
+          borderTopWidth: 0,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+        },
+      }}>
       <Tab.Screen
         name="Gastos"
         component={GastosNavigation}
@@ -60,21 +73,11 @@ export default function MainNavigation() {
 }
 
 function renderGastos() {
-  return (
-    <Image
-      source={require("../assets/gastosIcon.png")}
-      style={{ width: 30, height: 30 }}
-    />
-  );
+  return <FontAwesome5 name="gas-pump" size={30} color="#fcfbfb" />;
 }
 
 function renderIngresos() {
-  return (
-    <Image
-      source={require("../assets/ingresoIcon.png")}
-      style={{ width: 30, height: 30 }}
-    />
-  );
+  return <FontAwesome5 name="money-bill-wave" size={30} color="#fff" />;
 }
 
 function renderHome() {

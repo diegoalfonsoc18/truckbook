@@ -1,3 +1,4 @@
+import React, { useState, useCallback } from "react";
 import {
   SafeAreaView,
   Text,
@@ -8,7 +9,6 @@ import {
   Button,
   Platform,
 } from "react-native";
-import React, { useState } from "react";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -27,23 +27,37 @@ interface GastoItemProps {
   onChange: (id: string, value: string) => void;
 }
 
+// Componente GastoItem con React.memo para evitar renderizados innecesarios
+const GastoItem: React.FC<GastoItemProps> = React.memo(
+  ({ item, value, onChange }) => {
+    return (
+      <View style={styles.item}>
+        <Text style={styles.title}>{item.title}</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="numeric"
+          placeholder="Ingrese valor"
+          placeholderTextColor="#B0B0B0"
+          value={value}
+          onChangeText={(text) => onChange(item.id, text)}
+        />
+      </View>
+    );
+  }
+);
+
 export default function Gastos() {
-  // Tipar los estados
   const [values, setValues] = useState<Record<string, string>>({});
   const [date, setDate] = useState<Date>(new Date());
   const [show, setShow] = useState<boolean>(false);
 
-  // Tipar la función handleChange
-  const handleChange = (id: string, value: string) => {
-    if (!isNaN(Number(value))) {
-      setValues({
-        ...values,
-        [id]: value,
-      });
-    }
-  };
+  const handleChange = useCallback((id: string, value: string) => {
+    setValues((prevValues) => ({
+      ...prevValues,
+      [id]: value,
+    }));
+  }, []);
 
-  // Tipar la función onChange
   const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === "ios");
@@ -54,7 +68,6 @@ export default function Gastos() {
     setShow(true);
   };
 
-  // Tipar la función formatDate
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
@@ -62,20 +75,6 @@ export default function Gastos() {
       day: "numeric",
     });
   };
-
-  // Componente GastoItem con tipos
-  const GastoItem: React.FC<GastoItemProps> = ({ item, value, onChange }) => (
-    <View style={styles.item}>
-      <Text style={styles.title}>{item.title}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        placeholder="Ingrese valor"
-        value={value}
-        onChangeText={(text) => onChange(item.id, text)}
-      />
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -122,9 +121,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    //borderWidth: 1,
     backgroundColor: "#474b51",
-    //borderColor: COLORS.inputBorder,
     marginTop: 10,
     paddingHorizontal: 10,
     borderRadius: 25,
