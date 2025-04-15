@@ -6,13 +6,11 @@ import {
   TextInput,
   StyleSheet,
   View,
-  Button,
-  Platform,
+  TouchableOpacity,
 } from "react-native";
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import { Calendar } from "react-native-calendars";
 import { gastosData } from "../data/data";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"; // Importa MaterialCommunityIcons
 
 // Define la interfaz para los datos de gastos
 interface Gasto {
@@ -48,8 +46,10 @@ const GastoItem: React.FC<GastoItemProps> = React.memo(
 
 export default function Gastos() {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [date, setDate] = useState<Date>(new Date());
-  const [show, setShow] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
   const handleChange = useCallback((id: string, value: string) => {
     setValues((prevValues) => ({
@@ -58,30 +58,54 @@ export default function Gastos() {
     }));
   }, []);
 
-  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === "ios");
-    setDate(currentDate);
+  const toggleCalendar = () => {
+    setShowCalendar((prev) => !prev);
   };
 
-  const showDatepicker = () => {
-    setShow(true);
-  };
-
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("es-ES", {
+  const formatDate = (date: string): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
+    };
+    return new Date(date).toLocaleDateString("es-ES", options);
+  };
+
+  const getCurrentDay = (): string => {
+    const today = new Date();
+    return today.getDate().toString(); // Obtiene el día actual como string
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Button onPress={showDatepicker} title="Seleccionar Fecha" />
-      <Text style={styles.dateText}>
-        Fecha seleccionada: {formatDate(date)}
-      </Text>
+      <View style={styles.dateContainer}>
+        <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+        <TouchableOpacity onPress={toggleCalendar}>
+          {/* Ícono dinámico que muestra el día actual */}
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons name="calendar" size={40} color="#fff" />
+            <Text style={styles.dayText}>{getCurrentDay()}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+      {showCalendar && (
+        <Calendar
+          onDayPress={(day) => {
+            setSelectedDate(day.dateString);
+            setShowCalendar(false); // Oculta el calendario después de seleccionar una fecha
+          }}
+          maxDate={new Date().toISOString().split("T")[0]} // Permite solo fechas anteriores o actuales
+          markedDates={{
+            [selectedDate]: { selected: true, selectedColor: "#FAFF00" },
+          }}
+          theme={{
+            selectedDayBackgroundColor: "#FAFF00",
+            todayTextColor: "#FAFF00",
+            arrowColor: "#FAFF00",
+          }}
+        />
+      )}
       <FlatList
         data={gastosData}
         renderItem={({ item }) => (
@@ -98,7 +122,6 @@ export default function Gastos() {
 }
 
 const COLORS = {
-  background: "#393E46",
   text: "#fff",
   inputBorder: "#EBECF1",
   title: "#FAFF00",
@@ -106,8 +129,14 @@ const COLORS = {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
     flex: 1,
+  },
+  dateContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginVertical: 10,
   },
   item: {
     padding: 20,
@@ -129,8 +158,22 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 18,
-    textAlign: "center",
-    marginVertical: 10,
     color: COLORS.text,
+  },
+  calendarButton: {
+    fontSize: 24,
+    color: COLORS.title,
+  },
+  iconContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayText: {
+    position: "absolute",
+    fontSize: 12,
+    color: COLORS.text,
+    fontWeight: "bold",
+    top: 8,
   },
 });

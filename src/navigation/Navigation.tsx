@@ -65,7 +65,7 @@ export default function MainNavigation() {
 const styles = StyleSheet.create({
   tabBar: {
     position: "absolute",
-    backgroundColor: "#393E46",
+    //backgroundColor: "#393E46",
     borderTopWidth: 0,
     height: 70,
     paddingBottom: 10,
