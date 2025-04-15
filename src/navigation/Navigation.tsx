@@ -1,10 +1,16 @@
 import { StyleSheet, Image } from "react-native";
 import React from "react";
+import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import Fontisto from "@expo/vector-icons/Fontisto";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Foundation from "@expo/vector-icons/Foundation";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos";
 import IngresosNavigation from "../Screens/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
-import { FontAwesome5 } from "@expo/vector-icons";
+
 import Home from "../Screens/Home";
 import Account from "../Screens/Account";
 
@@ -73,36 +79,25 @@ export default function MainNavigation() {
 }
 
 function renderGastos() {
-  return <FontAwesome5 name="gas-pump" size={30} color="#fcfbfb" />;
+  return (
+    <MaterialCommunityIcons name="gas-station-outline" size={30} color="#fff" />
+  );
 }
 
 function renderIngresos() {
-  return <FontAwesome5 name="money-bill-wave" size={30} color="#fff" />;
+  return <Fontisto name="dollar" size={24} color="#fff" />;
 }
 
 function renderHome() {
   return (
-    <Image
-      source={require("../assets/homeIcon.png")}
-      style={{ width: 30, height: 30 }}
-    />
+    <MaterialCommunityIcons name="car-brake-parking" size={24} color="#fff" />
   );
 }
 
 function renderFinanzas() {
-  return (
-    <Image
-      source={require("../assets/finanzasIcon.png")}
-      style={{ width: 35, height: 35 }}
-    />
-  );
+  return <SimpleLineIcons name="graph" size={24} color="#fff" />;
 }
 
 function renderAccount() {
-  return (
-    <Image
-      source={require("../assets/accountIcon.png")}
-      style={{ width: 30, height: 30, color: "#cc0000" }}
-    />
-  );
+  return <FontAwesome name="drivers-license-o" size={24} color="#fff" />;
 }
