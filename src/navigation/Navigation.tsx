@@ -1,103 +1,74 @@
-import { StyleSheet, Image } from "react-native";
 import React from "react";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
-import Fontisto from "@expo/vector-icons/Fontisto";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Foundation from "@expo/vector-icons/Foundation";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos";
 import IngresosNavigation from "../Screens/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
-
 import Home from "../Screens/Home";
 import Account from "../Screens/Account";
+import {
+  renderGastos,
+  renderIngresos,
+  renderHome,
+  renderFinanzas,
+  renderAccount,
+} from "../icons/icons"; // Centralizamos los íconos en un archivo separado
 
+// Crear el Tab Navigator
 const Tab = createBottomTabNavigator();
 
+// Función para configurar las opciones de cada pantalla
+const screenOptions = (icon: () => React.ReactNode) => ({
+  tabBarLabel: "", // Oculta el texto del tab
+  tabBarIcon: () => icon(), // Llama a la función para renderizar el ícono
+});
+
+// Componente principal de navegación
 export default function MainNavigation() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "#393E46",
-          borderTopWidth: 0,
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 10,
-        },
+        headerShown: false, // Oculta el encabezado
+        tabBarStyle: styles.tabBar, // Aplica estilos centralizados
       }}>
       <Tab.Screen
         name="Gastos"
         component={GastosNavigation}
-        options={{
-          tabBarLabel: "",
-          tabBarIcon: () => renderGastos(),
-        }}
+        options={screenOptions(renderGastos)}
       />
-
       <Tab.Screen
         name="Ingresos"
         component={IngresosNavigation}
-        options={{
-          tabBarLabel: "",
-          tabBarIcon: () => renderIngresos(),
-        }}
+        options={screenOptions(renderIngresos)}
       />
-
       <Tab.Screen
         name="Home"
         component={Home}
-        options={{
-          tabBarLabel: "",
-          tabBarIcon: () => renderHome(),
-        }}
+        options={screenOptions(renderHome)}
       />
-
       <Tab.Screen
         name="Finanzas"
         component={FinanzasNavigation}
-        options={{
-          tabBarLabel: "",
-          tabBarIcon: () => renderFinanzas(),
-        }}
+        options={screenOptions(renderFinanzas)}
       />
       <Tab.Screen
         name="Account"
         component={Account}
-        options={{
-          tabBarLabel: "",
-          tabBarIcon: () => renderAccount(),
-        }}
+        options={screenOptions(renderAccount)}
       />
     </Tab.Navigator>
   );
 }
 
-function renderGastos() {
-  return (
-    <MaterialCommunityIcons name="gas-station-outline" size={30} color="#fff" />
-  );
-}
-
-function renderIngresos() {
-  return <Fontisto name="dollar" size={24} color="#fff" />;
-}
-
-function renderHome() {
-  return (
-    <MaterialCommunityIcons name="car-brake-parking" size={24} color="#fff" />
-  );
-}
-
-function renderFinanzas() {
-  return <SimpleLineIcons name="graph" size={24} color="#fff" />;
-}
-
-function renderAccount() {
-  return <FontAwesome name="drivers-license-o" size={24} color="#fff" />;
-}
+// Estilos centralizados
+const styles = StyleSheet.create({
+  tabBar: {
+    position: "absolute",
+    backgroundColor: "#393E46",
+    borderTopWidth: 0,
+    height: 70,
+    paddingBottom: 10,
+    paddingTop: 10,
+  },
+});
