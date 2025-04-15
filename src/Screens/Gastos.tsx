@@ -11,7 +11,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { gastosData } from "../data/data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"; // Importa MaterialCommunityIcons
-
+import { useCurrencyStore } from "../store/CurrencyStore"; // Importa el store de Zustand
 // Define la interfaz para los datos de gastos
 interface Gasto {
   id: string;
@@ -28,6 +28,7 @@ interface GastoItemProps {
 // Componente GastoItem con React.memo para evitar renderizados innecesarios
 const GastoItem: React.FC<GastoItemProps> = React.memo(
   ({ item, value, onChange }) => {
+    const { currency } = useCurrencyStore(); // Accede al estado global de la moneda
     return (
       <View style={styles.item}>
         <Text style={styles.title}>{item.title}</Text>

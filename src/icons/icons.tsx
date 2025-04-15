@@ -7,22 +7,26 @@ import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 // Define el tipo de retorno para las funciones de íconos
 type IconRenderer = () => React.ReactNode;
 
-export const renderGastos: IconRenderer = () => (
-  <MaterialCommunityIcons name="gas-station-outline" size={32} color="#fff" />
+export const renderGastos = (color: string, size: number) => (
+  <MaterialCommunityIcons
+    name="gas-station-outline"
+    size={size}
+    color={color}
+  />
 );
 
-export const renderIngresos: IconRenderer = () => (
-  <Fontisto name="dollar" size={25} color="#fff" />
+export const renderIngresos = (color: string, size: number) => (
+  <Fontisto name="dollar" size={size} color={color} />
 );
 
-export const renderHome: IconRenderer = () => (
-  <MaterialCommunityIcons name="car-brake-parking" size={30} color="#fff" />
+export const renderHome = (color: string, size: number) => (
+  <MaterialCommunityIcons name="car-brake-parking" size={size} color={color} />
 );
 
-export const renderFinanzas: IconRenderer = () => (
-  <SimpleLineIcons name="graph" size={30} color="#fff" />
+export const renderFinanzas = (color: string, size: number) => (
+  <SimpleLineIcons name="graph" size={size} color={color} />
 );
 
-export const renderAccount: IconRenderer = () => (
-  <FontAwesome name="drivers-license-o" size={26} color="#fff" />
+export const renderAccount = (color: string, size: number) => (
+  <FontAwesome name="drivers-license-o" size={size} color={color} />
 );
