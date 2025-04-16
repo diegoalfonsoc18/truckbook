@@ -8,8 +8,10 @@ import {
   View,
   TouchableOpacity,
 } from "react-native";
+import { COLORS } from "../constants/colors";
 import { Calendar } from "react-native-calendars";
 import { gastosData } from "../data/data";
+import GastoItem from "../components/GastoItem"; // Importa el componente GastoItem
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"; // Importa MaterialCommunityIcons
 import { useCurrencyStore } from "../store/CurrencyStore"; // Importa el store de Zustand
 // Define la interfaz para los datos de gastos
@@ -24,26 +26,6 @@ interface GastoItemProps {
   value: string;
   onChange: (id: string, value: string) => void;
 }
-
-// Componente GastoItem con React.memo para evitar renderizados innecesarios
-const GastoItem: React.FC<GastoItemProps> = React.memo(
-  ({ item, value, onChange }) => {
-    const { currency } = useCurrencyStore(); // Accede al estado global de la moneda
-    return (
-      <View style={styles.item}>
-        <Text style={styles.title}>{item.title}</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="Ingrese valor"
-          placeholderTextColor="#B0B0B0"
-          value={value}
-          onChangeText={(text) => onChange(item.id, text)}
-        />
-      </View>
-    );
-  }
-);
 
 export default function Gastos() {
   const [values, setValues] = useState<Record<string, string>>({});
@@ -80,12 +62,16 @@ export default function Gastos() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Fecha seleccionada y botón para mostrar el calendario */}
       <View style={styles.dateContainer}>
         <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
         <TouchableOpacity onPress={toggleCalendar}>
-          {/* Ícono dinámico que muestra el día actual */}
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="calendar" size={40} color="#fff" />
+            <MaterialCommunityIcons
+              name="calendar"
+              size={40}
+              color={COLORS.text}
+            />
             <Text style={styles.dayText}>{getCurrentDay()}</Text>
           </View>
         </TouchableOpacity>
@@ -98,12 +84,12 @@ export default function Gastos() {
           }}
           maxDate={new Date().toISOString().split("T")[0]} // Permite solo fechas anteriores o actuales
           markedDates={{
-            [selectedDate]: { selected: true, selectedColor: "#FAFF00" },
+            [selectedDate]: { selected: true, selectedColor: COLORS.title },
           }}
           theme={{
-            selectedDayBackgroundColor: "#FAFF00",
-            todayTextColor: "#FAFF00",
-            arrowColor: "#FAFF00",
+            selectedDayBackgroundColor: COLORS.title,
+            todayTextColor: COLORS.title,
+            arrowColor: COLORS.title,
           }}
         />
       )}
@@ -117,16 +103,11 @@ export default function Gastos() {
           />
         )}
         keyExtractor={(item) => item.id}
+        extraData={values} // Asegura que los cambios en el estado actualicen la lista
       />
     </SafeAreaView>
   );
 }
-
-const COLORS = {
-  text: "#fff",
-  inputBorder: "#EBECF1",
-  title: "#FAFF00",
-};
 
 const styles = StyleSheet.create({
   container: {
