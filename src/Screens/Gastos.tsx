@@ -3,17 +3,16 @@ import {
   SafeAreaView,
   Text,
   FlatList,
-  TextInput,
   StyleSheet,
   View,
   TouchableOpacity,
 } from "react-native";
-import { COLORS } from "../constants/colors";
 import { Calendar } from "react-native-calendars";
-import { gastosData } from "../data/data";
-import GastoItem from "../components/GastoItem"; // Importa el componente GastoItem
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"; // Importa MaterialCommunityIcons
-import { useCurrencyStore } from "../store/CurrencyStore"; // Importa el store de Zustand
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { gastosData } from "../data/data"; // Datos de ejemplo
+import GastoItem from "../components/GastoItem"; // Componente separado
+import { formatDate, getCurrentDay } from "../utils/dataUtils"; // Funciones utilitarias
+import { COLORS } from "../constants/colors";
 // Define la interfaz para los datos de gastos
 interface Gasto {
   id: string;
