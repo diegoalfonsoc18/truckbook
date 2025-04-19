@@ -1,8 +1,9 @@
 export const COLORS = {
   text: "#fff",
-  inputBorder: "#EBECF1",
+  textSecondary: "#000",
+  inputBorder: "#3D3D3D",
   title: "#FAFF00",
-  background: "#393E46",
-  itemBackground: "#222831",
-  inputBackground: "#474b51",
+  background: "#121213",
+  //itemBackground: "#FFF",
+  inputBackground: "#1E1E1E",
 };

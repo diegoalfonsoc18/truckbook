@@ -2,11 +2,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import "react-native-gesture-handler";
-import {
-  NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
-} from "@react-navigation/native";
+import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import Navigation from "./src/navigation/Navigation";
 
@@ -15,8 +11,8 @@ const CustomDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: "#393E46", // fondo de toda la app
-    card: "#222831", // color del header/tab bar
+    background: "#121213", // fondo de toda la app
+    card: "#1E1E1E", // color del header/tab bar
     text: "#EEEEEE", // color del texto
     primary: "#00ADB5", // color para botones activos o links
     border: "#393E46", // borde entre pantallas/tab bar

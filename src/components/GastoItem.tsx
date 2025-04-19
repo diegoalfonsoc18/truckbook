@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { useCurrencyStore } from "../store/CurrencyStore"; // Estado global
 import { COLORS } from "../constants/colors"; // Colores centralizados
-
+import { Calendar } from "../components/CustomCalendar";
 interface Gasto {
   id: string;
   title: string;
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 10,
-    backgroundColor: COLORS.itemBackground,
+    // backgroundColor: COLORS.itemBackground,
   },
   title: {
     fontSize: 18,
