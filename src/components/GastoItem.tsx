@@ -1,59 +1,76 @@
-import React from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
-import { useCurrencyStore } from "../store/CurrencyStore"; // Estado global
-import { COLORS } from "../constants/colors"; // Colores centralizados
-import { Calendar } from "../components/CustomCalendar";
-interface Gasto {
-  id: string;
-  title: string;
-}
+import React, { useState } from "react";
+import { View, TextInput, Button, StyleSheet, Text } from "react-native";
 
 interface GastoItemProps {
-  item: Gasto;
+  item: {
+    id: string;
+    name: string; // Cambiado de 'title' a 'name'
+  };
   value: string;
   onChange: (id: string, value: string) => void;
+  onSend: (id: string, value: string) => void;
 }
 
-const GastoItem: React.FC<GastoItemProps> = React.memo(
-  ({ item, value, onChange }) => {
-    const { currency } = useCurrencyStore(); // Obtén la moneda seleccionada
+export default function GastoItem({
+  item,
+  value,
+  onChange,
+  onSend,
+}: GastoItemProps) {
+  const [inputValue, setInputValue] = useState(value);
 
-    return (
-      <View style={styles.item}>
-        <Text style={styles.title}>{item.title}</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder={`Ingrese valor (${currency})`} // Muestra la moneda seleccionada
-          placeholderTextColor="#B0B0B0"
-          value={value}
-          onChangeText={(text) => onChange(item.id, text)}
-        />
-      </View>
-    );
-  }
-);
+  // Función para formatear números con puntos de mil
+  const formatNumber = (num: string) => {
+    if (!num) return ""; // Si el número está vacío, retorna una cadena vacía
+    return parseInt(num, 10).toLocaleString("es-ES"); // Formatea el número según el idioma español
+  };
+
+  const handleSend = () => {
+    if (inputValue.trim() !== "") {
+      onSend(item.id, inputValue); // Llama a la función de envío
+      setInputValue(""); // Limpia el campo después de enviarlo
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Mostrar el nombre del gasto */}
+      <Text style={styles.name}>{item.name}</Text>
+      <TextInput
+        style={styles.input}
+        value={formatNumber(inputValue)} // Formatea el valor al mostrarlo
+        onChangeText={(text) => {
+          const rawValue = text.replace(/\./g, ""); // Elimina los puntos para mantener el valor "crudo"
+          if (!isNaN(Number(rawValue))) {
+            setInputValue(rawValue); // Actualiza el estado solo si es un número válido
+            onChange(item.id, rawValue); // Actualiza el estado en el componente padre
+          }
+        }}
+        placeholder="Ingresa un valor"
+        keyboardType="numeric" // Asegura que el teclado sea numérico
+      />
+      <Button title="Enviar" onPress={handleSend} />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  item: {
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    // backgroundColor: COLORS.itemBackground,
+  container: {
+    flexDirection: "column", // Cambiado a columna para apilar el nombre y el input
+    alignItems: "flex-start",
+    marginVertical: 10,
   },
-  title: {
-    fontSize: 18,
-    color: COLORS.title,
+  name: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5, // Espacio entre el nombre y el input
   },
   input: {
-    height: 40,
-    backgroundColor: COLORS.inputBackground,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    borderRadius: 25,
-    color: COLORS.text,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 8,
+    borderRadius: 5,
+    marginBottom: 10, // Espacio entre el input y el botón
   },
 });
-
-export default GastoItem;

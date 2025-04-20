@@ -7,11 +7,12 @@ import {
   View,
   TouchableOpacity,
 } from "react-native";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { gastosData } from "../data/data";
 import GastoItem from "../components/GastoItem";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
+import Summary from "../components/Summary";
 
 export default function Gastos() {
   const [values, setValues] = useState<Record<string, string>>({});
@@ -27,6 +28,14 @@ export default function Gastos() {
     }));
   }, []);
 
+  const handleSend = useCallback((id: string, value: string) => {
+    console.log(`Valor enviado para el gasto ${id}: ${value}`);
+    setValues((prevValues) => ({
+      ...prevValues,
+      [id]: "", // Limpia el valor después de enviarlo
+    }));
+  }, []);
+
   const toggleCalendar = () => {
     setShowCalendar((prev) => !prev);
   };
@@ -38,10 +47,10 @@ export default function Gastos() {
         <Text style={styles.dateText}>{selectedDate}</Text>
         <TouchableOpacity onPress={toggleCalendar}>
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons
-              name="calendar"
-              size={40}
-              color={COLORS.text}
+            <MaterialIcons
+              name="calendar-month"
+              size={60}
+              color={COLORS.title}
             />
           </View>
         </TouchableOpacity>
@@ -56,18 +65,22 @@ export default function Gastos() {
         />
       )}
 
+      {/* Componente de resumen */}
+      <Summary values={values} />
+
       {/* Lista de gastos */}
       <FlatList
         data={gastosData}
         renderItem={({ item }) => (
           <GastoItem
             item={item}
-            value={values[item.id] || ""}
+            value={values[item.id] || ""} // Asegura que siempre haya un valor predeterminado
             onChange={handleChange}
+            onSend={handleSend}
           />
         )}
-        keyExtractor={(item) => item.id}
-        extraData={values} // Asegura que los cambios en el estado actualicen la lista
+        keyExtractor={(item) => item.id} // Asegura que cada elemento tenga un id único
+        extraData={values}
       />
     </SafeAreaView>
   );

@@ -1,14 +1,10 @@
-export interface Gasto {
-  id: string;
-  title: string;
-}
-
+// filepath: /Users/diegoalfonso/Dev/truckbook/truckbook/src/data/data.ts
 export const gastosData = [
-  { id: "1", title: "Combustible" },
-  { id: "2", title: "Mantenimiento" },
-  { id: "3", title: "Peajes-Permisos" },
-  { id: "4", title: "SOAT" },
-  { id: "5", title: "Seguros" },
-  { id: "6", title: "Salario" },
-  { id: "7", title: "Imprevistos" },
+  { id: "1", name: "Combustible" },
+  { id: "2", name: "Mantenimiento" },
+  { id: "3", name: "Peajes-Permisos" },
+  { id: "4", name: "SOAT" },
+  { id: "5", name: "Seguros" },
+  { id: "6", name: "Salario" },
+  { id: "7", name: "Imprevistos" },
 ];

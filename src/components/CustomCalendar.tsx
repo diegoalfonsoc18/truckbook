@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar } from "react-native-calendars";
 import { COLORS } from "../constants/colors";
+import * as Localization from "expo-localization"; // Importa expo-localization
 
 interface CustomCalendarProps {
   selectedDate: string;
@@ -13,8 +14,12 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   onDateChange,
   onClose,
 }) => {
+  // Obtén el idioma del dispositivo
+  const deviceLocale = Localization.locale; // Ejemplo: "es-ES" o "en-US"
+
   return (
     <Calendar
+      locale={deviceLocale} // Configura el idioma del calendario
       onDayPress={(day) => {
         onDateChange(day.dateString);
         onClose(); // Oculta el calendario después de seleccionar una fecha
@@ -32,7 +37,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
         todayTextColor: COLORS.secondary,
 
         // Color de las flechas del calendario
-        arrowColor: COLORS.primary,
+        arrowColor: COLORS.textSecondary,
 
         // Fondo del mes
         backgroundColor: COLORS.background,
