@@ -1,48 +1,56 @@
-import {
-  SafeAreaView,
-  Text,
-  FlatList,
-  TextInput,
-  StyleSheet,
-  View,
-} from "react-native";
-import React, { useState } from "react";
-
-const data = [
-  { id: "1", title: "Estados de Resultados" },
-  { id: "2", title: "Créditos o Deudas" },
-];
+import React from "react";
+import { SafeAreaView, Text, StyleSheet, Dimensions, View } from "react-native";
+import { LineChart } from "react-native-chart-kit";
 
 export default function FinanzasGenerales() {
-  const [values, setValues] = useState<{ [key: string]: string }>({});
-
-  const handleChange = (id: string, value: string) => {
-    setValues({
-      ...values,
-      [id]: value,
-    });
-  };
-
-  const renderItem = ({ item }: { item: { id: string; title: string } }) => (
-    <View style={styles.item}>
-      <Text style={styles.title}>{item.title}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        placeholder="Ingrese valor"
-        value={values[item.id] || ""}
-        onChangeText={(value) => handleChange(item.id, value)}
-      />
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-      />
+      <Text style={styles.chartTitle}>Gráfico de Finanzas</Text>
+      <View>
+        <LineChart
+          data={{
+            labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+            datasets: [
+              {
+                data: [
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                ],
+              },
+            ],
+          }}
+          width={Dimensions.get("window").width - 40} // Ancho dinámico
+          height={220}
+          yAxisLabel="$"
+          yAxisSuffix="k"
+          yAxisInterval={1} // Intervalo opcional
+          chartConfig={{
+            backgroundColor: "#e26a00",
+            backgroundGradientFrom: "#fb8c00",
+            backgroundGradientTo: "#ffa726",
+            decimalPlaces: 2, // Número de decimales
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            style: {
+              borderRadius: 16,
+            },
+            propsForDots: {
+              r: "6",
+              strokeWidth: "2",
+              stroke: "#ffa726",
+            },
+          }}
+          bezier // Hace que el gráfico sea curvo
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -50,26 +58,15 @@ export default function FinanzasGenerales() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
-  item: {
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    backgroundColor: "#2E4156",
-    borderRadius: 10,
-  },
-  title: {
-    fontSize: 18,
-    color: "#fff",
-  },
-  input: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    backgroundColor: "#fff",
-    borderRadius: 5,
+  chartTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
   },
 });

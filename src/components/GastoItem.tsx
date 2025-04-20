@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
+import { COLORS } from "../constants/colors";
 
 interface GastoItemProps {
   item: {
@@ -56,21 +57,28 @@ export default function GastoItem({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "column", // Cambiado a columna para apilar el nombre y el input
-    alignItems: "flex-start",
+    flexDirection: "column", // Apila los elementos verticalmente
+    alignItems: "center", // Alinea los elementos al centro horizontalmente
     marginVertical: 10,
+    backgroundColor: COLORS.inputBackground,
+    padding: 10, // Agrega un poco de espacio interno
+    borderRadius: 5, // Opcional: bordes redondeados para el contenedor
   },
   name: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5, // Espacio entre el nombre y el input
+    marginBottom: 5,
+    color: COLORS.text,
+    textAlign: "center", // Centra el texto del nombre
   },
   input: {
-    width: "100%",
+    width: "80%", // Ajusta el ancho del input
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 8,
     borderRadius: 5,
-    marginBottom: 10, // Espacio entre el input y el botón
+    marginBottom: 10,
+    textAlign: "center", // Centra el texto dentro del input
+    color: COLORS.text,
   },
 });
