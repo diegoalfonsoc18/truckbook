@@ -1,33 +1,34 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet } from "react-native";
+import { View, TextInput, Button, StyleSheet, Text } from "react-native";
 
 export default function GastoItem({
   item,
   onSend,
 }: {
-  item: any;
+  item: { id: string; name: string }; // Asegúrate de que `item` tenga una estructura válida
   onSend: (id: string, value: string) => void;
 }) {
-  const [inputValue, setInputValue] = useState<string>(""); // Estado local para el valor ingresado
+  const [inputValue, setInputValue] = useState<string>("");
 
   const handleSend = () => {
     if (inputValue.trim() !== "") {
-      onSend(item.id, inputValue); // Llamar a la función de envío con el valor ingresado
-      setInputValue(""); // Limpiar el input después de enviar
+      onSend(item.id, inputValue);
+      setInputValue("");
     }
   };
 
   return (
     <View style={styles.container}>
+      {/* Asegúrate de que item.name sea una cadena de texto */}
+      <Text style={styles.label}>{item.name || "Sin nombre"}</Text>
       <TextInput
         style={styles.input}
         value={inputValue}
-        onChangeText={setInputValue} // Actualizar el estado local
+        onChangeText={setInputValue}
         placeholder="Ingresa un valor"
         keyboardType="numeric"
       />
-      <Button title="Enviar" onPress={handleSend} />{" "}
-      {/* Botón para enviar el dato */}
+      <Button title="Enviar" onPress={handleSend} />
     </View>
   );
 }
@@ -37,6 +38,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 10,
+  },
+  label: {
+    flex: 1,
+    fontSize: 16,
   },
   input: {
     flex: 2,

@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pickerContainer: {
+    flexDirection: "column", // Asegura que los elementos estén apilados verticalmente
     marginHorizontal: 20,
     marginVertical: 10,
   },
@@ -133,8 +134,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: COLORS.text,
-    marginBottom: 5,
+    marginBottom: 10, // Espacio entre el texto y el picker
   },
+  picker: {
+    height: 50,
+    width: "100%",
+    color: COLORS.text,
+  },
+
   resumenTitle: {
     fontSize: 18,
     fontWeight: "bold",
