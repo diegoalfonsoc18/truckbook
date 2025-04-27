@@ -20,7 +20,7 @@ export default function GastoItem({
   return (
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
-      <Text style={styles.label}>{item.name || "Sin nombre"}</Text>
+      <Text style={styles.label}></Text>
       <TextInput
         style={styles.input}
         value={inputValue}

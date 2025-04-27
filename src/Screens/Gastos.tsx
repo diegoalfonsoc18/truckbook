@@ -3,16 +3,16 @@ import {
   SafeAreaView,
   Text,
   FlatList,
-  StyleSheet,
   View,
   TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { gastosData } from "../data/data";
 import GastoItem from "../components/GastoItem";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
-import { Picker } from "@react-native-picker/picker"; // Importar Picker
+import { Picker } from "@react-native-picker/picker";
 
 export default function Gastos() {
   const [gastosIngresados, setGastosIngresados] = useState<
@@ -22,7 +22,7 @@ export default function Gastos() {
     new Date().toISOString().split("T")[0]
   );
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
-  const [selectedGasto, setSelectedGasto] = useState<string>(gastosData[0].id); // Gasto seleccionado
+  const [selectedGasto, setSelectedGasto] = useState<string>(gastosData[0].id);
 
   const handleAddGasto = useCallback((id: string, value: string) => {
     const gasto = gastosData.find((g) => g.id === id);
@@ -48,7 +48,7 @@ export default function Gastos() {
             <MaterialIcons
               name="calendar-month"
               size={60}
-              color={COLORS.main}
+              color={COLORS.secondary}
             />
           </View>
         </TouchableOpacity>
@@ -66,7 +66,7 @@ export default function Gastos() {
       {/* Componente de resumen de gastos ingresados */}
       <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
       <FlatList
-        data={gastosIngresados} // Mostrar todos los gastos ingresados
+        data={gastosIngresados} // Todos los elementos estarán disponibles
         renderItem={({ item, index }) => (
           <View style={styles.resumenItem}>
             <Text style={styles.resumenText}>
@@ -75,7 +75,9 @@ export default function Gastos() {
             <Text style={styles.resumenValue}>${item.value}</Text>
           </View>
         )}
-        keyExtractor={(item, index) => `${item.id}-${index}`} // Asegura que cada elemento tenga un id único
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
+        style={styles.flatList} // Asegura que el FlatList ocupe el espacio necesario
       />
 
       {/* Selector de gastos */}
@@ -92,16 +94,18 @@ export default function Gastos() {
       </View>
 
       {/* Mostrar el gasto seleccionado */}
-      <FlatList
-        data={gastosData.filter((gasto) => gasto.id === selectedGasto)} // Filtrar por el gasto seleccionado
-        renderItem={({ item }) => (
-          <GastoItem
-            item={item}
-            onSend={(id, value) => handleAddGasto(id, value)} // Llamar a handleAddGasto solo al enviar
-          />
-        )}
-        keyExtractor={(item) => item.id} // Asegura que cada elemento tenga un id único
-      />
+      <View style={styles.listContainer}>
+        <FlatList
+          data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
+          renderItem={({ item }) => (
+            <GastoItem
+              item={item}
+              onSend={(id, value) => handleAddGasto(id, value)}
+            />
+          )}
+          keyExtractor={(item) => item.id}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -109,6 +113,7 @@ export default function Gastos() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background, // Fondo principal de la pantalla
   },
   dateContainer: {
     flexDirection: "row",
@@ -116,38 +121,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     marginVertical: 10,
+    backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
   },
   dateText: {
     fontSize: 18,
-    color: COLORS.text,
+    color: COLORS.text, // Color del texto de la fecha
   },
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
   },
   pickerContainer: {
-    flexDirection: "column", // Asegura que los elementos estén apilados verticalmente
+    flexDirection: "column",
     marginHorizontal: 20,
     marginVertical: 10,
+    backgroundColor: "#4a1414", // Fondo del picker
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20, // Espacio entre el picker y otros elementos
+    height: 160, // Altura del contenedor del picker
   },
   pickerLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.text,
-    marginBottom: 10, // Espacio entre el texto y el picker
+    color: COLORS.text, // Color del texto del picker
+    marginBottom: 10,
   },
   picker: {
     height: 50,
     width: "100%",
-    color: COLORS.text,
+    color: COLORS.text, // Color del texto dentro del picker
   },
-
+  listContainer: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "#00cc29", // Fondo del contenedor del FlatList
+    marginHorizontal: 10,
+    marginBottom: 20, // Espacio inferior
+  },
   resumenTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.text,
+    color: COLORS.text, // Color del título del resumen
     marginHorizontal: 20,
     marginVertical: 10,
+    backgroundColor: "#0000cc",
   },
   resumenItem: {
     flexDirection: "row",
@@ -155,15 +173,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+
+    maxHeight: "100%", // Altura máxima del elemento
   },
   resumenText: {
     fontSize: 16,
-    color: COLORS.text,
+    color: COLORS.text, // Color del texto del resumen
   },
   resumenValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.main,
+    color: COLORS.primary, // Color del valor del resumen
+  },
+  flatList: {
+    flexGrow: 1, // Evita que el FlatList ocupe más espacio del necesario
+    marginHorizontal: 20,
+    backgroundColor: COLORS.primary, // Fondo del FlatList
+    maxHeight: "50%", // Altura máxima del FlatList
   },
 });

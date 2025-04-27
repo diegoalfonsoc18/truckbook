@@ -38,7 +38,7 @@ export default function Ingresos() {
   );
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.container}>
       <FlatList
         data={data}
         renderItem={renderItem}

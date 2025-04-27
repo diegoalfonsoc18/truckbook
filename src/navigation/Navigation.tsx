@@ -13,6 +13,7 @@ import {
   renderFinanzas,
   renderAccount,
 } from "../icons/icons"; // Centralizamos los íconos en un archivo separado
+import { COLORS } from "../constants/colors";
 
 // Crear el Tab Navigator
 const Tab = createBottomTabNavigator();
@@ -31,8 +32,8 @@ export default function MainNavigation() {
       screenOptions={({ route }) => ({
         headerShown: false, // Oculta el encabezado
         tabBarStyle: styles.tabBar, // Aplica estilos centralizados
-        tabBarActiveTintColor: "#FAFF00", // Color del ícono activo
-        tabBarInactiveTintColor: "#EEEEEE", // Color del ícono inactivo
+        tabBarActiveTintColor: COLORS.primary, // Color del ícono activo
+        tabBarInactiveTintColor: COLORS.accent, // Color del ícono inactivo
         tabBarShowLabel: false, // Oculta las etiquetas de texto
         tabBarIcon: ({ focused, color, size }) => {
           // Renderiza el ícono correspondiente según la pestaña
