@@ -10,4 +10,6 @@ export const COLORS = {
   secondary: "#212121",
   surface: "#EDEEEF",
   accent: "#CCCCCC",
+  black: "#000000",
+  white: "#FFFFFF",
 };

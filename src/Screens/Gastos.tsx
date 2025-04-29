@@ -40,19 +40,28 @@ export default function Gastos() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Fecha seleccionada y botón para mostrar el calendario */}
-      <View style={styles.dateContainer}>
-        <Text style={styles.dateText}>{selectedDate}</Text>
-        <TouchableOpacity onPress={toggleCalendar}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons
-              name="calendar-month"
-              size={60}
-              color={COLORS.secondary}
-            />
-          </View>
-        </TouchableOpacity>
+      {/* Título del componente */}
+      <View style={styles.headerContainer}>
+        <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
+        <Text style={styles.headerTitle}>Gastos</Text>
+        <MaterialIcons
+          name="notifications-active"
+          size={24}
+          color={COLORS.black}
+        />
       </View>
+
+      {/* Fecha seleccionada y botón para mostrar el calendario */}
+      <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
+        <View style={styles.iconContainer}>
+          <MaterialIcons
+            name="calendar-month"
+            size={60}
+            color={COLORS.secondary}
+          />
+        </View>
+        <Text style={styles.dateText}>{selectedDate}</Text>
+      </TouchableOpacity>
 
       {/* Mostrar el calendario */}
       {showCalendar && (
@@ -64,22 +73,26 @@ export default function Gastos() {
       )}
 
       {/* Componente de resumen de gastos ingresados */}
-      <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
-      <View style={styles.listContainer}>
-        <FlatList
-          data={gastosIngresados} // Todos los elementos estarán disponibles
-          renderItem={({ item, index }) => (
-            <View style={styles.resumenItem}>
-              <Text style={styles.resumenText}>
-                {index + 1}. {item.name}
-              </Text>
-              <Text style={styles.resumenValue}>${item.value}</Text>
-            </View>
-          )}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
-          style={styles.flatList}
-        />
+      <View style={styles.resumenContainer}>
+        <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
+        <View style={styles.listContainer}>
+          <FlatList
+            data={gastosIngresados} // Todos los elementos estarán disponibles
+            renderItem={({ item, index }) => (
+              <View style={styles.resumenItem}>
+                <Text style={styles.resumenText}>
+                  {index + 1}. {item.name}
+                </Text>
+                <Text style={styles.resumenValue}>${item.value}</Text>
+              </View>
+            )}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
+            style={styles.flatList}
+            contentContainerStyle={{ paddingBottom: 20 }} // Espaciado interno para evitar cortes
+            showsVerticalScrollIndicator={false} // Oculta la barra de desplazamiento vertical
+          />
+        </View>
       </View>
 
       {/* Selector de gastos */}
@@ -117,11 +130,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background, // Fondo principal de la pantalla
+    alignItems: "center",
+  },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    padding: 20,
+    color: COLORS.primary, // Fondo del encabezado
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: COLORS.primary, // Color del texto del título
   },
   dateContainer: {
+    width: "90%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    borderRadius: 10,
     paddingHorizontal: 20,
     marginVertical: 10,
     backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
@@ -139,31 +168,44 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, // Fondo del contenedor del ícono
     borderRadius: 5,
   },
+  resumenContainer: {
+    width: "90%",
+    height: 200,
+    backgroundColor: COLORS.surface, // Fondo del contenedor del resumen
+    borderRadius: 10,
+    padding: 20,
+    //marginVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   resumenTitle: {
+    width: "100%",
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.text, // Color del título del resumen
-    marginHorizontal: 20,
-    marginVertical: 10,
-    //backgroundColor: "#11cc00", // Fondo del título
+    //marginVertical: 10, // Solo margen vertical
+    textAlign: "left", // Alinea el texto a la izquierda
+    alignSelf: "flex-start",
   },
   listContainer: {
     flex: 1, // Permite que el contenedor ocupe el espacio restante
+    width: "100%",
+    height: "60%",
     //backgroundColor: "#00cc29", // Fondo del contenedor del FlatList
-    marginHorizontal: 10,
-    marginBottom: 20, // Espacio inferior
+    justifyContent: "center",
+    alignItems: "center",
   },
   resumenItem: {
+    // Permite que el elemento ocupe el espacio restante
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.inputBorder, // Color del borde inferior
-    backgroundColor: COLORS.surface, // Fondo del resumen de cada gasto
+    //backgroundColor: "#cc0", // Fondo del resumen de cada gasto
   },
   resumenValue: {
-    fontSize: 16,
     fontWeight: "bold",
     color: COLORS.text, // Color del valor del resumen
     textAlign: "right",
@@ -175,13 +217,14 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     flexDirection: "column",
+    width: "90%",
     marginHorizontal: 20,
     marginVertical: 10,
-    //backgroundColor: "#4a1414", // Fondo del picker
+    backgroundColor: COLORS.surface, // Fondo del picker
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,
     marginBottom: 40, // Aumenta el espacio entre el picker y otros elementos
-    position: "relative", // Asegura que el contenedor no se superponga
+    //position: "relative", // Asegura que el contenedor no se superponga
     zIndex: 10, // Asegura que el Picker esté por encima de otros componentes
   },
   pickerLabel: {
@@ -195,13 +238,18 @@ const styles = StyleSheet.create({
     //backgroundColor: "#cc0000", // Fondo del picker
   },
   selectedListContainer: {
+    width: "90%",
+
     flex: 1, // Permite que el contenedor ocupe el espacio restante
-    //backgroundColor: "#dd0cbd", // Fondo del contenedor del FlatList seleccionado
-    marginHorizontal: 10,
-    marginBottom: 20, // Espacio inferior
+    borderRadius: 10,
+    backgroundColor: COLORS.surface, // Fondo del contenedor del FlatList seleccionado
+    //marginHorizontal: 10,
+    //marginBottom: 20, // Espacio inferior
+    justifyContent: "center",
+    alignItems: "center",
   },
   flatList: {
     flex: 1, // Permite que el FlatList ocupe el espacio restante
-    //backgroundColor: "#2259e4", // Fondo del FlatList
+    width: "100%",
   },
 });
