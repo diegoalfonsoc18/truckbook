@@ -65,20 +65,22 @@ export default function Gastos() {
 
       {/* Componente de resumen de gastos ingresados */}
       <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
-      <FlatList
-        data={gastosIngresados} // Todos los elementos estarán disponibles
-        renderItem={({ item, index }) => (
-          <View style={styles.resumenItem}>
-            <Text style={styles.resumenText}>
-              {index + 1}. {item.name}
-            </Text>
-            <Text style={styles.resumenValue}>${item.value}</Text>
-          </View>
-        )}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
-        style={styles.flatList} // Asegura que el FlatList ocupe el espacio necesario
-      />
+      <View style={styles.listContainer}>
+        <FlatList
+          data={gastosIngresados} // Todos los elementos estarán disponibles
+          renderItem={({ item, index }) => (
+            <View style={styles.resumenItem}>
+              <Text style={styles.resumenText}>
+                {index + 1}. {item.name}
+              </Text>
+              <Text style={styles.resumenValue}>${item.value}</Text>
+            </View>
+          )}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
+          style={styles.flatList}
+        />
+      </View>
 
       {/* Selector de gastos */}
       <View style={styles.pickerContainer}>
@@ -94,7 +96,7 @@ export default function Gastos() {
       </View>
 
       {/* Mostrar el gasto seleccionado */}
-      <View style={styles.listContainer}>
+      <View style={styles.selectedListContainer}>
         <FlatList
           data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
           renderItem={({ item }) => (
@@ -104,6 +106,7 @@ export default function Gastos() {
             />
           )}
           keyExtractor={(item) => item.id}
+          style={styles.flatList}
         />
       </View>
     </SafeAreaView>
@@ -124,40 +127,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
   },
   dateText: {
-    fontSize: 18,
-    color: COLORS.text, // Color del texto de la fecha
-  },
-  iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pickerContainer: {
-    flexDirection: "column",
-    marginHorizontal: 20,
-    marginVertical: 10,
-    backgroundColor: "#4a1414", // Fondo del picker
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20, // Espacio entre el picker y otros elementos
-    height: 160, // Altura del contenedor del picker
-  },
-  pickerLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.text, // Color del texto del picker
-    marginBottom: 10,
+    color: COLORS.text, // Color del texto de la fecha
+    textAlign: "center",
   },
-  picker: {
-    height: 50,
-    width: "100%",
-    color: COLORS.text, // Color del texto dentro del picker
-  },
-  listContainer: {
-    flex: 1,
+  iconContainer: {
     justifyContent: "center",
-    backgroundColor: "#00cc29", // Fondo del contenedor del FlatList
-    marginHorizontal: 10,
-    marginBottom: 20, // Espacio inferior
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: COLORS.surface, // Fondo del contenedor del ícono
+    borderRadius: 5,
   },
   resumenTitle: {
     fontSize: 18,
@@ -165,7 +145,13 @@ const styles = StyleSheet.create({
     color: COLORS.text, // Color del título del resumen
     marginHorizontal: 20,
     marginVertical: 10,
-    backgroundColor: "#0000cc",
+    //backgroundColor: "#11cc00", // Fondo del título
+  },
+  listContainer: {
+    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    //backgroundColor: "#00cc29", // Fondo del contenedor del FlatList
+    marginHorizontal: 10,
+    marginBottom: 20, // Espacio inferior
   },
   resumenItem: {
     flexDirection: "row",
@@ -173,22 +159,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
-
-    maxHeight: "100%", // Altura máxima del elemento
-  },
-  resumenText: {
-    fontSize: 16,
-    color: COLORS.text, // Color del texto del resumen
+    borderBottomColor: COLORS.inputBorder, // Color del borde inferior
+    backgroundColor: COLORS.surface, // Fondo del resumen de cada gasto
   },
   resumenValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.primary, // Color del valor del resumen
+    color: COLORS.text, // Color del valor del resumen
+    textAlign: "right",
+  },
+  resumenText: {
+    fontSize: 16,
+    color: COLORS.text, // Color del texto del resumen
+    textAlign: "left",
+  },
+  pickerContainer: {
+    flexDirection: "column",
+    marginHorizontal: 20,
+    marginVertical: 10,
+    //backgroundColor: "#4a1414", // Fondo del picker
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 40, // Aumenta el espacio entre el picker y otros elementos
+    position: "relative", // Asegura que el contenedor no se superponga
+    zIndex: 10, // Asegura que el Picker esté por encima de otros componentes
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.text, // Color del texto del picker label
+    marginBottom: 10,
+  },
+  picker: {
+    color: COLORS.text, // Color del texto del picker
+    //backgroundColor: "#cc0000", // Fondo del picker
+  },
+  selectedListContainer: {
+    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    //backgroundColor: "#dd0cbd", // Fondo del contenedor del FlatList seleccionado
+    marginHorizontal: 10,
+    marginBottom: 20, // Espacio inferior
   },
   flatList: {
-    flexGrow: 1, // Evita que el FlatList ocupe más espacio del necesario
-    marginHorizontal: 20,
-    backgroundColor: COLORS.primary, // Fondo del FlatList
-    maxHeight: "50%", // Altura máxima del FlatList
+    flex: 1, // Permite que el FlatList ocupe el espacio restante
+    //backgroundColor: "#2259e4", // Fondo del FlatList
   },
 });
