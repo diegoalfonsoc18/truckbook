@@ -6,6 +6,7 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
+  TouchableWithoutFeedback,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { gastosData } from "../data/data";
@@ -26,12 +27,14 @@ export default function Gastos() {
 
   const handleAddGasto = useCallback((id: string, value: string) => {
     const gasto = gastosData.find((g) => g.id === id);
-    if (gasto) {
-      setGastosIngresados((prevGastos) => [
-        ...prevGastos,
-        { id: gasto.id, name: gasto.name, value },
-      ]);
+    if (!gasto) {
+      console.error("Gasto no encontrado");
+      return;
     }
+    setGastosIngresados((prevGastos) => [
+      ...prevGastos,
+      { id: gasto.id, name: gasto.name, value },
+    ]);
   }, []);
 
   const toggleCalendar = () => {
@@ -65,11 +68,19 @@ export default function Gastos() {
 
       {/* Mostrar el calendario */}
       {showCalendar && (
-        <CustomCalendar
-          selectedDate={selectedDate}
-          onDateChange={(date) => setSelectedDate(date)}
-          onClose={() => setShowCalendar(false)}
-        />
+        <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
+          <View style={styles.calendarOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.calendarContainer}>
+                <CustomCalendar
+                  selectedDate={selectedDate}
+                  onDateChange={(date) => setSelectedDate(date)}
+                  onClose={() => setShowCalendar(false)}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       )}
 
       {/* Componente de resumen de gastos ingresados */}
@@ -167,6 +178,23 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: COLORS.surface, // Fondo del contenedor del ícono
     borderRadius: 5,
+  },
+  calendarOverlay: {
+    position: "absolute", // Superpone el calendario sobre el resto de los componentes
+    top: 0, // Posición desde la parte superior
+    left: 0, // Posición desde la parte izquierda
+    right: 0, // Posición desde la parte derecha
+    bottom: 0, // Posición desde la parte inferior
+    justifyContent: "center", // Centra el calendario verticalmente
+    alignItems: "center", // Centra el calendario horizontalmente
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fondo semitransparente para resaltar el calendario
+    zIndex: 100, // Asegura que el calendario esté por encima de otros componentes
+  },
+  calendarContainer: {
+    width: "80%", // Ocupa el 80% del ancho del contenedor padre
+    backgroundColor: COLORS.surface, // Fondo del calendario
+    borderRadius: 10, // Bordes redondeados
+    overflow: "hidden", // Asegura que el contenido no se desborde
   },
   resumenContainer: {
     width: "90%",
