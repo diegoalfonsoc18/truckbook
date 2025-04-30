@@ -41,6 +41,22 @@ export default function Gastos() {
     setShowCalendar((prev) => !prev);
   };
 
+  const handleEditGasto = (id: string) => {
+    const gasto = gastosIngresados.find((g) => g.id === id);
+    if (gasto) {
+      const newValue = prompt("Editar valor del gasto:", gasto.value); // Puedes usar un modal en lugar de prompt
+      if (newValue) {
+        setGastosIngresados((prevGastos) =>
+          prevGastos.map((g) => (g.id === id ? { ...g, value: newValue } : g))
+        );
+      }
+    }
+  };
+
+  const handleDeleteGasto = (id: string) => {
+    setGastosIngresados((prevGastos) => prevGastos.filter((g) => g.id !== id));
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Título del componente */}
@@ -82,6 +98,36 @@ export default function Gastos() {
           </View>
         </TouchableWithoutFeedback>
       )}
+      {/* Contenedor combinado */}
+      <View style={styles.combinedContainer}>
+        {/* Selector de gastos */}
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>Selecciona un gasto:</Text>
+          <Picker
+            selectedValue={selectedGasto}
+            onValueChange={(itemValue) => setSelectedGasto(itemValue)}
+            style={styles.picker}>
+            {gastosData.map((gasto) => (
+              <Picker.Item key={gasto.id} label={gasto.name} value={gasto.id} />
+            ))}
+          </Picker>
+        </View>
+
+        {/* Mostrar el gasto seleccionado */}
+        <View style={styles.selectedListContainer}>
+          <FlatList
+            data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
+            renderItem={({ item }) => (
+              <GastoItem
+                item={item}
+                onSend={(id, value) => handleAddGasto(id, value)}
+              />
+            )}
+            keyExtractor={(item) => item.id}
+            style={styles.flatList}
+          />
+        </View>
+      </View>
 
       {/* Componente de resumen de gastos ingresados */}
       <View style={styles.resumenContainer}>
@@ -95,6 +141,24 @@ export default function Gastos() {
                   {index + 1}. {item.name}
                 </Text>
                 <Text style={styles.resumenValue}>${item.value}</Text>
+                <View style={styles.actionButtons}>
+                  {/* Botón para editar */}
+                  <TouchableOpacity onPress={() => handleEditGasto(item.id)}>
+                    <MaterialIcons
+                      name="edit"
+                      size={24}
+                      color={COLORS.primary}
+                    />
+                  </TouchableOpacity>
+                  {/* Botón para eliminar */}
+                  <TouchableOpacity onPress={() => handleDeleteGasto(item.id)}>
+                    <MaterialIcons
+                      name="delete"
+                      size={24}
+                      color={COLORS.accent} // Replace with an existing valid color property
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
             keyExtractor={(item, index) => `${item.id}-${index}`}
@@ -104,34 +168,15 @@ export default function Gastos() {
             showsVerticalScrollIndicator={false} // Oculta la barra de desplazamiento vertical
           />
         </View>
-      </View>
-
-      {/* Selector de gastos */}
-      <View style={styles.pickerContainer}>
-        <Text style={styles.pickerLabel}>Selecciona un gasto:</Text>
-        <Picker
-          selectedValue={selectedGasto}
-          onValueChange={(itemValue) => setSelectedGasto(itemValue)}
-          style={styles.picker}>
-          {gastosData.map((gasto) => (
-            <Picker.Item key={gasto.id} label={gasto.name} value={gasto.id} />
-          ))}
-        </Picker>
-      </View>
-
-      {/* Mostrar el gasto seleccionado */}
-      <View style={styles.selectedListContainer}>
-        <FlatList
-          data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
-          renderItem={({ item }) => (
-            <GastoItem
-              item={item}
-              onSend={(id, value) => handleAddGasto(id, value)}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          style={styles.flatList}
-        />
+        {/* Mostrar la suma total de los gastos */}
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalText}>
+            Total: $
+            {gastosIngresados
+              .reduce((sum, gasto) => sum + parseFloat(gasto.value), 0)
+              .toFixed(2)}
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -223,6 +268,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  combinedContainer: {
+    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
+    backgroundColor: COLORS.surface, // Fondo del contenedor combinado
+    borderRadius: 10, // Bordes redondeados
+    // padding: 10, // Espaciado interno
+    //marginVertical: 10, // Espaciado vertical externo
+    //justifyContent: "space-between", // Distribuye los elementos verticalmente
+    alignItems: "center", // Centra los elementos horizontalmente
+  },
+  pickerContainer: {
+    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    flexDirection: "column",
+    width: "100%",
+    marginHorizontal: 20,
+    marginVertical: 10,
+    backgroundColor: COLORS.surface, // Fondo del picker
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10, // Aumenta el espacio entre el picker y otros elementos
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.text, // Color del texto del picker label
+    marginBottom: 10,
+  },
+  picker: {
+    color: COLORS.text, // Color del texto del picker
+    //backgroundColor: "#cc0000", // Fondo del picker
+  },
   resumenItem: {
     // Permite que el elemento ocupe el espacio restante
     width: "100%",
@@ -243,37 +319,29 @@ const styles = StyleSheet.create({
     color: COLORS.text, // Color del texto del resumen
     textAlign: "left",
   },
-  pickerContainer: {
-    flexDirection: "column",
-    width: "90%",
-    marginHorizontal: 20,
-    marginVertical: 10,
-    backgroundColor: COLORS.surface, // Fondo del picker
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 40, // Aumenta el espacio entre el picker y otros elementos
-    //position: "relative", // Asegura que el contenedor no se superponga
-    zIndex: 10, // Asegura que el Picker esté por encima de otros componentes
+  totalContainer: {
+    marginTop: 10, // Espaciado superior
+    alignItems: "flex-end", // Alinea el texto a la derecha
+    width: "100%", // Asegura que ocupe todo el ancho del contenedor
   },
-  pickerLabel: {
+  totalText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.text, // Color del texto del picker label
-    marginBottom: 10,
+    color: COLORS.text, // Color del texto del total
   },
-  picker: {
-    color: COLORS.text, // Color del texto del picker
-    //backgroundColor: "#cc0000", // Fondo del picker
+  actionButtons: {
+    flexDirection: "row", // Alinea los botones en fila
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginLeft: 10, // Espaciado entre el texto y los botones
   },
-  selectedListContainer: {
-    width: "90%",
 
-    flex: 1, // Permite que el contenedor ocupe el espacio restante
+  selectedListContainer: {
+    flex: 1, // Permite que la lista ocupe el espacio restante
+    width: "100%", // Ocupa todo el ancho del contenedor combinado
     borderRadius: 10,
-    backgroundColor: COLORS.surface, // Fondo del contenedor del FlatList seleccionado
-    //marginHorizontal: 10,
-    //marginBottom: 20, // Espacio inferior
-    justifyContent: "center",
+    backgroundColor: COLORS.primary, // Fondo del contenedor del FlatList seleccionado
+    justifyContent: "flex-end", // Alinea los elementos al inicio
     alignItems: "center",
   },
   flatList: {
