@@ -99,6 +99,7 @@ export default function Gastos() {
         </TouchableWithoutFeedback>
       )}
       {/* Contenedor combinado */}
+
       <View style={styles.combinedContainer}>
         {/* Selector de gastos */}
         <View style={styles.pickerContainer}>
@@ -113,8 +114,9 @@ export default function Gastos() {
           </Picker>
         </View>
 
-        {/* Mostrar el gasto seleccionado */}
         <View style={styles.selectedListContainer}>
+          {/* Lista de gastos seleccionados */}
+
           <FlatList
             data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
             renderItem={({ item }) => (
@@ -125,6 +127,7 @@ export default function Gastos() {
             )}
             keyExtractor={(item) => item.id}
             style={styles.flatList}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} // Centra el contenido verticalmente
           />
         </View>
       </View>
@@ -184,23 +187,26 @@ export default function Gastos() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: COLORS.background, // Fondo principal de la pantalla
     alignItems: "center",
+    justifyContent: "space-between", // Alinea los elementos al inicio
+    padding: 20, // Espaciado interno
   },
   headerContainer: {
     width: "100%",
     flexDirection: "row",
-    padding: 20,
+    paddingHorizontal: 20,
     color: COLORS.primary, // Fondo del encabezado
     alignItems: "center",
     justifyContent: "space-between",
   },
+
   headerTitle: {
     fontSize: 24,
     fontWeight: "600",
     color: COLORS.primary, // Color del texto del título
   },
+
   dateContainer: {
     width: "90%",
     flexDirection: "row",
@@ -264,18 +270,16 @@ const styles = StyleSheet.create({
     flex: 1, // Permite que el contenedor ocupe el espacio restante
     width: "100%",
     height: "60%",
-    //backgroundColor: "#00cc29", // Fondo del contenedor del FlatList
     justifyContent: "center",
     alignItems: "center",
   },
   combinedContainer: {
-    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    height: 300, // Altura del contenedor combinado
+    //flex: 1, // Permite que el contenedor ocupe el espacio restante
     width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
     backgroundColor: COLORS.surface, // Fondo del contenedor combinado
     borderRadius: 10, // Bordes redondeados
-    // padding: 10, // Espaciado interno
-    //marginVertical: 10, // Espaciado vertical externo
-    //justifyContent: "space-between", // Distribuye los elementos verticalmente
+    justifyContent: "space-between", // Distribuye los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
   },
   pickerContainer: {
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginHorizontal: 20,
     marginVertical: 10,
-    backgroundColor: COLORS.surface, // Fondo del picker
+    backgroundColor: "#cc0", // Fondo del picker
     padding: 10,
     borderRadius: 10,
     marginBottom: 10, // Aumenta el espacio entre el picker y otros elementos
@@ -298,6 +302,13 @@ const styles = StyleSheet.create({
   picker: {
     color: COLORS.text, // Color del texto del picker
     //backgroundColor: "#cc0000", // Fondo del picker
+  },
+  selectedListContainer: {
+    flex: 1, // Permite que la lista ocupe el espacio restante
+    width: "100%", // Ocupa todo el ancho del contenedor combinado
+    borderRadius: 10,
+    backgroundColor: "#36cc00", // Fondo del contenedor del FlatList seleccionado
+    alignItems: "flex-start", // Centra los elementos horizontalmente
   },
   resumenItem: {
     // Permite que el elemento ocupe el espacio restante
@@ -336,13 +347,18 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Espaciado entre el texto y los botones
   },
 
-  selectedListContainer: {
-    flex: 1, // Permite que la lista ocupe el espacio restante
-    width: "100%", // Ocupa todo el ancho del contenedor combinado
-    borderRadius: 10,
-    backgroundColor: COLORS.primary, // Fondo del contenedor del FlatList seleccionado
-    justifyContent: "flex-end", // Alinea los elementos al inicio
-    alignItems: "center",
+  inputContainer: {
+    width: "100%", // Asegura que el input ocupe todo el ancho del contenedor
+    marginTop: 20, // Espaciado superior
+  },
+  input: {
+    width: "100%", // Asegura que el input ocupe todo el ancho disponible
+    height: 40, // Altura del input
+    borderWidth: 1, // Borde del input
+    borderColor: COLORS.inputBorder, // Color del borde
+    borderRadius: 5, // Bordes redondeados
+    paddingHorizontal: 10, // Espaciado interno horizontal
+    backgroundColor: COLORS.surface, // Fondo del input
   },
   flatList: {
     flex: 1, // Permite que el FlatList ocupe el espacio restante
