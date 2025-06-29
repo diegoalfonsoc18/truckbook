@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.text, // Color del título del resumen
+    color: COLORS.primary, // Color del título del resumen
     //marginVertical: 10, // Solo margen vertical
     textAlign: "left", // Alinea el texto a la izquierda
     alignSelf: "flex-start",
@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.text, // Color del texto del picker label
+    color: COLORS.primary, // Color del texto del picker label
     marginBottom: 10,
   },
   picker: {
@@ -156,7 +156,7 @@ export const styles = StyleSheet.create({
   totalText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.text, // Color del texto del total
+    color: COLORS.primary, // Color del texto del total
   },
   actionButtons: {
     flexDirection: "row", // Alinea los botones en fila

@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   TouchableWithoutFeedback,
+  Modal,
+  TextInput,
+  Button,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { gastosData } from "../data/data";
@@ -42,15 +45,29 @@ export default function Gastos() {
     setShowCalendar((prev) => !prev);
   };
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+
   const handleEditGasto = (id: string) => {
     const gasto = gastosIngresados.find((g) => g.id === id);
     if (gasto) {
-      const newValue = prompt("Editar valor del gasto:", gasto.value); // Puedes usar un modal en lugar de prompt
-      if (newValue) {
-        setGastosIngresados((prevGastos) =>
-          prevGastos.map((g) => (g.id === id ? { ...g, value: newValue } : g))
-        );
-      }
+      setEditValue(gasto.value);
+      setEditId(id);
+      setModalVisible(true);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (editId) {
+      setGastosIngresados((prevGastos) =>
+        prevGastos.map((g) =>
+          g.id === editId ? { ...g, value: editValue } : g
+        )
+      );
+      setModalVisible(false);
+      setEditId(null);
+      setEditValue("");
     }
   };
 
@@ -144,7 +161,14 @@ export default function Gastos() {
                 <Text style={styles.resumenText}>
                   {index + 1}. {item.name}
                 </Text>
-                <Text style={styles.resumenValue}>${item.value}</Text>
+                <Text style={styles.resumenValue}>
+                  {parseFloat(item.value).toLocaleString("es-CO", {
+                    style: "currency",
+                    currency: "COP",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                </Text>
                 <View style={styles.actionButtons}>
                   {/* Botón para editar */}
                   <TouchableOpacity onPress={() => handleEditGasto(item.id)}>
@@ -154,12 +178,13 @@ export default function Gastos() {
                       color={COLORS.primary}
                     />
                   </TouchableOpacity>
+
                   {/* Botón para eliminar */}
                   <TouchableOpacity onPress={() => handleDeleteGasto(item.id)}>
                     <MaterialIcons
                       name="delete"
                       size={24}
-                      color={COLORS.accent} // Replace with an existing valid color property
+                      color={COLORS.primary} // Replace with an existing valid color property
                     />
                   </TouchableOpacity>
                 </View>
@@ -175,13 +200,59 @@ export default function Gastos() {
         {/* Mostrar la suma total de los gastos */}
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>
-            Total: $
+            Total: {""}
             {gastosIngresados
               .reduce((sum, gasto) => sum + parseFloat(gasto.value), 0)
-              .toFixed(2)}
+              .toLocaleString("es-CO", {
+                style: "currency",
+                currency: "COP",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
           </Text>
         </View>
       </View>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}>
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+              width: "80%",
+            }}>
+            <Text>Editar valor del gasto:</Text>
+            <TextInput
+              value={editValue}
+              onChangeText={setEditValue}
+              keyboardType="numeric"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 5,
+                padding: 10,
+                marginVertical: 10,
+              }}
+            />
+            <Button title="Guardar" onPress={handleSaveEdit} />
+            <Button
+              title="Cancelar"
+              onPress={() => setModalVisible(false)}
+              color="red"
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
