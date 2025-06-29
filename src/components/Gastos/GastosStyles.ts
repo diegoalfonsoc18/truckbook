@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center", // Alinea los elementos al inicio
     padding: 20, // Espaciado interno
-    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
   },
   headerContainer: {
     width: "100%",
@@ -66,17 +66,15 @@ export const styles = StyleSheet.create({
     borderRadius: 10, // Bordes redondeados
     overflow: "hidden", // Asegura que el contenido no se desborde
   },
+
   resumenContainer: {
     width: "90%",
-    height: 200,
     backgroundColor: COLORS.surface, // Fondo del contenedor del resumen
-    borderRadius: 10,
+    borderRadius: 30,
     padding: 20,
-
     flex: 1.5,
-    justifyContent: "center",
-    alignItems: "center",
   },
+
   resumenTitle: {
     width: "100%",
     fontSize: 18,
