@@ -3,10 +3,11 @@ import { COLORS } from "../../constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background, // Fondo principal de la pantalla
+    //backgroundColor: "#cc0", // Fondo principal de la pantalla
     alignItems: "center",
-    justifyContent: "space-between", // Alinea los elementos al inicio
+    justifyContent: "center", // Alinea los elementos al inicio
     padding: 20, // Espaciado interno
+    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
   },
   headerContainer: {
     width: "100%",
@@ -15,6 +16,7 @@ export const styles = StyleSheet.create({
     color: COLORS.primary, // Fondo del encabezado
     alignItems: "center",
     justifyContent: "space-between",
+    flex: 0, // Permite que el encabezado ocupe todo el espacio disponible
   },
 
   headerTitle: {
@@ -24,6 +26,7 @@ export const styles = StyleSheet.create({
   },
 
   dateContainer: {
+    flex: 0,
     width: "90%",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -69,7 +72,8 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, // Fondo del contenedor del resumen
     borderRadius: 10,
     padding: 20,
-    //marginVertical: 10,
+
+    flex: 1.5,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -90,10 +94,10 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   combinedContainer: {
-    height: 300, // Altura del contenedor combinado
-    //flex: 1, // Permite que el contenedor ocupe el espacio restante
+    height: 30, // Altura del contenedor combinado
+    flex: 2, // Permite que el contenedor ocupe el espacio restante
     width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
-    backgroundColor: COLORS.surface, // Fondo del contenedor combinado
+    //backgroundColor: "#cc0", // Fondo del contenedor combinado
     borderRadius: 10, // Bordes redondeados
     justifyContent: "space-between", // Distribuye los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
@@ -104,7 +108,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     marginHorizontal: 20,
     marginVertical: 10,
-    backgroundColor: "#cc0", // Fondo del picker
+    //backgroundColor: "#cc0", // Fondo del picker
     padding: 10,
     borderRadius: 10,
     marginBottom: 10, // Aumenta el espacio entre el picker y otros elementos
@@ -120,10 +124,10 @@ export const styles = StyleSheet.create({
     //backgroundColor: "#cc0000", // Fondo del picker
   },
   selectedListContainer: {
-    flex: 1, // Permite que la lista ocupe el espacio restante
+    flex: 0.5, // Permite que la lista ocupe el espacio restante
     width: "100%", // Ocupa todo el ancho del contenedor combinado
     borderRadius: 10,
-    backgroundColor: "#36cc00", // Fondo del contenedor del FlatList seleccionado
+    //backgroundColor: "#36cc00", // Fondo del contenedor del FlatList seleccionado
     alignItems: "flex-start", // Centra los elementos horizontalmente
   },
   resumenItem: {
