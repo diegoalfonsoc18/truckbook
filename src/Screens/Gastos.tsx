@@ -18,6 +18,7 @@ import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
 import { Picker } from "@react-native-picker/picker";
 import { styles } from "../components/Gastos/GastosStyles"; // Asegúrate de que la ruta sea correcta
+import { useGastosStore } from "../store/CurrencyStore";
 
 export default function Gastos() {
   const [gastosIngresados, setGastosIngresados] = useState<

@@ -1,14 +1,23 @@
 import { create } from "zustand";
 
-type Currency = "COP" | "USD" | "EUR"; // Define los tipos de moneda
+type Gasto = { id: string; name: string; value: string };
 
-interface CurrencyState {
-  currency: Currency; // Moneda seleccionada
-  setCurrency: (currency: Currency) => void; // Función para actualizar la moneda
+interface GastosState {
+  gastos: Gasto[];
+  addGasto: (gasto: Gasto) => void;
+  editGasto: (id: string, value: string) => void;
+  deleteGasto: (id: string) => void;
 }
 
-// Crea el store de Zustand
-export const useCurrencyStore = create<CurrencyState>((set) => ({
-  currency: "COP", // Moneda por defecto
-  setCurrency: (currency) => set({ currency }), // Actualiza la moneda
+export const useGastosStore = create<GastosState>((set) => ({
+  gastos: [],
+  addGasto: (gasto) => set((state) => ({ gastos: [...state.gastos, gasto] })),
+  editGasto: (id, value) =>
+    set((state) => ({
+      gastos: state.gastos.map((g) => (g.id === id ? { ...g, value } : g)),
+    })),
+  deleteGasto: (id) =>
+    set((state) => ({
+      gastos: state.gastos.filter((g) => g.id !== id),
+    })),
 }));
