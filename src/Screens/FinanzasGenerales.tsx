@@ -11,10 +11,10 @@ import { LineChart } from "react-native-chart-kit";
 import { useGastosStore } from "../store/CurrencyStore";
 
 // Función para agrupar gastos por clave (día, mes o año)
-function groupBy(gastos, keyFn) {
-  return gastos.reduce((acc, gasto) => {
+function groupBy<T>(gastos: T[], keyFn: (gasto: T) => string) {
+  return gastos.reduce<Record<string, number>>((acc, gasto) => {
     const key = keyFn(gasto);
-    acc[key] = (acc[key] || 0) + Number(gasto.value);
+    acc[key] = (acc[key] || 0) + Number((gasto as any).value);
     return acc;
   }, {});
 }

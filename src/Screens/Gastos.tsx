@@ -44,9 +44,9 @@ export default function Gastos() {
         console.error("Gasto no encontrado");
         return;
       }
-      addGasto({ id: gasto.id, name: gasto.name, value, fecha: selectedDate });
+      addGasto({ name: gasto.name, value, fecha: selectedDate });
     },
-    [addGasto]
+    [addGasto, selectedDate]
   );
 
   // Editar gasto (abrir modal)
@@ -62,7 +62,7 @@ export default function Gastos() {
   // Guardar edición
   const handleSaveEdit = () => {
     if (editId) {
-      editGasto(editId, editValue);
+      editGasto(editId, editValue, selectedDate);
       setModalVisible(false);
       setEditId(null);
       setEditValue("");
@@ -71,13 +71,18 @@ export default function Gastos() {
 
   // Eliminar gasto
   const handleDeleteGasto = (id: string) => {
-    deleteGasto(id);
+    deleteGasto(id, selectedDate);
   };
 
   // Mostrar/ocultar calendario
   const toggleCalendar = () => {
     setShowCalendar((prev) => !prev);
   };
+
+  // Filtra los gastos por la fecha seleccionada
+  const gastosFiltrados = gastosIngresados.filter(
+    (g) => g.fecha === selectedDate
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,12 +156,14 @@ export default function Gastos() {
         </View>
       </View>
 
-      {/* Resumen de gastos ingresados */}
+      {/* Resumen de gastos ingresados para la fecha seleccionada */}
       <View style={styles.resumenContainer}>
-        <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
+        <Text style={styles.resumenTitle}>
+          Resumen de Gastos ({selectedDate})
+        </Text>
         <View style={styles.listContainer}>
           <FlatList
-            data={gastosIngresados}
+            data={gastosFiltrados}
             renderItem={({ item, index }) => (
               <View style={styles.resumenItem}>
                 <Text style={styles.resumenText}>
@@ -197,11 +204,11 @@ export default function Gastos() {
             showsVerticalScrollIndicator={false}
           />
         </View>
-        {/* Total de gastos */}
+        {/* Total de gastos para la fecha seleccionada */}
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>
             Total:{" "}
-            {gastosIngresados
+            {gastosFiltrados
               .reduce((sum, gasto) => sum + parseFloat(gasto.value), 0)
               .toLocaleString("es-CO", {
                 style: "currency",
@@ -212,7 +219,6 @@ export default function Gastos() {
           </Text>
         </View>
       </View>
-
       {/* Modal para editar gasto */}
       <Modal
         visible={modalVisible}

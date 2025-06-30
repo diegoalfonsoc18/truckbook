@@ -5,6 +5,7 @@ import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import Navigation from "./src/navigation/Navigation";
 import { COLORS } from "./src/constants/colors"; // Importar los colores
+import "react-native-get-random-values";
 
 // Definir un tema global para la navegación
 const AppTheme = {
