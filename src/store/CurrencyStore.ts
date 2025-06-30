@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type Gasto = { id: string; name: string; value: string };
+type Gasto = { id: string; name: string; value: string; fecha: string };
 
 interface GastosState {
   gastos: Gasto[];

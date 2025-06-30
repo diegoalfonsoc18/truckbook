@@ -5,7 +5,6 @@ import {
   FlatList,
   View,
   TouchableOpacity,
-  StyleSheet,
   TouchableWithoutFeedback,
   Modal,
   TextInput,
@@ -17,39 +16,40 @@ import GastoItem from "../components/Gastos/GastoItem";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
 import { Picker } from "@react-native-picker/picker";
-import { styles } from "../components/Gastos/GastosStyles"; // Asegúrate de que la ruta sea correcta
+import { styles } from "../components/Gastos/GastosStyles";
 import { useGastosStore } from "../store/CurrencyStore";
 
 export default function Gastos() {
-  const [gastosIngresados, setGastosIngresados] = useState<
-    { id: string; name: string; value: string }[]
-  >([]);
+  // Zustand store
+  const gastosIngresados = useGastosStore((state) => state.gastos);
+  const addGasto = useGastosStore((state) => state.addGasto);
+  const editGasto = useGastosStore((state) => state.editGasto);
+  const deleteGasto = useGastosStore((state) => state.deleteGasto);
+
+  // Estados locales
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedGasto, setSelectedGasto] = useState<string>(gastosData[0].id);
-
-  const handleAddGasto = useCallback((id: string, value: string) => {
-    const gasto = gastosData.find((g) => g.id === id);
-    if (!gasto) {
-      console.error("Gasto no encontrado");
-      return;
-    }
-    setGastosIngresados((prevGastos) => [
-      ...prevGastos,
-      { id: gasto.id, name: gasto.name, value },
-    ]);
-  }, []);
-
-  const toggleCalendar = () => {
-    setShowCalendar((prev) => !prev);
-  };
-
   const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
 
+  // Agregar gasto usando Zustand
+  const handleAddGasto = useCallback(
+    (id: string, value: string) => {
+      const gasto = gastosData.find((g) => g.id === id);
+      if (!gasto) {
+        console.error("Gasto no encontrado");
+        return;
+      }
+      addGasto({ id: gasto.id, name: gasto.name, value, fecha: selectedDate });
+    },
+    [addGasto]
+  );
+
+  // Editar gasto (abrir modal)
   const handleEditGasto = (id: string) => {
     const gasto = gastosIngresados.find((g) => g.id === id);
     if (gasto) {
@@ -59,26 +59,29 @@ export default function Gastos() {
     }
   };
 
+  // Guardar edición
   const handleSaveEdit = () => {
     if (editId) {
-      setGastosIngresados((prevGastos) =>
-        prevGastos.map((g) =>
-          g.id === editId ? { ...g, value: editValue } : g
-        )
-      );
+      editGasto(editId, editValue);
       setModalVisible(false);
       setEditId(null);
       setEditValue("");
     }
   };
 
+  // Eliminar gasto
   const handleDeleteGasto = (id: string) => {
-    setGastosIngresados((prevGastos) => prevGastos.filter((g) => g.id !== id));
+    deleteGasto(id);
+  };
+
+  // Mostrar/ocultar calendario
+  const toggleCalendar = () => {
+    setShowCalendar((prev) => !prev);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Título del componente */}
+      {/* Header */}
       <View style={styles.headerContainer}>
         <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
         <Text style={styles.headerTitle}>Gastos</Text>
@@ -117,10 +120,9 @@ export default function Gastos() {
           </View>
         </TouchableWithoutFeedback>
       )}
-      {/* Contenedor combinado */}
 
+      {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
-        {/* Selector de gastos */}
         <View style={styles.pickerContainer}>
           <Text style={styles.pickerLabel}>Selecciona un gasto:</Text>
           <Picker
@@ -134,8 +136,6 @@ export default function Gastos() {
         </View>
 
         <View style={styles.selectedListContainer}>
-          {/* Lista de gastos seleccionados */}
-
           <FlatList
             data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
             renderItem={({ item }) => (
@@ -146,17 +146,17 @@ export default function Gastos() {
             )}
             keyExtractor={(item) => item.id}
             style={styles.flatList}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} // Centra el contenido verticalmente
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           />
         </View>
       </View>
 
-      {/* Componente de resumen de gastos ingresados */}
+      {/* Resumen de gastos ingresados */}
       <View style={styles.resumenContainer}>
         <Text style={styles.resumenTitle}>Resumen de Gastos</Text>
         <View style={styles.listContainer}>
           <FlatList
-            data={gastosIngresados} // Todos los elementos estarán disponibles
+            data={gastosIngresados}
             renderItem={({ item, index }) => (
               <View style={styles.resumenItem}>
                 <Text style={styles.resumenText}>
@@ -179,29 +179,28 @@ export default function Gastos() {
                       color={COLORS.primary}
                     />
                   </TouchableOpacity>
-
                   {/* Botón para eliminar */}
                   <TouchableOpacity onPress={() => handleDeleteGasto(item.id)}>
                     <MaterialIcons
                       name="delete"
                       size={24}
-                      color={COLORS.primary} // Replace with an existing valid color property
+                      color={COLORS.primary}
                     />
                   </TouchableOpacity>
                 </View>
               </View>
             )}
             keyExtractor={(item, index) => `${item.id}-${index}`}
-            initialNumToRender={5} // Renderiza inicialmente solo los primeros 5 elementos
+            initialNumToRender={5}
             style={styles.flatList}
-            contentContainerStyle={{ paddingBottom: 20 }} // Espaciado interno para evitar cortes
-            showsVerticalScrollIndicator={false} // Oculta la barra de desplazamiento vertical
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
           />
         </View>
-        {/* Mostrar la suma total de los gastos */}
+        {/* Total de gastos */}
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>
-            Total: {""}
+            Total:{" "}
             {gastosIngresados
               .reduce((sum, gasto) => sum + parseFloat(gasto.value), 0)
               .toLocaleString("es-CO", {
@@ -213,6 +212,8 @@ export default function Gastos() {
           </Text>
         </View>
       </View>
+
+      {/* Modal para editar gasto */}
       <Modal
         visible={modalVisible}
         transparent
