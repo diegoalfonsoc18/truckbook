@@ -15,9 +15,9 @@ import { gastosData } from "../../data/data";
 import GastoItem from "../../components/GastoItem";
 import { COLORS } from "../../constants/colors";
 import CustomCalendar from "../../components/CustomCalendar";
-import { Picker } from "@react-native-picker/picker";
 import { styles } from "./GastosStyles";
 import { useGastosStore } from "../../store/CurrencyStore";
+import PickerItem from "../../components/PickerItem";
 
 export default function Gastos() {
   // Zustand store
@@ -128,17 +128,15 @@ export default function Gastos() {
 
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
-        <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>Selecciona un gasto:</Text>
-          <Picker
-            selectedValue={selectedGasto}
-            onValueChange={(itemValue) => setSelectedGasto(itemValue)}
-            style={styles.picker}>
-            {gastosData.map((gasto) => (
-              <Picker.Item key={gasto.id} label={gasto.name} value={gasto.id} />
-            ))}
-          </Picker>
-        </View>
+        <PickerItem
+          data={gastosData}
+          label="Selecciona un gasto:"
+          pickerLabelKey="name"
+          pickerValueKey="id"
+          onSelect={setSelectedGasto}
+          pickerStyle={styles.picker}
+          containerStyle={styles.pickerContainer}
+        />
 
         <View style={styles.selectedListContainer}>
           <FlatList

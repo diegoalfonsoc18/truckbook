@@ -8,3 +8,10 @@ export const gastosData = [
   { id: "6", name: "Salario" },
   { id: "7", name: "Imprevistos" },
 ];
+
+export const ingresosData = [
+  { id: "1", name: "Flete" },
+  { id: "2", name: "Facturas" },
+  { id: "3", name: "Clientes" },
+  { id: "4", name: "Otros Ingresos" },
+];

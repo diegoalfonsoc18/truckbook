@@ -1,50 +1,36 @@
-import {
-  SafeAreaView,
-  Text,
-  FlatList,
-  TextInput,
-  StyleSheet,
-  View,
-} from "react-native";
 import React, { useState } from "react";
-import { styles } from "./IngresosStyles"; // Importa los estilos desde el archivo correspondiente
-
-const data = [
-  { id: "1", title: "Flete" },
-  { id: "2", title: "Facturas" },
-  { id: "3", title: "Clientes" },
-];
+import { SafeAreaView, View, Text } from "react-native";
+import { styles } from "./IngresosStyles";
+import PickerItem from "../../components/PickerItem";
+import { ingresosData } from "../../data/data";
+import HeaderCalendar from "../../navigation/HeaderCalendar";
 
 export default function Ingresos() {
-  const [values, setValues] = useState({});
+  const [selectedIngreso, setSelectedIngreso] = useState(ingresosData[0]?.id);
 
-  const handleChange = (id, value) => {
-    setValues({
-      ...values,
-      [id]: value,
-    });
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <Text style={styles.title}>{item.title}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        placeholder="Ingrese valor"
-        value={values[item.id] || ""}
-        onChangeText={(value) => handleChange(item.id, value)}
-      />
-    </View>
+  // Puedes mostrar detalles o un formulario según el ingreso seleccionado
+  const ingresoSeleccionado = ingresosData.find(
+    (i) => i.id === selectedIngreso
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+      <HeaderCalendar title="Ingresos" />
+      <PickerItem
+        data={ingresosData}
+        label="Selecciona un ingreso:"
+        pickerLabelKey="name"
+        pickerValueKey="id"
+        onSelect={setSelectedIngreso}
+        pickerStyle={{}} // Añade el estilo que desees aquí
+        containerStyle={{ margin: 20 }}
       />
+      <View style={{ margin: 20 }}>
+        <Text style={{ fontSize: 18 }}>
+          Seleccionado: {ingresoSeleccionado?.name}
+        </Text>
+        {/* Aquí puedes mostrar un formulario, input o lo que necesites */}
+      </View>
     </SafeAreaView>
   );
 }
