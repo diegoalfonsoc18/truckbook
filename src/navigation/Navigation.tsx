@@ -1,11 +1,11 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import GastosNavigation from "../Screens/Gastos";
-import IngresosNavigation from "../Screens/Ingresos";
+import GastosNavigation from "../Screens/Gastos/Gastos";
+import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGenerales";
 import Home from "../Screens/Home";
-import Account from "../Screens/Account";
+import Account from "../Screens/Account/Account"; // Asegúrate de que la ruta sea correcta
 import {
   renderGastos,
   renderIngresos,

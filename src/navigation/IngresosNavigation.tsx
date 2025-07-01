@@ -1,6 +1,9 @@
 import { View, Text } from "react-native";
 import React from "react";
-import IngresosScreen from "../Screens/Ingresos";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import IngresosScreen from "../Screens/Ingresos/Ingresos";
+
+const Stack = createNativeStackNavigator();
 
 export default function IngresosNavigation() {
   return (

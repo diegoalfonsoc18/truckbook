@@ -1,7 +1,7 @@
 import React from "react";
 import { SafeAreaView, Text, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // Importa el Picker desde el paquete correcto
-import { useCurrencyStore } from "../store/CurrencyStore"; // Importa el store de Zustand
+// Ajusta el import según el export real de CurrencyStore
 // Importa los estilos globales
 export default function Account() {
   const { currency, setCurrency } = useCurrencyStore(); // Accede al estado global

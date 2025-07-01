@@ -11,13 +11,13 @@ import {
   Button,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { gastosData } from "../data/data";
-import GastoItem from "../components/Gastos/GastoItem";
-import { COLORS } from "../constants/colors";
-import CustomCalendar from "../components/CustomCalendar";
+import { gastosData } from "../../data/data";
+import GastoItem from "../../components/GastoItem";
+import { COLORS } from "../../constants/colors";
+import CustomCalendar from "../../components/CustomCalendar";
 import { Picker } from "@react-native-picker/picker";
-import { styles } from "../components/Gastos/GastosStyles";
-import { useGastosStore } from "../store/CurrencyStore";
+import { styles } from "./GastosStyles";
+import { useGastosStore } from "../../store/CurrencyStore";
 
 export default function Gastos() {
   // Zustand store

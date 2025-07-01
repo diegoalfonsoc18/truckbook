@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import React, { useState } from "react";
+import { styles } from "./IngresosStyles"; // Importa los estilos desde el archivo correspondiente
 
 const data = [
   { id: "1", title: "Flete" },
@@ -47,28 +48,3 @@ export default function Ingresos() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 20,
-  },
-  item: {
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    backgroundColor: "#2E4156",
-    borderRadius: 10,
-  },
-  title: {
-    fontSize: 18,
-  },
-  input: {
-    height: 40,
-    borderColor: "#cc0000",
-    borderWidth: 1,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    backgroundColor: "#cc0",
-  },
-});
