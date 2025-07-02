@@ -18,6 +18,7 @@ import CustomCalendar from "../../components/CustomCalendar";
 import { styles } from "../../constants/GastosStyles";
 import { useGastosStore } from "../../store/CurrencyStore";
 import PickerItem from "../../components/PickerItem";
+import IngresGast from "../../components/ResumenIngreGast";
 
 export default function Gastos() {
   // Zustand store
@@ -50,11 +51,11 @@ export default function Gastos() {
   );
 
   // Editar gasto (abrir modal)
-  const handleEditGasto = (id: string) => {
-    const gasto = gastosIngresados.find((g) => g.id === id);
+  const handleEditGasto = (id: string | number) => {
+    const gasto = gastosIngresados.find((g) => g.id === String(id));
     if (gasto) {
       setEditValue(gasto.value);
-      setEditId(id);
+      setEditId(String(id));
       setModalVisible(true);
     }
   };
@@ -70,8 +71,8 @@ export default function Gastos() {
   };
 
   // Eliminar gasto
-  const handleDeleteGasto = (id: string) => {
-    deleteGasto(id, selectedDate);
+  const handleDeleteGasto = (id: string | number) => {
+    deleteGasto(String(id), selectedDate);
   };
 
   // Mostrar/ocultar calendario
@@ -143,110 +144,20 @@ export default function Gastos() {
       </View>
 
       {/* Resumen de gastos ingresados para la fecha seleccionada */}
-      <View style={styles.resumenContainer}>
-        <Text style={styles.resumenTitle}>
-          Resumen de Gastos ({selectedDate})
-        </Text>
-        <View style={styles.listContainer}>
-          <FlatList
-            data={gastosFiltrados}
-            renderItem={({ item, index }) => (
-              <View style={styles.resumenItem}>
-                <Text style={styles.resumenText}>
-                  {index + 1}. {item.name}
-                </Text>
-                <Text style={styles.resumenValue}>
-                  {parseFloat(item.value).toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </Text>
-                <View style={styles.actionButtons}>
-                  {/* Botón para editar */}
-                  <TouchableOpacity onPress={() => handleEditGasto(item.id)}>
-                    <MaterialIcons
-                      name="edit"
-                      size={24}
-                      color={COLORS.primary}
-                    />
-                  </TouchableOpacity>
-                  {/* Botón para eliminar */}
-                  <TouchableOpacity onPress={() => handleDeleteGasto(item.id)}>
-                    <MaterialIcons
-                      name="delete"
-                      size={24}
-                      color={COLORS.primary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            keyExtractor={(item, index) => `${item.id}-${index}`}
-            initialNumToRender={5}
-            style={styles.flatList}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-        {/* Total de gastos para la fecha seleccionada */}
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>
-            Total:{" "}
-            {gastosFiltrados
-              .reduce((sum, gasto) => sum + parseFloat(gasto.value), 0)
-              .toLocaleString("es-CO", {
-                style: "currency",
-                currency: "COP",
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-          </Text>
-        </View>
-      </View>
-      {/* Modal para editar gasto */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)",
-          }}>
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 20,
-              borderRadius: 10,
-              width: "80%",
-            }}>
-            <Text>Editar valor del gasto:</Text>
-            <TextInput
-              value={editValue}
-              onChangeText={setEditValue}
-              keyboardType="numeric"
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 5,
-                padding: 10,
-                marginVertical: 10,
-              }}
-            />
-            <Button title="Guardar" onPress={handleSaveEdit} />
-            <Button
-              title="Cancelar"
-              onPress={() => setModalVisible(false)}
-              color="red"
-            />
-          </View>
-        </View>
-      </Modal>
+      <IngresGast
+        selectedDate={selectedDate}
+        itemsFiltrados={gastosFiltrados}
+        handleEdit={handleEditGasto}
+        handleDelete={handleDeleteGasto}
+        totalLabel="Total"
+        title="Resumen de Gastos"
+        modalLabel="Editar valor del gasto"
+        editValue={editValue}
+        setEditValue={setEditValue}
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleSaveEdit={handleSaveEdit}
+      />
     </SafeAreaView>
   );
 }
