@@ -1,28 +1,43 @@
 import React, { useCallback, useState } from "react";
-import { SafeAreaView, View, Text } from "react-native";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { styles } from "../../constants/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import HeaderCalendar from "../../navigation/HeaderCalendar";
 import IngresosItem from "../../components/IngresosItem";
 import { useIngresosStore } from "../../store/IngresosStore"; // Asegúrate de importar tu store
 import IngresGast from "../../components/ResumenIngreGast";
+import CustomCalendar from "../../components/CustomCalendar";
+import { COLORS } from "../../constants/colors";
 
 export default function Ingresos() {
-  const [selectedIngreso, setSelectedIngreso] = useState(ingresosData[0]?.id);
+  // Zustand store
+  const ingresos = useIngresosStore((state) => state.ingresos);
+  const addIngreso = useIngresosStore((state) => state.addIngreso);
+  const editIngreso = useIngresosStore((state) => state.editIngreso);
+  const deleteIngreso = useIngresosStore((state) => state.deleteIngreso);
+
+  // Estados locales
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
 
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [selectedIngreso, setSelectedIngreso] = useState<string>(
+    ingresosData[0].id
+  );
+  const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState<string>("");
   const [editId, setEditId] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-  const addIngreso = useIngresosStore((state) => state.addIngreso);
-  const IngresosIngresados = useIngresosStore((state) => state.ingresos); // Asegúrate de que 'ingresos' es el nombre correcto en tu store
-
-  // ...
-
+  // Agregar ingreso usando Zustand
   const handleAddIngreso = useCallback(
     (id: string, value: string) => {
       const ingreso = ingresosData.find((i) => i.id === id);
@@ -36,37 +51,68 @@ export default function Ingresos() {
   );
   // Editar gasto (abrir modal)
   const handleEditGasto = (id: string | number) => {
-    const ingreso = IngresosFiltrados.find((g) => g.id === String(id));
+    const ingreso = ingresos.find((g) => g.id === String(id));
     if (ingreso) {
       setEditValue(ingreso.value);
       setEditId(String(id));
       setModalVisible(true);
     }
   };
-
-  // Eliminar gasto (debe implementar la lógica según tu store)
-  const handleDeleteGasto = (id: string | number) => {
-    // Aquí deberías llamar a la función de tu store para eliminar el ingreso/gasto
-    // Por ejemplo: removeIngreso(id);
-    console.log("Eliminar gasto con id:", id);
-  };
-
-  // Guardar edición del gasto/ingreso
+  // Guardar edición
   const handleSaveEdit = () => {
-    // Aquí deberías implementar la lógica para guardar la edición usando tu store
-    // Por ejemplo: updateIngreso(editId, editValue);
-    setModalVisible(false);
-    setEditId(null);
-    setEditValue("");
+    if (editId) {
+      editIngreso(editId, editValue, selectedDate);
+      setModalVisible(false);
+      setEditId(null);
+      setEditValue("");
+    }
   };
 
-  // Filtra los gastos por la fecha seleccionada
-  const IngresosFiltrados = IngresosIngresados.filter(
-    (g) => g.fecha === selectedDate
-  );
+  // Eliminar ingreso
+  const handleDeleteGasto = (id: string | number) => {
+    deleteIngreso(String(id), selectedDate);
+  };
+
+  // Mostrar/ocultar calendario
+  const toggleCalendar = () => {
+    setShowCalendar((prev) => !prev);
+  };
+
+  // Filtra los ingresos por la fecha seleccionada
+  const IngresosFiltrados = ingresos.filter((g) => g.fecha === selectedDate);
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderCalendar title="Ingresos" />
+
+      {/* Fecha seleccionada y botón para mostrar el calendario */}
+      <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
+        <View style={styles.iconContainer}>
+          <MaterialIcons
+            name="calendar-month"
+            size={60}
+            color={COLORS.secondary}
+          />
+        </View>
+        <Text style={styles.dateText}>{selectedDate}</Text>
+      </TouchableOpacity>
+
+      {/* Mostrar el calendario */}
+      {showCalendar && (
+        <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
+          <View style={styles.calendarOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.calendarContainer}>
+                <CustomCalendar
+                  selectedDate={selectedDate}
+                  onDateChange={(date) => setSelectedDate(date)}
+                  onClose={() => setShowCalendar(false)}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
         <PickerItem
@@ -90,7 +136,7 @@ export default function Ingresos() {
         handleEdit={handleEditGasto}
         handleDelete={handleDeleteGasto}
         totalLabel="Total"
-        title="Resumen de Gastos"
+        title="Resumen de Ingresos"
         modalLabel="Editar valor del gasto"
         editValue={editValue}
         setEditValue={setEditValue}
