@@ -11,7 +11,7 @@ import {
   TextInput,
   Button,
 } from "react-native";
-import { styles } from "../Screens/Gastos/GastosStyles";
+import { styles } from "../constants/GastosStyles";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
 type HeaderCalendarProps = { title: string };
@@ -54,7 +54,8 @@ export default function HeaderCalendar({ title }: HeaderCalendarProps) {
   );
 
   return (
-    <View>
+    <>
+      {/* Header */}
       <View style={styles.headerContainer}>
         <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
         <Text style={styles.headerTitle}>{title}</Text>
@@ -64,6 +65,7 @@ export default function HeaderCalendar({ title }: HeaderCalendarProps) {
           color={COLORS.black}
         />
       </View>
+
       {/* Fecha seleccionada y botón para mostrar el calendario */}
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
         <View style={styles.iconContainer}>
@@ -75,6 +77,7 @@ export default function HeaderCalendar({ title }: HeaderCalendarProps) {
         </View>
         <Text style={styles.dateText}>{selectedDate}</Text>
       </TouchableOpacity>
+
       {/* Mostrar el calendario */}
       {showCalendar && (
         <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
@@ -91,6 +94,6 @@ export default function HeaderCalendar({ title }: HeaderCalendarProps) {
           </View>
         </TouchableWithoutFeedback>
       )}
-    </View>
+    </>
   );
 }

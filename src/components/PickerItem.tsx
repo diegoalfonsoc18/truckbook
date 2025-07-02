@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { styles } from "../constants/GastosStyles";
 
 type PickerItemProps = {
   data: Array<Record<string, any>>;
@@ -10,6 +11,7 @@ type PickerItemProps = {
   onSelect?: (value: any) => void;
   pickerStyle?: object;
   containerStyle?: object;
+  renderSelectedItem: (item: any) => React.ReactNode; // Nuevo prop requerido
 };
 
 export default function PickerItem({
@@ -20,6 +22,7 @@ export default function PickerItem({
   onSelect,
   pickerStyle,
   containerStyle,
+  renderSelectedItem,
 }: PickerItemProps) {
   const [selected, setSelected] = useState(data[0]?.[pickerValueKey] || "");
 
@@ -43,6 +46,19 @@ export default function PickerItem({
           />
         ))}
       </Picker>
+
+      <View style={styles.selectedListContainer}>
+        <FlatList
+          data={data.filter((item) => item[pickerValueKey] === selected)}
+          renderItem={({ item }) => {
+            const rendered = renderSelectedItem(item);
+            return React.isValidElement(rendered) ? rendered : null;
+          }}
+          keyExtractor={(item) => item[pickerValueKey]}
+          style={styles.flatList}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        />
+      </View>
     </View>
   );
 }

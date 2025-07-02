@@ -15,7 +15,7 @@ import { gastosData } from "../../data/data";
 import GastoItem from "../../components/GastoItem";
 import { COLORS } from "../../constants/colors";
 import CustomCalendar from "../../components/CustomCalendar";
-import { styles } from "./GastosStyles";
+import { styles } from "../../constants/GastosStyles";
 import { useGastosStore } from "../../store/CurrencyStore";
 import PickerItem from "../../components/PickerItem";
 
@@ -136,22 +136,10 @@ export default function Gastos() {
           onSelect={setSelectedGasto}
           pickerStyle={styles.picker}
           containerStyle={styles.pickerContainer}
+          renderSelectedItem={(item) => (
+            <GastoItem item={item} onSend={handleAddGasto} />
+          )}
         />
-
-        <View style={styles.selectedListContainer}>
-          <FlatList
-            data={gastosData.filter((gasto) => gasto.id === selectedGasto)}
-            renderItem={({ item }) => (
-              <GastoItem
-                item={item}
-                onSend={(id, value) => handleAddGasto(id, value)}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            style={styles.flatList}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          />
-        </View>
       </View>
 
       {/* Resumen de gastos ingresados para la fecha seleccionada */}
