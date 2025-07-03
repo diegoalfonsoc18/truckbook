@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
   SafeAreaView,
@@ -14,44 +14,30 @@ import {
 import { styles } from "../constants/GastosStyles";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
-type HeaderCalendarProps = { title: string };
+type HeaderCalendarProps = {
+  title: string;
+  data: Array<{ fecha: string }>;
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+};
 
-export default function HeaderCalendar({ title }: HeaderCalendarProps) {
-  // Aquí puedes definir tus estados y funciones
-  // Ejemplo de estados ficticios para que compile:
-  const [editId, setEditId] = React.useState<string | null>(null);
-  const [editValue, setEditValue] = React.useState<string>("");
-  const [modalVisible, setModalVisible] = React.useState(false);
-  const [selectedDate, setSelectedDate] = React.useState<string>("");
-  const [showCalendar, setShowCalendar] = React.useState(false);
-  const gastosIngresados: { fecha: string }[] = []; // Ajusta el tipo según tu modelo
+export default function HeaderCalendar({
+  title,
+  data,
+  selectedDate,
+  setSelectedDate,
+}: HeaderCalendarProps) {
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
-  // Guardar edición
-  const handleSaveEdit = () => {
-    if (editId) {
-      // editGasto debe estar definido/importado
-      // editGasto(editId, editValue, selectedDate);
-      setModalVisible(false);
-      setEditId(null);
-      setEditValue("");
-    }
-  };
-
-  // Eliminar gasto
-  const handleDeleteGasto = (id: string) => {
-    // deleteGasto debe estar definido/importado
-    // deleteGasto(id, selectedDate);
-  };
-
+  // Función reutilizable para filtrar por fecha
+  const filtrarPorFecha = (items: Array<{ fecha: string }>, fecha: string) =>
+    items.filter((item) => item.fecha === fecha);
+  // Puedes usar filtrarPorFecha con cualquier data y fecha
+  const filtrados = filtrarPorFecha(data, selectedDate);
   // Mostrar/ocultar calendario
   const toggleCalendar = () => {
-    setShowCalendar((prev) => !prev);
+    setShowCalendar((prev: boolean) => !prev);
   };
-
-  // Filtra los gastos por la fecha seleccionada
-  const gastosFiltrados = gastosIngresados.filter(
-    (g) => g.fecha === selectedDate
-  );
 
   return (
     <>

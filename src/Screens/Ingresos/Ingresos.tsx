@@ -9,13 +9,10 @@ import {
 import { styles } from "../../constants/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import HeaderCalendar from "../../navigation/HeaderCalendar";
+import HeaderCalendar from "../../components/HeaderCalendar";
 import IngresosItem from "../../components/IngresosItem";
 import { useIngresosStore } from "../../store/IngresosStore"; // Asegúrate de importar tu store
 import IngresGast from "../../components/ResumenIngreGast";
-import CustomCalendar from "../../components/CustomCalendar";
-import { COLORS } from "../../constants/colors";
 
 export default function Ingresos() {
   // Zustand store
@@ -83,36 +80,13 @@ export default function Ingresos() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderCalendar title="Ingresos" />
+      <HeaderCalendar
+        title="Ingresos"
+        data={ingresos}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
 
-      {/* Fecha seleccionada y botón para mostrar el calendario */}
-      <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
-        <View style={styles.iconContainer}>
-          <MaterialIcons
-            name="calendar-month"
-            size={60}
-            color={COLORS.secondary}
-          />
-        </View>
-        <Text style={styles.dateText}>{selectedDate}</Text>
-      </TouchableOpacity>
-
-      {/* Mostrar el calendario */}
-      {showCalendar && (
-        <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
-          <View style={styles.calendarOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.calendarContainer}>
-                <CustomCalendar
-                  selectedDate={selectedDate}
-                  onDateChange={(date) => setSelectedDate(date)}
-                  onClose={() => setShowCalendar(false)}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
         <PickerItem

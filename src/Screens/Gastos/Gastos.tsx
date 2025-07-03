@@ -10,11 +10,10 @@ import {
   TextInput,
   Button,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { gastosData } from "../../data/data";
+import HeaderCalendar from "../../components/HeaderCalendar";
 import GastoItem from "../../components/GastoItem";
-import { COLORS } from "../../constants/colors";
-import CustomCalendar from "../../components/CustomCalendar";
 import { styles } from "../../constants/GastosStyles";
 import { useGastosStore } from "../../store/CurrencyStore";
 import PickerItem from "../../components/PickerItem";
@@ -88,45 +87,12 @@ export default function Gastos() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.headerContainer}>
-        <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
-        <Text style={styles.headerTitle}>Gastos</Text>
-        <MaterialIcons
-          name="notifications-active"
-          size={24}
-          color={COLORS.black}
-        />
-      </View>
-
-      {/* Fecha seleccionada y botón para mostrar el calendario */}
-      <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
-        <View style={styles.iconContainer}>
-          <MaterialIcons
-            name="calendar-month"
-            size={60}
-            color={COLORS.secondary}
-          />
-        </View>
-        <Text style={styles.dateText}>{selectedDate}</Text>
-      </TouchableOpacity>
-
-      {/* Mostrar el calendario */}
-      {showCalendar && (
-        <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
-          <View style={styles.calendarOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.calendarContainer}>
-                <CustomCalendar
-                  selectedDate={selectedDate}
-                  onDateChange={(date) => setSelectedDate(date)}
-                  onClose={() => setShowCalendar(false)}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
-
+      <HeaderCalendar
+        title="Gastos"
+        data={gastosIngresados}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
         <PickerItem
