@@ -11,6 +11,7 @@ import { LineChart } from "react-native-chart-kit";
 import { useGastosStore } from "../../store/CurrencyStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { styles } from "./StylesFinanzas";
+import FilterCalendar from "../../components/FilterCalendar";
 
 // Función para agrupar por clave (día, mes o año)
 function groupBy<T extends { fecha: string; value: number | string }>(
@@ -87,45 +88,24 @@ export default function FinanzasGenerales() {
     return ingreso - gasto;
   });
 
+  // Cálculo de totales y rentabilidad
+  const totalGastos = gastosData.reduce((a, b) => a + b, 0);
+  const totalIngresos = ingresosData.reduce((a, b) => a + b, 0);
+  const rentabilidad =
+    totalIngresos === 0
+      ? 0
+      : (((totalIngresos - totalGastos) / totalIngresos) * 100).toFixed(2);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.chartTitle}>Gráfico de Finanzas</Text>
-      {/* Filtro por rango de fechas */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          marginBottom: 10,
-        }}>
-        <View style={{ flex: 1, marginRight: 5 }}>
-          <Text>Desde:</Text>
-          <TextInput
-            placeholder="YYYY-MM-DD"
-            value={fechaInicio}
-            onChangeText={setFechaInicio}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 5,
-              padding: 5,
-            }}
-          />
-        </View>
-        <View style={{ flex: 1, marginLeft: 5 }}>
-          <Text>Hasta:</Text>
-          <TextInput
-            placeholder="YYYY-MM-DD"
-            value={fechaFin}
-            onChangeText={setFechaFin}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 5,
-              padding: 5,
-            }}
-          />
-        </View>
-      </View>
+      <FilterCalendar
+        fechaInicio={fechaInicio}
+        setFechaInicio={setFechaInicio}
+        fechaFin={fechaFin}
+        setFechaFin={setFechaFin}
+      />
+
       <View style={styles.buttonContainer}>
         <Button title="Días" onPress={() => setView("dias")} />
         <Button title="Meses" onPress={() => setView("meses")} />
@@ -185,21 +165,12 @@ export default function FinanzasGenerales() {
           <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
             Resumen numérico
           </Text>
+          <Text>Total Gastos: ${totalGastos.toLocaleString("es-CO")}</Text>
+          <Text>Total Ingresos: ${totalIngresos.toLocaleString("es-CO")}</Text>
           <Text>
-            Total Gastos: $
-            {gastosData.reduce((a, b) => a + b, 0).toLocaleString("es-CO")}
+            Balance: ${(totalIngresos - totalGastos).toLocaleString("es-CO")}
           </Text>
-          <Text>
-            Total Ingresos: $
-            {ingresosData.reduce((a, b) => a + b, 0).toLocaleString("es-CO")}
-          </Text>
-          <Text>
-            Balance: $
-            {(
-              ingresosData.reduce((a, b) => a + b, 0) -
-              gastosData.reduce((a, b) => a + b, 0)
-            ).toLocaleString("es-CO")}
-          </Text>
+          <Text>% Rentabilidad: {rentabilidad}%</Text>
         </View>
       </View>
     </SafeAreaView>

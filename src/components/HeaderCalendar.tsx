@@ -1,15 +1,10 @@
 import React, { useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
-  SafeAreaView,
   Text,
-  FlatList,
   View,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Modal,
-  TextInput,
-  Button,
 } from "react-native";
 import { styles } from "../constants/GastosStyles";
 import { COLORS } from "../constants/colors";
