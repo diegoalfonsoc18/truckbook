@@ -38,7 +38,7 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
     onChangeRango({ inicio: fechaInicio, fin: fechaFin });
   }, [fechaInicio, fechaFin]);
 
-  const periodoLabel = `${fechaInicio} a ${fechaFin}`;
+  const periodoLabel = `${fechaInicio} - ${fechaFin}`;
 
   const onChangeInicio = (_: any, selectedDate?: Date) => {
     if (selectedDate) {
@@ -56,25 +56,22 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={{ fontWeight: "bold", marginBottom: 4 }}>Periodo</Text>
-      <TouchableOpacity
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          borderWidth: 1,
-          borderColor: "#ccc",
-          borderRadius: 5,
-          padding: 10,
-          backgroundColor: "#ce2d2d",
-        }}
-        onPress={() => setModalVisible(true)}>
-        <Text style={{ marginLeft: 8, fontSize: 16 }}>{periodoLabel}</Text>
-        <MaterialIcons
-          name="calendar-today"
-          size={24}
-          color={COLORS.secondary}
-        />
-      </TouchableOpacity>
+      <View style={styles.containerTitle}>
+        <Text style={styles.chartTitle}>Reportes</Text>
+      </View>
+      <View style={styles.containerFilter}>
+        <Text style={styles.titleCalendar}>Periodo</Text>
+        <TouchableOpacity
+          style={styles.dateSelect}
+          onPress={() => setModalVisible(true)}>
+          <Text style={{ marginLeft: 8, fontSize: 16 }}>{periodoLabel}</Text>
+          <MaterialIcons
+            name="calendar-today"
+            size={24}
+            color={COLORS.secondary}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Modal para seleccionar meses */}
       <Modal

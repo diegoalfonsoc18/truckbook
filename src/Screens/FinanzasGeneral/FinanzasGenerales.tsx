@@ -102,14 +102,14 @@ export default function FinanzasGenerales() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.chartTitle}>Reportes</Text>
       <FilterCalendar onChangeRango={setRango} />
-      <View style={styles.buttonContainer}>
-        <Button title="Días" onPress={() => setView("dias")} />
-        <Button title="Meses" onPress={() => setView("meses")} />
-        <Button title="Años" onPress={() => setView("años")} />
-      </View>
-      <View>
+
+      <View style={styles.containerGraph}>
+        <View style={styles.buttonContainer}>
+          <Button title="Días" onPress={() => setView("dias")} />
+          <Button title="Meses" onPress={() => setView("meses")} />
+          <Button title="Años" onPress={() => setView("años")} />
+        </View>
         <LineChart
           data={{
             labels: allKeys.length > 0 ? allKeys : ["Sin datos"],
@@ -152,24 +152,16 @@ export default function FinanzasGenerales() {
             borderRadius: 16,
           }}
         />
+      </View>
 
-        <View
-          style={{
-            marginTop: 16,
-            padding: 16,
-            backgroundColor: "#fff",
-            borderRadius: 10,
-          }}>
-          <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-            Resumen numérico
-          </Text>
-          <Text>Total Gastos: ${totalGastos.toLocaleString("es-CO")}</Text>
-          <Text>Total Ingresos: ${totalIngresos.toLocaleString("es-CO")}</Text>
-          <Text>
-            Balance: ${(totalIngresos - totalGastos).toLocaleString("es-CO")}
-          </Text>
-          <Text>% Rentabilidad: {rentabilidad}%</Text>
-        </View>
+      <View style={styles.resumenContainer}>
+        <Text style={styles.resumenTitle}>Resumen numérico</Text>
+        <Text>Total Gastos: ${totalGastos.toLocaleString("es-CO")}</Text>
+        <Text>Total Ingresos: ${totalIngresos.toLocaleString("es-CO")}</Text>
+        <Text>
+          Balance: ${(totalIngresos - totalGastos).toLocaleString("es-CO")}
+        </Text>
+        <Text>% Rentabilidad: {rentabilidad}%</Text>
       </View>
     </SafeAreaView>
   );
