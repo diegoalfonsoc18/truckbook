@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    //marginBottom: 20,
+    marginBottom: 20,
   },
   chartTitle: {
     marginVertical: 8,
@@ -24,14 +24,16 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   containerFilter: {
-    flex: 1,
+    //flex: 1,
     width: "100%",
+    minHeight: 120,
     flexDirection: "column",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 10,
-    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface, // Fondo del contenedor de filtro
   },
   titleCalendar: {
     width: "80%",
