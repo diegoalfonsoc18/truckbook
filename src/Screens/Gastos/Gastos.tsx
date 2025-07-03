@@ -1,15 +1,5 @@
 import React, { useState, useCallback } from "react";
-import {
-  SafeAreaView,
-  Text,
-  FlatList,
-  View,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Modal,
-  TextInput,
-  Button,
-} from "react-native";
+import { SafeAreaView, View } from "react-native";
 
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/HeaderCalendar";

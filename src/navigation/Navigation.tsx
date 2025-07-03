@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
-import FinanzasNavigation from "../Screens/FinanzasGenerales";
+import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import Home from "../Screens/Home";
 import Account from "../Screens/Account/Account"; // Asegúrate de que la ruta sea correcta
 import {
