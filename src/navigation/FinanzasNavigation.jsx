@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import FinanzasGenerales from "../Screens/FinanzasGeneral/FinanzasGenerales";
+import FinanzasGenerales from "../Screens/FinanzasGeneral/ResumenGeneraless";
 
 const Tab = createBottomTabNavigator();
 

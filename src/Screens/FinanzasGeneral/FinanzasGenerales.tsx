@@ -1,17 +1,10 @@
 import React, { useState } from "react";
-import {
-  SafeAreaView,
-  Text,
-  Dimensions,
-  View,
-  Button,
-  TextInput,
-} from "react-native";
+import { SafeAreaView, Text, Dimensions, View, Button } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useGastosStore } from "../../store/CurrencyStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { styles } from "./StylesFinanzas";
-import FilterCalendar from "../../components/FilterCalendar";
+import FilterCalendar from "../../components/Reportes/FilterCalendar";
 
 // Función para agrupar por clave (día, mes o año)
 function groupBy<T extends { fecha: string; value: number | string }>(
@@ -41,15 +34,26 @@ function filtrarPorRango<T extends { fecha: string }>(
 
 export default function FinanzasGenerales() {
   const [view, setView] = useState<"dias" | "meses" | "años">("meses");
-  const [fechaInicio, setFechaInicio] = useState<string>("");
-  const [fechaFin, setFechaFin] = useState<string>("");
+  // const [fechaInicio, setFechaInicio] = useState<string>("");
+  // const [fechaFin, setFechaFin] = useState<string>("");
+
+  const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
+    // Inicializa con el mes actual
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const first = `${year}-${month}-01`;
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    const last = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+    return { inicio: first, fin: last };
+  });
 
   const gastos = useGastosStore((state) => state.gastos);
   const ingresos = useIngresosStore((state) => state.ingresos);
 
-  // Filtra por rango de fechas antes de agrupar
-  const gastosFiltrados = filtrarPorRango(gastos, fechaInicio, fechaFin);
-  const ingresosFiltrados = filtrarPorRango(ingresos, fechaInicio, fechaFin);
+  // Y usa rango.inicio y rango.fin para filtrar:
+  const gastosFiltrados = filtrarPorRango(gastos, rango.inicio, rango.fin);
+  const ingresosFiltrados = filtrarPorRango(ingresos, rango.inicio, rango.fin);
 
   // Agrupa según la vista seleccionada
   let groupedGastos: Record<string, number> = {};
@@ -98,14 +102,8 @@ export default function FinanzasGenerales() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.chartTitle}>Gráfico de Finanzas</Text>
-      <FilterCalendar
-        fechaInicio={fechaInicio}
-        setFechaInicio={setFechaInicio}
-        fechaFin={fechaFin}
-        setFechaFin={setFechaFin}
-      />
-
+      <Text style={styles.chartTitle}>Reportes</Text>
+      <FilterCalendar onChangeRango={setRango} />
       <View style={styles.buttonContainer}>
         <Button title="Días" onPress={() => setView("dias")} />
         <Button title="Meses" onPress={() => setView("meses")} />
