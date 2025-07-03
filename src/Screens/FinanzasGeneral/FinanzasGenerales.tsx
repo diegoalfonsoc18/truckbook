@@ -58,12 +58,12 @@ function formatLabel(fecha: string) {
   return `${dia} ${meses[parseInt(mes, 10) - 1]}`;
 }
 
-// Formatea los valores del eje Y (K/M)
-function abreviarNumero(valor: number | string) {
+// Formatea los valores del eje Y (K/M) sin decimales
+function abreviarNumero(valor: number | string): string {
   const num = Number(valor);
-  if (isNaN(num)) return valor;
-  if (Math.abs(num) >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-  if (Math.abs(num) >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  if (isNaN(num)) return String(valor);
+  if (Math.abs(num) >= 1_000_000) return Math.round(num / 1_000_000) + "M";
+  if (Math.abs(num) >= 1_000) return Math.round(num / 1_000) + "K";
   return num.toLocaleString("es-CO");
 }
 
@@ -159,13 +159,8 @@ export default function FinanzasGenerales() {
                   color: () => "#19b11e",
                   strokeWidth: 2,
                 },
-                {
-                  data: balanceData.length > 0 ? balanceData : [0],
-                  color: () => "#1e90ff",
-                  strokeWidth: 2,
-                },
               ],
-              legend: ["Gastos", "Ingresos", "Balance"],
+              legend: ["Gastos", "Ingresos"], // Elimina "Balance"
             }}
             width={chartWidth}
             height={300}
