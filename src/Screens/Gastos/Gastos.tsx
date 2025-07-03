@@ -1,5 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { SafeAreaView, View } from "react-native";
+import {
+  SafeAreaView,
+  View,
+  Modal,
+  Text,
+  TextInput,
+  Button,
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/HeaderCalendar";
@@ -25,6 +33,8 @@ export default function Gastos() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState<string>(selectedDate);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Agregar gasto usando Zustand
   const handleAddGasto = useCallback(
@@ -45,6 +55,7 @@ export default function Gastos() {
     if (gasto) {
       setEditValue(gasto.value);
       setEditId(String(id));
+      setEditDate(gasto.fecha); // Usar la fecha original del gasto
       setModalVisible(true);
     }
   };
@@ -52,7 +63,7 @@ export default function Gastos() {
   // Guardar edición
   const handleSaveEdit = () => {
     if (editId) {
-      editGasto(editId, editValue, selectedDate);
+      editGasto(editId, editValue, editDate);
       setModalVisible(false);
       setEditId(null);
       setEditValue("");
@@ -69,7 +80,7 @@ export default function Gastos() {
     setShowCalendar((prev) => !prev);
   };
 
-  // Filtra los gastos por la fecha seleccionada
+  // Filtra los gastos por el mes seleccionado
   const gastosFiltrados = gastosIngresados.filter(
     (g) => g.fecha === selectedDate
   );
@@ -98,6 +109,64 @@ export default function Gastos() {
           )}
         />
       </View>
+
+      {/* Modal para editar gasto */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.3)",
+          }}>
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 10,
+              padding: 20,
+              width: "80%",
+              alignItems: "center",
+            }}>
+            <Text
+              style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
+              Editar valor del gasto
+            </Text>
+            <TextInput
+              value={editValue}
+              onChangeText={setEditValue}
+              keyboardType="numeric"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 5,
+                padding: 10,
+                width: "100%",
+                marginBottom: 10,
+              }}
+            />
+            <Button
+              title={`Fecha: ${editDate}`}
+              onPress={() => setShowDatePicker(true)}
+            />
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date(editDate)}
+                mode="date"
+                display="default"
+                onChange={(_, date) => {
+                  setShowDatePicker(false);
+                  if (date) setEditDate(date.toISOString().split("T")[0]);
+                }}
+              />
+            )}
+            <View style={{ flexDirection: "row", marginTop: 20 }}>
+              <Button title="Guardar" onPress={handleSaveEdit} />
+              <View style={{ width: 10 }} />
+              <Button title="Cancelar" onPress={() => setModalVisible(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Resumen de gastos ingresados para la fecha seleccionada */}
       <IngresGast
