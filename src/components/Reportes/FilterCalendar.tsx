@@ -65,7 +65,7 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
           color={COLORS.black}
         />
       </View>
-      <View style={styles.container}>
+      <View style={styles.containerMain}>
         <View style={styles.containerFilter}>
           <Text style={styles.titleCalendar}>Periodo</Text>
           <TouchableOpacity

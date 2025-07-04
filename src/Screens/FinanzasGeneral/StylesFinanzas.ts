@@ -3,62 +3,34 @@ import { COLORS } from "../../constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
-    //backgroundColor: "#cc0", // Fondo principal de la pantalla
+    flex: 0.9, // Ocupa todo el espacio disponible
+
     alignItems: "center",
-    justifyContent: "center", // Alinea los elementos al inicio
-    padding: 20, // Espaciado interno
-    flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
-  },
-  titleContainer: {
-    width: "100%",
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    color: COLORS.primary, // Fondo del encabezado
-    alignItems: "center",
-    justifyContent: "space-between",
-    flex: 0, // Fondo del contenedor del título
-  },
-  chartTitle: {
-    flex: 1,
-    width: "90%",
-    marginVertical: 8,
-    borderRadius: 16,
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    textAlign: "center",
-    backgroundColor: "#cc0",
-  },
-  filterContainer: {
-    flex: 1.8,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 40,
-  },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-start", // Para que los hijos se apilen desde arriba
+    padding: 0,
     width: "100%",
   },
   containerGraph: {
-    flex: 3,
+    flex: 3, // Ocupa más espacio para el gráfico
+    width: "100%",
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  buttonContainer: {
+    flex: 0.5, // Ocupa menos espacio para los botones
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     width: "100%",
-    //backgroundColor: "#f9f9",
-    padding: 0,
   },
   resumenContainer: {
-    flex: 1,
-    marginTop: 8,
-    padding: 12,
+    flex: 1.2, // Espacio proporcional para el resumen
+    width: "90%",
     backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    width: "90%", // Aquí sí puedes dejarlo para el resumen
-    alignItems: "center",
+    borderRadius: 30,
+    padding: 30,
+    //alignItems: "center",
     justifyContent: "center",
     marginBottom: 40,
   },
@@ -70,5 +42,13 @@ export const styles = StyleSheet.create({
   resumenText: {
     fontSize: 16,
     marginBottom: 4,
+  },
+  titleContainer: {
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    color: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 });

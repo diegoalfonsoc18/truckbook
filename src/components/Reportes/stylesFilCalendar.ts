@@ -2,20 +2,6 @@ import { StyleSheet } from "react-native";
 import { COLORS } from "../../constants/colors";
 
 export const styles = StyleSheet.create({
-  container: {
-    width: "90%",
-    justifyContent: "flex-start", // Esto alinea el contenido arriba
-    alignItems: "center",
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.surface,
-  },
-  containerTitle: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
   headerContainer: {
     width: "100%",
     flexDirection: "row",
@@ -25,11 +11,15 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     flex: 0,
   },
-
   headerTitle: {
     fontSize: 24,
     fontWeight: "600",
     color: COLORS.primary, // Color del texto del título
+  },
+  containerMain: {
+    width: "90%",
+    alignItems: "center",
+    justifyContent: "center", // Alinea los elementos al inicio
   },
 
   containerFilter: {
@@ -51,6 +41,7 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     color: COLORS.text,
   },
+
   dateSelect: {
     width: "80%",
     flexDirection: "row",
@@ -61,13 +52,5 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     //backgroundColor: "#ce2d2d",
-  },
-
-  datePickerButton: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: "#f9f9f9",
   },
 });
