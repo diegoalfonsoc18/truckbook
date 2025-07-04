@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginTop: 8,
     padding: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surface,  
     borderRadius: 10,
     width: "90%", // Aquí sí puedes dejarlo para el resumen
     alignItems: "center",
