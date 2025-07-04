@@ -6,14 +6,13 @@ export const styles = StyleSheet.create({
     flex: 1, // Ocupa todo el espacio disponible
     alignItems: "center",
     justifyContent: "flex-start",
-    padding: 0,
     width: "100%",
   },
   graphicContainer: {
-    flex: 0.8, // Ocupa todo el espacio disponible
+    flex: 1, // Ocupa todo el espacio disponible
     width: "100%",
-    backgroundColor: COLORS.background, // Fondo del contenedor del gráfico
-    padding: 10,
+    //backgroundColor: COLORS.background, // Fondo del contenedor del gráfico
+    //padding: 10,
     borderRadius: 20,
     marginBottom: 20,
     // Sombra para iOS
@@ -25,14 +24,14 @@ export const styles = StyleSheet.create({
     elevation: 5,
   },
   containerGraph: {
-    flex: 1, // Más espacio para el gráfico
+    flex: 6, // Más espacio para el gráfico
     width: "100%",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonContainer: {
-    flex: 2, // Espacio proporcional para los botones
+    flex: 1, // Espacio proporcional para los botones
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -40,7 +39,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
   },
   resumenContainer: {
-    flex: 1.4, // Espacio proporcional para el resumen
+    flex: 0.3, // Espacio proporcional para el resumen
     width: "90%",
     backgroundColor: COLORS.surface,
     padding: 30,
@@ -57,7 +56,7 @@ export const styles = StyleSheet.create({
   },
   resumenTitle: {
     fontWeight: "bold",
-    fontSize: 20,
+    fontSize: 18,
     marginBottom: 10,
   },
   resumenText: {
