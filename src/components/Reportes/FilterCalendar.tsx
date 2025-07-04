@@ -4,6 +4,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../../constants/colors";
 import { styles } from "./stylesFilCalendar";
+import Calendar from "../../icons/";
 
 type FilterCalendarProps = {
   onChangeRango: (rango: { inicio: string; fin: string }) => void;
@@ -56,6 +57,7 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
 
   return (
     <>
+      <Calendar></Calendar>
       <View style={styles.headerContainer}>
         <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
         <Text style={styles.headerTitle}>Reportes</Text>
