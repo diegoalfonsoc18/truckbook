@@ -62,16 +62,24 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
         <MaterialIcons
           name="notifications-active"
           size={24}
+          r
           color={COLORS.black}
         />
       </View>
       <View style={styles.containerMain}>
         <View style={styles.containerFilter}>
-          <Text style={styles.titleCalendar}>Periodo</Text>
+          <Text style={styles.titleCalendar}>Selecciona un periodo</Text>
           <TouchableOpacity
             style={styles.dateSelect}
             onPress={() => setModalVisible(true)}>
-            <Text style={{ marginLeft: 8, fontSize: 16 }}>{periodoLabel}</Text>
+            <Text
+              style={{
+                marginLeft: 8,
+                fontSize: 16,
+                color: COLORS.textTertiary,
+              }}>
+              {periodoLabel}
+            </Text>
             <MaterialIcons
               name="calendar-today"
               size={24}

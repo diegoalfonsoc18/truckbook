@@ -27,20 +27,26 @@ export const styles = StyleSheet.create({
     //flex: 1,
     width: "100%",
     minHeight: 120,
+    padding: 20,
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginBottom: 10,
-    borderRadius: 10,
+    marginBottom: 20,
+    borderRadius: 20,
     backgroundColor: COLORS.surface, // Fondo del contenedor de filtro
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   titleCalendar: {
     width: "80%",
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-    color: COLORS.text,
+    color: COLORS.backgroundDark,
   },
 
   dateSelect: {

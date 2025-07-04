@@ -3,21 +3,36 @@ import { COLORS } from "../../constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 0.9, // Ocupa todo el espacio disponible
+    flex: 1, // Ocupa todo el espacio disponible
     alignItems: "center",
     justifyContent: "flex-start",
     padding: 0,
     width: "100%",
   },
+  graphicContainer: {
+    flex: 0.8, // Ocupa todo el espacio disponible
+    width: "100%",
+    backgroundColor: COLORS.background, // Fondo del contenedor del gráfico
+    padding: 10,
+    borderRadius: 20,
+    marginBottom: 20,
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra para Android
+    elevation: 5,
+  },
   containerGraph: {
-    flex: 4, // Más espacio para el gráfico
+    flex: 1, // Más espacio para el gráfico
     width: "100%",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonContainer: {
-    flex: 0.8, // Espacio proporcional para los botones
+    flex: 2, // Espacio proporcional para los botones
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -28,20 +43,27 @@ export const styles = StyleSheet.create({
     flex: 1.4, // Espacio proporcional para el resumen
     width: "90%",
     backgroundColor: COLORS.surface,
-    paddingLeft: 20,
-    borderRadius: 30,
-    //alignItems: "center",
+    padding: 30,
+    borderRadius: 20,
     justifyContent: "center",
-    // Elimina marginBottom grande
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra para Android
+    elevation: 5,
+    marginBottom: 50,
   },
   resumenTitle: {
     fontWeight: "bold",
     fontSize: 20,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   resumenText: {
     fontSize: 16,
     marginBottom: 4,
+    color: COLORS.textTertiary,
   },
   titleContainer: {
     width: "100%",
