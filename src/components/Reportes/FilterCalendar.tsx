@@ -55,119 +55,129 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.containerTitle}>
-        <Text style={styles.chartTitle}>Reportes</Text>
+    <>
+      <View style={styles.headerContainer}>
+        <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
+        <Text style={styles.headerTitle}>Reportes</Text>
+        <MaterialIcons
+          name="notifications-active"
+          size={24}
+          color={COLORS.black}
+        />
       </View>
-      <View style={styles.containerFilter}>
-        <Text style={styles.titleCalendar}>Periodo</Text>
-        <TouchableOpacity
-          style={styles.dateSelect}
-          onPress={() => setModalVisible(true)}>
-          <Text style={{ marginLeft: 8, fontSize: 16 }}>{periodoLabel}</Text>
-          <MaterialIcons
-            name="calendar-today"
-            size={24}
-            color={COLORS.secondary}
-          />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.container}>
+        <View style={styles.containerFilter}>
+          <Text style={styles.titleCalendar}>Periodo</Text>
+          <TouchableOpacity
+            style={styles.dateSelect}
+            onPress={() => setModalVisible(true)}>
+            <Text style={{ marginLeft: 8, fontSize: 16 }}>{periodoLabel}</Text>
+            <MaterialIcons
+              name="calendar-today"
+              size={24}
+              color={COLORS.secondary}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* Modal para seleccionar meses */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.3)",
-          }}>
+        {/* Modal para seleccionar meses */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}>
           <View
             style={{
-              backgroundColor: "#fff",
-              borderRadius: 10,
-              padding: 20,
-              width: "90%",
+              flex: 1,
+              justifyContent: "center",
               alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.3)",
             }}>
-            <Text
-              style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
-              Selecciona el periodo
-            </Text>
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                width: "100%",
-              }}>
-              <View style={{ flex: 1, alignItems: "center" }}>
-                <Text>Desde</Text>
-                <TouchableOpacity
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 5,
-                    padding: 10,
-                    marginVertical: 8,
-                    minWidth: 100,
-                    alignItems: "center",
-                  }}
-                  onPress={() => setShowInicio(true)}>
-                  <Text>{fechaInicio || "Fecha inicial"}</Text>
-                </TouchableOpacity>
-                {showInicio && (
-                  <DateTimePicker
-                    value={fechaInicio ? new Date(fechaInicio) : new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={onChangeInicio}
-                  />
-                )}
-              </View>
-              <View style={{ flex: 1, alignItems: "center" }}>
-                <Text>Hasta</Text>
-                <TouchableOpacity
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 5,
-                    padding: 10,
-                    marginVertical: 8,
-                    minWidth: 100,
-                    alignItems: "center",
-                  }}
-                  onPress={() => setShowFin(true)}>
-                  <Text>{fechaFin || "Fecha final"}</Text>
-                </TouchableOpacity>
-                {showFin && (
-                  <DateTimePicker
-                    value={fechaFin ? new Date(fechaFin) : new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={onChangeFin}
-                  />
-                )}
-              </View>
-            </View>
-            <TouchableOpacity
-              style={{
-                marginTop: 20,
-                backgroundColor: COLORS.secondary,
-                padding: 10,
-                borderRadius: 5,
-                width: "60%",
+                backgroundColor: "#fff",
+                borderRadius: 10,
+                padding: 20,
+                width: "90%",
                 alignItems: "center",
-              }}
-              onPress={() => setModalVisible(false)}>
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Aplicar</Text>
-            </TouchableOpacity>
+              }}>
+              <Text
+                style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
+                Selecciona el periodo
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}>
+                <View style={{ flex: 1, alignItems: "center" }}>
+                  <Text>Desde</Text>
+                  <TouchableOpacity
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 5,
+                      padding: 10,
+                      marginVertical: 8,
+                      minWidth: 100,
+                      alignItems: "center",
+                    }}
+                    onPress={() => setShowInicio(true)}>
+                    <Text>{fechaInicio || "Fecha inicial"}</Text>
+                  </TouchableOpacity>
+                  {showInicio && (
+                    <DateTimePicker
+                      value={fechaInicio ? new Date(fechaInicio) : new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={onChangeInicio}
+                    />
+                  )}
+                </View>
+                <View style={{ flex: 1, alignItems: "center" }}>
+                  <Text>Hasta</Text>
+                  <TouchableOpacity
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 5,
+                      padding: 10,
+                      marginVertical: 8,
+                      minWidth: 100,
+                      alignItems: "center",
+                    }}
+                    onPress={() => setShowFin(true)}>
+                    <Text>{fechaFin || "Fecha final"}</Text>
+                  </TouchableOpacity>
+                  {showFin && (
+                    <DateTimePicker
+                      value={fechaFin ? new Date(fechaFin) : new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={onChangeFin}
+                    />
+                  )}
+                </View>
+              </View>
+              <TouchableOpacity
+                style={{
+                  marginTop: 20,
+                  backgroundColor: COLORS.secondary,
+                  padding: 10,
+                  borderRadius: 5,
+                  width: "60%",
+                  alignItems: "center",
+                }}
+                onPress={() => setModalVisible(false)}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Aplicar
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </>
   );
 }

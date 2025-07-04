@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     color: COLORS.primary, // Fondo del encabezado
     alignItems: "center",
     justifyContent: "space-between",
-    flex: 0, // Permite que el encabezado ocupe todo el espacio disponible
+    flex: 0,
   },
 
   headerTitle: {

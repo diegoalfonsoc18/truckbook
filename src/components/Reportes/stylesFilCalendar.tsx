@@ -4,10 +4,11 @@ import { COLORS } from "../../constants/colors";
 export const styles = StyleSheet.create({
   container: {
     width: "90%",
-    justifyContent: "center",
+    justifyContent: "flex-start", // Esto alinea el contenido arriba
     alignItems: "center",
     padding: 20,
     borderRadius: 10,
+    backgroundColor: COLORS.surface,
   },
   containerTitle: {
     width: "100%",
@@ -15,14 +16,22 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
   },
-  chartTitle: {
-    marginVertical: 8,
-    borderRadius: 16,
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    textAlign: "center",
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    color: COLORS.primary, // Fondo del encabezado
+    alignItems: "center",
+    justifyContent: "space-between",
+    flex: 0,
   },
+
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: COLORS.primary, // Color del texto del título
+  },
+
   containerFilter: {
     //flex: 1,
     width: "100%",
