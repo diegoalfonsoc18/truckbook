@@ -8,8 +8,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: COLORS.primary, // Fondo del encabezado
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Color del borde del encabezado
     flex: 0,
+    paddingBottom: 10, // Espacio debajo del encabezado
   },
   headerTitle: {
     fontSize: 24,
