@@ -137,12 +137,12 @@ export default function FinanzasGenerales() {
   return (
     <SafeAreaView style={styles.container}>
       <FilterCalendar onChangeRango={setRango} />
+      <View style={styles.buttonContainer}>
+        <Button title="Días" onPress={() => setView("dias")} />
+        <Button title="Meses" onPress={() => setView("meses")} />
+        <Button title="Años" onPress={() => setView("años")} />
+      </View>
       <View style={styles.containerGraph}>
-        <View style={styles.buttonContainer}>
-          <Button title="Días" onPress={() => setView("dias")} />
-          <Button title="Meses" onPress={() => setView("meses")} />
-          <Button title="Años" onPress={() => setView("años")} />
-        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <LineChart
             data={{

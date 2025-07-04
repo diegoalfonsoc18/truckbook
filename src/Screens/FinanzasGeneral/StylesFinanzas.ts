@@ -4,35 +4,35 @@ import { COLORS } from "../../constants/colors";
 export const styles = StyleSheet.create({
   container: {
     flex: 0.9, // Ocupa todo el espacio disponible
-
     alignItems: "center",
-    justifyContent: "flex-start", // Para que los hijos se apilen desde arriba
+    justifyContent: "flex-start",
     padding: 0,
     width: "100%",
   },
   containerGraph: {
-    flex: 3, // Ocupa más espacio para el gráfico
+    flex: 4, // Más espacio para el gráfico
     width: "100%",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonContainer: {
-    flex: 0.5, // Ocupa menos espacio para los botones
+    flex: 0.8, // Espacio proporcional para los botones
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+    fontSize: 16,
   },
   resumenContainer: {
-    flex: 1.2, // Espacio proporcional para el resumen
+    flex: 1.4, // Espacio proporcional para el resumen
     width: "90%",
     backgroundColor: COLORS.surface,
+    paddingLeft: 20,
     borderRadius: 30,
-    padding: 30,
     //alignItems: "center",
     justifyContent: "center",
-    marginBottom: 40,
+    // Elimina marginBottom grande
   },
   resumenTitle: {
     fontWeight: "bold",
