@@ -6,13 +6,14 @@ import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import Home from "../Screens/Home";
 import Account from "../Screens/Account/Account"; // Asegúrate de que la ruta sea correcta
+// Asegúrate de que la ruta sea correcta y que el archivo exista
 import {
   renderGastos,
   renderIngresos,
   renderHome,
   renderFinanzas,
   renderAccount,
-} from "../icons/icons"; // Centralizamos los íconos en un archivo separado
+} from "../assets/icons/icons";
 import { COLORS } from "../constants/colors";
 
 // Crear el Tab Navigator

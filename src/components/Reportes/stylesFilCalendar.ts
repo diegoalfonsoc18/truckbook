@@ -25,9 +25,10 @@ export const styles = StyleSheet.create({
 
   containerFilter: {
     //flex: 1,
+
     width: "100%",
     minHeight: 120,
-    padding: 20,
+    padding: 10,
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
@@ -42,22 +43,19 @@ export const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   titleCalendar: {
-    width: "80%",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
-    color: COLORS.backgroundDark,
+    color: COLORS.textTertiary,
+    marginBottom: 8,
   },
 
   dateSelect: {
-    width: "80%",
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 10,
-    //backgroundColor: "#ce2d2d",
+  },
+  periodoText: {
+    fontSize: 16,
+    color: COLORS.textTertiary,
   },
 });

@@ -56,7 +56,6 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
 
   return (
     <>
-      <Calendar></Calendar>
       <View style={styles.headerContainer}>
         <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
         <Text style={styles.headerTitle}>Reportes</Text>
@@ -68,26 +67,21 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
         />
       </View>
       <View style={styles.containerMain}>
-        <View style={styles.containerFilter}>
+        <TouchableOpacity
+          style={styles.containerFilter}
+          activeOpacity={0.3}
+          onPress={() => setModalVisible(true)}>
           <Text style={styles.titleCalendar}>Selecciona un periodo</Text>
-          <TouchableOpacity
-            style={styles.dateSelect}
-            onPress={() => setModalVisible(true)}>
-            <Text
-              style={{
-                marginLeft: 8,
-                fontSize: 16,
-                color: COLORS.textTertiary,
-              }}>
-              {periodoLabel}
-            </Text>
+
+          <View style={styles.dateSelect}>
+            <Text style={styles.periodoText}>{periodoLabel}</Text>
             <MaterialIcons
-              name="calendar-today"
-              size={24}
-              color={COLORS.secondary}
+              name="edit-calendar"
+              size={38}
+              color={COLORS.textSecondary}
             />
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Modal para seleccionar meses */}
         <Modal
