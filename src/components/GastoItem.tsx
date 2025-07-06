@@ -28,7 +28,7 @@ export default function GastoItem({
         placeholder="Ingresa un valor"
         keyboardType="numeric"
       />
-      <Button title="Enviar" onPress={handleSend} />
+      <Button style={styles.button} title="Enviar" onPress={handleSend} />
     </View>
   );
 }
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     backgroundColor: "#d9d92499",
     padding: 10,
     width: "100%",
@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   input: {
+    width: "60%",
     justifyContent: "center",
     alignItems: "center",
     //flex: 2,

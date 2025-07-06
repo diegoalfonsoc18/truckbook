@@ -96,7 +96,7 @@ export default function Gastos() {
       />
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
-        <Text style={styles.titlePicker}>Selecciona un gasto:</Text>
+        <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
         <PickerItem
           data={gastosData}
           //label="Selecciona un gasto:"

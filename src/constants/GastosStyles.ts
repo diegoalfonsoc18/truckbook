@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
   combinedContainer: {
     flex: 3, // Permite que el contenedor ocupe el espacio restante
     width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
-    backgroundColor: "#cc0000", // Fondo del contenedor combinado
+    //backgroundColor: "#cc0000", // Fondo del contenedor combinado
     borderRadius: 10, // Bordes redondeados
     justifyContent: "space-around", // Distribuye los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
@@ -108,7 +108,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     marginHorizontal: 20,
     marginVertical: 10,
-    backgroundColor: "#cc0000", // Fondo del picker
+    //backgroundColor: "#cc0000", // Fondo del picker
     padding: 10,
     borderRadius: 10,
     marginBottom: 10, // Aumenta el espacio entre el picker y otros elementos
@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
     width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
     textAlign: "left", // Alinea el texto a la izquierda
     alignSelf: "flex-start", // Alinea el título al inicio del contenedor
-    backgroundColor: "#ED3500",
+    //backgroundColor: "#ED3500",
     paddingInlineStart: 10, // Espacio interno al inicio del título
     fontSize: 18,
     fontWeight: "bold",
@@ -130,7 +130,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between", // Centra el contenido del picker
     flex: 1, // Permite que el contenedor ocupe el espacio restante
     width: "100%", // Asegura que el contenedor ocupe todo el ancho
-    backgroundColor: COLORS.primary, // Fondo del contenedor del picker
+    //backgroundColor: COLORS.primary, // Fondo del contenedor del picker
     borderRadius: 10, // Bordes redondeados del contenedor del picker
     //padding: 10, // Espaciado interno del contenedor del picker
   },
@@ -138,7 +138,7 @@ export const styles = StyleSheet.create({
   picker: {
     flex: 2, // Permite que el picker ocupe el espacio restante
     color: COLORS.primary, // Color del texto del picker
-    backgroundColor: "#cc0", // Fondo del picker
+    //backgroundColor: "#cc0", // Fondo del picker
     borderRadius: 10, // Bordes redondeados del picker
     padding: 10, // Espaciado interno del picker
     width: "100%", // Asegura que el picker ocupe todo el ancho del
