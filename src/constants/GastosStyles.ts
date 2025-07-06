@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
     //backgroundColor: "#cc0", // Fondo principal de la pantalla
     alignItems: "center",
     justifyContent: "center", // Alinea los elementos al inicio
-    padding: 20, // Espaciado interno
+    padding: 10, // Espaciado interno
     flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
   },
   headerContainer: {
@@ -66,6 +66,15 @@ export const styles = StyleSheet.create({
     borderRadius: 10, // Bordes redondeados
     overflow: "hidden", // Asegura que el contenido no se desborde
   },
+  combinedContainer: {
+    flex: 3, // Permite que el contenedor ocupe el espacio restante
+    width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
+    backgroundColor: "#cc0000", // Fondo del contenedor combinado
+    borderRadius: 10, // Bordes redondeados
+    justifyContent: "space-around", // Distribuye los elementos verticalmente
+    alignItems: "center", // Centra los elementos horizontalmente
+    padding: 10,
+  },
 
   resumenContainer: {
     width: "90%",
@@ -91,35 +100,48 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  combinedContainer: {
-    height: 30, // Altura del contenedor combinado
-    flex: 2, // Permite que el contenedor ocupe el espacio restante
-    width: "90%", // Asegura que el contenedor combinado ocupe el 90% del ancho
-    //backgroundColor: "#cc0", // Fondo del contenedor combinado
-    borderRadius: 10, // Bordes redondeados
-    justifyContent: "space-between", // Distribuye los elementos verticalmente
-    alignItems: "center", // Centra los elementos horizontalmente
-  },
+
   pickerContainer: {
     flex: 1, // Permite que el contenedor ocupe el espacio restante
     flexDirection: "column",
+    justifyContent: "space-between",
     width: "100%",
     marginHorizontal: 20,
     marginVertical: 10,
-    //backgroundColor: "#cc0", // Fondo del picker
+    backgroundColor: "#cc0000", // Fondo del picker
     padding: 10,
     borderRadius: 10,
     marginBottom: 10, // Aumenta el espacio entre el picker y otros elementos
   },
-  pickerLabel: {
-    fontSize: 16,
+  titlePicker: {
+    width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
+    textAlign: "left", // Alinea el texto a la izquierda
+    alignSelf: "flex-start", // Alinea el título al inicio del contenedor
+    backgroundColor: "#ED3500",
+    paddingInlineStart: 10, // Espacio interno al inicio del título
+    fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.primary, // Color del texto del picker label
-    marginBottom: 10,
+    color: COLORS.textTertiary, // Color del título del picker
+    marginBottom: 10, // Espacio entre el título y el picker
+    padding: 10, // Espaciado interno del título
   },
+
+  containerPicker: {
+    justifyContent: "space-between", // Centra el contenido del picker
+    flex: 1, // Permite que el contenedor ocupe el espacio restante
+    width: "100%", // Asegura que el contenedor ocupe todo el ancho
+    backgroundColor: COLORS.primary, // Fondo del contenedor del picker
+    borderRadius: 10, // Bordes redondeados del contenedor del picker
+    //padding: 10, // Espaciado interno del contenedor del picker
+  },
+
   picker: {
-    color: COLORS.text, // Color del texto del picker
-    //backgroundColor: "#cc0000", // Fondo del picker
+    flex: 2, // Permite que el picker ocupe el espacio restante
+    color: COLORS.primary, // Color del texto del picker
+    backgroundColor: "#cc0", // Fondo del picker
+    borderRadius: 10, // Bordes redondeados del picker
+    padding: 10, // Espaciado interno del picker
+    width: "100%", // Asegura que el picker ocupe todo el ancho del
   },
   selectedListContainer: {
     flex: 0.5, // Permite que la lista ocupe el espacio restante

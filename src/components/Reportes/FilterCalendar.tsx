@@ -75,11 +75,7 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
 
           <View style={styles.dateSelect}>
             <Text style={styles.periodoText}>{periodoLabel}</Text>
-            <MaterialIcons
-              name="edit-calendar"
-              size={38}
-              color={COLORS.textSecondary}
-            />
+            <MaterialIcons name="edit-calendar" size={38} color={"#007AFF"} />
           </View>
         </TouchableOpacity>
 

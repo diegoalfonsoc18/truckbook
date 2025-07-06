@@ -37,18 +37,26 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    justifyContent: "space-between",
+    backgroundColor: "#d9d92499",
+    padding: 10,
+    width: "100%",
+    //minHeight: 60, // Agrega altura mínima
   },
   label: {
-    flex: 1,
     fontSize: 16,
+    alignContent: "center",
+    justifyContent: "center",
   },
   input: {
-    flex: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    //flex: 2,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 5,
-    padding: 5,
+    padding: 10,
     marginRight: 10,
+    backgroundColor: "#fff",
   },
 });

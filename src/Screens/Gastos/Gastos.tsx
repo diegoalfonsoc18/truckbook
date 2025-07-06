@@ -96,14 +96,14 @@ export default function Gastos() {
       />
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
+        <Text style={styles.titlePicker}>Selecciona un gasto:</Text>
         <PickerItem
           data={gastosData}
-          label="Selecciona un gasto:"
+          //label="Selecciona un gasto:"
           pickerLabelKey="name"
           pickerValueKey="id"
           onSelect={setSelectedGasto}
           pickerStyle={styles.picker}
-          containerStyle={styles.pickerContainer}
           renderSelectedItem={(item) => (
             <GastoItem item={item} onSend={handleAddGasto} />
           )}

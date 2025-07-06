@@ -10,18 +10,17 @@ type PickerItemProps = {
   pickerValueKey?: string;
   onSelect?: (value: any) => void;
   pickerStyle?: object;
-  containerStyle?: object;
+  //containerStyle?: object;
   renderSelectedItem: (item: any) => React.ReactNode; // Nuevo prop requerido
 };
 
 export default function PickerItem({
   data,
-  label = "Selecciona un ingreso:",
   pickerLabelKey = "name",
   pickerValueKey = "id",
   onSelect,
   pickerStyle,
-  containerStyle,
+  //containerStyle,
   renderSelectedItem,
 }: PickerItemProps) {
   const [selected, setSelected] = useState(data[0]?.[pickerValueKey] || "");
@@ -32,8 +31,7 @@ export default function PickerItem({
   };
 
   return (
-    <View style={containerStyle}>
-      <Text>{label}</Text>
+    <View style={styles.containerPicker}>
       <Picker
         selectedValue={selected}
         onValueChange={handleChange}

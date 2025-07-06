@@ -143,36 +143,54 @@ export default function FinanzasGenerales() {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             onPress={() => setView("dias")}
-            style={{ marginHorizontal: 8 }}>
+            style={[
+              styles.button,
+              view === "dias" && {
+                backgroundColor: COLORS.primary,
+                borderRadius: 8,
+              },
+            ]}>
             <Text
               style={{
                 fontWeight: "bold",
                 fontSize: 16,
-                color: COLORS.backgroundDark,
+                color: view === "dias" ? "#fff" : COLORS.backgroundDark,
               }}>
               Días
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setView("meses")}
-            style={{ marginHorizontal: 8 }}>
+            style={[
+              styles.button,
+              view === "meses" && {
+                backgroundColor: COLORS.primary,
+                borderRadius: 8,
+              },
+            ]}>
             <Text
               style={{
                 fontWeight: "bold",
                 fontSize: 16,
-                color: COLORS.backgroundDark,
+                color: view === "meses" ? "#fff" : COLORS.backgroundDark,
               }}>
               Meses
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setView("años")}
-            style={{ marginHorizontal: 8 }}>
+            style={[
+              styles.button,
+              view === "años" && {
+                backgroundColor: COLORS.primary,
+                borderRadius: 8,
+              },
+            ]}>
             <Text
               style={{
                 fontWeight: "bold",
                 fontSize: 16,
-                color: COLORS.backgroundDark,
+                color: view === "años" ? "#fff" : COLORS.backgroundDark,
               }}>
               Años
             </Text>

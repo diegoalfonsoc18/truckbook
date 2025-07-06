@@ -91,7 +91,7 @@ export default function Ingresos() {
       <View style={styles.combinedContainer}>
         <PickerItem
           data={ingresosData}
-          label="Selecciona un ingreso:"
+          //label="Selecciona un ingreso:"
           pickerLabelKey="name"
           pickerValueKey="id"
           onSelect={setSelectedIngreso}

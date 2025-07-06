@@ -9,6 +9,7 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   graphicContainer: {
+    // Oculta el desbordamiento del gráfico
     flex: 1, // Ocupa todo el espacio disponible
     width: "100%",
     //backgroundColor: COLORS.background, // Fondo del contenedor del gráfico
@@ -37,6 +38,17 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     fontSize: 16,
+  },
+  button: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    marginHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   resumenContainer: {
     flex: 0.3, // Espacio proporcional para el resumen
