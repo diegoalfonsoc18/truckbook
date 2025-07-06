@@ -121,7 +121,7 @@ export default function Gastos() {
           }}>
           <View
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "#c64c4c",
               borderRadius: 10,
               padding: 20,
               width: "80%",

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
-
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { COLORS } from "../constants/colors";
 export default function GastoItem({
   item,
   onSend,
@@ -21,14 +22,21 @@ export default function GastoItem({
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
       <Text style={styles.label}></Text>
+      <MaterialIcons
+        name="attach-money"
+        size={26}
+        color={COLORS.textTertiary}
+        style={{ marginRight: 4 }}
+      />
+
       <TextInput
         style={styles.input}
         value={inputValue}
         onChangeText={setInputValue}
-        placeholder="Ingresa un valor"
+        placeholder="¿Cuanto fue el gasto?"
         keyboardType="numeric"
       />
-      <Button style={styles.button} title="Enviar" onPress={handleSend} />
+      <Button title="Enviar" onPress={handleSend} />
     </View>
   );
 }
@@ -37,27 +45,30 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "#d9d92499",
+    justifyContent: "center",
+    //backgroundColor: "#d9d92499",
     padding: 10,
     width: "100%",
-    //minHeight: 60, // Agrega altura mínima
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra Android
+    elevation: 5,
   },
   label: {
     fontSize: 16,
-    alignContent: "center",
-    justifyContent: "center",
+    //alignContent: "center",
+    //justifyContent: "center",
   },
   input: {
     width: "60%",
-    justifyContent: "center",
-    alignItems: "center",
-    //flex: 2,
-    borderWidth: 1,
+    //justifyContent: "space-between",
+    //alignItems: "center",
     borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
-    marginRight: 10,
     backgroundColor: "#fff",
   },
 });

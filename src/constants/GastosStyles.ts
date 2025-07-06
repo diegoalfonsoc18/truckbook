@@ -35,6 +35,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginVertical: 10,
     backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra Android
+    elevation: 5,
   },
   dateText: {
     fontSize: 16,
@@ -82,6 +89,13 @@ export const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 20,
     flex: 1.5,
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra Android
+    elevation: 5,
   },
 
   resumenTitle: {

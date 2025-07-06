@@ -58,7 +58,7 @@ export default function Ingresos() {
   // Guardar edición
   const handleSaveEdit = () => {
     if (editId) {
-      editIngreso(editId, editValue, selectedDate);
+      editIngreso(editId, editValue);
       setModalVisible(false);
       setEditId(null);
       setEditValue("");
@@ -96,7 +96,6 @@ export default function Ingresos() {
           pickerValueKey="id"
           onSelect={setSelectedIngreso}
           pickerStyle={styles.picker}
-          containerStyle={styles.pickerContainer}
           renderSelectedItem={(item) => (
             <IngresosItem item={item} onSend={handleAddIngreso} />
           )}
