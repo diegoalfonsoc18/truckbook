@@ -1,52 +1,43 @@
 import React from "react";
-import { Styles } from "react-native-svg";
-import { SafeAreaView, Text, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // Importa el Picker desde el paquete correcto
-//import { useCurrencyStore } from "../../store/CurrencyStore"; // Ajusta la ruta según la ubicación real de CurrencyStore
-// Importa los estilos globales
+import { useNavigation } from "@react-navigation/native";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+
+// Replace this with your actual param list type
+type RootStackParamList = {
+  InsertarCamiones: undefined;
+  // add other routes here if needed
+};
+
 export default function Account() {
-  //const { currency, setCurrency } = useCurrencyStore(); // Accede al estado global
+  const navigation =
+    useNavigation<
+      import("@react-navigation/native-stack").NativeStackNavigationProp<RootStackParamList>
+    >();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Selecciona tu moneda:</Text>
-      {/*<Picker
-       // selectedValue={currency}
-        onValueChange={(value) => setCurrency(value)} // Actualiza la moneda seleccionada
-        style={styles.picker}>
-        <Picker.Item label="Pesos Colombianos (COP)" value="COP" />
-        <Picker.Item label="Dólares (USD)" value="USD" />
-        <Picker.Item label="Euros (EUR)" value="EUR" />
-      </Picker>
-      /*}
-      {/* Muestra la moneda seleccionada */}
-      {/*<Text style={styles.selectedCurrency}>
-        Moneda seleccionada:// {currency}
-      </Text>*/}
-    </SafeAreaView>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.devButton}
+        onPress={() => navigation.navigate("InsertarCamiones")}>
+        <Text style={styles.devButtonText}>
+          Cargar camiones a Firebase (solo dev)
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#393E46",
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  devButton: {
+    backgroundColor: "#4caf50",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
-  title: {
-    fontSize: 18,
-    color: "#FAFF00",
-    marginBottom: 20,
-  },
-  picker: {
-    width: 200,
-    color: "#EEEEEE",
-    backgroundColor: "#222831",
-  },
-  selectedCurrency: {
-    marginTop: 20,
+  devButtonText: {
+    color: "#fff",
     fontSize: 16,
-    color: "#EEEEEE",
+    fontWeight: "bold",
   },
 });
