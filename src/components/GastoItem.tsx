@@ -12,7 +12,8 @@ export default function GastoItem({
   const [inputValue, setInputValue] = useState<string>("");
 
   const handleSend = () => {
-    if (inputValue.trim() !== "") {
+    // Verifica que el valor no esté vacío y sea un número válido
+    if (inputValue.trim() !== "" && !isNaN(Number(inputValue))) {
       onSend(item.id, inputValue);
       setInputValue("");
     }
@@ -26,7 +27,7 @@ export default function GastoItem({
         name="attach-money"
         size={26}
         color={COLORS.textTertiary}
-        style={{ marginRight: 4 }}
+        style={{ marginRight: 8 }}
       />
 
       <TextInput
@@ -46,7 +47,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    //backgroundColor: "#d9d92499",
+    // /backgroundColor: "#d9d92499",
     padding: 10,
     width: "100%",
     // Sombra para iOS

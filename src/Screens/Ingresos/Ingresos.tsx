@@ -33,6 +33,8 @@ export default function Ingresos() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState<string>("");
   const [editId, setEditId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState<string>(selectedDate);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Agregar ingreso usando Zustand
   const handleAddIngreso = useCallback(
@@ -66,8 +68,8 @@ export default function Ingresos() {
   };
 
   // Eliminar ingreso
-  const handleDeleteGasto = (id: string | number) => {
-    deleteIngreso(String(id), selectedDate);
+  const handleDeleteIngreso = (id: string | number) => {
+    deleteIngreso(String(id));
   };
 
   // Mostrar/ocultar calendario
@@ -89,6 +91,7 @@ export default function Ingresos() {
 
       {/* Selector y lista de gastos */}
       <View style={styles.combinedContainer}>
+        <Text style={styles.titlePicker}>Seleccione un ingreso:</Text>
         <PickerItem
           data={ingresosData}
           //label="Selecciona un ingreso:"
@@ -107,7 +110,7 @@ export default function Ingresos() {
         selectedDate={selectedDate}
         itemsFiltrados={IngresosFiltrados}
         handleEdit={handleEditGasto}
-        handleDelete={handleDeleteGasto}
+        handleDelete={handleDeleteIngreso}
         totalLabel="Total"
         title="Resumen de Ingresos"
         modalLabel="Editar valor del gasto"

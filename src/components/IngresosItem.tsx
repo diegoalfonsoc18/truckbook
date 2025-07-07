@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
-
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { COLORS } from "../constants/colors";
 export default function IngresosItem({
   item,
   onSend,
@@ -11,7 +12,8 @@ export default function IngresosItem({
   const [inputValue, setInputValue] = useState<string>("");
 
   const handleSend = () => {
-    if (inputValue.trim() !== "") {
+    // Verifica que el valor no esté vacío y sea un número válido
+    if (inputValue.trim() !== "" && !isNaN(Number(inputValue))) {
       onSend(item.id, inputValue);
       setInputValue("");
     }
@@ -19,19 +21,23 @@ export default function IngresosItem({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{item.name}</Text>
+      {/* Asegúrate de que item.name sea una cadena de texto */}
+      <Text style={styles.label}></Text>
+      <MaterialIcons
+        name="attach-money"
+        size={26}
+        color={COLORS.textTertiary}
+        style={{ marginRight: 8 }}
+      />
+
       <TextInput
         style={styles.input}
         value={inputValue}
         onChangeText={setInputValue}
-        placeholder="Ingresa un valor"
+        placeholder="¿Cuanto fue el ingreso?"
         keyboardType="numeric"
       />
-      <Button
-        title="Enviar"
-        onPress={handleSend}
-        disabled={inputValue.trim() === ""}
-      />
+      <Button title="Enviar" onPress={handleSend} />
     </View>
   );
 }
@@ -40,18 +46,30 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    justifyContent: "center",
+    // /backgroundColor: "#d9d92499",
+    padding: 10,
+    width: "100%",
+    // Sombra para iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Sombra Android
+    elevation: 5,
   },
   label: {
-    flex: 1,
     fontSize: 16,
+    //alignContent: "center",
+    //justifyContent: "center",
   },
   input: {
-    flex: 2,
-    borderWidth: 1,
+    width: "60%",
+    //justifyContent: "space-between",
+    //alignItems: "center",
     borderColor: "#ccc",
     borderRadius: 5,
-    padding: 5,
-    marginRight: 10,
+    padding: 10,
+    backgroundColor: "#fff",
   },
 });
