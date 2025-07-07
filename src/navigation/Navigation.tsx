@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
-import Home from "../Screens/Home";
+import Home from "../Screens/Home/Home";
 import Account from "../Screens/Account/Account"; // Asegúrate de que la ruta sea correcta
 // Asegúrate de que la ruta sea correcta y que el archivo exista
 import {
@@ -35,7 +35,7 @@ export default function MainNavigation() {
         tabBarStyle: styles.tabBar, // Aplica estilos centralizados
         tabBarActiveTintColor: COLORS.primary, // Color del ícono activo
         tabBarInactiveTintColor: COLORS.accent, // Color del ícono inactivo
-        tabBarShowLabel: false, // Oculta las etiquetas de texto
+        //tabBarShowLabel: false, // Oculta las etiquetas de texto
         tabBarIcon: ({ focused, color, size }) => {
           // Renderiza el ícono correspondiente según la pestaña
           switch (route.name) {
@@ -45,7 +45,7 @@ export default function MainNavigation() {
               return renderIngresos(color, size);
             case "Home":
               return renderHome(color, size);
-            case "Finanzas":
+            case "Reportes":
               return renderFinanzas(color, size);
             case "Account":
               return renderAccount(color, size);
@@ -57,7 +57,7 @@ export default function MainNavigation() {
       <Tab.Screen name="Gastos" component={GastosNavigation} />
       <Tab.Screen name="Ingresos" component={IngresosNavigation} />
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Finanzas" component={FinanzasNavigation} />
+      <Tab.Screen name="Reportes" component={FinanzasNavigation} />
       <Tab.Screen name="Account" component={Account} />
     </Tab.Navigator>
   );

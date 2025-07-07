@@ -1,26 +1,28 @@
 import React from "react";
+import { Styles } from "react-native-svg";
 import { SafeAreaView, Text, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // Importa el Picker desde el paquete correcto
-// Ajusta el import según el export real de CurrencyStore
+//import { useCurrencyStore } from "../../store/CurrencyStore"; // Ajusta la ruta según la ubicación real de CurrencyStore
 // Importa los estilos globales
 export default function Account() {
-  const { currency, setCurrency } = useCurrencyStore(); // Accede al estado global
+  //const { currency, setCurrency } = useCurrencyStore(); // Accede al estado global
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Selecciona tu moneda:</Text>
-      <Picker
-        selectedValue={currency}
+      {/*<Picker
+       // selectedValue={currency}
         onValueChange={(value) => setCurrency(value)} // Actualiza la moneda seleccionada
         style={styles.picker}>
         <Picker.Item label="Pesos Colombianos (COP)" value="COP" />
         <Picker.Item label="Dólares (USD)" value="USD" />
         <Picker.Item label="Euros (EUR)" value="EUR" />
       </Picker>
+      /*}
       {/* Muestra la moneda seleccionada */}
-      <Text style={styles.selectedCurrency}>
-        Moneda seleccionada: {currency}
-      </Text>
+      {/*<Text style={styles.selectedCurrency}>
+        Moneda seleccionada:// {currency}
+      </Text>*/}
     </SafeAreaView>
   );
 }
