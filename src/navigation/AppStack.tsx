@@ -26,7 +26,7 @@ const screenOptions = (icon: () => React.ReactNode) => ({
 });
 
 // Componente principal de navegación
-export default function MainNavigation() {
+export default function AppStack() {
   return (
     <Tab.Navigator
       initialRouteName="Home"

@@ -218,4 +218,63 @@ export const styles = StyleSheet.create({
     flex: 1, // Permite que el FlatList ocupe el espacio restante
     width: "100%",
   },
+
+  containerLogin: {
+    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    //backgroundColor: "#cc0", // Fondo de la pantalla de login
+    alignItems: "center", // Centra los elementos horizontalmente
+    justifyContent: "center", // Centra los elementos verticalmente
+    padding: 20, // Espaciado interno del contenedor
+  },
+
+  button: {
+    width: "90%", // Asegura que el botón ocupe todo el ancho del contenedor
+    height: 50, // Altura del botón
+    backgroundColor: "#007bff",
+    borderRadius: 50,
+    paddingVertical: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  buttonText: {
+    color: COLORS.white, // Color del texto del botón
+    fontSize: 16, // Tamaño del texto del botón
+    fontWeight: "bold", // Negrita para el texto del botón
+  },
+  inputLogin: {
+    width: "90%", // Asegura que el input ocupe todo el ancho del contenedor
+    height: 50, // Altura del input
+    //backgroundColor: COLORS.inputBackground, // Fondo del input
+    color: COLORS.textPrimary, // Color del texto del input
+    borderRadius: 10, // Bordes redondeados del input
+    paddingHorizontal: 15, // Espaciado interno horizontal
+    borderWidth: 1,
+    borderColor: "#ccc",
+
+    padding: 10,
+    marginBottom: 15,
+  },
+  imageContainer: {
+    //backgroundColor: "#f00",
+    width: "90%",
+    alignItems: "center",
+    justifyContent: "center", // Centra la imagen vertical y horizontalmente
+    marginBottom: 20,
+  },
+  mailPasswordContainer: {
+    width: "90%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
+    height: 200, // Permite que el contenedor ajuste su altura según el contenido
+    justifyContent: "space-between", // Centra los elementos verticalmente
+    alignItems: "center", // Centra los elementos horizontalmente
+    //backgroundColor: "#f00",
+  },
+  imageLogin: {
+    width: 220,
+    height: 220,
+    resizeMode: "contain",
+    marginBottom: 30,
+  },
 });
