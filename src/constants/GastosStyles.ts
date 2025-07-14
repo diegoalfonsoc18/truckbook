@@ -277,4 +277,29 @@ export const styles = StyleSheet.create({
     resizeMode: "contain",
     marginBottom: 30,
   },
+
+  socialLoginContainer: {
+    flexDirection: "row", // Alinea los botones sociales en fila
+    justifyContent: "space-around", // Distribuye los botones uniformemente
+    width: "36%", // Asegura que ocupe todo el ancho del contenedor
+    marginTop: 20, // Espaciado superior
+  },
+  iconSocialGoogle: {
+    color: "#fff",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#db4437", // Fondo del botón de Google
+    justifyContent: "center",
+    alignItems: "center", // Centra el ícono dentro del botón
+  },
+  iconSocialFacebook: {
+    color: "#fff",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#4267B2", // Fondo del botón de Facebook
+    justifyContent: "center",
+    alignItems: "center", // Centra el ícono dentro del botón
+  },
 });
