@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { View, TextInput, Text, Alert, TouchableOpacity } from "react-native";
 import supabase from "../../config/SupaBaseConfig"; // Asegúrate que este archivo exporta la instancia correctamente
-import { useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import styles from "./LoginStyles";
-
+import { styles } from "../../constants/GastosStyles";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import { MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 // Define tu stack de rutas
 type AuthStackParamList = {
   Register: undefined;
   Login: undefined;
+  Home: undefined; // <-- Agrega esta línea
   // otras rutas...
 };
 
@@ -28,19 +30,45 @@ export default function Register({ navigation }: Props) {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) {
       Alert.alert("Error", error.message);
+      return;
+    }
+
+    if (data.session) {
+      // Usuario registrado y logueado automáticamente
+      Alert.alert("¡Bienvenido!", "Registro exitoso.");
+      // Cambia "Home" por la pantalla principal de tu app
+      navigation.replace("Home");
     } else {
+      // Si tu proyecto requiere confirmación de correo
       Alert.alert(
         "Registro exitoso",
         "Revisa tu correo para confirmar tu cuenta."
       );
       navigation.navigate("Login");
+    }
+  };
+
+  const handleSocialLogin = async (provider: "google" | "facebook") => {
+    const redirectTo = Linking.createURL("/");
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
+    });
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+
+    if (data?.url) {
+      await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     }
   };
 
@@ -62,6 +90,18 @@ export default function Register({ navigation }: Props) {
       <TouchableOpacity style={styles.button} onPress={register}>
         <Text style={styles.buttonText}>Registrarse</Text>
       </TouchableOpacity>
+      <View style={styles.socialLoginContainer}>
+        <TouchableOpacity
+          style={[styles.iconSocialGoogle]}
+          onPress={() => handleSocialLogin("google")}>
+          <MaterialCommunityIcons name="google-plus" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconSocialFacebook]}
+          onPress={() => handleSocialLogin("facebook")}>
+          <FontAwesome name="facebook-f" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
