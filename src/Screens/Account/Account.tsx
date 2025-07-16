@@ -1,28 +1,32 @@
 import React from "react";
-import { Styles } from "react-native-svg";
-import { SafeAreaView, Text, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // Importa el Picker desde el paquete correcto
-//import { useCurrencyStore } from "../../store/CurrencyStore"; // Ajusta la ruta según la ubicación real de CurrencyStore
-// Importa los estilos globales
-export default function Account() {
-  //const { currency, setCurrency } = useCurrencyStore(); // Accede al estado global
+import {
+  SafeAreaView,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import supabase from "../../config/SupaBaseConfig"; // Asegúrate de importar tu instancia
+
+export default function Account({ navigation }: any) {
+  // const { currency, setCurrency } = useCurrencyStore();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
+      navigation.replace("Login"); // O la pantalla de inicio de sesión de tu stack
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Selecciona tu moneda:</Text>
-      {/*<Picker
-       // selectedValue={currency}
-        onValueChange={(value) => setCurrency(value)} // Actualiza la moneda seleccionada
-        style={styles.picker}>
-        <Picker.Item label="Pesos Colombianos (COP)" value="COP" />
-        <Picker.Item label="Dólares (USD)" value="USD" />
-        <Picker.Item label="Euros (EUR)" value="EUR" />
-      </Picker>
-      /*}
-      {/* Muestra la moneda seleccionada */}
-      {/*<Text style={styles.selectedCurrency}>
-        Moneda seleccionada:// {currency}
-      </Text>*/}
+      {/* ...tu Picker aquí... */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Cerrar sesión</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -48,5 +52,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: "#EEEEEE",
+  },
+  logoutButton: {
+    marginTop: 40,
+    backgroundColor: "#db4437",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

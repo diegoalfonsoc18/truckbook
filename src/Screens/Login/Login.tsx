@@ -37,7 +37,8 @@ export default function LoginScreen({ navigation }: Props) {
     if (error) {
       Alert.alert("Error", error.message);
     } else {
-      navigation.replace("Home");
+      Alert.alert("¡Bienvenido!", "Inicio de sesión exitoso.");
+      // No navegues manualmente, el cambio de sesión mostrará AppStack
     }
   };
 

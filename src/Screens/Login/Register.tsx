@@ -43,8 +43,7 @@ export default function Register({ navigation }: Props) {
     if (data.session) {
       // Usuario registrado y logueado automáticamente
       Alert.alert("¡Bienvenido!", "Registro exitoso.");
-      // Cambia "Home" por la pantalla principal de tu app
-      navigation.replace("Home");
+      // No navegues manualmente, el cambio de sesión mostrará AppStack
     } else {
       // Si tu proyecto requiere confirmación de correo
       Alert.alert(

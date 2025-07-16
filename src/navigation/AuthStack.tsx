@@ -18,6 +18,7 @@ export default function AuthStack() {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Register" component={Register} />
+
       {/* otras pantallas */}
     </Stack.Navigator>
   );
