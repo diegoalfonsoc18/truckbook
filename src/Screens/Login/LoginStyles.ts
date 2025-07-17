@@ -136,6 +136,12 @@ export default StyleSheet.create({
     marginBottom: 10,
     borderWidth: 2,
   },
+  imageSocials: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+    marginRight: 5, // Espaciado entre el ícono y el texto
+  },
   iconSocialFacebook: {
     flexDirection: "row", // Alinea el ícono y el texto horizontalmente
     width: "100%",

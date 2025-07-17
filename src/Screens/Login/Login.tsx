@@ -118,17 +118,19 @@ export default function LoginScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[styles.iconSocialGoogle]}
             onPress={() => handleSocialLogin("google")}>
-            <MaterialCommunityIcons
-              name="google-plus"
-              size={24}
-              color="black"
+            <Image
+              source={require("../../assets/img/google.png")}
+              style={styles.imageSocials}
             />
             <Text style={styles.buttonText}>Sign in with Google</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconSocialFacebook]}
             onPress={() => handleSocialLogin("facebook")}>
-            <FontAwesome name="facebook-f" size={24} color="black" />
+            <Image
+              source={require("../../assets/img/facebook.png")}
+              style={styles.imageSocials}
+            />
             <Text style={styles.buttonText}>Sign in with Facebook</Text>
           </TouchableOpacity>
 
