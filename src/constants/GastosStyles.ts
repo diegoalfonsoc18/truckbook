@@ -219,14 +219,6 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
 
-  containerLogin: {
-    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
-    //backgroundColor: "#cc0", // Fondo de la pantalla de login
-    alignItems: "center", // Centra los elementos horizontalmente
-    justifyContent: "center", // Centra los elementos verticalmente
-    padding: 20, // Espaciado interno del contenedor
-  },
-
   button: {
     width: "90%", // Asegura que el botón ocupe todo el ancho del contenedor
     height: 50, // Altura del botón
@@ -243,63 +235,5 @@ export const styles = StyleSheet.create({
     color: COLORS.white, // Color del texto del botón
     fontSize: 16, // Tamaño del texto del botón
     fontWeight: "bold", // Negrita para el texto del botón
-  },
-  inputLogin: {
-    width: "90%", // Asegura que el input ocupe todo el ancho del contenedor
-    height: 50, // Altura del input
-    //backgroundColor: COLORS.inputBackground, // Fondo del input
-    color: COLORS.textPrimary, // Color del texto del input
-    borderRadius: 10, // Bordes redondeados del input
-    paddingHorizontal: 15, // Espaciado interno horizontal
-    borderWidth: 1,
-    borderColor: "#ccc",
-
-    padding: 10,
-    marginBottom: 15,
-  },
-  imageContainer: {
-    //backgroundColor: "#f00",
-    width: "90%",
-    alignItems: "center",
-    justifyContent: "center", // Centra la imagen vertical y horizontalmente
-    marginBottom: 20,
-  },
-  mailPasswordContainer: {
-    width: "90%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
-    height: 200, // Permite que el contenedor ajuste su altura según el contenido
-    justifyContent: "space-between", // Centra los elementos verticalmente
-    alignItems: "center", // Centra los elementos horizontalmente
-    //backgroundColor: "#f00",
-  },
-  imageLogin: {
-    width: 220,
-    height: 220,
-    resizeMode: "contain",
-    marginBottom: 30,
-  },
-
-  socialLoginContainer: {
-    flexDirection: "row", // Alinea los botones sociales en fila
-    justifyContent: "space-around", // Distribuye los botones uniformemente
-    width: "36%", // Asegura que ocupe todo el ancho del contenedor
-    marginTop: 20, // Espaciado superior
-  },
-  iconSocialGoogle: {
-    color: "#fff",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#db4437", // Fondo del botón de Google
-    justifyContent: "center",
-    alignItems: "center", // Centra el ícono dentro del botón
-  },
-  iconSocialFacebook: {
-    color: "#fff",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#4267B2", // Fondo del botón de Facebook
-    justifyContent: "center",
-    alignItems: "center", // Centra el ícono dentro del botón
   },
 });

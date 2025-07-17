@@ -1,17 +1,15 @@
-// LoginScreen.tsx
 import React, { useState } from "react";
 import { View, TextInput, Alert, Image } from "react-native";
 import { Text, TouchableOpacity, StyleSheet } from "react-native";
-
 import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { styles } from "../../constants/GastosStyles";
-
+import styles from "./LoginStyles";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { COLORS } from "../../constants/colors";
+
 // Define tus rutas
 type RootStackParamList = {
   Login: undefined;
@@ -86,51 +84,63 @@ export default function LoginScreen({ navigation }: Props) {
           style={styles.imageLogin}
         />
       </View>
-      <View style={styles.mailPasswordContainer}>
-        <TextInput
-          placeholder="Correo"
-          style={styles.inputLogin}
-          autoCapitalize="none"
-          onChangeText={setEmail}
-          value={email}
-        />
-        <TextInput
-          placeholder="Contraseña"
-          secureTextEntry={true}
-          style={styles.inputLogin}
-          autoCapitalize="none"
-          onChangeText={setPassword}
-          value={password}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-        {/* BOTÓN DE REGISTRO */}
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#28a745", marginTop: 10 }]}
-          onPress={() => navigation.navigate("Register")}>
-          <Text style={styles.buttonText}>Registrarse</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
-          <Text
-            style={{ color: "#007bff", marginTop: 16, textAlign: "center" }}>
-            ¿Olvidaste tu contraseña?
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.socialLoginContainer}>
+      <View style={styles.LoginSingContainer}>
+        <View style={styles.containerTextPassword}>
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor={COLORS.textSecondary}
+            style={styles.inputLogin}
+            autoCapitalize="none"
+            onChangeText={setEmail}
+            value={email}
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor={COLORS.textSecondary}
+            secureTextEntry={true}
+            style={styles.inputLogin}
+            autoCapitalize="none"
+            onChangeText={setPassword}
+            value={password}
+          />
           <TouchableOpacity
-            style={[styles.iconSocialGoogle]}
-            onPress={() => handleSocialLogin("google")}>
-            <MaterialCommunityIcons
-              name="google-plus"
-              size={24}
-              color="white"
-            />
+            style={styles.containerTextPassword}
+            onPress={() => navigation.navigate("ForgotPassword")}>
+            <Text style={styles.textPassword}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Continue</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.containerSingUp}>
+          <Text style={styles.textLogin}>O, continue con</Text>
+          {/* BOTÓN DE REGISTRO */}
+
+          <View style={styles.socialLoginContainer}>
+            <TouchableOpacity
+              style={[styles.iconSocialGoogle]}
+              onPress={() => handleSocialLogin("google")}>
+              <MaterialCommunityIcons
+                name="google-plus"
+                size={24}
+                color="white"
+              />
+              <Text style={styles.buttonText}>Sing in with Google</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconSocialFacebook]}
+              onPress={() => handleSocialLogin("facebook")}>
+              <FontAwesome name="facebook-f" size={24} color="white" />
+              <Text style={styles.buttonText}>Sing in with Facebook</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
-            style={[styles.iconSocialFacebook]}
-            onPress={() => handleSocialLogin("facebook")}>
-            <FontAwesome name="facebook-f" size={24} color="white" />
+            style={[
+              styles.button,
+              { backgroundColor: "#28a745", marginTop: 10 },
+            ]}
+            onPress={() => navigation.navigate("Register")}>
+            <Text style={styles.buttonText}>Sing up</Text>
           </TouchableOpacity>
         </View>
       </View>
