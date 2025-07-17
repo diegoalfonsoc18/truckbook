@@ -24,11 +24,11 @@ export default StyleSheet.create({
     alignItems: "center", // Centra los elementos horizontalmente
     justifyContent: "space-between", // Centra los elementos verticalmente
     padding: 20, // Espaciado interno del contenedor
-    //backgroundColor: COLORS.backgroundDark, // Fondo oscuro
+    //backgroundColor: "#FFCB61", // Fondo oscuro
   },
   imageContainer: {
-    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
-    //backgroundColor: "#f00",
+    flex: 2, // Permite que el contenedor ocupe todo el espacio disponible
+    //backgroundColor: "#0A400C",
     width: "90%",
     alignItems: "center",
     justifyContent: "center", // Centra la imagen vertical y horizontalmente
@@ -45,7 +45,7 @@ export default StyleSheet.create({
     flex: 3, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
-    //backgroundColor: "#f9f",
+    //backgroundColor: "#56DFCF",
   },
   loginTitle: {
     width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
@@ -61,7 +61,7 @@ export default StyleSheet.create({
     width: "100%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
     alignItems: "center", // Centra los elementos horizontalmente
     justifyContent: "space-between", // Centra los elementos verticalmente
-    //backgroundColor: "#d0d", // Fondo transparente para el contenedor de contraseña
+    //backgroundColor: "#06923E", // Fondo transparente para el contenedor de contraseña
   },
   inputLogin: {
     width: "100%", // Asegura que el input ocupe todo el ancho del contenedor
@@ -115,13 +115,13 @@ export default StyleSheet.create({
     flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
     width: "100%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
     alignItems: "center", // Centra los elementos horizontalmente
-    //backgroundColor: COLORS.backgroundDark, // Fondo oscuro
+    //backgroundColor: "#E6521F", // Fondo oscuro
   },
   textLogin: {
+    fontWeight: "bold", // Negrita el texto
     color: COLORS.textTertiary, // Color del texto secundario
     fontSize: 16, // Tamaño de fuente del texto secundario
     textAlign: "center", // Centra el texto horizontalmente
-    //marginVertical: 10, // Espaciado vertical del texto
     marginBottom: 20, // Espaciado inferior del texto
   },
 
@@ -146,5 +146,21 @@ export default StyleSheet.create({
     alignItems: "center", // Centra el ícono dentro del botón
     borderWidth: 2,
     marginBottom: 10,
+  },
+  textLinkRegister: {
+    fontWeight: "bold", // Negrita el texto
+    color: COLORS.textTertiary, // Color del texto secundario
+    fontSize: 16, // Tamaño de fuente del texto secundario
+    textAlign: "center", // Centra el texto horizontalmente
+    //marginTop: 20, // Espaciado superior del texto
+    marginBottom: 20, // Espaciado inferior del texto
+  },
+  textFooter: {
+    fontWeight: "bold", // Negrita el texto
+    color: COLORS.textTertiary, // Color del texto secundario
+    fontSize: 12, // Tamaño de fuente del texto secundario
+    textAlign: "center", // Centra el texto horizontalmente
+    //marginTop: 20, // Espaciado superior del texto
+    marginBottom: 3, // Espaciado inferior del texto
   },
 });

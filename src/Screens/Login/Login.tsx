@@ -123,28 +123,29 @@ export default function LoginScreen({ navigation }: Props) {
               size={24}
               color="black"
             />
-            <Text style={styles.buttonText}>Sing in with Google</Text>
+            <Text style={styles.buttonText}>Sign in with Google</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconSocialFacebook]}
             onPress={() => handleSocialLogin("facebook")}>
             <FontAwesome name="facebook-f" size={24} color="black" />
-            <Text style={styles.buttonText}>Sing in with Facebook</Text>
+            <Text style={styles.buttonText}>Sign in with Facebook</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: "#28a745", marginTop: 10 },
-            ]}
-            onPress={() => navigation.navigate("Register")}>
-            <Text style={styles.buttonText}>Sing up</Text>
-          </TouchableOpacity>
-          <Text style={styles.textLogin}>Don't have an account? Sing up</Text>
-          <Text style={styles.textLogin}>
+          <Text style={styles.textLinkRegister}>
+            Don't have an account?{" "}
+            <Text
+              style={[styles.textLogin, { color: COLORS.primary }]}
+              onPress={() => navigation.navigate("Register")}>
+              Sign up
+            </Text>
+          </Text>
+          <Text style={styles.textFooter}>
             By creating this account, you agree to our
           </Text>
-          <Text style={styles.textLogin}>Privacy Policy and Cookie Policy</Text>
+          <Text style={styles.textFooter}>
+            Privacy Policy and Cookie Policy
+          </Text>
         </View>
       </View>
     </View>
