@@ -6,7 +6,7 @@ export default StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.background,
+    //backgroundColor: COLORS.background,
   },
   input: {
     width: "80%",
@@ -17,30 +17,18 @@ export default StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
   },
-  button: {
-    width: "80%",
-    height: 50,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+
   containerLogin: {
     width: "100%", // Asegura que el contenedor ocupe todo el ancho de la pantalla
     flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
     alignItems: "center", // Centra los elementos horizontalmente
-    justifyContent: "center", // Centra los elementos verticalmente
+    justifyContent: "space-between", // Centra los elementos verticalmente
     padding: 20, // Espaciado interno del contenedor
-    backgroundColor: COLORS.backgroundDark, // Fondo oscuro
+    //backgroundColor: COLORS.backgroundDark, // Fondo oscuro
   },
   imageContainer: {
     flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
-    backgroundColor: "#f00",
+    //backgroundColor: "#f00",
     width: "90%",
     alignItems: "center",
     justifyContent: "center", // Centra la imagen vertical y horizontalmente
@@ -54,10 +42,26 @@ export default StyleSheet.create({
   },
   LoginSingContainer: {
     width: "90%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
-    flex: 2, // Permite que el contenedor ocupe todo el espacio disponible
+    flex: 3, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
-    backgroundColor: "#f9f",
+    //backgroundColor: "#f9f",
+  },
+  loginTitle: {
+    width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
+    alignItems: "center", // Centra el título horizontalmente
+    fontSize: 24,
+    fontWeight: "bold",
+    color: COLORS.textTertiary,
+    marginBottom: 10, // Espaciado inferior del título
+  },
+  loginPasswordContainer: {
+    //flexGrow: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    //flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    width: "100%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
+    alignItems: "center", // Centra los elementos horizontalmente
+    justifyContent: "space-between", // Centra los elementos verticalmente
+    //backgroundColor: "#d0d", // Fondo transparente para el contenedor de contraseña
   },
   inputLogin: {
     width: "100%", // Asegura que el input ocupe todo el ancho del contenedor
@@ -71,48 +75,76 @@ export default StyleSheet.create({
     fontSize: 16, // Tamaño de fuente del input
   },
 
-  textLogin: {
-    color: COLORS.textSecondary, // Color del texto secundario
-    fontSize: 16, // Tamaño de fuente del texto secundario
-    textAlign: "center", // Centra el texto horizontalmente
-    //marginVertical: 10, // Espaciado vertical del texto
-  },
-
   containerTextPassword: {
     width: "100%",
     alignItems: "flex-end", // Centra el texto horizontalmente
     justifyContent: "center", // Centra el texto verticalmente
-    backgroundColor: "#cc0", // Fondo transparente para el enlace de contraseña
+    //backgroundColor: "#cc0", // Fondo transparente para el enlace de contraseña
     color: COLORS.primary, // Color del texto del enlace de contraseña
     fontSize: 36, // Tamaño de fuente del enlace de contraseña
     textAlign: "center", // Centra el texto horizontalmente
-    marginTop: 16, // Espaciado superior del enlace de contraseña
+    marginBottom: 10, // Espaciado inferior del enlace de contraseña
   },
 
   textPassword: {
     color: COLORS.primary, // Color del texto del enlace de contraseña
-    fontSize: 16, // Tamaño de fuente del enlace de contraseña
+    fontSize: 14, // Tamaño de fuente del enlace de contraseña
+    textDecorationLine: "underline", // Color de la decoración del texto
   },
-  socialLoginContainer: {
-    justifyContent: "space-around", // Distribuye los botones uniformemente
-    width: "80%", // Asegura que ocupe todo el ancho del contenedor
+
+  button: {
+    width: "100%",
+    height: 50,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 100,
+    marginBottom: 20, // Espaciado inferior del enlace de contraseña
   },
+  buttonTextContinue: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  buttonText: {
+    color: COLORS.textTertiary,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  containerSingUp: {
+    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    width: "100%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
+    alignItems: "center", // Centra los elementos horizontalmente
+    //backgroundColor: COLORS.backgroundDark, // Fondo oscuro
+  },
+  textLogin: {
+    color: COLORS.textTertiary, // Color del texto secundario
+    fontSize: 16, // Tamaño de fuente del texto secundario
+    textAlign: "center", // Centra el texto horizontalmente
+    //marginVertical: 10, // Espaciado vertical del texto
+    marginBottom: 20, // Espaciado inferior del texto
+  },
+
   iconSocialGoogle: {
+    justifyContent: "center",
+    alignItems: "center", // Centra el ícono dentro del botón
     flexDirection: "row", // Alinea el ícono y el texto horizontalmente
     width: "100%",
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#db4437", // Fondo del botón de Google
-    justifyContent: "center",
-    alignItems: "center", // Centra el ícono dentro del botón
+    //backgroundColor: "#db4437", // Fondo del botón de Google
+    marginBottom: 10,
+    borderWidth: 2,
   },
   iconSocialFacebook: {
     flexDirection: "row", // Alinea el ícono y el texto horizontalmente
     width: "100%",
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#4267B2", // Fondo del botón de Facebook
+    //backgroundColor: "#4267B2", // Fondo del botón de Facebook
     justifyContent: "center",
     alignItems: "center", // Centra el ícono dentro del botón
+    borderWidth: 2,
+    marginBottom: 10,
   },
 });

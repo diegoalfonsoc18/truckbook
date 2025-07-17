@@ -85,7 +85,8 @@ export default function LoginScreen({ navigation }: Props) {
         />
       </View>
       <View style={styles.LoginSingContainer}>
-        <View style={styles.containerTextPassword}>
+        <View style={styles.loginPasswordContainer}>
+          <Text style={styles.loginTitle}>Login</Text>
           <TextInput
             placeholder="Email"
             placeholderTextColor={COLORS.textSecondary}
@@ -106,34 +107,31 @@ export default function LoginScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.containerTextPassword}
             onPress={() => navigation.navigate("ForgotPassword")}>
-            <Text style={styles.textPassword}>¿Olvidaste tu contraseña?</Text>
+            <Text style={styles.textPassword}>Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Continue</Text>
+            <Text style={styles.buttonTextContinue}>Continue</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.containerSingUp}>
           <Text style={styles.textLogin}>O, continue con</Text>
-          {/* BOTÓN DE REGISTRO */}
+          <TouchableOpacity
+            style={[styles.iconSocialGoogle]}
+            onPress={() => handleSocialLogin("google")}>
+            <MaterialCommunityIcons
+              name="google-plus"
+              size={24}
+              color="black"
+            />
+            <Text style={styles.buttonText}>Sing in with Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconSocialFacebook]}
+            onPress={() => handleSocialLogin("facebook")}>
+            <FontAwesome name="facebook-f" size={24} color="black" />
+            <Text style={styles.buttonText}>Sing in with Facebook</Text>
+          </TouchableOpacity>
 
-          <View style={styles.socialLoginContainer}>
-            <TouchableOpacity
-              style={[styles.iconSocialGoogle]}
-              onPress={() => handleSocialLogin("google")}>
-              <MaterialCommunityIcons
-                name="google-plus"
-                size={24}
-                color="white"
-              />
-              <Text style={styles.buttonText}>Sing in with Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.iconSocialFacebook]}
-              onPress={() => handleSocialLogin("facebook")}>
-              <FontAwesome name="facebook-f" size={24} color="white" />
-              <Text style={styles.buttonText}>Sing in with Facebook</Text>
-            </TouchableOpacity>
-          </View>
           <TouchableOpacity
             style={[
               styles.button,
@@ -142,6 +140,11 @@ export default function LoginScreen({ navigation }: Props) {
             onPress={() => navigation.navigate("Register")}>
             <Text style={styles.buttonText}>Sing up</Text>
           </TouchableOpacity>
+          <Text style={styles.textLogin}>Don't have an account? Sing up</Text>
+          <Text style={styles.textLogin}>
+            By creating this account, you agree to our
+          </Text>
+          <Text style={styles.textLogin}>Privacy Policy and Cookie Policy</Text>
         </View>
       </View>
     </View>
