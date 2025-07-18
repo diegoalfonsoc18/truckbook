@@ -1,11 +1,18 @@
 import React, { useState } from "react";
-import { View, TextInput, Text, Alert, TouchableOpacity } from "react-native";
+import {
+  View,
+  TextInput,
+  Text,
+  Alert,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import supabase from "../../config/SupaBaseConfig"; // Asegúrate que este archivo exporta la instancia correctamente
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { styles } from "../../constants/GastosStyles";
+import styles from "./LoginStyles";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
+
 // Define tu stack de rutas
 type AuthStackParamList = {
   Register: undefined;
@@ -72,23 +79,43 @@ export default function Register({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        placeholder="Correo"
-        onChangeText={setEmail}
-        value={email}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Contraseña"
-        onChangeText={setPassword}
-        value={password}
-        secureTextEntry
-        style={styles.input}
-      />
-      <TouchableOpacity style={styles.button} onPress={register}>
-        <Text style={styles.buttonText}>Registrarse</Text>
-      </TouchableOpacity>
+    <View style={styles.containerRegister}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require("../../assets/img/camion.png")}
+          style={styles.imageLogin}
+        />
+      </View>
+      <View style={styles.LoginSingContainer}>
+        <Text style={styles.loginTitle}>Sing up</Text>
+        <TextInput
+          placeholder="Correo"
+          onChangeText={setEmail}
+          value={email}
+          style={styles.inputLogin}
+        />
+        <TextInput
+          placeholder="Contraseña"
+          onChangeText={setPassword}
+          value={password}
+          secureTextEntry
+          style={styles.inputLogin}
+        />
+        <TextInput
+          placeholder="Confirmar Contraseña"
+          onChangeText={setPassword}
+          value={password}
+          secureTextEntry
+          style={styles.inputLogin}
+        />
+        <Text style={styles.textLogin}>
+          I have read and accept the Privacy Policy
+        </Text>
+        <TouchableOpacity style={styles.button} onPress={register}>
+          <Text style={styles.buttonText}>Registrarse</Text>
+        </TouchableOpacity>
+        <Text style={styles.textLogin}>I'm already registered, </Text>
+      </View>
     </View>
   );
 }

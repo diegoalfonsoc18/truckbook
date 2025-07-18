@@ -28,7 +28,7 @@ export default StyleSheet.create({
   },
   imageContainer: {
     flex: 2, // Permite que el contenedor ocupe todo el espacio disponible
-    //backgroundColor: "#0A400C",
+    backgroundColor: "#0A400C",
     width: "90%",
     alignItems: "center",
     justifyContent: "center", // Centra la imagen vertical y horizontalmente
@@ -45,7 +45,7 @@ export default StyleSheet.create({
     flex: 3, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
-    //backgroundColor: "#56DFCF",
+    backgroundColor: "#56DFCF",
   },
   loginTitle: {
     width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
@@ -168,5 +168,26 @@ export default StyleSheet.create({
     textAlign: "center", // Centra el texto horizontalmente
     //marginTop: 20, // Espaciado superior del texto
     marginBottom: 3, // Espaciado inferior del texto
+  },
+
+  // Registro de Styles
+
+  containerRegister: {
+    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    width: "100%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
+    alignItems: "center", // Centra los elementos horizontalmente
+    justifyContent: "center", // Centra los elementos verticalmente
+    padding: 20, // Espaciado interno del contenedor
+    backgroundColor: "#FFCB61", // Fondo oscuro
+  },
+  inputRegister: {
+    width: "80%",
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    borderColor: COLORS.inputBorder, // Color del borde del input
+    backgroundColor: COLORS.surface, // Fondo del input
   },
 });
