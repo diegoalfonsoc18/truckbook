@@ -86,7 +86,7 @@ export default function Register({ navigation }: Props) {
           style={styles.imageLogin}
         />
       </View>
-      <View style={styles.LoginSingContainer}>
+      <View style={styles.registerSingContainer}>
         <Text style={styles.loginTitle}>Sing up</Text>
         <TextInput
           placeholder="Correo"

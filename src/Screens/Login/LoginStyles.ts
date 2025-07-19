@@ -28,7 +28,7 @@ export default StyleSheet.create({
   },
   imageContainer: {
     flex: 2, // Permite que el contenedor ocupe todo el espacio disponible
-    backgroundColor: "#0A400C",
+    //rbackgroundColor: "#0A400C",
     width: "90%",
     alignItems: "center",
     justifyContent: "center", // Centra la imagen vertical y horizontalmente
@@ -45,7 +45,7 @@ export default StyleSheet.create({
     flex: 3, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra los elementos verticalmente
     alignItems: "center", // Centra los elementos horizontalmente
-    backgroundColor: "#56DFCF",
+    //backgroundColor: "#56DFCF",
   },
   loginTitle: {
     width: "100%", // Asegura que el título ocupe todo el ancho del contenedor
@@ -178,7 +178,14 @@ export default StyleSheet.create({
     alignItems: "center", // Centra los elementos horizontalmente
     justifyContent: "center", // Centra los elementos verticalmente
     padding: 20, // Espaciado interno del contenedor
-    backgroundColor: "#FFCB61", // Fondo oscuro
+    //backgroundColor: "#FFCB61", // Fondo oscuro
+  },
+  registerSingContainer: {
+    width: "90%", // Asegura que el contenedor ocupe todo el ancho del contenedor padre
+    flex: 3, // Permite que el contenedor ocupe todo el espacio disponible
+    justifyContent: "flex-start", // Centra los elementos verticalmente
+    alignItems: "center", // Centra los elementos horizontalmente
+    //backgroundColor: "#56DFCF",
   },
   inputRegister: {
     width: "80%",
