@@ -1,11 +1,5 @@
 import React, { useCallback, useState } from "react";
-import {
-  SafeAreaView,
-  View,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { SafeAreaView, View, Text } from "react-native";
 import { styles } from "../../constants/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
