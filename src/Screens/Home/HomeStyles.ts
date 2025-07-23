@@ -40,4 +40,19 @@ export const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  itemsContainer: {
+    width: "90%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  itemBox: {
+    flex: 1,
+    margin: 10,
+    padding: 20,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
