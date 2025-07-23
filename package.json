@@ -25,6 +25,7 @@
     "expo-linking": "^7.1.7",
     "expo-localization": "~16.1.6",
     "expo-status-bar": "~2.2.3",
+    "expo-web-browser": "~14.2.0",
     "firebase": "^11.10.0",
     "react": "19.0.0",
     "react-native": "0.79.4",
@@ -47,6 +48,8 @@
     "@babel/core": "^7.20.0",
     "@types/react": "^19.0.0",
     "@types/react-native": "^0.73.0",
+    "eslint": "^9.31.0",
+    "prettier": "^3.6.2",
     "react-native-svg-transformer": "^1.5.1",
     "typescript": "^5.8.3"
   },
