@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
   containerHeader: {
     flex: 0.4,
     flexDirection: "row",
+    justifyContent: "space-between",
     width: "90%",
     borderRadius: 10,
     backgroundColor: "#fff",
