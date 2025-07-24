@@ -6,7 +6,7 @@ import {
 } from "react-native-safe-area-context";
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-
+import { items } from "./Items"; // Importing the items array
 export default function Home() {
   const insets = useSafeAreaInsets();
 
@@ -30,52 +30,22 @@ export default function Home() {
           }}
           showsVerticalScrollIndicator={false}>
           <View style={styles.containerAlert}>
-            <Text>Avisos</Text>
+            <Text style={styles.textAlert}>Avisos</Text>
           </View>
           <View style={styles.itemsContainer}>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/factura.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Por hacer</Text>
-              <Text>Multas</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/proteger.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Pago SOAT</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/licencia.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Licencia de conducción</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/certificado-digital.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Técnico Mecánica</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/aceite-de-motor.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Mantenimiento</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.itemBox}>
-              <Image
-                source={require("../../assets/icons/seguridad-mundial.png")}
-                style={styles.iconItemBox}
-              />
-              <Text>Seguro todo riesgo</Text>
-            </TouchableOpacity>
+            {items.map((item, idx) => (
+              <TouchableOpacity style={styles.itemBox} key={idx}>
+                <View style={styles.iconContainer}>
+                  <Image source={item.icon} style={styles.iconItemBox} />
+                </View>
+                <View style={styles.textContainer}>
+                  <Text style={styles.textTitle}>{item.title}</Text>
+                  {item.subtitle && (
+                    <Text style={styles.textSubtitle}>{item.subtitle}</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         </ScrollView>
       </View>

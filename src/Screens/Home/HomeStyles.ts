@@ -5,7 +5,7 @@ import { COLORS } from "../../constants/colors"; // Adjust the import path as ne
 export const styles = StyleSheet.create({
   container: {
     width: "100%", // Ancho completo de la pantalla
-    backgroundColor: "#FF0B55", // Fondo principal de la pantalla
+    //backgroundColor: "#FF0B55", // Fondo principal de la pantalla
     alignItems: "center",
     justifyContent: "space-between", // Espacio entre los elementos
     padding: 10, // Espaciado interno
@@ -15,8 +15,8 @@ export const styles = StyleSheet.create({
     flex: 0.4,
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "90%",
-    borderRadius: 10,
+    width: "98%",
+    borderRadius: 20,
     backgroundColor: "#fff",
     padding: 20,
     marginTop: 20,
@@ -49,29 +49,31 @@ export const styles = StyleSheet.create({
   },
   containerScroll: {
     flex: 6, // Permite que el contenedor ocupe todo el espacio disponible
-    width: "90%",
+    width: "98%",
     alignItems: "center", // Centra los elementos horizontalmente
     backgroundColor: COLORS.surface, // Fondo del contenedor de scroll
     marginBottom: 80,
+    marginTop: 10,
     borderRadius: 20, // Bordes redondeados
     //padding: 10, // Espaciado interno
     shadowColor: "#000",
   },
   containerAlert: {
-    flex: 1,
+    flex: 0, // O elimina flex si usas height/minHeight
     width: "100%",
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 20,
+
     marginBottom: 20,
-    backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
-    // Sombra para iOS
+    backgroundColor: COLORS.surface,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    // Sombra Android
     elevation: 5,
+    height: 150, // <-- Más alto
   },
+
   itemsContainer: {
     flex: 3, // Ocupa todo el espacio vertical disponible
     flexWrap: "wrap", // Permite que los elementos se ajusten en varias líneas
@@ -95,10 +97,12 @@ export const styles = StyleSheet.create({
     margin: "1%",
     height: 100, // Ajusta la altura según lo que necesites
     marginVertical: 10,
-    padding: 20,
+    padding: 6,
     borderRadius: 10,
     backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
+    //backgroundColor: "#A0153E", // Fondo del contenedor de la fecha
     // Sombra para iOS
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -106,9 +110,37 @@ export const styles = StyleSheet.create({
     // Sombra Android
     elevation: 5,
   },
+  iconContainer: {
+    flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
+    justifyContent: "center", // Centra verticalmente
+    alignItems: "center", // Centra horizontalmente
+    //backgroundColor: "#FF9D23",
+  },
   iconItemBox: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     marginBottom: 10,
+  },
+
+  textContainer: {
+    flex: 1.6, // Permite que el contenedor ocupe todo el espacio disponible
+    justifyContent: "center", // Centra verticalmente
+    alignItems: "flex-end", // Alinea el texto al inicio horizontalmente
+    paddingLeft: 10, // Espacio entre el icono y el texto
+    //backgroundColor: "#16C47F", // Fondo del icono
+  },
+  textTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.textTertiary, // Color del texto
+  },
+  textSubtitle: {
+    fontSize: 14,
+    color: COLORS.textTertiary, // Color del texto
+  },
+  textAlert: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.textTertiary, // Color del texto
   },
 });
