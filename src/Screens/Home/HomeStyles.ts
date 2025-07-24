@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "98%",
     borderRadius: 20,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.surface, // Fondo del contenedor del header
     padding: 20,
     marginTop: 20,
     marginBottom: 20,
@@ -51,19 +51,21 @@ export const styles = StyleSheet.create({
     flex: 6, // Permite que el contenedor ocupe todo el espacio disponible
     width: "98%",
     alignItems: "center", // Centra los elementos horizontalmente
-    backgroundColor: COLORS.surface, // Fondo del contenedor de scroll
+    backgroundColor: "transparent", // Fondo del contenedor de scroll
     marginBottom: 80,
     marginTop: 10,
     borderRadius: 20, // Bordes redondeados
-    //padding: 10, // Espaciado interno
     shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
   },
   containerAlert: {
     flex: 0, // O elimina flex si usas height/minHeight
     width: "100%",
     padding: 20,
     borderRadius: 20,
-
     marginBottom: 20,
     backgroundColor: COLORS.surface,
     shadowColor: "#000",
@@ -83,7 +85,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 10,
     marginBottom: 80,
-    //        sbackgroundColor: "#CFFFE2",
+    //backgroundColor: "#CFFFE2",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

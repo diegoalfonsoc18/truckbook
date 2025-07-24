@@ -11,7 +11,7 @@ export const items = [
   },
   {
     icon: require("../../assets/icons/licencia.png"),
-    title: "vigente",
+    title: "Vigente",
     subtitle: "Licencia",
   },
   {
