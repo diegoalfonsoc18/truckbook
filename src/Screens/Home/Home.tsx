@@ -34,21 +34,46 @@ export default function Home() {
           </View>
           <View style={styles.itemsContainer}>
             <TouchableOpacity style={styles.itemBox}>
+              <Image
+                source={require("../../assets/icons/factura.png")}
+                style={styles.iconItemBox}
+              />
+              <Text>Por hacer</Text>
               <Text>Multas</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.itemBox}>
+              <Image
+                source={require("../../assets/icons/proteger.png")}
+                style={styles.iconItemBox}
+              />
               <Text>Pago SOAT</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.itemBox}>
-              <Text>Licencia conducción</Text>
+              <Image
+                source={require("../../assets/icons/licencia.png")}
+                style={styles.iconItemBox}
+              />
+              <Text>Licencia de conducción</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.itemBox}>
+              <Image
+                source={require("../../assets/icons/certificado-digital.png")}
+                style={styles.iconItemBox}
+              />
               <Text>Técnico Mecánica</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.itemBox}>
+              <Image
+                source={require("../../assets/icons/aceite-de-motor.png")}
+                style={styles.iconItemBox}
+              />
               <Text>Mantenimiento</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.itemBox}>
+              <Image
+                source={require("../../assets/icons/seguridad-mundial.png")}
+                style={styles.iconItemBox}
+              />
               <Text>Seguro todo riesgo</Text>
             </TouchableOpacity>
           </View>

@@ -89,6 +89,7 @@ export const styles = StyleSheet.create({
   },
 
   itemBox: {
+    flexDirection: "row",
     width: "48%",
     margin: "1%",
     height: 100, // Ajusta la altura según lo que necesites
@@ -103,5 +104,10 @@ export const styles = StyleSheet.create({
     shadowRadius: 3.84,
     // Sombra Android
     elevation: 5,
+  },
+  iconItemBox: {
+    width: 50,
+    height: 50,
+    marginBottom: 10,
   },
 });
