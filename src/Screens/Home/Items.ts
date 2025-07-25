@@ -1,27 +1,27 @@
-const factura = require("../../assets/icons/factura (1).png");
-const aceiteMotor = require("../../assets/icons/aceite-motor.png");
-const certificadoDigital = require("../../assets/icons/certificado-digital.png");
-const licencia = require("../../assets/icons/licencia.png");
-const proteger = require("../../assets/icons/proteger.png");
-
+const comparendo = require("../../assets/icons1/comparendo.png");
+const aceiteMotor = require("../../assets/icons1/aceitemotor.png");
+const soat = require("../../assets/icons1/proteger.png");
+const licencia = require("../../assets/icons1/licencia-de-conducir.png");
+const seguroRiesgo = require("../../assets/icons1/blindaje.png");
+const tecnoMecanica = require("../../assets/icons1/certificado.png");
 export const items = [
   {
-    icon: factura,
+    icon: comparendo,
     title: "Pendiente",
     subtitle: "Multas",
   },
   {
-    icon: require("../../assets/icons/proteger.png"),
+    icon: soat,
     title: "Proximo",
     subtitle: "Soat",
   },
   {
-    icon: require("../../assets/icons/licencia.png"),
+    icon: licencia,
     title: "Vigente",
     subtitle: "Licencia",
   },
   {
-    icon: require("../../assets/icons/certificado-digital.png"),
+    icon: tecnoMecanica,
     title: "Proximo",
     subtitle: "Técno Mecánica",
   },
@@ -31,8 +31,18 @@ export const items = [
     subtitle: "Mantenimiento",
   },
   {
-    icon: require("../../assets/icons/seguridad-mundial.png"),
+    icon: seguroRiesgo,
     title: "Activo",
     subtitle: "Seguro Intégral",
+  },
+  {
+    icon: comparendo,
+    title: "Pendiente",
+    subtitle: "Multas",
+  },
+  {
+    icon: comparendo,
+    title: "Pendiente",
+    subtitle: "Multas",
   },
 ];

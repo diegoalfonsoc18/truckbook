@@ -14,7 +14,7 @@ export default function Home() {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.containerHeader}>
         <Image
-          source={require("../../assets/icons/camionIcon.png")}
+          source={require("../../assets/icons1/camion.png")}
           style={styles.iconHome}
         />
         <Text>Agrega tu camión</Text>

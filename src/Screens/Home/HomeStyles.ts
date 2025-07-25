@@ -97,6 +97,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     width: "48%",
     margin: "1%",
+    resizeMode: "cover",
     height: 100, // Ajusta la altura según lo que necesites
     marginVertical: 10,
     padding: 6,
