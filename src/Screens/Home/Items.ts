@@ -1,6 +1,6 @@
 export const items = [
   {
-    icon: require("../../assets/icons/factura.png"),
+    icon: require("../../assets/icons/factura(1).png"),
     title: "Pendiente",
     subtitle: "Multas",
   },

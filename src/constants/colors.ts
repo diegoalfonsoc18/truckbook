@@ -9,7 +9,7 @@ export const COLORS = {
   inputBackground: "#1E1E1E",
   primary: "#007BFF",
   secondary: "#212121",
-  surface: "#EDEEEF",
+  surface: "#EBECF1",
   accent: "#CCCCCC",
   black: "#000000",
   white: "#FFFFFF",
