@@ -1,6 +1,12 @@
+const factura = require("../../assets/icons/factura (1).png");
+const aceiteMotor = require("../../assets/icons/aceite-motor.png");
+const certificadoDigital = require("../../assets/icons/certificado-digital.png");
+const licencia = require("../../assets/icons/licencia.png");
+const proteger = require("../../assets/icons/proteger.png");
+
 export const items = [
   {
-    icon: require("../../assets/icons/factura(1).png"),
+    icon: factura,
     title: "Pendiente",
     subtitle: "Multas",
   },
@@ -20,7 +26,7 @@ export const items = [
     subtitle: "Técno Mecánica",
   },
   {
-    icon: require("../../assets/icons/aceite-de-motor.png"),
+    icon: aceiteMotor,
     title: "Proximo",
     subtitle: "Mantenimiento",
   },
