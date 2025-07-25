@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import {
-  SafeAreaView,
   Text,
   Dimensions,
   View,
-  Button,
   ScrollView,
   TouchableOpacity,
 } from "react-native";
@@ -14,7 +12,7 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import { styles } from "./StylesFinanzas";
 import FilterCalendar from "../../components/Reportes/FilterCalendar";
 import { COLORS } from "../../constants/colors";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 function groupBy<T extends { fecha: string; value: number | string }>(
   items: T[],
   keyFn: (item: T) => string
@@ -137,7 +135,7 @@ export default function FinanzasGenerales() {
   const formattedLabels = view === "dias" ? allKeys.map(formatLabel) : allKeys;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <FilterCalendar onChangeRango={setRango} />
       <View style={styles.graphicContainer}>
         <View style={styles.buttonContainer}>

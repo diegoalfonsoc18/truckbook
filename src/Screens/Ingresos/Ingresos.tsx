@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { SafeAreaView, View, Text } from "react-native";
+import { View, Text } from "react-native";
 import { styles } from "../../constants/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
@@ -7,7 +7,10 @@ import HeaderCalendar from "../../components/HeaderCalendar";
 import IngresosItem from "../../components/IngresosItem";
 import { useIngresosStore } from "../../store/IngresosStore"; // Asegúrate de importar tu store
 import IngresGast from "../../components/ResumenIngreGast";
-
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 export default function Ingresos() {
   // Zustand store
   const ingresos = useIngresosStore((state) => state.ingresos);
@@ -73,9 +76,9 @@ export default function Ingresos() {
 
   // Filtra los ingresos por la fecha seleccionada
   const IngresosFiltrados = ingresos.filter((g) => g.fecha === selectedDate);
-
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <HeaderCalendar
         title="Ingresos"
         data={ingresos}

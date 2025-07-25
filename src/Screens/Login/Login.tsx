@@ -6,8 +6,6 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import styles from "./LoginStyles";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { COLORS } from "../../constants/colors";
 
 // Define tus rutas

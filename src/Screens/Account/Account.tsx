@@ -1,13 +1,7 @@
 import React from "react";
-import {
-  SafeAreaView,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import supabase from "../../config/SupaBaseConfig"; // Asegúrate de importar tu instancia
-
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function Account({ navigation }: any) {
   // const { currency, setCurrency } = useCurrencyStore();
 
@@ -21,7 +15,7 @@ export default function Account({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <Text style={styles.title}>Selecciona tu moneda:</Text>
       {/* ...tu Picker aquí... */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

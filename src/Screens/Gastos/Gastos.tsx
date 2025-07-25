@@ -1,14 +1,8 @@
 import React, { useState, useCallback } from "react";
-import {
-  SafeAreaView,
-  View,
-  Modal,
-  Text,
-  TextInput,
-  Button,
-} from "react-native";
+import { View, Modal, Text, TextInput, Button } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
+import { SafeAreaView } from "react-native-safe-area-context";
+// ...existing code...
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/HeaderCalendar";
 import GastoItem from "../../components/GastoItem";
@@ -86,7 +80,7 @@ export default function Gastos() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <HeaderCalendar
         title="Gastos"

@@ -3,10 +3,11 @@ import { COLORS } from "../../constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 1, // Ocupa todo el espacio disponible
+    //backgroundColor: "#cc0", // Fondo principal de la pantalla
     alignItems: "center",
-    justifyContent: "flex-start",
-    width: "100%",
+    justifyContent: "center", // Alinea los elementos al inicio
+    padding: 10, // Espaciado interno
+    flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
   },
   graphicContainer: {
     // Oculta el desbordamiento del gráfico
