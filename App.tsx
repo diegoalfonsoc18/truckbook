@@ -1,6 +1,12 @@
 // App.tsx
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  Platform,
+  StatusBar as RNStatusBar,
+} from "react-native";
 import "react-native-gesture-handler";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
@@ -52,7 +58,16 @@ export default function App() {
 
   return (
     <View style={styles.globalContainer}>
-      <StatusBar style="light" backgroundColor={COLORS.primary} />
+      {/* Fondo para el StatusBar en Android */}
+      {Platform.OS === "android" && (
+        <View
+          style={{
+            height: RNStatusBar.currentHeight,
+            backgroundColor: COLORS.primary,
+          }}
+        />
+      )}
+      <StatusBar style="light" translucent />
       <NavigationContainer theme={AppTheme}>
         {session ? <AppStack /> : <AuthStack />}
       </NavigationContainer>

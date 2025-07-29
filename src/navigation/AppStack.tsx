@@ -1,6 +1,8 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
@@ -27,12 +29,19 @@ const screenOptions = (icon: () => React.ReactNode) => ({
 
 // Componente principal de navegación
 export default function AppStack() {
+  //const insets = useSafeAreaInsets(); // Obtener los insets de la pantalla
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false, // Oculta el encabezado
-        tabBarStyle: styles.tabBar, // Aplica estilos centralizados
+        tabBarStyle: {
+          position: "absolute",
+          borderTopWidth: 0,
+          //height: 60 + insets.bottom, // 👈 Ajustamos dinámicamente el alto
+          //paddingBottom: insets.bottom, // 👈 Muy importante en Android
+          paddingTop: 10,
+        },
         tabBarActiveTintColor: COLORS.primary, // Color del ícono activo
         tabBarInactiveTintColor: COLORS.accent, // Color del ícono inactivo
         //tabBarShowLabel: false, // Oculta las etiquetas de texto
