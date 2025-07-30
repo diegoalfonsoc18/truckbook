@@ -236,4 +236,9 @@ export const styles = StyleSheet.create({
     fontSize: 16, // Tamaño del texto del botón
     fontWeight: "bold", // Negrita para el texto del botón
   },
+  calendarIcon: {
+    width: 50,
+    height: 50,
+    //tintColor: COLORS.secondary, // Color del ícono del calendario
+  },
 });

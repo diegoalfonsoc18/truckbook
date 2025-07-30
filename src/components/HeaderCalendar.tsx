@@ -5,10 +5,12 @@ import {
   View,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { styles } from "../constants/GastosStyles";
 import { COLORS } from "../constants/colors";
 import CustomCalendar from "../components/CustomCalendar";
+
 type HeaderCalendarProps = {
   title: string;
   data: Array<{ fecha: string }>;
@@ -50,10 +52,9 @@ export default function HeaderCalendar({
       {/* Fecha seleccionada y botón para mostrar el calendario */}
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
         <View style={styles.iconContainer}>
-          <MaterialIcons
-            name="calendar-month"
-            size={60}
-            color={COLORS.secondary}
+          <Image
+            source={require("../assets/icons1/calendario.png")}
+            style={styles.calendarIcon}
           />
         </View>
         <Text style={styles.dateText}>{selectedDate}</Text>
