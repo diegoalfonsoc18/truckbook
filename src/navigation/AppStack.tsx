@@ -1,7 +1,6 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
@@ -34,29 +33,23 @@ export default function AppStack() {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false, // Oculta el encabezado
-        tabBarStyle: {
-          position: "absolute",
-          borderTopWidth: 0,
-          //height: 60 + insets.bottom, // 👈 Ajustamos dinámicamente el alto
-          //paddingBottom: insets.bottom, // 👈 Muy importante en Android
-          paddingTop: 10,
-        },
+        tabBarStyle: styles.tabBar, // Aplica estilos al tabBar
         tabBarActiveTintColor: COLORS.primary, // Color del ícono activo
-        tabBarInactiveTintColor: COLORS.accent, // Color del ícono inactivo
-        //tabBarShowLabel: false, // Oculta las etiquetas de texto
+        tabBarInactiveTintColor: COLORS.textTertiary,
+
         tabBarIcon: ({ focused, color, size }) => {
           // Renderiza el ícono correspondiente según la pestaña
           switch (route.name) {
             case "Gastos":
-              return renderGastos(color, size);
+              return renderGastos(color, size, focused);
             case "Ingresos":
-              return renderIngresos(color, size);
+              return renderIngresos(color, size, focused);
             case "Home":
-              return renderHome(color, size);
+              return renderHome(color, size, focused);
             case "Reportes":
-              return renderFinanzas(color, size);
+              return renderFinanzas(color, size, focused);
             case "Account":
-              return renderAccount(color, size);
+              return renderAccount(color, size, focused);
             default:
               return null;
           }
@@ -75,10 +68,19 @@ export default function AppStack() {
 const styles = StyleSheet.create({
   tabBar: {
     position: "absolute",
-    //backgroundColor: "#393E46",
+    backgroundColor: COLORS.background,
     borderTopWidth: 0,
-    height: 70,
+    height: 90,
     paddingBottom: 10,
     paddingTop: 10,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: "hidden",
+    // Sombra más notoria
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 16, // Sombra Android más fuerte
   },
 });
