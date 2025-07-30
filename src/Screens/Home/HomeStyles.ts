@@ -80,11 +80,11 @@ export const styles = StyleSheet.create({
     flex: 3, // Ocupa todo el espacio vertical disponible
     flexWrap: "wrap", // Permite que los elementos se ajusten en varias líneas
     flexDirection: "row", // Alinea los elementos en filas
-    justifyContent: "space-between", // Espacio entre los elementos
+    justifyContent: "space-evenly", // Espacio entre los elementos
     alignItems: "stretch", // Alinea los elementos para que ocupen el mismo alto// Ancho del contenedor de los elementos
     width: "100%",
     borderRadius: 10,
-    marginBottom: 80,
+    //marginBottom: 80,
     //backgroundColor: "#CFFFE2",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -95,13 +95,16 @@ export const styles = StyleSheet.create({
 
   itemBox: {
     flexDirection: "row",
-    width: "48%",
+    justifyContent: "center", // Centra verticalmente
+    alignItems: "center", // Centra horizontalmente
+    width: "43%", // Ancho del contenedor de cada elemento
     margin: "1%",
     resizeMode: "cover",
     height: 100, // Ajusta la altura según lo que necesites
     marginVertical: 10,
     padding: 6,
-    borderRadius: 10,
+
+    borderRadius: 20,
     backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
     //backgroundColor: "#A0153E", // Fondo del contenedor de la fecha
     // Sombra para iOS
@@ -114,23 +117,26 @@ export const styles = StyleSheet.create({
     elevation: 5,
   },
   iconContainer: {
+    height: "100%", // Altura completa del contenedor del icono
+    width: "100%", // Ancho completo del contenedor del icono
     flex: 1, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra verticalmente
     alignItems: "center", // Centra horizontalmente
     //backgroundColor: "#FF9D23",
   },
   iconItemBox: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+    width: 68,
+    height: 68,
   },
 
   textContainer: {
-    flex: 1.6, // Permite que el contenedor ocupe todo el espacio disponible
+    height: "100%", // Altura completa del contenedor del texto
+    flex: 1.4, // Permite que el contenedor ocupe todo el espacio disponible
     justifyContent: "center", // Centra verticalmente
     alignItems: "flex-end", // Alinea el texto al inicio horizontalmente
     paddingLeft: 10, // Espacio entre el icono y el texto
     //backgroundColor: "#16C47F", // Fondo del icono
+    width: "100%", // Ancho completo del contenedor del texto
   },
   textTitle: {
     fontSize: 16,
@@ -138,8 +144,11 @@ export const styles = StyleSheet.create({
     color: COLORS.textTertiary, // Color del texto
   },
   textSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textTertiary, // Color del texto
+    justifyContent: "center", // Centra verticalmente
+    alignItems: "center", // Alinea el texto al inicio horizontalmente
+    textAlign: "center", // Centra el texto horizontalmente
   },
   textAlert: {
     fontSize: 16,

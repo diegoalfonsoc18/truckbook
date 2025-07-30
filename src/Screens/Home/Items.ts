@@ -1,9 +1,9 @@
 const comparendo = require("../../assets/icons1/comparendo3d.png");
 const aceiteMotor = require("../../assets/icons1/aceiteMotor2.png");
-const soat = require("../../assets/icons1/proteger.png");
-const licencia = require("../../assets/icons1/licencia-de-conducir.png");
-const seguroRiesgo = require("../../assets/icons1/blindaje.png");
-const tecnoMecanica = require("../../assets/icons1/certificado.png");
+const soat = require("../../assets/icons1/escudoMadera3d.png");
+const licencia = require("../../assets/icons1/licencia3d.png");
+const seguroRiesgo = require("../../assets/icons1/escudoMetal3d.png");
+const tecnoMecanica = require("../../assets/icons1/certificacion3d.png");
 export const items = [
   {
     icon: comparendo,
