@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, Text } from "react-native";
+import { View, TextInput, Button, StyleSheet, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../constants/colors";
+
 export default function GastoItem({
   item,
   onSend,
@@ -22,13 +23,12 @@ export default function GastoItem({
   return (
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
-      <Text style={styles.label}></Text>
-      <MaterialIcons
-        name="attach-money"
-        size={26}
-        color={COLORS.textTertiary}
-        style={{ marginRight: 8 }}
-      />
+      <View style={styles.iconContainer}>
+        <Image
+          source={require("../assets/icons1/pesos.png")}
+          style={styles.calendarIcon}
+        />
+      </View>
 
       <TextInput
         style={styles.input}
@@ -71,5 +71,27 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     backgroundColor: "#fff",
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "white", // mejora contraste
+    alignItems: "center",
+    justifyContent: "center",
+
+    // iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+
+    // Android
+    elevation: 3,
+    marginRight: 8,
+  },
+  calendarIcon: {
+    width: 50,
+    height: 50,
   },
 });

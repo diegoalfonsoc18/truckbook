@@ -53,7 +53,7 @@ export default function HeaderCalendar({
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
         <View style={styles.iconContainer}>
           <Image
-            source={require("../assets/icons1/calendario.png")}
+            source={require("../assets/icons1/calendar3d1.png")}
             style={styles.calendarIcon}
           />
         </View>
