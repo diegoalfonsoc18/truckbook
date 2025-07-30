@@ -1,5 +1,5 @@
-const comparendo = require("../../assets/icons1/comparendo.png");
-const aceiteMotor = require("../../assets/icons1/aceitemotor.png");
+const comparendo = require("../../assets/icons1/comparendo3d.png");
+const aceiteMotor = require("../../assets/icons1/aceiteMotor2.png");
 const soat = require("../../assets/icons1/proteger.png");
 const licencia = require("../../assets/icons1/licencia-de-conducir.png");
 const seguroRiesgo = require("../../assets/icons1/blindaje.png");
