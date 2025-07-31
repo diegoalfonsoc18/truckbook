@@ -24,6 +24,7 @@ const AppTheme = {
   colors: {
     ...DefaultTheme.colors,
     background: COLORS.background,
+    //background: COLORS.backgroundDark, // Cambia el fondo a un color oscuro
     text: COLORS.text,
   },
 };
@@ -59,7 +60,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.globalContainer} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.globalContainer} edges={["top"]}>
         {/* Solo para Android, evita usar translucent en iOS */}
         {Platform.OS === "android" && (
           <View
@@ -85,6 +86,10 @@ export default function App() {
 const styles = StyleSheet.create({
   globalContainer: {
     flex: 1,
+    backgroundColor: COLORS.background, // Cambia el fondo a un color oscuro
+    paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
+    paddingBottom: 0, // Evita el padding inferior en iOS
+    //paddingHorizontal: 16, // Añade un padding horizontal para evitar que el contenido toque
   },
   loadingContainer: {
     flex: 1,

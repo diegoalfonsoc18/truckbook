@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
@@ -67,20 +67,28 @@ export default function AppStack() {
 // Estilos centralizados
 const styles = StyleSheet.create({
   tabBar: {
+    width: "100%",
     position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0, // <-- Esto lo pega al borde inferior
     backgroundColor: COLORS.background,
     borderTopWidth: 0,
-    height: 90,
-    paddingBottom: 10,
+    borderBottomWidth: 0,
+    height: 90, // <-- Ajusta la altura según lo que desees
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    overflow: "hidden",
-    // Sombra más notoria
+
+    // ✅ Sombra sutil arriba y lados
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 16, // Sombra Android más fuerte
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+
+    elevation: 16, // Para Android
+
+    // ✅ Permite que la sombra se extienda
+    overflow: "visible",
   },
 });
