@@ -5,7 +5,7 @@ export const COLORS = {
   textTertiary: "#3C3D37",
   inputBorder: "#3D3D3D",
   backgroundDark: "#121213",
-  background: "#F9FAFB",
+  background: "#FFF",
   inputBackground: "#1E1E1E",
   primary: "#007BFF",
   secondary: "#212121",
