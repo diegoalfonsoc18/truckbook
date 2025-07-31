@@ -25,7 +25,7 @@ export default function GastoItem({
       {/* Asegúrate de que item.name sea una cadena de texto */}
       <View style={styles.iconContainer}>
         <Image
-          source={require("../assets/icons1/pesos.png")}
+          source={require("../assets/icons1/moneyigas3d.png")}
           style={styles.calendarIcon}
         />
       </View>

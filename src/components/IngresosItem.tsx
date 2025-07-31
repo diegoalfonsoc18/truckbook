@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, Text } from "react-native";
+import { View, TextInput, Button, StyleSheet, Text, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../constants/colors";
 export default function IngresosItem({
@@ -23,11 +23,9 @@ export default function IngresosItem({
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
       <Text style={styles.label}></Text>
-      <MaterialIcons
-        name="attach-money"
-        size={26}
-        color={COLORS.textTertiary}
-        style={{ marginRight: 8 }}
+      <Image
+        source={require("../assets/icons1/moneyIn3d.png")}
+        style={styles.moneyIcon}
       />
 
       <TextInput
@@ -71,5 +69,27 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     backgroundColor: "#fff",
+  },
+  moneyIcon: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+    // iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+
+    // Android
+    elevation: 3,
   },
 });
