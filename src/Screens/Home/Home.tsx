@@ -12,7 +12,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <View style={styles.containerHeader}>
         <Image
           source={require("../../assets/icons1/camion.png")}
