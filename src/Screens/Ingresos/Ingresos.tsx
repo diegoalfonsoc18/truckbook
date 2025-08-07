@@ -78,7 +78,7 @@ export default function Ingresos() {
   const IngresosFiltrados = ingresos.filter((g) => g.fecha === selectedDate);
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <HeaderCalendar
         title="Ingresos"
         data={ingresos}

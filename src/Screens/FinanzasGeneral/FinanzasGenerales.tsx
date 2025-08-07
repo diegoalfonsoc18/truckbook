@@ -135,7 +135,7 @@ export default function FinanzasGenerales() {
   const formattedLabels = view === "dias" ? allKeys.map(formatLabel) : allKeys;
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <FilterCalendar onChangeRango={setRango} />
       <View style={styles.graphicContainer}>
         <View style={styles.buttonContainer}>
