@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center", // Alinea los elementos al inicio
     padding: 10, // Espaciado interno
-    flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
+    flex: 0.88, // Permite que el contenedor ocupe todo el espacio disponible
   },
   headerContainer: {
     width: "100%",

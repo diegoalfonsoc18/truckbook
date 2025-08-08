@@ -7,14 +7,15 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center", // Alinea los elementos al inicio
     padding: 10, // Espaciado interno
-    flex: 0.9, // Permite que el contenedor ocupe todo el espacio disponible
+    flex: 0.88, // Permite que el contenedor ocupe todo el espacio disponible
   },
   graphicContainer: {
-    // Oculta el desbordamiento del gráfico
-    flex: 1, // Ocupa todo el espacio disponible
+    flex: 1.6, // Ocupa todo el espacio disponible
+    justifyContent: "center", // Centra el contenido verticalmente
+    alignItems: "center", // Centra el contenido horizontalmente
     width: "100%",
     //backgroundColor: COLORS.background, // Fondo del contenedor del gráfico
-    //padding: 10,
+    //backgroundColor: "#d45714ff",
     borderRadius: 20,
     marginBottom: 20,
     // Sombra para iOS
@@ -25,13 +26,6 @@ export const styles = StyleSheet.create({
     // Sombra para Android
     elevation: 5,
   },
-  containerGraph: {
-    flex: 6, // Más espacio para el gráfico
-    width: "100%",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   buttonContainer: {
     flex: 1, // Espacio proporcional para los botones
     flexDirection: "row",
@@ -39,7 +33,18 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     fontSize: 16,
+    //backgroundColor: "#a80e65ff",
+    //marginBottom: 20,
   },
+  containerGraph: {
+    flex: 6, // Más espacio para el gráfico
+    width: "100%",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    //backgroundColor: "#13e716ff",
+  },
+
   button: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -55,6 +60,7 @@ export const styles = StyleSheet.create({
     flex: 0.3, // Espacio proporcional para el resumen
     width: "90%",
     backgroundColor: COLORS.surface,
+
     padding: 30,
     borderRadius: 20,
     justifyContent: "center",
@@ -65,7 +71,7 @@ export const styles = StyleSheet.create({
     shadowRadius: 3.84,
     // Sombra para Android
     elevation: 5,
-    marginBottom: 50,
+    //marginBottom: 50,
   },
   resumenTitle: {
     fontWeight: "bold",

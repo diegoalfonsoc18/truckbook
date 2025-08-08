@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  Text,
-  Dimensions,
-  View,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { Text, Dimensions, View, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useGastosStore } from "../../store/CurrencyStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -13,6 +7,7 @@ import { styles } from "./StylesFinanzas";
 import FilterCalendar from "../../components/Reportes/FilterCalendar";
 import { COLORS } from "../../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 function groupBy<T extends { fecha: string; value: number | string }>(
   items: T[],
   keyFn: (item: T) => string
@@ -124,14 +119,6 @@ export default function FinanzasGenerales() {
     totalIngresos === 0
       ? 0
       : (((totalIngresos - totalGastos) / totalIngresos) * 100).toFixed(2);
-
-  // Calcula el ancho del gráfico para scroll horizontal si hay muchos datos
-  const chartWidth = Math.max(
-    Dimensions.get("window").width - 40,
-    allKeys.length * 60
-  );
-
-  // Formatea las etiquetas del eje X
   const formattedLabels = view === "dias" ? allKeys.map(formatLabel) : allKeys;
 
   return (
@@ -195,51 +182,48 @@ export default function FinanzasGenerales() {
           </TouchableOpacity>
         </View>
         <View style={styles.containerGraph}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <LineChart
-              data={{
-                labels:
-                  formattedLabels.length > 0 ? formattedLabels : ["Sin datos"],
-                datasets: [
-                  {
-                    data: gastosData.length > 0 ? gastosData : [0],
-                    color: () => "#DA1212",
-                    strokeWidth: 2,
-                  },
-                  {
-                    data: ingresosData.length > 0 ? ingresosData : [0],
-                    color: () => "#19b11e",
-                    strokeWidth: 2,
-                  },
-                ],
-                legend: ["Gastos", "Ingresos"], // Elimina "Balance"
-              }}
-              width={chartWidth}
-              height={300}
-              yAxisLabel="$"
-              yAxisInterval={1}
-              fromZero={true}
-              withVerticalLines={true}
-              withHorizontalLines={true}
-              formatYLabel={abreviarNumero}
-              chartConfig={{
-                backgroundColor: "#e8f0fe",
-                backgroundGradientFrom: "#2998ff", // Azul vibrante
-                backgroundGradientTo: "#56ccf2", // Azul claro
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255,255,255,${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255,255,255,${opacity})`,
-                style: { borderRadius: 16 },
-                propsForDots: { r: "5", strokeWidth: "2", stroke: "#ffffff" },
-              }}
-              bezier
-              style={{
-                marginVertical: 8,
-                borderRadius: 16,
-                paddingHorizontal: 8,
-              }}
-            />
-          </ScrollView>
+          <LineChart
+            data={{
+              labels:
+                formattedLabels.length > 0 ? formattedLabels : ["Sin datos"],
+              datasets: [
+                {
+                  data: gastosData.length > 0 ? gastosData : [0],
+                  color: () => "#DA1212",
+                  strokeWidth: 2,
+                },
+                {
+                  data: ingresosData.length > 0 ? ingresosData : [0],
+                  color: () => "#19b11e",
+                  strokeWidth: 2,
+                },
+              ],
+              legend: ["Gastos", "Ingresos"],
+            }}
+            width={Dimensions.get("window").width * 0.9} // ancho completo
+            height={310}
+            yAxisLabel="$"
+            yAxisInterval={1}
+            fromZero={true}
+            withVerticalLines={true}
+            withHorizontalLines={true}
+            formatYLabel={abreviarNumero}
+            chartConfig={{
+              backgroundColor: "#e8f0fe",
+              backgroundGradientFrom: "#2998ff",
+              backgroundGradientTo: "#56ccf2",
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(255,255,255,${opacity})`,
+              labelColor: (opacity = 1) => `rgba(255,255,255,${opacity})`,
+              style: { borderRadius: 16 },
+              propsForDots: { r: "5", strokeWidth: "2", stroke: "#ffffff" },
+            }}
+            bezier
+            style={{
+              //marginVertical: 8,
+              borderRadius: 16,
+            }}
+          />
         </View>
       </View>
       <View style={styles.resumenContainer}>
