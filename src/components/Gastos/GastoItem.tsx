@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, Text, Image } from "react-native";
+import { View, TextInput, Button, StyleSheet, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../constants/colors";
-export default function IngresosItem({
+
+export default function GastoItem({
   item,
   onSend,
 }: {
-  item: { id: string; name: string };
+  item: { id: string; name: string }; // Asegúrate de que `item` tenga una estructura válida
   onSend: (id: string, value: string) => void;
 }) {
   const [inputValue, setInputValue] = useState<string>("");
@@ -22,17 +23,18 @@ export default function IngresosItem({
   return (
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
-      <Text style={styles.label}></Text>
-      <Image
-        source={require("../assets/icons1/moneyIn3d.png")}
-        style={styles.moneyIcon}
-      />
+      <View style={styles.iconContainer}>
+        <Image
+          source={require("../../assets/icons1/moneyigas3d.png")}
+          style={styles.calendarIcon}
+        />
+      </View>
 
       <TextInput
         style={styles.input}
         value={inputValue}
         onChangeText={setInputValue}
-        placeholder="¿Cuanto fue el ingreso?"
+        placeholder="¿Cuanto fue el gasto?"
         keyboardType="numeric"
       />
       <Button title="Enviar" onPress={handleSend} />
@@ -70,19 +72,14 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
   },
-  moneyIcon: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
-  },
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
+    backgroundColor: "white", // mejora contraste
     alignItems: "center",
-    marginRight: 10,
+    justifyContent: "center",
+
     // iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -91,5 +88,10 @@ const styles = StyleSheet.create({
 
     // Android
     elevation: 3,
+    marginRight: 8,
+  },
+  calendarIcon: {
+    width: 50,
+    height: 50,
   },
 });

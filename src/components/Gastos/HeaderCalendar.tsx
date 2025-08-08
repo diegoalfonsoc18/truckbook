@@ -7,9 +7,9 @@ import {
   TouchableWithoutFeedback,
   Image,
 } from "react-native";
-import { styles } from "../constants/GastosStyles";
-import { COLORS } from "../constants/colors";
-import CustomCalendar from "../components/CustomCalendar";
+import { styles } from "../../constants/GastosStyles";
+import { COLORS } from "../../constants/colors";
+import CustomCalendar from "../CustomCalendar";
 
 type HeaderCalendarProps = {
   title: string;
@@ -53,7 +53,7 @@ export default function HeaderCalendar({
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
         <View style={styles.iconContainer}>
           <Image
-            source={require("../assets/icons1/calendar3d1.png")}
+            source={require("../../assets/icons1/calendar3d1.png")}
             style={styles.calendarIcon}
           />
         </View>

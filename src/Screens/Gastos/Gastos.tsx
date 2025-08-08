@@ -4,12 +4,12 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 // ...existing code...
 import { gastosData } from "../../data/data";
-import HeaderCalendar from "../../components/HeaderCalendar";
-import GastoItem from "../../components/GastoItem";
+import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
+import GastoItem from "../../components/Gastos/GastoItem";
 import { styles } from "../../constants/GastosStyles";
 import { useGastosStore } from "../../store/CurrencyStore";
 import PickerItem from "../../components/PickerItem";
-import IngresGast from "../../components/ResumenIngreGast";
+import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 
 export default function Gastos() {
   // Zustand store

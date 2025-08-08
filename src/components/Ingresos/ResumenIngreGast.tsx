@@ -9,8 +9,8 @@ import {
   Button,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { COLORS } from "../constants/colors";
-import { styles } from "../constants/GastosStyles";
+import { COLORS } from "../../constants/colors";
+import { styles } from "../../constants/GastosStyles";
 
 interface IngresGastProps {
   selectedDate: string;
