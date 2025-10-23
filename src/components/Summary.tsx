@@ -52,7 +52,6 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.title,
     marginTop: 10,
   },
 });

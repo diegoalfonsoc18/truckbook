@@ -15,7 +15,7 @@ export default function Account({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <Text style={styles.title}>Selecciona tu moneda:</Text>
       {/* ...tu Picker aquí... */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
