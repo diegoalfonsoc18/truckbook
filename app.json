@@ -4,7 +4,6 @@
     "slug": "TruckBook",
     "scheme": "truckbook",
     "version": "1.0.0",
-    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,7 +28,8 @@
     },
     "plugins": [
       "expo-localization",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ]
   }
 }
