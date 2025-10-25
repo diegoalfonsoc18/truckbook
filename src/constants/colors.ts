@@ -15,5 +15,5 @@ export const COLORS = {
   accent: "#CCCCCC",
   black: "#000000",
   white: "#FFFFFF",
-  red: "#FF0000",
+  red: "#E30613",
 };

@@ -1,8 +1,4 @@
 import React from "react";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Fontisto from "@expo/vector-icons/Fontisto";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import Svg, { G, Path } from "react-native-svg";
 
 interface StopIconProps {
@@ -10,53 +6,6 @@ interface StopIconProps {
   height?: number;
   color?: string;
 }
-// Gastos: outline y filled
-export const renderGastos = (color: string, size: number, focused: boolean) => (
-  <MaterialCommunityIcons
-    name={focused ? "gas-station" : "gas-station-outline"}
-    size={size}
-    color={color}
-  />
-);
-
-// Ingresos: Fontisto no tiene "filled", puedes usar otro icono si quieres
-export const renderIngresos = (
-  color: string,
-  size: number,
-  focused: boolean
-) => (
-  <Fontisto
-    name="dollar"
-    size={size}
-    color={color}
-    // Puedes cambiar de librería si quieres un efecto filled
-  />
-);
-
-// Home: outline y filled
-export const renderHome = (color: string, size: number, focused: boolean) =>
-  focused ? (
-    <StopIconOutline width={34} height={34} color={color} /> // ← Cambiado
-  ) : (
-    <StopIcon width={32} height={32} color={color} /> // ← Cambiado
-  );
-
-// Finanzas: SimpleLineIcons no tiene "filled", puedes buscar otro icono si quieres
-export const renderFinanzas = (
-  color: string,
-  size: number,
-  focused: boolean
-) => <SimpleLineIcons name="graph" size={size} color={color} />;
-
-// Account: FontAwesome ejemplo con dos iconos distintos
-export const renderAccount = (
-  color: string,
-  size: number,
-  focused: boolean
-) => (
-  <FontAwesome name={focused ? "user" : "user-o"} size={size} color={color} />
-);
-
 // Versión OUTLINE (sin relleno)
 export const StopIconOutline = ({
   width = 24,
@@ -92,5 +41,245 @@ export const StopIcon = ({
         <Path d="m256 335.782c-8.284 0-15 6.716-15 15v.686c0 8.284 6.716 15 15 15s15-6.716 15-15v-.686c0-8.284-6.716-15-15-15z"></Path>
       </G>
     </Svg>
+  );
+};
+// Versión OUTLINE (sin relleno)
+export const GasStationIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G fill={color}>
+        <Path
+          d="M466.208,67.125l-42.667-42.667c-4.167-4.167-10.917-4.167-15.083,0c-4.167,4.167-4.167,10.917,0,15.083l35.125,35.125
+          l-35.125,35.125c-2,2-3.125,4.708-3.125,7.542v32C405.333,172.865,424.469,192,448,192v181.333
+          c0,5.885-4.781,10.667-10.667,10.667c-5.885,0-10.667-4.781-10.667-10.667V352c0-17.646-14.354-32-32-32H384V42.667
+          C384,19.135,364.865,0,341.333,0H128c-23.531,0-42.667,19.135-42.667,42.667v384c-23.531,0-42.667,19.135-42.667,42.667v32
+          c0,5.896,4.771,10.667,10.667,10.667H416c5.896,0,10.667-4.771,10.667-10.667v-32c0-23.531-19.135-42.667-42.667-42.667v-85.333
+          h10.667c5.885,0,10.667,4.781,10.667,10.667v21.333c0,17.646,14.354,32,32,32c17.646,0,32-14.354,32-32V74.667
+          C469.333,71.833,468.208,69.125,466.208,67.125z M341.333,181.531c0,5.896-4.771,10.667-10.667,10.667h-192
+          c-5.896,0-10.667-4.771-10.667-10.667V53.333c0-5.896,4.771-10.667,10.667-10.667h192c5.896,0,10.667,4.771,10.667,10.667V181.531
+          z"></Path>
+      </G>
+    </Svg>
+  );
+};
+
+// Versión FILLED (con relleno completo)
+export const GasStationIconOutline = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G fill={color}>
+        <Path
+          d="M466.208,67.125l-42.667-42.667c-4.167-4.167-10.917-4.167-15.083,0c-4.167,4.167-4.167,10.917,0,15.083l35.125,35.125
+          l-35.125,35.125c-2,2-3.125,4.708-3.125,7.542v32C405.333,172.865,424.469,192,448,192v181.333
+          c0,5.885-4.781,10.667-10.667,10.667c-5.885,0-10.667-4.781-10.667-10.667V352c0-17.646-14.354-32-32-32H384V42.667
+          C384,19.135,364.865,0,341.333,0H128c-23.531,0-42.667,19.135-42.667,42.667v384c-23.531,0-42.667,19.135-42.667,42.667v32
+          c0,5.896,4.771,10.667,10.667,10.667H416c5.896,0,10.667-4.771,10.667-10.667v-32c0-23.531-19.135-42.667-42.667-42.667v-85.333
+          h10.667c5.885,0,10.667,4.781,10.667,10.667v21.333c0,17.646,14.354,32,32,32c17.646,0,32-14.354,32-32V74.667
+          C469.333,71.833,468.208,69.125,466.208,67.125z M106.667,42.667c0-11.76,9.573-21.333,21.333-21.333h213.333
+          c11.76,0,21.333,9.573,21.333,21.333v384h-256V42.667z M405.333,469.333v21.333H64v-21.333C64,457.573,73.573,448,85.333,448H384
+          C395.76,448,405.333,457.573,405.333,469.333z M448,170.667c-11.76,0-21.333-9.573-21.333-21.333V121.75L448,100.417V170.667z"></Path>
+        <Path
+          d="M330.667,42.667h-192c-5.896,0-10.667,4.771-10.667,10.667v128.198c0,5.896,4.771,10.667,10.667,10.667h192
+          c5.896,0,10.667-4.771,10.667-10.667V53.333C341.333,47.438,336.563,42.667,330.667,42.667z M320,170.865H149.333V64H320V170.865
+          z"></Path>
+      </G>
+    </Svg>
+  );
+};
+
+// ============================================
+// ICONO DE DÓLAR - VERSIÓN FILLED (Con relleno) - NORMALIZADO
+// ============================================
+export const DollarIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G fill={color} transform="scale(20.48)">
+        <Path d="m12.5 1.5c-6.0599365 0-11 4.9400635-11 11 0 6.0699463 4.9400635 11 11 11 6.0699463 0 11-4.9300537 11-11 0-6.0599365-4.9300537-11-11-11zm0 10.0899658c1.6600342 0 3 1.3500977 3 3 0 1.3100586-.8299561 2.4200439-2 2.8300781v1.1699219h-2v-1.1699219c-1.1600342-.4100342-2-1.5200195-2-2.8300781h2c0 .5600586.4499512 1 1 1 .5499268 0 1-.4399414 1-1 0-.5500488-.4500732-1-1-1-1.6500244 0-3-1.3399658-3-3 0-1.3000488.8399658-2.4099121 2-2.8199463v-1.1800537h2v1.1800537c1.1700439.4100342 2 1.5198975 2 2.8199463h-2c0-.5500488-.4500732-1-1-1-.5500488 0-1 .4499512-1 1 0 .5600586.4499512 1 1 1z" />
+      </G>
+    </Svg>
+  );
+};
+
+// ============================================
+// ICONO DE DÓLAR - VERSIÓN OUTLINE (Sin relleno) - NORMALIZADO
+// ============================================
+export const DollarIconOutline = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G fill={color} transform="scale(20.48)">
+        <Path d="m12.5 1.5c-6.0654297 0-11 4.9345703-11 11s4.9345703 11 11 11 11-4.9345703 11-11-4.9345703-11-11-11zm0 20c-4.9624023 0-9-4.0375977-9-9s4.0375977-9 9-9 9 4.0375977 9 9-4.0375977 9-9 9z" />
+        <Path d="m12.5 9.59375c.5512695 0 1 .4487305 1 1h2c0-1.3019409-.838501-2.4016113-2-2.8157349v-1.1842651h-2v1.1842651c-1.161499.4141235-2 1.5137939-2 2.8157349 0 1.6542969 1.3457031 3 3 3 .5512695 0 1 .4487305 1 1s-.4487305 1-1 1-1-.4487305-1-1h-2c0 1.3019409.838501 2.4015503 2 2.8156738v1.1843262h2v-1.1842651c1.161499-.4141235 2-1.5137939 2-2.8157349 0-1.6542969-1.3457031-3-3-3-.5512695 0-1-.4487305-1-1s.4487305-1 1-1z" />
+      </G>
+    </Svg>
+  );
+};
+// ============================================
+// ICONO DE FINANZAS - VERSIÓN FILLED (Con relleno)
+// ============================================
+export const FinancesIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G>
+        <Path
+          d="m495.93 82.599h-163.09c-8.87 0-16.07 7.19-16.07 16.07v32.46c0 8.87 7.2 16.07 16.07 16.07h68.89l-140.96 140.95-59.76-59.76c-12.62-12.61-33.07-12.61-45.69 0l-150.61 150.63c-6.28 6.27-6.28 16.45 0 22.72l22.95 22.96c6.27 6.27 16.45 6.27 22.72 0l127.79-127.79 59.75 59.76c12.619 12.623 33.072 12.628 45.69 0l163.79-163.79v68.89c0 8.87 7.19 16.07 16.07 16.07h32.46c8.88 0 16.07-7.2 16.07-16.07v-163.1c0-8.88-7.19-16.07-16.07-16.07z"
+          fill={color}
+        />
+      </G>
+    </Svg>
+  );
+};
+
+// ============================================
+// ICONO DE FINANZAS - VERSIÓN OUTLINE (Sin relleno)
+// ============================================
+export const FinancesIconOutline = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <G>
+        <Path
+          d="m497 76.757h-181.432c-8.284 0-15 6.716-15 15v60.035c0 8.284 6.716 15 15 15h42.739l-94.783 94.782-44.937-44.938c-17.55-17.535-46.108-17.535-63.664.005l-150.53 150.541c-5.857 5.857-5.857 15.354-.001 21.212l42.445 42.455c2.813 2.813 6.628 4.394 10.607 4.395h.001c3.978 0 7.794-1.581 10.606-4.394l118.71-118.71 44.924 44.932c8.504 8.505 19.811 13.188 31.837 13.188 12.028 0 23.334-4.685 31.83-13.188l126.613-126.612v42.738c0 8.284 6.716 15 15 15h60.035c8.284 0 15-6.716 15-15v-181.441c0-8.284-6.716-15-15-15zm-15 181.442h-30.035v-63.952c0-6.067-3.654-11.537-9.26-13.858-5.603-2.319-12.057-1.038-16.347 3.252l-152.222 152.222c-2.833 2.835-6.602 4.397-10.612 4.397-4.013 0-7.786-1.563-10.624-4.4l-55.53-55.54c-2.813-2.813-6.628-4.395-10.607-4.395-3.978 0-7.794 1.581-10.606 4.394l-118.71 118.71-21.235-21.24 139.921-139.93c5.858-5.854 15.391-5.855 21.247-.005l55.539 55.54c2.813 2.813 6.628 4.394 10.607 4.394s7.794-1.58 10.606-4.394l130.996-130.996c4.29-4.29 5.573-10.742 3.252-16.347-2.322-5.605-7.792-9.26-13.858-9.26h-63.952v-30.035h151.43z"
+          fill={color}
+        />
+      </G>
+    </Svg>
+  );
+};
+
+/// ICONO DE ACCOUNT - VERSIÓN FILLED (Con relleno)
+/// ============================================
+export const AccountIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 511.79 511.79" {...props}>
+      <G fill={color}>
+        <Path d="M255.895,387.981c-10.876,0-19.724,8.848-19.724,19.723c0,10.876,8.848,19.724,19.724,19.724s19.724-8.848,19.724-19.724   C275.619,396.829,266.771,387.981,255.895,387.981z" />
+        <Path d="M255.895,302.55c-28.204,0-53.844,11.167-72.746,29.306l25.372,7.259l-17.458,53.589h17.426   c6.377-20.108,25.215-34.723,47.406-34.723s41.029,14.615,47.406,34.723h17.426l-17.458-53.589l25.381-7.262   C309.747,313.714,284.101,302.55,255.895,302.55z" />
+        <Path d="M208.489,422.704H181.29l-7.792,23.919l-16.308-2.672c13.134,35.655,45.057,62.296,83.705,67.84v-56.68   C225.522,450.235,213.364,438.077,208.489,422.704z" />
+        <Path d="M436.834,324.073l-42.181-104.327c-6.124-15.146-20.638-24.934-36.977-24.934H154.114   c-16.339,0-30.853,9.787-36.977,24.934L74.957,324.073c-5.457,13.499-1.646,28.875,9.482,38.263l57.81,48.766l10.698,1.754   l17.414-53.455l-15.561-4.451l-18.645,0.517l-0.832-29.988L149,325.098c24.742-31.944,63.455-52.548,106.895-52.548   c43.436,0,82.135,20.609,106.877,52.548l13.694,0.38l-0.832,29.988l-18.645-0.517l-15.561,4.451l17.414,53.455l10.698-1.754   l57.81-48.766C438.48,352.948,442.291,337.572,436.834,324.073z" />
+        <Path d="M330.5,422.704h-27.199c-4.875,15.373-17.033,27.531-32.406,32.406v56.679c38.646-5.544,70.568-32.184,83.701-67.838   l-16.304,2.672L330.5,422.704z" />
+        {/* Círculo convertido a Path */}
+        <Path d="M345.801,89.906c0,49.641-40.265,89.906-89.906,89.906s-89.906-40.265-89.906-89.906S206.254,0,255.895,0 S345.801,40.265,345.801,89.906z" />
+      </G>
+    </Svg>
+  );
+};
+
+// ============================================
+// ICONO DE ACCOUNT - VERSIÓN OUTLINE (Sin relleno)
+// ============================================
+export const AccountIconOutline = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+  ...props
+}) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
+      <Path
+        d="M447.823,300.162l-38.516-95.264c-9.999-24.729-33.694-40.708-60.368-40.708h-22.821  c16.702-17.447,26.977-41.093,26.977-67.095C353.096,43.557,309.539,0,256,0s-97.096,43.557-97.096,97.096  c0,26.002,10.276,49.648,26.977,67.095h-22.821c-26.674,0-50.369,15.979-60.368,40.709l-38.516,95.262  c-9.646,23.859-2.911,51.038,16.76,67.632l52.903,44.626C145.5,469.18,195.84,512,256,512c60.163,0,110.509-42.822,122.167-99.587  l52.896-44.62C450.734,351.199,457.47,324.021,447.823,300.162z M188.904,97.096C188.904,60.099,219.003,30,256,30  s67.096,30.099,67.096,67.096c0,36.996-30.099,67.095-67.096,67.095S188.904,134.092,188.904,97.096z M167.908,422.036l13.746,2.252  l7.168-22.004h22.956c4.662,13.704,15.518,24.56,29.222,29.221v49.284C207.625,475.453,180.021,452.634,167.908,422.036z   M192.135,317.402c16.853-15.417,39.279-24.835,63.865-24.835c24.584,0,47.001,9.424,63.853,24.838l-22.252,6.367l15.804,48.512  h-13.183c-6.264-18.416-23.715-31.707-44.222-31.707s-37.958,13.291-44.222,31.707h-13.183l15.804-48.512L192.135,317.402z   M256,403.99c-9.212,0-16.707-7.494-16.707-16.706s7.495-16.707,16.707-16.707s16.707,7.495,16.707,16.707  S265.212,403.99,256,403.99z M271,480.789v-49.284c13.704-4.661,24.56-15.517,29.222-29.221h22.956l7.168,22.004l13.735-2.251  C331.967,452.633,304.373,475.453,271,480.789z M411.72,344.861l-52.513,44.297l-8.311,1.362l-15.136-46.463l12.716-3.638  l16.824,0.466l0.83-29.988l-11.881-0.329c-22.846-29.196-58.389-48.001-98.25-48.001c-39.859,0-75.395,18.807-98.241,48l-11.89,0.33  l0.83,29.988l16.824-0.466l12.716,3.638l-15.136,46.463l-8.311-1.362l-52.513-44.297c-9.73-8.208-13.063-21.652-8.291-33.455  l38.516-95.262c5.393-13.337,18.171-21.954,32.556-21.954h185.879c14.385,0,27.163,8.617,32.556,21.953l38.516,95.264  C424.782,323.209,421.45,336.653,411.72,344.861z"
+        fill={color}
+      />
+    </Svg>
+  );
+};
+
+// Gastos: outline y filled
+export const renderGastos = (color: string, size: number, focused: boolean) => {
+  const iconSize = 24;
+
+  return focused ? (
+    <GasStationIcon width={iconSize} height={iconSize} color={color} />
+  ) : (
+    <GasStationIconOutline width={iconSize} height={iconSize} color={color} />
+  );
+};
+
+// Ingresos: Fontisto no tiene "filled", puedes usar otro icono si quieres
+export const renderIngresos = (
+  color: string,
+  size: number,
+  focused: boolean
+) => {
+  const iconSize = 24; // Personaliza el tamaño del icono aquí
+
+  return focused ? (
+    <DollarIcon width={iconSize} height={iconSize} color={color} />
+  ) : (
+    <DollarIconOutline width={iconSize} height={iconSize} color={color} />
+  );
+};
+
+// Home: outline y filled
+export const renderHome = (color: string, size: number, focused: boolean) => {
+  const iconSize = 24;
+
+  return focused ? (
+    <StopIconOutline width={iconSize} height={iconSize} color={color} /> // ← Cambiado
+  ) : (
+    <StopIcon width={iconSize} height={iconSize} color={color} /> // ← Cambiado
+  );
+};
+
+// Finanzas: SimpleLineIcons no tiene "filled", puedes buscar otro icono si quieres
+export const renderFinanzas = (
+  color: string,
+  size: number,
+  focused: boolean
+) => {
+  const iconSize = 24; // Personaliza el tamaño del icono aquí
+
+  return focused ? (
+    <FinancesIcon width={iconSize} height={iconSize} color={color} />
+  ) : (
+    <FinancesIconOutline width={iconSize} height={iconSize} color={color} />
+  );
+};
+
+// Account: FontAwesome ejemplo con dos iconos distintos
+export const renderAccount = (
+  color: string,
+  size: number,
+  focused: boolean
+) => {
+  const iconSize = 24; // Personaliza el tamaño del icono aquí
+
+  return focused ? (
+    <AccountIcon width={iconSize} height={iconSize} color={color} />
+  ) : (
+    <AccountIconOutline width={iconSize} height={iconSize} color={color} />
   );
 };
