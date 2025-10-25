@@ -34,7 +34,7 @@ export default function AppStack() {
       screenOptions={({ route }) => ({
         headerShown: false, // Oculta el encabezado
         tabBarStyle: styles.tabBar, // Aplica estilos al tabBar
-        tabBarActiveTintColor: COLORS.red, // Color del ícono activo
+        tabBarActiveTintColor: COLORS.primary, // Color del ícono activo
         tabBarInactiveTintColor: COLORS.textTertiary,
 
         tabBarIcon: ({ focused, color, size }) => {

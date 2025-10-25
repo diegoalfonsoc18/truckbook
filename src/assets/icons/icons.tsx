@@ -221,7 +221,7 @@ export const renderIngresos = (
   size: number,
   focused: boolean
 ) => {
-  const iconSize = 24; // Personaliza el tamaño del icono aquí
+  const iconSize = 30; // Personaliza el tamaño del icono aquí
 
   return focused ? (
     <DollarIcon width={iconSize} height={iconSize} color={color} />
@@ -232,7 +232,7 @@ export const renderIngresos = (
 
 // Home: outline y filled
 export const renderHome = (color: string, size: number, focused: boolean) => {
-  const iconSize = 24;
+  const iconSize = 30;
 
   return focused ? (
     <StopIconOutline width={iconSize} height={iconSize} color={color} /> // ← Cambiado
@@ -247,7 +247,7 @@ export const renderFinanzas = (
   size: number,
   focused: boolean
 ) => {
-  const iconSize = 24; // Personaliza el tamaño del icono aquí
+  const iconSize = 28; // Personaliza el tamaño del icono aquí
 
   return focused ? (
     <FinancesIcon width={iconSize} height={iconSize} color={color} />
@@ -262,7 +262,7 @@ export const renderAccount = (
   size: number,
   focused: boolean
 ) => {
-  const iconSize = 24; // Personaliza el tamaño del icono aquí
+  const iconSize = 30; // Personaliza el tamaño del icono aquí
 
   return focused ? (
     <AccountIcon width={iconSize} height={iconSize} color={color} />
