@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderTopWidth: 0,
     borderBottomWidth: 0,
-    height: 90, // <-- Ajusta la altura según lo que desees
+    height: 94, // <-- Ajusta la altura según lo que desees
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

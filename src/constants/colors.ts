@@ -1,5 +1,3 @@
-import { red } from "react-native-reanimated/lib/typescript/Colors";
-
 export const COLORS = {
   text: "#212121",
   textPrimary: "#A8AFB9",

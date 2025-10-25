@@ -9,8 +9,6 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items"; // Importing the items array
 
 export default function Home() {
-  const insets = useSafeAreaInsets();
-
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <View style={styles.containerHeader}>
