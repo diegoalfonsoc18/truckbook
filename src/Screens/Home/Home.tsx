@@ -34,19 +34,28 @@ export default function Home() {
             <Text style={styles.textAlert}>Avisos</Text>
           </View>
           <View style={styles.itemsContainer}>
-            {items.map((item, idx) => (
-              <TouchableOpacity style={styles.itemBox} key={idx}>
-                <View style={styles.iconContainer}>
-                  <Image source={item.icon} style={styles.iconItemBox} />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.textTitle}>{item.title}</Text>
-                  {item.subtitle && (
-                    <Text style={styles.textSubtitle}>{item.subtitle}</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
+            {items.map((item, idx) => {
+              const isComponent = typeof item.icon === "function";
+              const Icon = item.icon;
+
+              return (
+                <TouchableOpacity style={styles.itemBox} key={idx}>
+                  <View style={styles.iconContainer}>
+                    {isComponent ? (
+                      <Icon width={40} height={40} />
+                    ) : (
+                      <Image source={item.icon} style={styles.iconItemBox} />
+                    )}
+                  </View>
+                  <View style={styles.textContainer}>
+                    <Text style={styles.textTitle}>{item.title}</Text>
+                    {item.subtitle && (
+                      <Text style={styles.textSubtitle}>{item.subtitle}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </ScrollView>
       </View>
