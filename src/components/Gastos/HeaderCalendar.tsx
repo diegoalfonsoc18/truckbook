@@ -10,7 +10,7 @@ import {
 import { styles } from "../../constants/GastosStyles";
 import { COLORS } from "../../constants/colors";
 import CustomCalendar from "../CustomCalendar";
-
+import { CamionIcon } from "../../assets/icons/icons";
 type HeaderCalendarProps = {
   title: string;
   data: Array<{ fecha: string }>;
@@ -52,10 +52,7 @@ export default function HeaderCalendar({
       {/* Fecha seleccionada y botón para mostrar el calendario */}
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
         <View style={styles.iconContainer}>
-          <Image
-            source={require("../../assets/icons1/calendar3d1.png")}
-            style={styles.calendarIcon}
-          />
+          <CamionIcon style={styles.calendarIcon} />
         </View>
         <Text style={styles.dateText}>{selectedDate}</Text>
       </TouchableOpacity>

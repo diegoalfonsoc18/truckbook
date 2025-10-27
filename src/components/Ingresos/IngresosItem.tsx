@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text, Image } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../../constants/colors";
+import { CamionIcon } from "../../assets/icons/icons";
+
 export default function IngresosItem({
   item,
   onSend,
@@ -22,11 +23,8 @@ export default function IngresosItem({
   return (
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
-      <Text style={styles.label}></Text>
-      <Image
-        source={require("../../assets/icons1/moneyIn3d.png")}
-        style={styles.moneyIcon}
-      />
+      <Text style={styles.label}>{item.name}</Text>
+      <CamionIcon style={styles.moneyIcon} />
 
       <TextInput
         style={styles.input}

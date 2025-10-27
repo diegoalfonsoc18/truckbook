@@ -11,6 +11,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { CamionIcon } from "../../assets/icons/icons";
+
 export default function Ingresos() {
   // Zustand store
   const ingresos = useIngresosStore((state) => state.ingresos);

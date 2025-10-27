@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { COLORS } from "../constants/colors";
-
+import { COLORS } from "../../constants/colors";
+import { CamionIcon } from "../../assets/icons/icons";
 export default function GastoItem({
   item,
   onSend,
@@ -24,10 +24,7 @@ export default function GastoItem({
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
       <View style={styles.iconContainer}>
-        <Image
-          source={require("../../assets/icons1/moneyigas3d.png")}
-          style={styles.calendarIcon}
-        />
+        <CamionIcon style={styles.calendarIcon} />
       </View>
 
       <TextInput
@@ -47,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    // /backgroundColor: "#d9d92499",
+    // backgroundColor: "#d9d92499",
     padding: 10,
     width: "100%",
     // Sombra para iOS
@@ -75,8 +72,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: "white", // mejora contraste
+
     alignItems: "center",
     justifyContent: "center",
 

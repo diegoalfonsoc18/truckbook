@@ -7,15 +7,12 @@ import {
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items"; // Importing the items array
-
+import { CamionIcon } from "../../assets/icons/icons";
 export default function Home() {
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <View style={styles.containerHeader}>
-        <Image
-          source={require("../../assets/icons1/camion.png")}
-          style={styles.iconHome}
-        />
+        <CamionIcon />
         <Text>Agrega tu camión</Text>
         <FontAwesome name="drivers-license" size={24} color="black" />
       </View>
