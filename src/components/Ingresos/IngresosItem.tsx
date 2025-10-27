@@ -23,7 +23,7 @@ export default function IngresosItem({
   return (
     <View style={styles.container}>
       {/* Asegúrate de que item.name sea una cadena de texto */}
-      <Text style={styles.label}>{item.name}</Text>
+
       <CamionIcon style={styles.moneyIcon} />
 
       <TextInput
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    // /backgroundColor: "#d9d92499",
+    //backgroundColor: "#d9d92499",
     padding: 10,
     width: "100%",
     // Sombra para iOS

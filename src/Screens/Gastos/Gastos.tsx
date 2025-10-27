@@ -2,7 +2,6 @@ import React, { useState, useCallback } from "react";
 import { View, Modal, Text, TextInput, Button } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
-// ...existing code...
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import GastoItem from "../../components/Gastos/GastoItem";
