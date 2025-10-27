@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { styles } from "../../constants/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import IngresosItem from "../../components/Ingresos/IngresosItem";
-import { useIngresosStore } from "../../store/IngresosStore"; // Asegúrate de importar tu store
+import { useIngresosStore } from "../../store/IngresosStore";
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 import {
   SafeAreaView,
@@ -44,9 +44,11 @@ export default function Ingresos() {
         return;
       }
       addIngreso({ name: ingreso.name, value, fecha: selectedDate });
+      Keyboard.dismiss(); // Cerrar teclado después de agregar
     },
     [addIngreso, selectedDate]
   );
+
   // Editar gasto (abrir modal)
   const handleEditGasto = (id: string | number) => {
     const ingreso = ingresos.find((g) => g.id === String(id));
@@ -56,6 +58,7 @@ export default function Ingresos() {
       setModalVisible(true);
     }
   };
+
   // Guardar edición
   const handleSaveEdit = () => {
     if (editId) {
@@ -79,46 +82,48 @@ export default function Ingresos() {
   // Filtra los ingresos por la fecha seleccionada
   const IngresosFiltrados = ingresos.filter((g) => g.fecha === selectedDate);
   const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <HeaderCalendar
-        title="Ingresos"
-        data={ingresos}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-      />
-
-      {/* Selector y lista de gastos */}
-      <View style={styles.combinedContainer}>
-        <Text style={styles.titlePicker}>Seleccione un ingreso:</Text>
-        <PickerItem
-          data={ingresosData}
-          //label="Selecciona un ingreso:"
-          pickerLabelKey="name"
-          pickerValueKey="id"
-          onSelect={setSelectedIngreso}
-          pickerStyle={styles.picker}
-          renderSelectedItem={(item) => (
-            <IngresosItem item={item} onSend={handleAddIngreso} />
-          )}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container} edges={["left", "right"]}>
+        <HeaderCalendar
+          title="Ingresos"
+          data={ingresos}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
         />
-      </View>
 
-      {/* Resumen de gastos ingresados para la fecha seleccionada */}
-      <IngresGast
-        selectedDate={selectedDate}
-        itemsFiltrados={IngresosFiltrados}
-        handleEdit={handleEditGasto}
-        handleDelete={handleDeleteIngreso}
-        totalLabel="Total"
-        title="Resumen de Ingresos"
-        modalLabel="Editar valor del gasto"
-        editValue={editValue}
-        setEditValue={setEditValue}
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        handleSaveEdit={handleSaveEdit}
-      />
-    </SafeAreaView>
+        {/* Selector y lista de gastos */}
+        <View style={styles.combinedContainer}>
+          <Text style={styles.titlePicker}>Seleccione un ingreso:</Text>
+          <PickerItem
+            data={ingresosData}
+            pickerLabelKey="name"
+            pickerValueKey="id"
+            onSelect={setSelectedIngreso}
+            pickerStyle={styles.picker}
+            renderSelectedItem={(item) => (
+              <IngresosItem item={item} onSend={handleAddIngreso} />
+            )}
+          />
+        </View>
+
+        {/* Resumen de gastos ingresados para la fecha seleccionada */}
+        <IngresGast
+          selectedDate={selectedDate}
+          itemsFiltrados={IngresosFiltrados}
+          handleEdit={handleEditGasto}
+          handleDelete={handleDeleteIngreso}
+          totalLabel="Total"
+          title="Resumen de Ingresos"
+          modalLabel="Editar valor del gasto"
+          editValue={editValue}
+          setEditValue={setEditValue}
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          handleSaveEdit={handleSaveEdit}
+        />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }

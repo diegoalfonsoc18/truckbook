@@ -1,5 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { View, Modal, Text, TextInput, Button } from "react-native";
+import {
+  View,
+  Modal,
+  Text,
+  TextInput,
+  Button,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { gastosData } from "../../data/data";
@@ -38,6 +46,7 @@ export default function Gastos() {
         return;
       }
       addGasto({ name: gasto.name, value, fecha: selectedDate });
+      Keyboard.dismiss(); // Cerrar teclado después de agregar
     },
     [addGasto, selectedDate]
   );
@@ -79,103 +88,107 @@ export default function Gastos() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      {/* Header */}
-      <HeaderCalendar
-        title="Gastos"
-        data={gastosIngresados}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-      />
-      {/* Selector y lista de gastos */}
-      <View style={styles.combinedContainer}>
-        <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
-        <PickerItem
-          data={gastosData}
-          //label="Selecciona un gasto:"
-          pickerLabelKey="name"
-          pickerValueKey="id"
-          onSelect={setSelectedGasto}
-          pickerStyle={styles.picker}
-          renderSelectedItem={(item) => (
-            <GastoItem item={item} onSend={handleAddGasto} />
-          )}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container} edges={["left", "right"]}>
+        {/* Header */}
+        <HeaderCalendar
+          title="Gastos"
+          data={gastosIngresados}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
         />
-      </View>
+        {/* Selector y lista de gastos */}
+        <View style={styles.combinedContainer}>
+          <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
+          <PickerItem
+            data={gastosData}
+            pickerLabelKey="name"
+            pickerValueKey="id"
+            onSelect={setSelectedGasto}
+            pickerStyle={styles.picker}
+            renderSelectedItem={(item) => (
+              <GastoItem item={item} onSend={handleAddGasto} />
+            )}
+          />
+        </View>
 
-      {/* Modal para editar gasto */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.3)",
-          }}>
+        {/* Modal para editar gasto */}
+        <Modal visible={modalVisible} transparent animationType="slide">
           <View
             style={{
-              backgroundColor: "#c64c4c",
-              borderRadius: 10,
-              padding: 20,
-              width: "80%",
+              flex: 1,
+              justifyContent: "center",
               alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.3)",
             }}>
-            <Text
-              style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
-              Editar valor del gasto
-            </Text>
-            <TextInput
-              value={editValue}
-              onChangeText={setEditValue}
-              keyboardType="numeric"
+            <View
               style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 5,
-                padding: 10,
-                width: "100%",
-                marginBottom: 10,
-              }}
-            />
-            <Button
-              title={`Fecha: ${editDate}`}
-              onPress={() => setShowDatePicker(true)}
-            />
-            {showDatePicker && (
-              <DateTimePicker
-                value={new Date(editDate)}
-                mode="date"
-                display="default"
-                onChange={(_, date) => {
-                  setShowDatePicker(false);
-                  if (date) setEditDate(date.toISOString().split("T")[0]);
+                backgroundColor: "#c64c4c",
+                borderRadius: 10,
+                padding: 20,
+                width: "80%",
+                alignItems: "center",
+              }}>
+              <Text
+                style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
+                Editar valor del gasto
+              </Text>
+              <TextInput
+                value={editValue}
+                onChangeText={setEditValue}
+                keyboardType="numeric"
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  borderRadius: 5,
+                  padding: 10,
+                  width: "100%",
+                  marginBottom: 10,
                 }}
               />
-            )}
-            <View style={{ flexDirection: "row", marginTop: 20 }}>
-              <Button title="Guardar" onPress={handleSaveEdit} />
-              <View style={{ width: 10 }} />
-              <Button title="Cancelar" onPress={() => setModalVisible(false)} />
+              <Button
+                title={`Fecha: ${editDate}`}
+                onPress={() => setShowDatePicker(true)}
+              />
+              {showDatePicker && (
+                <DateTimePicker
+                  value={new Date(editDate)}
+                  mode="date"
+                  display="default"
+                  onChange={(_, date) => {
+                    setShowDatePicker(false);
+                    if (date) setEditDate(date.toISOString().split("T")[0]);
+                  }}
+                />
+              )}
+              <View style={{ flexDirection: "row", marginTop: 20 }}>
+                <Button title="Guardar" onPress={handleSaveEdit} />
+                <View style={{ width: 10 }} />
+                <Button
+                  title="Cancelar"
+                  onPress={() => setModalVisible(false)}
+                />
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Resumen de gastos ingresados para la fecha seleccionada */}
-      <IngresGast
-        selectedDate={selectedDate}
-        itemsFiltrados={gastosFiltrados}
-        handleEdit={handleEditGasto}
-        handleDelete={handleDeleteGasto}
-        totalLabel="Total"
-        title="Resumen de Gastos"
-        modalLabel="Editar valor del gasto"
-        editValue={editValue}
-        setEditValue={setEditValue}
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        handleSaveEdit={handleSaveEdit}
-      />
-    </SafeAreaView>
+        {/* Resumen de gastos ingresados para la fecha seleccionada */}
+        <IngresGast
+          selectedDate={selectedDate}
+          itemsFiltrados={gastosFiltrados}
+          handleEdit={handleEditGasto}
+          handleDelete={handleDeleteGasto}
+          totalLabel="Total"
+          title="Resumen de Gastos"
+          modalLabel="Editar valor del gasto"
+          editValue={editValue}
+          setEditValue={setEditValue}
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          handleSaveEdit={handleSaveEdit}
+        />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
