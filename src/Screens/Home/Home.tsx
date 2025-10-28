@@ -1,9 +1,6 @@
 import React from "react";
 import { Text, Image, View, TouchableOpacity, ScrollView } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items"; // Importing the items array
@@ -34,7 +31,13 @@ export default function Home() {
               const Icon = item.icon;
 
               return (
-                <TouchableOpacity style={styles.itemBox} key={idx}>
+                <TouchableOpacity
+                  style={[
+                    styles.itemBox,
+                    { backgroundColor: item.backgroundColor || "#FFFFFF" }, // ✅ Color dinámico
+                  ]}
+                  key={idx}
+                  activeOpacity={0.7}>
                   <View style={styles.iconContainer}>
                     {isComponent ? (
                       <Icon width={40} height={40} />

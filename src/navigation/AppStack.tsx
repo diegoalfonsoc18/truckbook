@@ -64,31 +64,28 @@ export default function AppStack() {
   );
 }
 
-// Estilos centralizados
 const styles = StyleSheet.create({
   tabBar: {
     width: "100%",
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0, // <-- Esto lo pega al borde inferior
+    bottom: 0,
     backgroundColor: COLORS.background,
     borderTopWidth: 0,
-    borderBottomWidth: 0,
-    height: 94, // <-- Ajusta la altura según lo que desees
+    height: 94,
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
 
-    // ✅ Sombra sutil arriba y lados
+    // ✅ Sombra más visible
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
 
-    elevation: 16, // Para Android
+    elevation: 16, // Android
 
-    // ✅ Permite que la sombra se extienda
     overflow: "visible",
   },
 });

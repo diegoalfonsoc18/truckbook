@@ -115,8 +115,8 @@ export default function Ingresos() {
           handleEdit={handleEditGasto}
           handleDelete={handleDeleteIngreso}
           totalLabel="Total"
-          title="Resumen de Ingresos"
-          modalLabel="Editar valor del gasto"
+          title="Ingresos"
+          modalLabel="Editar valor del ingresos"
           editValue={editValue}
           setEditValue={setEditValue}
           modalVisible={modalVisible}

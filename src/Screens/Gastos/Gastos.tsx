@@ -180,7 +180,7 @@ export default function Gastos() {
           handleEdit={handleEditGasto}
           handleDelete={handleDeleteGasto}
           totalLabel="Total"
-          title="Resumen de Gastos"
+          title="Resumen"
           modalLabel="Editar valor del gasto"
           editValue={editValue}
           setEditValue={setEditValue}

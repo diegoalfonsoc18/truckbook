@@ -34,14 +34,14 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 20,
     marginVertical: 10,
-    backgroundColor: COLORS.surface, // Fondo del contenedor de la fecha
-    // Sombra para iOS
+    backgroundColor: "#F2F2F7", // Fondo del contenedor de la fecha
+    // ✅ Sin sombra o muy sutil (Apple casi no usa sombras)
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    // Sombra Android
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+
+    elevation: 0, // ✅ Sin elevación en Android
   },
   dateText: {
     fontSize: 16,
@@ -85,17 +85,18 @@ export const styles = StyleSheet.create({
 
   resumenContainer: {
     width: "90%",
-    backgroundColor: COLORS.surface, // Fondo del contenedor del resumen
+    backgroundColor: "#F2F2F7", // ✅ Gris claro Apple
     borderRadius: 30,
     padding: 20,
     flex: 1.5,
-    // Sombra para iOS
+
+    // ✅ Sin sombra o muy sutil (Apple casi no usa sombras)
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    // Sombra Android
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+
+    elevation: 0, // ✅ Sin elevación en Android
   },
 
   resumenTitle: {
