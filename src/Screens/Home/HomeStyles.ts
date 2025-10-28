@@ -63,15 +63,20 @@ export const styles = StyleSheet.create({
   containerAlert: {
     flex: 0,
     width: "100%",
-    padding: 20,
-    borderRadius: 16, // ✅ Menos redondeado
+    height: 250,
+    aspectRatio: 10 / 6.4, // ⭐ Ajusta esto según tu imagen (ej: 16/9, 4/3, 1/1)
+    borderRadius: 16,
     marginBottom: 20,
-    backgroundColor: "#FFFFFF", // ✅ Blanco puro
-    height: 150,
-
-    // ✅ Sin sombras
+    backgroundColor: "#e00505ff",
     shadowOpacity: 0,
     elevation: 0,
+    overflow: "hidden",
+  },
+  imageAlert: {
+    width: "100%",
+    height: "100%",
+    //borderRadius: 16,
+    resizeMode: "stretch",
   },
 
   itemsContainer: {

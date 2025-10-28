@@ -9,7 +9,7 @@ export const items = [
     icon: MultasIcon,
     title: "Pendiente",
     subtitle: "Multas",
-    backgroundColor: "#FFF7D1", // ✅ Rojo pastel
+    backgroundColor: "#ECFAE5", // ✅ Rojo pastel
   },
   {
     icon: SoatIcon,
@@ -34,5 +34,11 @@ export const items = [
     title: "Tecnomecánica",
     subtitle: "Vencimiento",
     backgroundColor: "#ffd1f0", // ✅ Morado pastel
+  },
+  {
+    icon: SoatIcon,
+    title: "Soat",
+    subtitle: "Historial",
+    backgroundColor: "#c0c5d1ff", // ✅ Azul pastel
   },
 ];

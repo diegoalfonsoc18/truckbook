@@ -5,6 +5,8 @@ import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items"; // Importing the items array
 import { CamionIcon } from "../../assets/icons/icons";
+import llantas from "../../assets/img/llantas.webp";
+
 export default function Home() {
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
@@ -17,14 +19,15 @@ export default function Home() {
         <ScrollView
           style={{ width: "100%", flex: 1 }}
           contentContainerStyle={{
-            justifyContent: "center", // Centra verticalmente si hay espacio
+            justifyContent: "center",
             alignItems: "center",
             paddingBottom: 10,
           }}
           showsVerticalScrollIndicator={false}>
           <View style={styles.containerAlert}>
-            <Text style={styles.textAlert}>Avisos</Text>
+            <Image source={llantas} style={styles.imageAlert} />
           </View>
+
           <View style={styles.itemsContainer}>
             {items.map((item, idx) => {
               const isComponent = typeof item.icon === "function";
