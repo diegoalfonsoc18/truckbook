@@ -1,7 +1,14 @@
 // src/screens/Home/Home.tsx
 
 import React, { useState } from "react";
-import { Text, Image, View, TouchableOpacity, ScrollView } from "react-native";
+import {
+  Text,
+  Image,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl, // ← AGREGAR
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -11,21 +18,34 @@ import llantas from "../../assets/img/llantas.webp";
 import { useMultas } from "../../hooks/useMultas";
 
 export default function Home() {
-  // Placa del camion actual
-  // TODO: Reemplazar con la placa real de tu sistema de gestion de camiones
-  const [placaActual] = useState<string | null>("BZO523");
+  const [placaActual] = useState<string | null>("eka854");
 
-  const { tieneMultasPendientes, cantidadPendientes, cargando } = useMultas(
-    placaActual,
-    true
-  );
+  // Estado para el pull-to-refresh
+  const [refrescando, setRefrescando] = useState(false);
+
+  const {
+    tieneMultasPendientes,
+    cantidadPendientes,
+    cargando,
+    recargar, // ← Usar la función recargar del hook
+  } = useMultas(placaActual, true);
+
+  // Función para manejar el pull-to-refresh
+  const handleRefresh = async () => {
+    setRefrescando(true);
+    try {
+      await recargar(); // Forzar recarga sin cache
+    } finally {
+      setRefrescando(false);
+    }
+  };
 
   const renderBadge = (item: (typeof items)[0]) => {
     if (item.id !== "multas" || !item.mostrarBadge) {
       return null;
     }
 
-    if (cargando) {
+    if (cargando || refrescando) {
       return (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>...</Text>
@@ -66,7 +86,17 @@ export default function Home() {
             alignItems: "center",
             paddingBottom: 10,
           }}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          // ← AGREGAR PULL-TO-REFRESH
+          refreshControl={
+            <RefreshControl
+              refreshing={refrescando}
+              onRefresh={handleRefresh}
+              tintColor="#2196F3" // Color del spinner (iOS)
+              colors={["#2196F3"]} // Color del spinner (Android)
+              title="Actualizando multas..." // Texto (iOS)
+            />
+          }>
           <View style={styles.containerAlert}>
             <Image source={llantas} style={styles.imageAlert} />
           </View>

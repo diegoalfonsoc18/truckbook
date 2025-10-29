@@ -1,21 +1,18 @@
 // src/hooks/useMultas.ts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { simitService } from "../services/simitService";
-import type { RespuestaMultas } from "../assets/types/simit.types";
+import type { RespuestaMultas } from "../types/simit.types";
 
 interface UseMultasReturn {
   multas: RespuestaMultas | null;
   cargando: boolean;
   error: string | null;
-  recargar: () => Promise<void>;
+  recargar: () => Promise<void>; // ← Función para forzar recarga
   tieneMultasPendientes: boolean;
   cantidadPendientes: number;
 }
 
-/**
- * Hook para consultar multas de un vehículo
- */
 export function useMultas(
   placa: string | null,
   autoCargar: boolean = false
@@ -24,45 +21,58 @@ export function useMultas(
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const cargarMultas = async () => {
-    if (!placa || placa.trim().length === 0) {
-      setMultas(null);
-      setError(null);
-      return;
-    }
-
-    setCargando(true);
-    setError(null);
-
-    try {
-      const resultado = await simitService.consultarPorPlaca(placa);
-
-      if (resultado.exito) {
-        setMultas(resultado);
-        setError(null);
-      } else {
+  const cargarMultas = useCallback(
+    async (forzarRecarga: boolean = false) => {
+      if (!placa || placa.trim().length === 0) {
         setMultas(null);
-        setError(resultado.error || "Error al consultar");
+        setError(null);
+        return;
       }
-    } catch (err) {
-      setMultas(null);
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setCargando(false);
-    }
-  };
 
+      setCargando(true);
+      setError(null);
+
+      try {
+        // Si forzarRecarga es true, no usar cache
+        const resultado = await simitService.consultarPorPlaca(
+          placa,
+          !forzarRecarga
+        );
+
+        if (resultado.exito) {
+          setMultas(resultado);
+          setError(null);
+        } else {
+          setMultas(null);
+          setError(resultado.error || "Error al consultar");
+        }
+      } catch (err) {
+        setMultas(null);
+        setError(err instanceof Error ? err.message : "Error desconocido");
+      } finally {
+        setCargando(false);
+      }
+    },
+    [placa]
+  );
+
+  // Auto-cargar al montar o cuando cambie la placa
   useEffect(() => {
     if (autoCargar && placa) {
-      cargarMultas();
+      cargarMultas(false); // Usar cache en carga automática
     }
-  }, [placa, autoCargar]);
+  }, [placa, autoCargar, cargarMultas]);
+
+  // Función pública para forzar recarga sin cache
+  const recargar = useCallback(async () => {
+    await cargarMultas(true); // Forzar sin cache
+  }, [cargarMultas]);
 
   return {
     multas,
     cargando,
     error,
-    recargar: cargarMultas,
+    recargar, // ← Exponer función
     tieneMultasPendientes: (multas?.multasPendientes || 0) > 0,
     cantidadPendientes: multas?.multasPendientes || 0,
   };

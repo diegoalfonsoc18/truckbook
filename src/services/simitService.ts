@@ -9,7 +9,7 @@ class SimitService {
 
   private cache: Map<string, { data: RespuestaMultas; timestamp: number }> =
     new Map();
-  private readonly CACHE_DURATION = 60 * 60 * 1000; // 1 hora
+  private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 minutos
 
   private normalizarPlaca(placa: string): string {
     return placa.trim().toUpperCase().replace(/\s+/g, "");
