@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { simitService } from "../services/simitService";
-import type { RespuestaMultas } from "../types/simit.types";
+import type { RespuestaMultas } from "../assets/types/simit.types";
 
 interface UseMultasReturn {
   multas: RespuestaMultas | null;

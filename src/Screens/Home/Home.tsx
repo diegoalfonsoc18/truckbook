@@ -7,9 +7,10 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  RefreshControl, // ← AGREGAR
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native"; // ← AGREGAR
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items";
@@ -18,30 +19,31 @@ import llantas from "../../assets/img/llantas.webp";
 import { useMultas } from "../../hooks/useMultas";
 
 export default function Home() {
+  const navigation = useNavigation(); // ← AGREGAR
   const [placaActual] = useState<string | null>("eka854");
-
-  // Estado para el pull-to-refresh
   const [refrescando, setRefrescando] = useState(false);
 
-  const {
-    tieneMultasPendientes,
-    cantidadPendientes,
-    cargando,
-    recargar, // ← Usar la función recargar del hook
-  } = useMultas(placaActual, true);
+  const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
+    useMultas(placaActual, true);
 
-  // Función para manejar el pull-to-refresh
   const handleRefresh = async () => {
     setRefrescando(true);
     try {
-      await recargar(); // Forzar recarga sin cache
+      await recargar();
     } finally {
       setRefrescando(false);
     }
   };
 
+  // ← AGREGAR: Función para manejar click en items
+  const handleItemPress = (itemId: string) => {
+    if (itemId === "Multas") {
+      navigation.navigate("Multas"); // ✅ Nombre de la ruta registrada
+    }
+  };
+
   const renderBadge = (item: (typeof items)[0]) => {
-    if (item.id !== "multas" || !item.mostrarBadge) {
+    if (item.id !== "Multas" || !item.mostrarBadge) {
       return null;
     }
 
@@ -87,14 +89,13 @@ export default function Home() {
             paddingBottom: 10,
           }}
           showsVerticalScrollIndicator={false}
-          // ← AGREGAR PULL-TO-REFRESH
           refreshControl={
             <RefreshControl
               refreshing={refrescando}
               onRefresh={handleRefresh}
-              tintColor="#2196F3" // Color del spinner (iOS)
-              colors={["#2196F3"]} // Color del spinner (Android)
-              title="Actualizando multas..." // Texto (iOS)
+              tintColor="#2196F3"
+              colors={["#2196F3"]}
+              title="Actualizando multas..."
             />
           }>
           <View style={styles.containerAlert}>
@@ -113,7 +114,9 @@ export default function Home() {
                     { backgroundColor: item.backgroundColor || "#FFFFFF" },
                   ]}
                   key={item.id || idx}
-                  activeOpacity={0.7}>
+                  activeOpacity={0.7}
+                  onPress={() => handleItemPress(item.id)} // ← AGREGAR
+                >
                   {renderBadge(item)}
 
                   <View style={styles.iconContainer}>
