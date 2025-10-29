@@ -162,4 +162,34 @@ export const styles = StyleSheet.create({
     color: "#000000", // ✅ Negro puro
     letterSpacing: -0.4,
   },
+
+  badge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 10,
+    elevation: 3, // Sombra en Android
+    shadowColor: "#000", // Sombra en iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  badgePendiente: {
+    backgroundColor: "#FF5252", // Rojo para pendientes
+  },
+  badgeOk: {
+    backgroundColor: "#4CAF50", // Verde para "al día"
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  badgeTextOk: {
+    color: "#FFFFFF",
+  },
 });

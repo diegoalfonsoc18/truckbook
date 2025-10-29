@@ -1,44 +1,57 @@
+// src/screens/Home/Items.ts
+
 import { MultasIcon } from "../../assets/icons/icons";
 import { SoatIcon } from "../../assets/icons/icons";
 import { MantenimientoIcon } from "../../assets/icons/icons";
 import { LicenciaIcon } from "../../assets/icons/icons";
 import { tecnoIcon } from "../../assets/icons/icons";
 
-export const items = [
+// Definir el tipo Item
+export interface Item {
+  id: string; // ✅ ID único para cada item
+  icon: any; // Puede ser componente o require()
+  title: string;
+  subtitle?: string;
+  backgroundColor?: string;
+  mostrarBadge?: boolean; // ✅ Para saber si mostrar badge de estado
+}
+
+export const items: Item[] = [
   {
-    icon: MultasIcon,
-    title: "Pendiente",
-    subtitle: "Multas",
-    backgroundColor: "#ECFAE5", // ✅ Rojo pastel
+    id: "multas",
+    icon: MultasIcon, // ✅ Usar el componente importado
+    title: "Multas",
+    subtitle: "Consultar multas",
+    backgroundColor: "#FFE0E0", // Rojo pastel
+    mostrarBadge: true, // 👈 Este mostrará el badge de pendiente/al día
   },
   {
+    id: "soat",
     icon: SoatIcon,
-    title: "Soat",
-    subtitle: "Historial",
-    backgroundColor: "#c0c5d1ff", // ✅ Azul pastel
+    title: "SOAT",
+    subtitle: "Verificar SOAT",
+    backgroundColor: "#E0F0FF", // Azul pastel
   },
   {
+    id: "tecnomecanica",
+    icon: tecnoIcon,
+    title: "Tecnomecánica",
+    subtitle: "Estado",
+    backgroundColor: "#E8F5E9", // Verde pastel
+  },
+  {
+    id: "mantenimiento",
     icon: MantenimientoIcon,
     title: "Mantenimiento",
-    subtitle: "Vencimiento",
-    backgroundColor: "#b3b9cfff", // ✅ Verde pastel
+    subtitle: "Próximo",
+    backgroundColor: "#FFF9E0", // Amarillo pastel
   },
   {
+    id: "licencia",
     icon: LicenciaIcon,
     title: "Licencia",
     subtitle: "Vencimiento",
-    backgroundColor: "#d1f0ff", // ✅ Amarillo pastel
+    backgroundColor: "#F3E5F5", // Morado pastel
   },
-  {
-    icon: tecnoIcon,
-    title: "Tecnomecánica",
-    subtitle: "Vencimiento",
-    backgroundColor: "#ffd1f0", // ✅ Morado pastel
-  },
-  {
-    icon: SoatIcon,
-    title: "Soat",
-    subtitle: "Historial",
-    backgroundColor: "#c0c5d1ff", // ✅ Azul pastel
-  },
+  // Agrega más items según necesites
 ];

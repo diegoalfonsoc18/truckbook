@@ -1,13 +1,55 @@
-import React from "react";
+// src/screens/Home/Home.tsx
+
+import React, { useState } from "react";
 import { Text, Image, View, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { items } from "./Items"; // Importing the items array
+import { items } from "./Items";
 import { CamionIcon } from "../../assets/icons/icons";
 import llantas from "../../assets/img/llantas.webp";
+import { useMultas } from "../../hooks/useMultas";
 
 export default function Home() {
+  // Placa del camion actual
+  // TODO: Reemplazar con la placa real de tu sistema de gestion de camiones
+  const [placaActual] = useState<string | null>("BZO523");
+
+  const { tieneMultasPendientes, cantidadPendientes, cargando } = useMultas(
+    placaActual,
+    true
+  );
+
+  const renderBadge = (item: (typeof items)[0]) => {
+    if (item.id !== "multas" || !item.mostrarBadge) {
+      return null;
+    }
+
+    if (cargando) {
+      return (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>...</Text>
+        </View>
+      );
+    }
+
+    if (tieneMultasPendientes) {
+      return (
+        <View style={[styles.badge, styles.badgePendiente]}>
+          <Text style={styles.badgeText}>
+            {cantidadPendientes} Pendiente{cantidadPendientes > 1 ? "s" : ""}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.badge, styles.badgeOk]}>
+        <Text style={[styles.badgeText, styles.badgeTextOk]}>✓ Al día</Text>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <View style={styles.containerHeader}>
@@ -15,6 +57,7 @@ export default function Home() {
         <Text>Agrega tu camión</Text>
         <FontAwesome name="drivers-license" size={24} color="black" />
       </View>
+
       <View style={styles.containerScroll}>
         <ScrollView
           style={{ width: "100%", flex: 1 }}
@@ -37,10 +80,12 @@ export default function Home() {
                 <TouchableOpacity
                   style={[
                     styles.itemBox,
-                    { backgroundColor: item.backgroundColor || "#FFFFFF" }, // ✅ Color dinámico
+                    { backgroundColor: item.backgroundColor || "#FFFFFF" },
                   ]}
-                  key={idx}
+                  key={item.id || idx}
                   activeOpacity={0.7}>
+                  {renderBadge(item)}
+
                   <View style={styles.iconContainer}>
                     {isComponent ? (
                       <Icon width={40} height={40} />
@@ -48,6 +93,7 @@ export default function Home() {
                       <Image source={item.icon} style={styles.iconItemBox} />
                     )}
                   </View>
+
                   <View style={styles.textContainer}>
                     <Text style={styles.textTitle}>{item.title}</Text>
                     {item.subtitle && (
