@@ -1,4 +1,4 @@
-// src/navigation/HomeNavigation.tsx (O donde lo tengas)
+// src/navigation/HomeNavigation.tsx
 
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -7,7 +7,7 @@ import Multas from "../Screens/itemsPage/Multas";
 
 export type HomeStackParamList = {
   HomeScreen: undefined;
-  Multas: undefined;
+  Multas: { placa: string }; // ← AGREGAR parámetro placa
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -19,20 +19,8 @@ export default function HomeNavigation() {
         headerShown: false,
         animationEnabled: true,
       }}>
-      <Stack.Screen
-        name="HomeScreen"
-        component={Home}
-        options={{
-          title: "Home",
-        }}
-      />
-      <Stack.Screen
-        name="Multas"
-        component={Multas}
-        options={{
-          title: "Mis Multas",
-        }}
-      />
+      <Stack.Screen name="HomeScreen" component={Home} />
+      <Stack.Screen name="Multas" component={Multas} />
     </Stack.Navigator>
   );
 }

@@ -1,4 +1,4 @@
-// src/screens/Multas/MultasStyles.ts
+// src/screens/Multas/multasStyle.ts (COMPLETO CON TODOS LOS ESTILOS)
 
 import { StyleSheet } from "react-native";
 
@@ -99,6 +99,43 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666666",
     fontWeight: "500",
+  },
+
+  // Error Container
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333333",
+    textAlign: "center",
+  },
+
+  errorSubtitle: {
+    fontSize: 14,
+    color: "#999999",
+    textAlign: "center",
+  },
+
+  retryButton: {
+    backgroundColor: "#2196F3",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    textAlign: "center",
   },
 
   // Lista
@@ -228,6 +265,29 @@ export const styles = StyleSheet.create({
   valorPagada: {
     color: "#4CAF50",
     textDecorationLine: "line-through",
+  },
+
+  // Organismo Container
+  organismoContainer: {
+    backgroundColor: "#F0F4FF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#2196F3",
+  },
+
+  organismoLabel: {
+    fontSize: 10,
+    color: "#2196F3",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+
+  organismoText: {
+    fontSize: 12,
+    color: "#333333",
+    fontWeight: "500",
   },
 
   pagarButton: {

@@ -11,21 +11,51 @@ export const styles = StyleSheet.create({
     backgroundColor: "#F2F2F7", // ✅ Fondo estilo Apple
   },
 
+  // ✅ ACTUALIZADO: containerHeader ahora es clickeable
   containerHeader: {
     flex: 0.4,
     flexDirection: "row",
     justifyContent: "space-between",
     width: "98%",
-    borderRadius: 16, // ✅ Menos redondeado
-    backgroundColor: "#FFFFFF", // ✅ Blanco puro
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
     padding: 20,
     marginTop: 20,
     marginBottom: 20,
     alignItems: "center",
-
-    // ✅ Sin sombras
     shadowOpacity: 0,
     elevation: 0,
+  },
+
+  // ✅ NUEVO: Contenedor de texto del header
+  headerTextContainer: {
+    flex: 1,
+    marginHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+
+  // ✅ NUEVO: Texto "Selecciona tu camión"
+  seleccionarCamionText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2196F3",
+  },
+
+  // ✅ NUEVO: Label "Vehículo seleccionado"
+  placaLabel: {
+    fontSize: 12,
+    color: "#999999",
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+
+  // ✅ NUEVO: Texto con la placa
+  placaText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333333",
+    letterSpacing: 1,
   },
 
   headerText: {
@@ -54,8 +84,6 @@ export const styles = StyleSheet.create({
     marginBottom: 80,
     marginTop: 10,
     borderRadius: 20,
-
-    // ✅ Sin sombras
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -64,7 +92,7 @@ export const styles = StyleSheet.create({
     flex: 0,
     width: "100%",
     height: 250,
-    aspectRatio: 10 / 6.4, // ⭐ Ajusta esto según tu imagen (ej: 16/9, 4/3, 1/1)
+    aspectRatio: 10 / 6.4,
     borderRadius: 16,
     marginBottom: 20,
     backgroundColor: "#e00505ff",
@@ -72,10 +100,10 @@ export const styles = StyleSheet.create({
     elevation: 0,
     overflow: "hidden",
   },
+
   imageAlert: {
     width: "100%",
     height: "100%",
-    //borderRadius: 16,
     resizeMode: "stretch",
   },
 
@@ -87,8 +115,6 @@ export const styles = StyleSheet.create({
     alignItems: "stretch",
     width: "100%",
     borderRadius: 10,
-
-    // ✅ Sin sombras del contenedor
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -103,10 +129,8 @@ export const styles = StyleSheet.create({
     height: 100,
     marginVertical: 10,
     padding: 6,
-    borderRadius: 16, // ✅ Menos redondeado
-    backgroundColor: "#A0153E", // Tu color personalizado
-
-    // ✅ SIN SOMBRAS - Esto elimina la sombra del ícono
+    borderRadius: 16,
+    backgroundColor: "#A0153E",
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -117,8 +141,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-
-    // ✅ Sin sombras en el contenedor del ícono
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -126,8 +148,6 @@ export const styles = StyleSheet.create({
   iconItemBox: {
     width: 68,
     height: 68,
-
-    // ✅ Sin sombras
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -143,13 +163,13 @@ export const styles = StyleSheet.create({
 
   textTitle: {
     fontSize: 16,
-    fontWeight: "600", // ✅ Semibold
+    fontWeight: "600",
     color: COLORS.textTertiary,
   },
 
   textSubtitle: {
     fontSize: 12,
-    fontWeight: "400", // ✅ Regular
+    fontWeight: "400",
     color: COLORS.textTertiary,
     justifyContent: "center",
     alignItems: "center",
@@ -157,9 +177,9 @@ export const styles = StyleSheet.create({
   },
 
   textAlert: {
-    fontSize: 20, // ✅ Más grande
-    fontWeight: "700", // ✅ Bold
-    color: "#000000", // ✅ Negro puro
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
     letterSpacing: -0.4,
   },
 
@@ -171,25 +191,110 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     zIndex: 10,
-    elevation: 3, // Sombra en Android
-    shadowColor: "#000", // Sombra en iOS
+    elevation: 3,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
+
   badgePendiente: {
-    backgroundColor: "#FF5252", // Rojo para pendientes
+    backgroundColor: "#FF5252",
   },
+
   badgeOk: {
-    backgroundColor: "#4CAF50", // Verde para "al día"
+    backgroundColor: "#4CAF50",
   },
+
   badgeText: {
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "700",
     textAlign: "center",
   },
+
   badgeTextOk: {
+    color: "#FFFFFF",
+  },
+
+  // ✅ MODAL STYLES
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    width: "80%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333333",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  placaInput: {
+    borderWidth: 2,
+    borderColor: "#2196F3",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333333",
+    marginBottom: 20,
+    textAlign: "center",
+    letterSpacing: 1,
+  },
+
+  modalButtonContainer: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#EEEEEE",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666666",
+  },
+
+  guardarButton: {
+    flex: 1,
+    backgroundColor: "#2196F3",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  guardarButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });

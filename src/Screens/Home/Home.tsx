@@ -1,4 +1,4 @@
-// src/screens/Home/Home.tsx
+// src/screens/Home/Home.tsx (MODAL AL HACER CLICK)
 
 import React, { useState } from "react";
 import {
@@ -8,23 +8,38 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native"; // ← AGREGAR
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { styles } from "./HomeStyles";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items";
 import { CamionIcon } from "../../assets/icons/icons";
 import llantas from "../../assets/img/llantas.webp";
 import { useMultas } from "../../hooks/useMultas";
+import { HomeStackParamList } from "../../navigation/HomeNavigation";
+
+type HomeNavigationProp = NativeStackNavigationProp<
+  HomeStackParamList,
+  "HomeScreen"
+>;
 
 export default function Home() {
-  const navigation = useNavigation(); // ← AGREGAR
-  const [placaActual] = useState<string | null>("eka854");
+  const navigation = useNavigation<HomeNavigationProp>();
+
+  // ✅ Estado para la placa ingresada por el usuario
+  const [placaActual, setPlacaActual] = useState<string | null>(null);
+  const [placaTemporal, setPlacaTemporal] = useState("");
+  const [modalVisible, setModalVisible] = useState(false); // ✅ NO mostrar al inicio
   const [refrescando, setRefrescando] = useState(false);
 
+  // ✅ Solo cargar multas si hay una placa ingresada
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
-    useMultas(placaActual, true);
+    useMultas(placaActual, !!placaActual); // Solo si placaActual existe
 
   const handleRefresh = async () => {
     setRefrescando(true);
@@ -35,15 +50,44 @@ export default function Home() {
     }
   };
 
-  // ← AGREGAR: Función para manejar click en items
+  // ✅ Abrir modal para ingresar placa
+  const handleAbrirModalPlaca = () => {
+    setPlacaTemporal(placaActual || "");
+    setModalVisible(true);
+  };
+
+  // ✅ Guardar placa ingresada
+  const handleGuardarPlaca = () => {
+    const placaLimpia = placaTemporal.trim().toUpperCase();
+
+    if (!placaLimpia) {
+      Alert.alert("Error", "Por favor ingresa una placa válida");
+      return;
+    }
+
+    if (placaLimpia.length < 3) {
+      Alert.alert("Error", "La placa debe tener al menos 3 caracteres");
+      return;
+    }
+
+    setPlacaActual(placaLimpia);
+    setModalVisible(false);
+  };
+
   const handleItemPress = (itemId: string) => {
-    if (itemId === "Multas") {
-      navigation.navigate("Multas"); // ✅ Nombre de la ruta registrada
+    if (itemId === "multas") {
+      if (!placaActual) {
+        Alert.alert("Error", "Por favor selecciona una placa primero");
+        return;
+      }
+      navigation.navigate("Multas", {
+        placa: placaActual,
+      });
     }
   };
 
   const renderBadge = (item: (typeof items)[0]) => {
-    if (item.id !== "Multas" || !item.mostrarBadge) {
+    if (item.id !== "multas" || !item.mostrarBadge) {
       return null;
     }
 
@@ -74,11 +118,25 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <View style={styles.containerHeader}>
+      {/* ✅ HEADER CON BOTÓN "SELECCIONA TU CAMIÓN" */}
+      <TouchableOpacity
+        style={styles.containerHeader}
+        onPress={handleAbrirModalPlaca}>
         <CamionIcon />
-        <Text>Agrega tu camión</Text>
+        <View style={styles.headerTextContainer}>
+          {placaActual ? (
+            <>
+              <Text style={styles.placaLabel}>Vehículo seleccionado</Text>
+              <Text style={styles.placaText}>{placaActual}</Text>
+            </>
+          ) : (
+            <Text style={styles.seleccionarCamionText}>
+              Selecciona tu camión
+            </Text>
+          )}
+        </View>
         <FontAwesome name="drivers-license" size={24} color="black" />
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.containerScroll}>
         <ScrollView
@@ -115,8 +173,7 @@ export default function Home() {
                   ]}
                   key={item.id || idx}
                   activeOpacity={0.7}
-                  onPress={() => handleItemPress(item.id)} // ← AGREGAR
-                >
+                  onPress={() => handleItemPress(item.id)}>
                   {renderBadge(item)}
 
                   <View style={styles.iconContainer}>
@@ -139,6 +196,43 @@ export default function Home() {
           </View>
         </ScrollView>
       </View>
+
+      {/* ✅ MODAL PARA INGRESAR PLACA - SOLO AL HACER CLICK */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>
+              Ingresa la placa de tu vehículo
+            </Text>
+
+            <TextInput
+              style={styles.placaInput}
+              placeholder="Ej: BZO523"
+              placeholderTextColor="#999"
+              value={placaTemporal}
+              onChangeText={setPlacaTemporal}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={10}
+              autoFocus
+            />
+
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.guardarButton}
+                onPress={handleGuardarPlaca}>
+                <Text style={styles.guardarButtonText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

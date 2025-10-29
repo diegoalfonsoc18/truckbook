@@ -1,4 +1,4 @@
-// src/screens/Multas/Multas.tsx
+// src/screens/Multas/Multas.tsx (COMPLETO Y FUNCIONAL)
 
 import React, { useState } from "react";
 import {
@@ -10,68 +10,38 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native"; // ✅ IMPORTAR useRoute
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { styles } from "./multasStyle";
 import { useMultas } from "../../hooks/useMultas";
+import type { Multa } from "../../assets/types/simit.types";
+import { HomeStackParamList } from "../../navigation/HomeNavigation";
 
-interface Multa {
-  id: string;
-  numero: string;
-  valor: number;
-  fecha: string;
-  concepto: string;
-  estado: "pagada" | "pendiente";
-  placa: string;
-}
+// ✅ TIPOS CORRECTOS
+type Props = NativeStackScreenProps<HomeStackParamList, "Multas">;
 
-export default function Multas() {
+export default function Multas({ route }: Props) {
   const navigation = useNavigation();
-  const [placaActual] = useState<string | null>("eka854");
   const [refrescando, setRefrescando] = useState(false);
 
-  const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
-    useMultas(placaActual, true);
+  // ✅ RECIBIR placa del parámetro
+  const placaActual = route?.params?.placa || "bzo523";
 
-  // Datos de ejemplo (en un caso real, vendrían del hook useMultas o una API)
-  const [multas] = useState<Multa[]>([
-    {
-      id: "1",
-      numero: "2024-001",
-      valor: 450000,
-      fecha: "2024-10-15",
-      concepto: "Exceso de velocidad",
-      estado: "pendiente",
-      placa: "eka854",
-    },
-    {
-      id: "2",
-      numero: "2024-002",
-      valor: 320000,
-      fecha: "2024-09-20",
-      concepto: "Estacionamiento prohibido",
-      estado: "pendiente",
-      placa: "eka854",
-    },
-    {
-      id: "3",
-      numero: "2024-003",
-      valor: 580000,
-      fecha: "2024-08-10",
-      concepto: "No llevar documentos",
-      estado: "pagada",
-      placa: "eka854",
-    },
-    {
-      id: "4",
-      numero: "2024-004",
-      valor: 240000,
-      fecha: "2024-07-05",
-      concepto: "Placa ilegible",
-      estado: "pagada",
-      placa: "eka854",
-    },
-  ]);
+  console.log("🚗 Placa recibida en Multas:", placaActual);
+
+  // ✅ USAR la placa recibida
+  const {
+    multas: respuestaMultas,
+    cargando,
+    error,
+    recargar,
+    tieneMultasPendientes,
+    cantidadPendientes,
+  } = useMultas(placaActual, true);
+
+  // ✅ EXTRAE LAS MULTAS DE LA RESPUESTA
+  const multas: Multa[] = respuestaMultas?.multas || [];
 
   const handleRefresh = async () => {
     setRefrescando(true);
@@ -82,49 +52,74 @@ export default function Multas() {
     }
   };
 
-  const formatCurrency = (valor: number): string => {
+  const formatCurrency = (valor: any): string => {
+    const numero = typeof valor === "string" ? parseFloat(valor) : valor;
+    if (isNaN(numero)) return "$0";
+
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
       minimumFractionDigits: 0,
-    }).format(valor);
+    }).format(numero);
   };
 
-  const formatDate = (fecha: string): string => {
-    const date = new Date(fecha);
-    return date.toLocaleDateString("es-CO");
+  const formatDate = (fecha: string | undefined): string => {
+    if (!fecha) return "N/A";
+    try {
+      const date = new Date(fecha);
+      return date.toLocaleDateString("es-CO");
+    } catch {
+      return fecha;
+    }
+  };
+
+  const isPagada = (estado: string | undefined): boolean => {
+    if (!estado) return false;
+    return (
+      estado.toLowerCase() === "pagada" ||
+      estado.toLowerCase() === "pago" ||
+      estado.toLowerCase() === "pagado"
+    );
   };
 
   const renderMultaItem = ({ item }: { item: Multa }) => {
-    const isPagada = item.estado === "pagada";
+    const pagada = isPagada(item.estado);
+    const numeroComparendo =
+      item.numero_comparendo || `Multa ${item.infraccion || "N/A"}`;
+    const concepto =
+      item.descripcion_infraccion || item.infraccion || "Sin concepto";
+    const valor = item.valor || 0;
+    const fecha = item.fecha_infraccion || "N/A";
 
     return (
       <View style={styles.multaCard}>
         <View style={styles.multaHeader}>
           <View style={styles.multaNumberContainer}>
-            <Text style={styles.multaNumber}>Multa #{item.numero}</Text>
-            <Text style={styles.multaDate}>{formatDate(item.fecha)}</Text>
+            <Text style={styles.multaNumber}>
+              Comparendo #{numeroComparendo}
+            </Text>
+            <Text style={styles.multaDate}>{formatDate(fecha)}</Text>
           </View>
 
           <View
             style={[
               styles.estadoBadge,
-              isPagada ? styles.estadoPagada : styles.estadoPendiente,
+              pagada ? styles.estadoPagada : styles.estadoPendiente,
             ]}>
             <Text
               style={[
                 styles.estadoText,
-                isPagada ? styles.textPagada : styles.textPendiente,
+                pagada ? styles.textPagada : styles.textPendiente,
               ]}>
-              {isPagada ? "✓ Pagada" : "⏱ Pendiente"}
+              {pagada ? "✓ Pagada" : "⏱ Pendiente"}
             </Text>
           </View>
         </View>
 
         <View style={styles.multaContent}>
           <View style={styles.conceptoContainer}>
-            <Text style={styles.conceptoLabel}>Concepto</Text>
-            <Text style={styles.conceptoText}>{item.concepto}</Text>
+            <Text style={styles.conceptoLabel}>Infracción</Text>
+            <Text style={styles.conceptoText}>{concepto}</Text>
           </View>
 
           <View style={styles.valorContainer}>
@@ -132,14 +127,23 @@ export default function Multas() {
             <Text
               style={[
                 styles.valorText,
-                isPagada ? styles.valorPagada : styles.valorPendiente,
+                pagada ? styles.valorPagada : styles.valorPendiente,
               ]}>
-              {formatCurrency(item.valor)}
+              {formatCurrency(valor)}
             </Text>
           </View>
+
+          {item.organismo_transito && (
+            <View style={styles.organismoContainer}>
+              <Text style={styles.organismoLabel}>Organismo</Text>
+              <Text style={styles.organismoText}>
+                {item.organismo_transito}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {item.estado === "pendiente" && (
+        {!pagada && (
           <TouchableOpacity style={styles.pagarButton}>
             <FontAwesome name="credit-card" size={16} color="white" />
             <Text style={styles.pagarButtonText}>Pagar multa</Text>
@@ -150,8 +154,12 @@ export default function Multas() {
   };
 
   const totalPendiente = multas
-    .filter((m) => m.estado === "pendiente")
-    .reduce((sum, m) => sum + m.valor, 0);
+    .filter((m) => !isPagada(m.estado))
+    .reduce((sum, m) => {
+      const valor =
+        typeof m.valor === "string" ? parseFloat(m.valor) : m.valor || 0;
+      return sum + valor;
+    }, 0);
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -161,9 +169,48 @@ export default function Multas() {
     </View>
   );
 
-  if (cargando && !refrescando) {
+  // ✅ ERROR STATE
+  if (error && !refrescando) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <FontAwesome name="chevron-left" size={20} color="#333" />
+            <Text style={styles.backText}>Atrás</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mis Multas</Text>
+          <View style={styles.headerPlaceholder} />
+        </View>
+
+        <View style={styles.errorContainer}>
+          <FontAwesome name="exclamation-circle" size={64} color="#FF6B6B" />
+          <Text style={styles.errorTitle}>Error al cargar multas</Text>
+          <Text style={styles.errorSubtitle}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ✅ LOADING STATE
+  if (cargando && multas.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <FontAwesome name="chevron-left" size={20} color="#333" />
+            <Text style={styles.backText}>Atrás</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mis Multas</Text>
+          <View style={styles.headerPlaceholder} />
+        </View>
+
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
           <Text style={styles.loaderText}>Cargando multas...</Text>
@@ -172,6 +219,7 @@ export default function Multas() {
     );
   }
 
+  // ✅ MAIN RENDER
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       {/* Header */}
@@ -184,6 +232,12 @@ export default function Multas() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mis Multas</Text>
         <View style={styles.headerPlaceholder} />
+      </View>
+
+      {/* Placa Info */}
+      <View style={styles.placaInfoContainer}>
+        <FontAwesome name="car" size={16} color="#2196F3" />
+        <Text style={styles.placaInfoText}>{placaActual}</Text>
       </View>
 
       {/* Resumen */}
@@ -213,7 +267,9 @@ export default function Multas() {
         <FlatList
           data={multas}
           renderItem={renderMultaItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) =>
+            item.numero_comparendo || `multa-${index}`
+          }
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={
