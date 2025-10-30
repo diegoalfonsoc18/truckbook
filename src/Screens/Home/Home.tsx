@@ -83,8 +83,11 @@ export default function Home() {
       case "soat":
         navigation.navigate("SOAT", { placa: placaActual });
         break;
-      case "tecnicomecanica": // ✅ AGREGAR ESTO
+      case "tecnicomecanica":
         navigation.navigate("RTM", { placa: placaActual });
+        break;
+      case "licencia": // ✅ AQUÍ ANTES DEL DEFAULT
+        navigation.navigate("Licencia", { documento: "1234567890" });
         break;
       default:
         break;
