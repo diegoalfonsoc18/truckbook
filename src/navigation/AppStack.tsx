@@ -5,13 +5,13 @@ import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import HomeNavigation from "../navigation/HomeNavigation"; // ✅ CAMBIO 1: Importar HomeNavigation
-import Account from "../Screens/Account/Account";
+import Account from "../Screens/Cuenta/Cuenta";
 import {
   renderGastos,
   renderIngresos,
   renderHome,
   renderFinanzas,
-  renderAccount,
+  renderCuenta,
 } from "../assets/icons/icons";
 import { COLORS } from "../constants/colors";
 
@@ -37,8 +37,8 @@ export default function AppStack() {
               return renderHome(color, size, focused);
             case "Reportes":
               return renderFinanzas(color, size, focused);
-            case "Account":
-              return renderAccount(color, size, focused);
+            case "Cuenta":
+              return renderCuenta(color, size, focused);
             default:
               return null;
           }
@@ -49,9 +49,8 @@ export default function AppStack() {
 
       {/* ✅ CAMBIO 2: Usar HomeNavigation en lugar de Home */}
       <Tab.Screen name="Home" component={HomeNavigation} />
-
       <Tab.Screen name="Reportes" component={FinanzasNavigation} />
-      <Tab.Screen name="Account" component={Account} />
+      <Tab.Screen name="Cuenta" component={Account} />
     </Tab.Navigator>
   );
 }

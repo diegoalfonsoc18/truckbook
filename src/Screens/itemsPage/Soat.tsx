@@ -23,10 +23,8 @@ export default function SOAT({ route }: Props) {
   const navigation = useNavigation();
   const [refrescando, setRefrescando] = useState(false);
 
-  // ✅ RECIBIR placa del parámetro
   const placaActual = route?.params?.placa || "bzo523";
 
-  // ✅ USAR hook para consultar SOAT
   const {
     soat: respuestaSOAT,
     vehiculo,
@@ -34,7 +32,6 @@ export default function SOAT({ route }: Props) {
     error,
     recargar,
     esSOATVigente,
-    esRTMVigente,
     diasParaVencerSOAT,
   } = useSOAT(placaActual, true);
 
@@ -58,9 +55,9 @@ export default function SOAT({ route }: Props) {
   };
 
   const getStatusColor = (vigente: boolean, diasParaVencer: number): string => {
-    if (!vigente) return "#E74C3C"; // Rojo - Vencido
-    if (diasParaVencer <= 30) return "#F39C12"; // Naranja - Por vencer
-    return "#27AE60"; // Verde - Vigente
+    if (!vigente) return "#E74C3C";
+    if (diasParaVencer <= 30) return "#F39C12";
+    return "#27AE60";
   };
 
   const getStatusText = (vigente: boolean, diasParaVencer: number): string => {
@@ -69,7 +66,6 @@ export default function SOAT({ route }: Props) {
     return "✅ Vigente";
   };
 
-  // ✅ ERROR STATE
   if (error && !refrescando) {
     return (
       <SafeAreaView style={styles.container}>
@@ -80,7 +76,7 @@ export default function SOAT({ route }: Props) {
             <FontAwesome name="chevron-left" size={20} color="#333" />
             <Text style={styles.backText}>Atrás</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>SOAT y RTM</Text>
+          <Text style={styles.headerTitle}>SOAT</Text>
           <View style={styles.headerPlaceholder} />
         </View>
 
@@ -96,7 +92,6 @@ export default function SOAT({ route }: Props) {
     );
   }
 
-  // ✅ LOADING STATE
   if (cargando && !respuestaSOAT) {
     return (
       <SafeAreaView style={styles.container}>
@@ -107,7 +102,7 @@ export default function SOAT({ route }: Props) {
             <FontAwesome name="chevron-left" size={20} color="#333" />
             <Text style={styles.backText}>Atrás</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>SOAT y RTM</Text>
+          <Text style={styles.headerTitle}>SOAT</Text>
           <View style={styles.headerPlaceholder} />
         </View>
 
@@ -119,10 +114,8 @@ export default function SOAT({ route }: Props) {
     );
   }
 
-  // ✅ MAIN RENDER
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -130,11 +123,10 @@ export default function SOAT({ route }: Props) {
           <FontAwesome name="chevron-left" size={20} color="#333" />
           <Text style={styles.backText}>Atrás</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>SOAT y RTM</Text>
+        <Text style={styles.headerTitle}>SOAT</Text>
         <View style={styles.headerPlaceholder} />
       </View>
 
-      {/* Placa Info */}
       <View style={styles.placaInfoContainer}>
         <FontAwesome name="car" size={16} color="#2196F3" />
         <Text style={styles.placaInfoText}>{placaActual}</Text>
@@ -152,7 +144,6 @@ export default function SOAT({ route }: Props) {
             title="Actualizando SOAT..."
           />
         }>
-        {/* Información del vehículo */}
         {vehiculo && (
           <View style={styles.vehiculoCard}>
             <Text style={styles.cardTitle}>📋 Información del Vehículo</Text>
@@ -171,7 +162,6 @@ export default function SOAT({ route }: Props) {
           </View>
         )}
 
-        {/* SOAT */}
         {respuestaSOAT?.soat && (
           <View
             style={[
@@ -245,62 +235,12 @@ export default function SOAT({ route }: Props) {
           </View>
         )}
 
-        {/* RTM */}
-        {respuestaSOAT?.rtm && (
-          <View
-            style={[
-              styles.rtmCard,
-              {
-                borderLeftColor: esRTMVigente ? "#27AE60" : "#E74C3C",
-              },
-            ]}>
-            <View style={styles.soatHeader}>
-              <Text style={styles.cardTitle}>
-                🔧 RTM (Revisión Técnico Mecánica)
-              </Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor: esRTMVigente ? "#27AE60" : "#E74C3C",
-                  },
-                ]}>
-                <Text style={styles.statusText}>
-                  {esRTMVigente ? "✅ Vigente" : "❌ Vencida"}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Tipo Revisión:</Text>
-              <Text style={styles.infoValue}>
-                {respuestaSOAT.rtm.tipoRevision || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Fecha Expedición:</Text>
-              <Text style={styles.infoValue}>
-                {formatDate(respuestaSOAT.rtm.fechaExpedicion)}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Fecha Vigente:</Text>
-              <Text style={styles.infoValue}>
-                {formatDate(respuestaSOAT.rtm.fechaVigente)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Sin datos */}
-        {!respuestaSOAT?.soat && !respuestaSOAT?.rtm && (
+        {!respuestaSOAT?.soat && (
           <View style={styles.emptyContainer}>
             <FontAwesome name="info-circle" size={64} color="#99999" />
             <Text style={styles.emptyTitle}>Sin información</Text>
             <Text style={styles.emptySubtitle}>
-              No se encontró información de SOAT o RTM para esta placa
+              No se encontró información de SOAT para esta placa
             </Text>
           </View>
         )}

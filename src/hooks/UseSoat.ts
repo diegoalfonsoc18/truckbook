@@ -1,4 +1,4 @@
-// src/hooks/useSOAT.ts (CORREGIDO)
+// src/hooks/useSOAT.ts
 
 import { useState, useEffect, useCallback } from "react";
 import soatService from "../services/Soatservice";
@@ -6,7 +6,6 @@ import type {
   RespuestaSOAT,
   VehiculoSOAT,
   SOAT,
-  RTM,
 } from "../assets/types/Soat.types";
 
 interface UseSOATReturn {
@@ -61,13 +60,11 @@ export function useSOAT(
     consultarSOAT();
   }, [placa, habilitado, consultarSOAT]);
 
-  // ✅ LLAMAR A MÉTODOS DE INSTANCIA (no estáticos)
   const esSOATVigente = soatService.isSOATVigente(soat?.soat?.fechaVencimiento);
   const diasParaVencerSOAT = soatService.diasParaVencer(
     soat?.soat?.fechaVencimiento
   );
 
-  // Calcular estado de RTM
   const esRTMVigente = soat?.rtm?.esVigente || false;
 
   return {

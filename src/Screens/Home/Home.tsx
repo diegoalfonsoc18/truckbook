@@ -70,7 +70,6 @@ export default function Home() {
     setModalVisible(false);
   };
 
-  // ✅ ACTUALIZADO: Incluir navegación a SOAT
   const handleItemPress = (itemId: string) => {
     if (!placaActual) {
       Alert.alert("Error", "Por favor selecciona una placa primero");
@@ -81,10 +80,12 @@ export default function Home() {
       case "multas":
         navigation.navigate("Multas", { placa: placaActual });
         break;
-      case "soat": // ✅ AGREGAR CASO PARA SOAT
+      case "soat":
         navigation.navigate("SOAT", { placa: placaActual });
         break;
-      // Otros items aquí
+      case "tecnicomecanica": // ✅ AGREGAR ESTO
+        navigation.navigate("RTM", { placa: placaActual });
+        break;
       default:
         break;
     }

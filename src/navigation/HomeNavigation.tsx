@@ -3,11 +3,13 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "../Screens/Home/Home";
 import Multas from "../Screens/itemsPage/Multas";
 import SOAT from "../Screens/itemsPage/Soat";
+import RTM from "../Screens/itemsPage/Rtm";
 
 export type HomeStackParamList = {
   HomeScreen: undefined;
   Multas: { placa: string };
   SOAT: { placa: string };
+  RTM: { placa: string };
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -17,11 +19,12 @@ export default function HomeNavigation() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        animationEnabled: true,
+        animation: "default",
       }}>
       <Stack.Screen name="HomeScreen" component={Home} />
       <Stack.Screen name="Multas" component={Multas} />
       <Stack.Screen name="SOAT" component={SOAT} />
+      <Stack.Screen name="RTM" component={RTM} />
     </Stack.Navigator>
   );
 }

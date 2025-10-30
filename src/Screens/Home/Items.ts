@@ -30,12 +30,12 @@ export const items: Item[] = [
     icon: SoatIcon,
     title: "SOAT",
     subtitle: "Verificar SOAT",
-    backgroundColor: "#E0F0FF", // Azul pastel
+    backgroundColor: "#E0F0FF",
   },
   {
-    id: "tecnomecanica",
+    id: "tecnicomecanica",
     icon: tecnoIcon,
-    title: "Tecnomecánica",
+    title: "Tecnicomecánica",
     subtitle: "Estado",
     backgroundColor: "#E8F5E9", // Verde pastel
   },
