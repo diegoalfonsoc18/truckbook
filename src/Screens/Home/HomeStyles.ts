@@ -297,4 +297,21 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
   },
+  tipoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginVertical: 8,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  tipoButtonText: {
+    marginLeft: 16,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
 });

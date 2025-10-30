@@ -1,6 +1,6 @@
-// src/screens/Home/Home.tsx (ACTUALIZADO CON SOAT)
+// src/screens/Home/Home.tsx
 
-import React, { useState } from "react";
+import React, { useState, ComponentType } from "react"; // ✅ Agregar ComponentType
 import {
   Text,
   Image,
@@ -11,46 +11,86 @@ import {
   Modal,
   TextInput,
   Alert,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { styles } from "./HomeStyles";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { items } from "./Items";
-import { CamionIcon } from "../../assets/icons/icons";
 import llantas from "../../assets/img/llantas.webp";
 import { useMultas } from "../../hooks/useMultas";
 import { HomeStackParamList } from "../../navigation/HomeNavigation";
+import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
+import {
+  VolquetaIcon,
+  EstacasIcon,
+  PlanchonIcon,
+  CisternaIcon,
+  FurgonIcon,
+  GruaIcon,
+} from "../../assets/icons/icons";
 
 type HomeNavigationProp = NativeStackNavigationProp<
   HomeStackParamList,
   "HomeScreen"
 >;
 
+interface IconProps {
+  width?: number;
+  height?: number;
+  color?: string;
+}
+
+// ✅ Mapeo de iconos
+const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
+  estacas: EstacasIcon,
+  volqueta: VolquetaIcon,
+  planchon: PlanchonIcon,
+  cisterna: CisternaIcon,
+  furgon: FurgonIcon,
+  grua: GruaIcon,
+};
+
+// ✅ Definición de tipos de camión con componentes
+const TIPOS_CAMION: {
+  id: TipoCamion;
+  label: string;
+  icon: ComponentType<IconProps>;
+}[] = [
+  { id: "estacas", label: "Estacas", icon: EstacasIcon },
+  { id: "volqueta", label: "Volqueta", icon: VolquetaIcon },
+  { id: "planchon", label: "Planchón", icon: PlanchonIcon },
+  { id: "cisterna", label: "Cisterna", icon: CisternaIcon },
+  { id: "furgon", label: "Furgón", icon: FurgonIcon },
+  { id: "grua", label: "Grúa", icon: GruaIcon },
+];
+
 export default function Home() {
   const navigation = useNavigation<HomeNavigationProp>();
 
-  const [placaActual, setPlacaActual] = useState<string | null>(null);
+  const {
+    placa: placaActual,
+    tipoCamion,
+    setPlaca,
+    setTipoCamion,
+  } = useVehiculoStore();
   const [placaTemporal, setPlacaTemporal] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTipoVisible, setModalTipoVisible] = useState(false);
+  const [modalPlacaVisible, setModalPlacaVisible] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
 
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
     useMultas(placaActual, !!placaActual);
 
-  const handleRefresh = async () => {
-    setRefrescando(true);
-    try {
-      await recargar();
-    } finally {
-      setRefrescando(false);
-    }
+  const handleAbrirModalTipo = () => {
+    setModalTipoVisible(true);
   };
 
-  const handleAbrirModalPlaca = () => {
-    setPlacaTemporal(placaActual || "");
-    setModalVisible(true);
+  const handleSeleccionarTipo = (tipo: TipoCamion) => {
+    setTipoCamion(tipo);
+    setModalTipoVisible(false);
+    setModalPlacaVisible(true);
   };
 
   const handleGuardarPlaca = () => {
@@ -66,8 +106,18 @@ export default function Home() {
       return;
     }
 
-    setPlacaActual(placaLimpia);
-    setModalVisible(false);
+    setPlaca(placaLimpia);
+    setModalPlacaVisible(false);
+    setPlacaTemporal("");
+  };
+
+  const handleRefresh = async () => {
+    setRefrescando(true);
+    try {
+      await recargar();
+    } finally {
+      setRefrescando(false);
+    }
   };
 
   const handleItemPress = (itemId: string) => {
@@ -86,7 +136,7 @@ export default function Home() {
       case "tecnicomecanica":
         navigation.navigate("RTM", { placa: placaActual });
         break;
-      case "licencia": // ✅ AQUÍ ANTES DEL DEFAULT
+      case "licencia":
         navigation.navigate("Licencia", { documento: "1234567890" });
         break;
       default:
@@ -124,17 +174,27 @@ export default function Home() {
     );
   };
 
+  const getTipoCamionLabel = (tipo: TipoCamion | null) => {
+    return TIPOS_CAMION.find((t) => t.id === tipo)?.label || "";
+  };
+
+  // ✅ Obtener el icono dinámico
+  const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
+
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      {/* ✅ HEADER CON BOTÓN "SELECCIONA TU CAMIÓN" */}
       <TouchableOpacity
         style={styles.containerHeader}
-        onPress={handleAbrirModalPlaca}>
-        <CamionIcon />
+        onPress={handleAbrirModalTipo}>
+        {/* ✅ Renderiza el icono dinámicamente */}
+        <CamionIconDinamico width={32} height={32} color="#000" />
+
         <View style={styles.headerTextContainer}>
           {placaActual ? (
             <>
-              <Text style={styles.placaLabel}>Vehículo seleccionado</Text>
+              <Text style={styles.placaLabel}>
+                {getTipoCamionLabel(tipoCamion)}
+              </Text>
               <Text style={styles.placaText}>{placaActual}</Text>
             </>
           ) : (
@@ -143,7 +203,11 @@ export default function Home() {
             </Text>
           )}
         </View>
-        <FontAwesome name="drivers-license" size={24} color="black" />
+
+        {/* ✅ Icono de edición simple */}
+        <View style={styles.editIconContainer}>
+          <Text style={styles.editIcon}>✏️</Text>
+        </View>
       </TouchableOpacity>
 
       <View style={styles.containerScroll}>
@@ -205,12 +269,45 @@ export default function Home() {
         </ScrollView>
       </View>
 
-      {/* ✅ MODAL PARA INGRESAR PLACA */}
-      <Modal visible={modalVisible} transparent animationType="fade">
+      {/* MODAL SELECCIONAR TIPO CAMIÓN */}
+      <Modal visible={modalTipoVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Selecciona el tipo de camión</Text>
+
+            <FlatList
+              data={TIPOS_CAMION}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              renderItem={({ item }) => {
+                const IconComponent = item.icon;
+                return (
+                  <TouchableOpacity
+                    style={styles.tipoButton}
+                    onPress={() => handleSeleccionarTipo(item.id)}>
+                    {/* ✅ Renderizar componente de icono */}
+                    <IconComponent width={24} height={24} color="#2196F3" />
+                    <Text style={styles.tipoButtonText}>{item.label}</Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setModalTipoVisible(false)}>
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL INGRESAR PLACA */}
+      <Modal visible={modalPlacaVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>
-              Ingresa la placa de tu vehículo
+              Ingresa la placa de tu {getTipoCamionLabel(tipoCamion)}
             </Text>
 
             <TextInput
@@ -228,8 +325,11 @@ export default function Home() {
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                onPress={() => {
+                  setModalPlacaVisible(false);
+                  setModalTipoVisible(true);
+                }}>
+                <Text style={styles.cancelButtonText}>Atrás</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
