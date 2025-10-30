@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
     aspectRatio: 10 / 6.4,
     borderRadius: 16,
     marginBottom: 20,
-    backgroundColor: "#e00505ff",
+    //backgroundColor: "#e00505ff",
     shadowOpacity: 0,
     elevation: 0,
     overflow: "hidden",

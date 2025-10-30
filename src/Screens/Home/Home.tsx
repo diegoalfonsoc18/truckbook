@@ -1,4 +1,4 @@
-// src/screens/Home/Home.tsx (MODAL AL HACER CLICK)
+// src/screens/Home/Home.tsx (ACTUALIZADO CON SOAT)
 
 import React, { useState } from "react";
 import {
@@ -31,15 +31,13 @@ type HomeNavigationProp = NativeStackNavigationProp<
 export default function Home() {
   const navigation = useNavigation<HomeNavigationProp>();
 
-  // ✅ Estado para la placa ingresada por el usuario
   const [placaActual, setPlacaActual] = useState<string | null>(null);
   const [placaTemporal, setPlacaTemporal] = useState("");
-  const [modalVisible, setModalVisible] = useState(false); // ✅ NO mostrar al inicio
+  const [modalVisible, setModalVisible] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
 
-  // ✅ Solo cargar multas si hay una placa ingresada
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
-    useMultas(placaActual, !!placaActual); // Solo si placaActual existe
+    useMultas(placaActual, !!placaActual);
 
   const handleRefresh = async () => {
     setRefrescando(true);
@@ -50,13 +48,11 @@ export default function Home() {
     }
   };
 
-  // ✅ Abrir modal para ingresar placa
   const handleAbrirModalPlaca = () => {
     setPlacaTemporal(placaActual || "");
     setModalVisible(true);
   };
 
-  // ✅ Guardar placa ingresada
   const handleGuardarPlaca = () => {
     const placaLimpia = placaTemporal.trim().toUpperCase();
 
@@ -74,15 +70,23 @@ export default function Home() {
     setModalVisible(false);
   };
 
+  // ✅ ACTUALIZADO: Incluir navegación a SOAT
   const handleItemPress = (itemId: string) => {
-    if (itemId === "multas") {
-      if (!placaActual) {
-        Alert.alert("Error", "Por favor selecciona una placa primero");
-        return;
-      }
-      navigation.navigate("Multas", {
-        placa: placaActual,
-      });
+    if (!placaActual) {
+      Alert.alert("Error", "Por favor selecciona una placa primero");
+      return;
+    }
+
+    switch (itemId) {
+      case "multas":
+        navigation.navigate("Multas", { placa: placaActual });
+        break;
+      case "soat": // ✅ AGREGAR CASO PARA SOAT
+        navigation.navigate("SOAT", { placa: placaActual });
+        break;
+      // Otros items aquí
+      default:
+        break;
     }
   };
 
@@ -197,7 +201,7 @@ export default function Home() {
         </ScrollView>
       </View>
 
-      {/* ✅ MODAL PARA INGRESAR PLACA - SOLO AL HACER CLICK */}
+      {/* ✅ MODAL PARA INGRESAR PLACA */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
