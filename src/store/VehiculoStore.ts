@@ -4,13 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type TipoCamion =
-  | "estacas"
-  | "volqueta"
-  | "planchon"
-  | "cisterna"
-  | "furgon"
-  | "grua";
+export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua";
 
 interface VehiculoStore {
   placa: string | null;

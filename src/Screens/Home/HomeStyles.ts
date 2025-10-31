@@ -15,10 +15,11 @@ export const styles = StyleSheet.create({
   containerHeader: {
     flex: 0.4,
     flexDirection: "row",
-    justifyContent: "space-between",
+    //justifyContent: "space-between",
+    //alignContent: "space-around",
     width: "98%",
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#f40909ff",
     padding: 20,
     marginTop: 20,
     marginBottom: 20,
@@ -30,6 +31,7 @@ export const styles = StyleSheet.create({
   // ✅ NUEVO: Contenedor de texto del header
   headerTextContainer: {
     flex: 1,
+    backgroundColor: "rgba(30, 192, 106, 1)",
     marginHorizontal: 12,
     justifyContent: "center",
     alignItems: "flex-start",
@@ -39,15 +41,16 @@ export const styles = StyleSheet.create({
   seleccionarCamionText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2196F3",
+    color: "#a3abb2ff",
   },
 
   // ✅ NUEVO: Label "Vehículo seleccionado"
   placaLabel: {
     fontSize: 12,
-    color: "#999999",
+    color: "#f10b0bff",
     fontWeight: "500",
     marginBottom: 2,
+    justifyContent: "center",
   },
 
   // ✅ NUEVO: Texto con la placa
@@ -95,7 +98,7 @@ export const styles = StyleSheet.create({
     aspectRatio: 10 / 6.4,
     borderRadius: 16,
     marginBottom: 20,
-    //backgroundColor: "#e00505ff",
+
     shadowOpacity: 0,
     elevation: 0,
     overflow: "hidden",
@@ -130,7 +133,6 @@ export const styles = StyleSheet.create({
     marginVertical: 10,
     padding: 6,
     borderRadius: 16,
-    backgroundColor: "#A0153E",
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -218,6 +220,7 @@ export const styles = StyleSheet.create({
   },
 
   // ✅ MODAL STYLES
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -299,6 +302,7 @@ export const styles = StyleSheet.create({
   },
   tipoButton: {
     flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,

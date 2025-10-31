@@ -25,8 +25,6 @@ import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import {
   VolquetaIcon,
   EstacasIcon,
-  PlanchonIcon,
-  CisternaIcon,
   FurgonIcon,
   GruaIcon,
 } from "../../assets/icons/icons";
@@ -46,8 +44,6 @@ interface IconProps {
 const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
   estacas: EstacasIcon,
   volqueta: VolquetaIcon,
-  planchon: PlanchonIcon,
-  cisterna: CisternaIcon,
   furgon: FurgonIcon,
   grua: GruaIcon,
 };
@@ -60,8 +56,6 @@ const TIPOS_CAMION: {
 }[] = [
   { id: "estacas", label: "Estacas", icon: EstacasIcon },
   { id: "volqueta", label: "Volqueta", icon: VolquetaIcon },
-  { id: "planchon", label: "Planchón", icon: PlanchonIcon },
-  { id: "cisterna", label: "Cisterna", icon: CisternaIcon },
   { id: "furgon", label: "Furgón", icon: FurgonIcon },
   { id: "grua", label: "Grúa", icon: GruaIcon },
 ];
@@ -203,11 +197,7 @@ export default function Home() {
             </Text>
           )}
         </View>
-
         {/* ✅ Icono de edición simple */}
-        <View style={styles.editIconContainer}>
-          <Text style={styles.editIcon}>✏️</Text>
-        </View>
       </TouchableOpacity>
 
       <View style={styles.containerScroll}>
