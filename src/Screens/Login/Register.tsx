@@ -7,29 +7,30 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import supabase from "../../config/SupaBaseConfig"; // Asegúrate que este archivo exporta la instancia correctamente
+import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import styles from "./LoginStyles";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
-// Define tu stack de rutas
+// ✅ Agregar SelectRole a las rutas
 type AuthStackParamList = {
   Register: undefined;
   Login: undefined;
-  Home: undefined; // <-- Agrega esta línea
-  // otras rutas...
+  SelectRole: undefined; // ✅ NUEVO
+  Home: undefined;
 };
 
-// Usa las props tipadas
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 export default function Register({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const register = async () => {
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       Alert.alert(
         "Campos incompletos",
         "Por favor ingresa correo y contraseña."
@@ -37,27 +38,40 @@ export default function Register({ navigation }: Props) {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      Alert.alert("Error", error.message);
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Las contraseñas no coinciden");
       return;
     }
 
-    if (data.session) {
-      // Usuario registrado y logueado automáticamente
-      Alert.alert("¡Bienvenido!", "Registro exitoso.");
-      // No navegues manualmente, el cambio de sesión mostrará AppStack
-    } else {
-      // Si tu proyecto requiere confirmación de correo
-      Alert.alert(
-        "Registro exitoso",
-        "Revisa tu correo para confirmar tu cuenta."
-      );
-      navigation.navigate("Login");
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        Alert.alert("Error", error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.session) {
+        // ✅ Usuario registrado automáticamente
+        Alert.alert("¡Bienvenido!", "Registro exitoso.");
+        // ✅ Navega a SelectRole
+        navigation.replace("SelectRole");
+      } else {
+        // Si requiere confirmación de correo
+        Alert.alert(
+          "Registro exitoso",
+          "Revisa tu correo para confirmar tu cuenta."
+        );
+        navigation.navigate("Login");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,35 +100,59 @@ export default function Register({ navigation }: Props) {
           style={styles.imageLogin}
         />
       </View>
+
       <View style={styles.registerSingContainer}>
-        <Text style={styles.loginTitle}>Sing up</Text>
+        <Text style={styles.loginTitle}>Sign up</Text>
+
         <TextInput
           placeholder="Correo"
           onChangeText={setEmail}
           value={email}
-          style={styles.inputLogin}
+          style={styles.inputRegister}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          editable={!loading}
         />
+
         <TextInput
           placeholder="Contraseña"
           onChangeText={setPassword}
           value={password}
           secureTextEntry
-          style={styles.inputLogin}
+          style={styles.inputRegister}
+          editable={!loading}
         />
+
         <TextInput
           placeholder="Confirmar Contraseña"
-          onChangeText={setPassword}
-          value={password}
+          onChangeText={setConfirmPassword}
+          value={confirmPassword}
           secureTextEntry
-          style={styles.inputLogin}
+          style={styles.inputRegister}
+          editable={!loading}
         />
-        <Text style={styles.textLogin}>
-          I have read and accept the Privacy Policy
+
+        <Text style={styles.textFooter}>
+          He leído y acepto la Política de Privacidad
         </Text>
-        <TouchableOpacity style={styles.button} onPress={register}>
-          <Text style={styles.buttonText}>Registrarse</Text>
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={register}
+          disabled={loading}>
+          <Text style={styles.buttonTextContinue}>
+            {loading ? "Registrando..." : "Registrarse"}
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.textLogin}>I'm already registered, </Text>
+
+        <View style={styles.loginLinkContainer}>
+          <Text style={styles.textLogin}>¿Ya tienes cuenta? </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Login")}
+            disabled={loading}>
+            <Text style={styles.textLoginLink}>Inicia sesión</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

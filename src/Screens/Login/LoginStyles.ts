@@ -29,54 +29,55 @@ export default StyleSheet.create({
     backgroundColor: "#FFFFFF",
     justifyContent: "space-between",
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingTop: 12,
+    paddingBottom: 20,
   },
 
   imageContainer: {
-    flex: 0.4,
+    flex: 0.5,
     width: "100%",
+    height: 220,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 24,
+    marginBottom: 40,
+    //backgroundColor: "#cc0",
   },
 
   imageLogin: {
-    width: 140,
-    height: 140,
+    width: 400,
+    height: 400,
     resizeMode: "contain",
   },
 
   LoginSingContainer: {
-    flex: 0.6,
+    flex: 0.7,
     width: "100%",
-    justifyContent: "flex-start",
+    justifyContent: "space-between", // ✅ Volver a space-between
+    paddingBottom: 8, // ✅ Agregar esto
   },
-
   loginTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "700",
     color: "#000",
-    marginBottom: 28,
+    marginBottom: 20,
     letterSpacing: -0.5,
   },
 
   loginPasswordContainer: {
     width: "100%",
-    marginBottom: 24,
   },
 
   inputLogin: {
     width: "100%",
-    height: 48,
+    height: 44,
     color: "#000",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#E5E5E5",
-    marginBottom: 12,
-    fontSize: 16,
+    marginBottom: 10,
+    fontSize: 15,
     fontWeight: "500",
     backgroundColor: "#F9F9F9",
   },
@@ -84,8 +85,8 @@ export default StyleSheet.create({
   containerTextPassword: {
     width: "100%",
     alignItems: "flex-end",
-    marginTop: 12,
-    marginBottom: 28,
+    marginTop: 8,
+    marginBottom: 16,
   },
 
   textPassword: {
@@ -96,43 +97,45 @@ export default StyleSheet.create({
 
   button: {
     width: "100%",
-    height: 48,
+    height: 44,
     backgroundColor: COLORS.primary || "#2196F3",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 12,
-    marginBottom: 20,
+    borderRadius: 10,
+    marginBottom: 2,
     shadowColor: COLORS.primary || "#2196F3",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
   buttonTextContinue: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: 0.3,
   },
 
   buttonText: {
     color: "#000",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
 
   containerSingUp: {
     width: "100%",
     alignItems: "center",
+    flex: 1, // ✅ AGREGAR ESTO
+    justifyContent: "center", // ✅ AGREGAR ESTO
   },
 
   textLogin: {
     fontWeight: "500",
     color: "#999",
-    fontSize: 13,
+    fontSize: 12,
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: 6, // ✅ Aumentar de 4 a 6
   },
 
   iconSocialGoogle: {
@@ -140,19 +143,19 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    height: 48,
-    borderRadius: 12,
-    marginBottom: 12,
+    height: 44,
+    borderRadius: 10,
+    marginBottom: 10, // ✅ Aumentar de 8 a 10
     borderWidth: 1,
     borderColor: "#E5E5E5",
     backgroundColor: "#F9F9F9",
   },
 
   imageSocials: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     resizeMode: "contain",
-    marginRight: 10,
+    marginRight: 8,
   },
 
   iconSocialFacebook: {
@@ -160,9 +163,9 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    height: 48,
-    borderRadius: 12,
-    marginBottom: 20,
+    height: 44,
+    borderRadius: 10,
+    marginBottom: 14, // ✅ Aumentar de 12 a 14
     borderWidth: 1,
     borderColor: "#E5E5E5",
     backgroundColor: "#F9F9F9",
@@ -171,17 +174,17 @@ export default StyleSheet.create({
   textLinkRegister: {
     fontWeight: "500",
     color: "#666",
-    fontSize: 13,
+    fontSize: 12,
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: 6,
   },
 
   textFooter: {
     fontWeight: "400",
     color: "#999",
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 0, // ✅ Cambiar a 0
   },
 
   // ✅ ESTILO APPLE - REGISTER
@@ -213,5 +216,24 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#000",
+  },
+
+  // ✅ Styles Role
+
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
+  loginLinkContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+
+  textLoginLink: {
+    color: COLORS.primary || "#2196F3",
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
 });
