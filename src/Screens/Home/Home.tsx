@@ -180,9 +180,10 @@ export default function Home() {
       <TouchableOpacity
         style={styles.containerHeader}
         onPress={handleAbrirModalTipo}>
-        {/* ✅ Renderiza el icono dinámicamente */}
+        {/* Icono en el extremo izquierdo */}
         <CamionIconDinamico width={32} height={32} color="#000" />
 
+        {/* Contenedor de texto en el extremo derecho */}
         <View style={styles.headerTextContainer}>
           {placaActual ? (
             <>
@@ -197,7 +198,6 @@ export default function Home() {
             </Text>
           )}
         </View>
-        {/* ✅ Icono de edición simple */}
       </TouchableOpacity>
 
       <View style={styles.containerScroll}>

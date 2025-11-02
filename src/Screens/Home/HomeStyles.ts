@@ -8,33 +8,34 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 10,
     flex: 1,
-    backgroundColor: "#F2F2F7", // ✅ Fondo estilo Apple
+    //backgroundColor: "#F2F2F7", // ✅ Fondo estilo Apple
   },
 
-  // ✅ ACTUALIZADO: containerHeader ahora es clickeable
   containerHeader: {
-    flex: 0.4,
     flexDirection: "row",
-    //justifyContent: "space-between",
-    //alignContent: "space-around",
-    width: "98%",
-    borderRadius: 16,
-    backgroundColor: "#f40909ff",
-    padding: 20,
-    marginTop: 20,
-    marginBottom: 20,
+    justifyContent: "space-between",
     alignItems: "center",
-    shadowOpacity: 0,
-    elevation: 0,
+    width: "95%",
+    borderRadius: 12,
+    backgroundColor: "#f5f5f5", // Gris claro como Apple
+    paddingHorizontal: 16,
+    paddingVertical: 12, // Más compacto
+    marginTop: 16,
+    marginBottom: 16,
+
+    // Sombra sutil como Apple
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
 
-  // ✅ NUEVO: Contenedor de texto del header
   headerTextContainer: {
-    flex: 1,
-    backgroundColor: "rgba(30, 192, 106, 1)",
-    marginHorizontal: 12,
+    flex: 0,
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "flex-end", // Alinea el texto a la derecha
+    marginHorizontal: 12,
   },
 
   // ✅ NUEVO: Texto "Selecciona tu camión"

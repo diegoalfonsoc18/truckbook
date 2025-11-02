@@ -22,7 +22,7 @@ export const items: Item[] = [
     icon: MultasIcon, // ✅ Usar el componente importado
     title: "Multas",
     subtitle: "Consultar multas",
-    backgroundColor: "#FFE0E0", // Rojo pastel
+    backgroundColor: "#f5f5f5",
     mostrarBadge: true, // 👈 Este mostrará el badge de pendiente/al día
   },
   {
@@ -30,28 +30,28 @@ export const items: Item[] = [
     icon: SoatIcon,
     title: "SOAT",
     subtitle: "Verificar SOAT",
-    backgroundColor: "#E0F0FF",
+    backgroundColor: "#f5f5f5",
   },
   {
     id: "tecnicomecanica",
     icon: tecnoIcon,
     title: "Tecnicomecánica",
     subtitle: "Estado",
-    backgroundColor: "#E8F5E9", // Verde pastel
+    backgroundColor: "#f5f5f5",
   },
   {
     id: "mantenimiento",
     icon: MantenimientoIcon,
     title: "Mantenimiento",
     subtitle: "Próximo",
-    backgroundColor: "#FFF9E0", // Amarillo pastel
+    backgroundColor: "#f5f5f5",
   },
   {
     id: "licencia",
     icon: LicenciaIcon,
     title: "Licencia",
     subtitle: "Vencimiento",
-    backgroundColor: "#F3E5F5", // Morado pastel
+    backgroundColor: "#f5f5f5",
   },
   // Agrega más items según necesites
 ];
