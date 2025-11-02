@@ -50,7 +50,7 @@ export const items: Item[] = [
     id: "licencia",
     icon: LicenciaIcon,
     title: "Licencia",
-    subtitle: "Vencimiento",
+    subtitle: "Vijente",
     backgroundColor: "#f5f5f5",
   },
   // Agrega más items según necesites

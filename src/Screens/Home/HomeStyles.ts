@@ -121,13 +121,14 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     shadowOpacity: 0,
     elevation: 0,
+    //backgroundColor: "#FF5252",
   },
 
   itemBox: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    width: "43%",
+    width: "46%",
     margin: "1%",
     resizeMode: "cover",
     height: 100,
@@ -146,6 +147,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     shadowOpacity: 0,
     elevation: 0,
+
+    //backgroundColor: "rgba(0, 116, 204, 1)",
   },
 
   iconItemBox: {
@@ -162,6 +165,7 @@ export const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingLeft: 10,
     width: "100%",
+    //backgroundColor: "#cc0",
   },
 
   textTitle: {
@@ -171,7 +175,7 @@ export const styles = StyleSheet.create({
   },
 
   textSubtitle: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "400",
     color: COLORS.textTertiary,
     justifyContent: "center",
@@ -252,7 +256,7 @@ export const styles = StyleSheet.create({
 
   placaInput: {
     borderWidth: 2,
-    borderColor: "#2196F3",
+    borderColor: "#ece630ff",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
