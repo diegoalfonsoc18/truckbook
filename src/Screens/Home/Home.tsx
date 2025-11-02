@@ -1,6 +1,4 @@
-// src/screens/Home/Home.tsx
-
-import React, { useState, ComponentType } from "react"; // ✅ Agregar ComponentType
+import React, { useState, ComponentType } from "react";
 import {
   Text,
   Image,
@@ -12,6 +10,8 @@ import {
   TextInput,
   Alert,
   FlatList,
+  Keyboard, // ✅ AGREGAR
+  TouchableWithoutFeedback, // ✅ AGREGAR
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -259,77 +259,99 @@ export default function Home() {
         </ScrollView>
       </View>
 
-      {/* MODAL SELECCIONAR TIPO CAMIÓN */}
-      <Modal visible={modalTipoVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Selecciona el tipo de camión</Text>
-
-            <FlatList
-              data={TIPOS_CAMION}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              renderItem={({ item }) => {
-                const IconComponent = item.icon;
-                return (
-                  <TouchableOpacity
-                    style={styles.tipoButton}
-                    onPress={() => handleSeleccionarTipo(item.id)}>
-                    {/* ✅ Renderizar componente de icono */}
-                    <IconComponent width={24} height={24} color="#2196F3" />
-                    <Text style={styles.tipoButtonText}>{item.label}</Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-
+      {/* ✅ MODAL SELECCIONAR TIPO CAMIÓN */}
+      <Modal
+        visible={modalTipoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalTipoVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalTipoVisible(false)}>
+          <View style={styles.modalOverlay}>
+            {/* ✅ TouchableOpacity evita que el onPress del padre se active */}
             <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setModalTipoVisible(false)}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>
+                Selecciona el tipo de camión
+              </Text>
 
-      {/* MODAL INGRESAR PLACA */}
-      <Modal visible={modalPlacaVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>
-              Ingresa la placa de tu {getTipoCamionLabel(tipoCamion)}
-            </Text>
+              <FlatList
+                data={TIPOS_CAMION}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                renderItem={({ item }) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <TouchableOpacity
+                      style={styles.tipoButton}
+                      onPress={() => handleSeleccionarTipo(item.id)}>
+                      <IconComponent width={24} height={24} color="#2196F3" />
+                      <Text style={styles.tipoButtonText}>{item.label}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
 
-            <TextInput
-              style={styles.placaInput}
-              placeholder="Ej: BZO523"
-              placeholderTextColor="#999"
-              value={placaTemporal}
-              onChangeText={setPlacaTemporal}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={10}
-              autoFocus
-            />
-
-            <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => {
-                  setModalPlacaVisible(false);
-                  setModalTipoVisible(true);
-                }}>
-                <Text style={styles.cancelButtonText}>Atrás</Text>
+                onPress={() => setModalTipoVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.guardarButton}
-                onPress={handleGuardarPlaca}>
-                <Text style={styles.guardarButtonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* ✅ MODAL INGRESAR PLACA */}
+      <Modal
+        visible={modalPlacaVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalPlacaVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalPlacaVisible(false)}>
+          <View style={styles.modalOverlay}>
+            {/* ✅ TouchableOpacity evita que el onPress del padre se active */}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>
+                Ingresa la placa de tu {getTipoCamionLabel(tipoCamion)}
+              </Text>
+
+              <TextInput
+                style={styles.placaInput}
+                placeholder="Ej: BZO523"
+                placeholderTextColor="#999"
+                value={placaTemporal}
+                onChangeText={setPlacaTemporal}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={10}
+                autoFocus
+              />
+
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalPlacaVisible(false);
+                    setModalTipoVisible(true);
+                  }}>
+                  <Text style={styles.cancelButtonText}>Atrás</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.guardarButton}
+                  onPress={handleGuardarPlaca}>
+                  <Text style={styles.guardarButtonText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
