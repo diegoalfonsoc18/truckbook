@@ -1,69 +1,92 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from "react";
+import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles from "./AdministradorStyles";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import HomeBaseAdapted from "../Home/Home"; // ✅ Importar desde ubicación correcta
+import { Item } from "../Home/Items";
+import {
+  VolquetaIcon,
+  EstacasIcon,
+  FurgonIcon,
+  GruaIcon,
+} from "../../assets/icons/icons";
+
+type AdministradorNavigationProp = NativeStackNavigationProp<
+  any,
+  "AdministradorHome"
+>;
 
 export default function AdministradorHome() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<AdministradorNavigationProp>();
+  const [refrescando, setRefrescando] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefrescando(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } finally {
+      setRefrescando(false);
+    }
+  };
+
+  // ✅ Items específicos del ADMINISTRADOR
+  const adminItems: Item[] = [
+    {
+      id: "conductores",
+      title: "Conductores",
+      subtitle: "Gestionar lista",
+      icon: EstacasIcon,
+      backgroundColor: "#E3F2FD",
+    },
+    {
+      id: "vehiculos",
+      title: "Vehículos",
+      subtitle: "Gestionar flota",
+      icon: VolquetaIcon,
+      backgroundColor: "#FFF3E0",
+    },
+    {
+      id: "gastos",
+      title: "Aprobar Gastos",
+      subtitle: "Revisar solicitudes",
+      icon: FurgonIcon,
+      backgroundColor: "#FCE4EC",
+    },
+    {
+      id: "reportes",
+      title: "Reportes",
+      subtitle: "Estadísticas",
+      icon: GruaIcon,
+      backgroundColor: "#F3E5F5",
+    },
+  ];
+
+  const handleItemPress = (item: Item) => {
+    switch (item.id) {
+      case "conductores":
+        Alert.alert("En desarrollo", "Gestión de conductores próximamente");
+        break;
+      case "vehiculos":
+        Alert.alert("En desarrollo", "Gestión de vehículos próximamente");
+        break;
+      case "gastos":
+        Alert.alert("En desarrollo", "Aprobación de gastos próximamente");
+        break;
+      case "reportes":
+        Alert.alert("En desarrollo", "Reportes próximamente");
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
-        {/* HEADER */}
-        <View style={styles.headerSection}>
-          <Text style={styles.mainTitle}>Administrador</Text>
-          <Text style={styles.subtitle}>Gestiona conductores y vehículos</Text>
-        </View>
-
-        {/* ACCIONES */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acciones</Text>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>👥</Text>
-            <Text style={styles.actionTitle}>Conductores</Text>
-            <Text style={styles.actionSubtitle}>Gestionar lista</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>🚛</Text>
-            <Text style={styles.actionTitle}>Vehículos</Text>
-            <Text style={styles.actionSubtitle}>Gestionar flota</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>📊</Text>
-            <Text style={styles.actionTitle}>Reportes</Text>
-            <Text style={styles.actionSubtitle}>Ver estadísticas</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>✓</Text>
-            <Text style={styles.actionTitle}>Aprobar Gastos</Text>
-            <Text style={styles.actionSubtitle}>Revisión de gastos</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* PERFIL */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.perfilCard}
-            onPress={() => navigation.navigate("Account")}>
-            <Text style={styles.perfilIcon}>👤</Text>
-            <View style={styles.perfilContent}>
-              <Text style={styles.perfilTitle}>Mi Perfil</Text>
-              <Text style={styles.perfilSubtitle}>
-                Ver y editar información
-              </Text>
-            </View>
-            <Text style={styles.perfilArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <HomeBaseAdapted
+      items={adminItems}
+      onRefresh={handleRefresh}
+      refreshing={refrescando}
+      showCamionHeader={false} // ✅ Sin header de camión
+      onItemPress={handleItemPress}
+    />
   );
 }
