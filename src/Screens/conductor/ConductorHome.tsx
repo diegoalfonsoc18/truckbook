@@ -1,0 +1,394 @@
+import React, { useState, ComponentType, useEffect } from "react";
+import {
+  Text,
+  Image,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
+  FlatList,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import styles from "./ConductorStyles ";
+import llantas from "../../assets/img/llantas.webp";
+import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
+import supabase from "../../config/SupaBaseConfig";
+import {
+  VolquetaIcon,
+  EstacasIcon,
+  FurgonIcon,
+  GruaIcon,
+} from "../../assets/icons/icons";
+
+type ConductorNavigationProp = NativeStackNavigationProp<any, "ConductorHome">;
+
+interface IconProps {
+  width?: number;
+  height?: number;
+  color?: string;
+}
+
+interface ConductorItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon: ComponentType<IconProps> | any;
+  backgroundColor?: string;
+  mostrarBadge?: boolean;
+}
+
+// ✅ Mapeo de iconos
+const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
+  estacas: EstacasIcon,
+  volqueta: VolquetaIcon,
+  furgon: FurgonIcon,
+  grua: GruaIcon,
+};
+
+// ✅ Definición de tipos de camión
+const TIPOS_CAMION: {
+  id: TipoCamion;
+  label: string;
+  icon: ComponentType<IconProps>;
+}[] = [
+  { id: "estacas", label: "Estacas", icon: EstacasIcon },
+  { id: "volqueta", label: "Volqueta", icon: VolquetaIcon },
+  { id: "furgon", label: "Furgón", icon: FurgonIcon },
+  { id: "grua", label: "Grúa", icon: GruaIcon },
+];
+
+// ✅ Items del dashboard del conductor
+const ITEMS_CONDUCTOR: ConductorItem[] = [
+  {
+    id: "gastos",
+    title: "Mis Gastos",
+    subtitle: "Registra tus gastos",
+    icon: EstacasIcon,
+    backgroundColor: "#E3F2FD",
+  },
+  {
+    id: "reportes",
+    title: "Reportar Problema",
+    subtitle: "Reporte mecánico",
+    icon: VolquetaIcon,
+    backgroundColor: "#FFF3E0",
+  },
+  {
+    id: "multas",
+    title: "Multas",
+    subtitle: "Ver mis multas",
+    icon: FurgonIcon,
+    backgroundColor: "#FCE4EC",
+    mostrarBadge: true,
+  },
+  {
+    id: "documentos",
+    title: "Documentos",
+    subtitle: "SOAT, RTM, Licencia",
+    icon: GruaIcon,
+    backgroundColor: "#F3E5F5",
+  },
+];
+
+export default function ConductorHome() {
+  const navigation = useNavigation<ConductorNavigationProp>();
+
+  const {
+    placa: placaActual,
+    tipoCamion,
+    setPlaca,
+    setTipoCamion,
+  } = useVehiculoStore();
+
+  const [placaTemporal, setPlacaTemporal] = useState("");
+  const [modalTipoVisible, setModalTipoVisible] = useState(false);
+  const [modalPlacaVisible, setModalPlacaVisible] = useState(false);
+  const [refrescando, setRefrescando] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    cargarNombreUsuario();
+  }, []);
+
+  const cargarNombreUsuario = async () => {
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (!error && user) {
+        setUserName(user.user_metadata?.nombre || "Conductor");
+      }
+    } catch (error) {
+      console.error("Error al cargar nombre:", error);
+    }
+  };
+
+  const handleAbrirModalTipo = () => {
+    setModalTipoVisible(true);
+  };
+
+  const handleSeleccionarTipo = (tipo: TipoCamion) => {
+    setTipoCamion(tipo);
+    setModalTipoVisible(false);
+    setModalPlacaVisible(true);
+  };
+
+  const handleGuardarPlaca = () => {
+    const placaLimpia = placaTemporal.trim().toUpperCase();
+
+    if (!placaLimpia) {
+      Alert.alert("Error", "Por favor ingresa una placa válida");
+      return;
+    }
+
+    if (placaLimpia.length < 3) {
+      Alert.alert("Error", "La placa debe tener al menos 3 caracteres");
+      return;
+    }
+
+    setPlaca(placaLimpia);
+    setModalPlacaVisible(false);
+    setPlacaTemporal("");
+  };
+
+  const handleRefresh = async () => {
+    setRefrescando(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } finally {
+      setRefrescando(false);
+    }
+  };
+
+  const handleItemPress = (itemId: string) => {
+    if (!placaActual) {
+      Alert.alert("Error", "Por favor selecciona una placa primero");
+      return;
+    }
+
+    switch (itemId) {
+      case "gastos":
+        navigation.navigate("ConductorGastos");
+        break;
+      case "reportes":
+        navigation.navigate("ReportarProblema");
+        break;
+      case "multas":
+        navigation.navigate("Multas", { placa: placaActual });
+        break;
+      case "documentos":
+        navigation.navigate("MisDocumentos");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const renderBadge = (item: ConductorItem) => {
+    if (item.id !== "multas" || !item.mostrarBadge) {
+      return null;
+    }
+
+    return (
+      <View style={[styles.badge, styles.badgeOk]}>
+        <Text style={[styles.badgeText, styles.badgeTextOk]}>✓ Al día</Text>
+      </View>
+    );
+  };
+
+  const getTipoCamionLabel = (tipo: TipoCamion | null) => {
+    return TIPOS_CAMION.find((t) => t.id === tipo)?.label || "";
+  };
+
+  // ✅ Obtener el icono dinámico
+  const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
+
+  return (
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+      {/* HEADER */}
+      <TouchableOpacity
+        style={styles.containerHeader}
+        onPress={handleAbrirModalTipo}>
+        <CamionIconDinamico width={32} height={32} color="#000" />
+
+        <View style={styles.headerTextContainer}>
+          {placaActual ? (
+            <>
+              <Text style={styles.placaLabel}>
+                {getTipoCamionLabel(tipoCamion)}
+              </Text>
+              <Text style={styles.placaText}>{placaActual}</Text>
+            </>
+          ) : (
+            <Text style={styles.seleccionarCamionText}>
+              Selecciona tu camión
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      {/* SCROLL CONTENT */}
+      <View style={styles.containerScroll}>
+        <ScrollView
+          style={{ width: "100%", flex: 1 }}
+          contentContainerStyle={{
+            justifyContent: "center",
+            alignItems: "center",
+            paddingBottom: 10,
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refrescando}
+              onRefresh={handleRefresh}
+              tintColor="#2196F3"
+              colors={["#2196F3"]}
+              title="Actualizando..."
+            />
+          }>
+          {/* IMAGE */}
+          <View style={styles.containerAlert}>
+            <Image source={llantas} style={styles.imageAlert} />
+          </View>
+
+          {/* ITEMS GRID */}
+          <View style={styles.itemsContainer}>
+            {ITEMS_CONDUCTOR.map((item, idx) => {
+              const isComponent = typeof item.icon === "function";
+              const Icon = item.icon;
+
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.itemBox,
+                    { backgroundColor: item.backgroundColor || "#FFFFFF" },
+                  ]}
+                  key={item.id || idx}
+                  activeOpacity={0.7}
+                  onPress={() => handleItemPress(item.id)}>
+                  {renderBadge(item)}
+
+                  <View style={styles.iconContainer}>
+                    {isComponent ? (
+                      <Icon width={40} height={40} />
+                    ) : (
+                      <Image source={item.icon} style={styles.iconItemBox} />
+                    )}
+                  </View>
+
+                  <View style={styles.textContainer}>
+                    <Text style={styles.textTitle}>{item.title}</Text>
+                    {item.subtitle && (
+                      <Text style={styles.textSubtitle}>{item.subtitle}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* ✅ MODAL SELECCIONAR TIPO CAMIÓN */}
+      <Modal
+        visible={modalTipoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalTipoVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalTipoVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>
+                Selecciona el tipo de camión
+              </Text>
+
+              <FlatList
+                data={TIPOS_CAMION}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                renderItem={({ item }) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <TouchableOpacity
+                      style={styles.tipoButton}
+                      onPress={() => handleSeleccionarTipo(item.id)}>
+                      <IconComponent width={24} height={24} color="#2196F3" />
+                      <Text style={styles.tipoButtonText}>{item.label}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalTipoVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* ✅ MODAL INGRESAR PLACA */}
+      <Modal
+        visible={modalPlacaVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalPlacaVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalPlacaVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>
+                Ingresa la placa de tu {getTipoCamionLabel(tipoCamion)}
+              </Text>
+
+              <TextInput
+                style={styles.placaInput}
+                placeholder="Ej: BZO523"
+                placeholderTextColor="#999"
+                value={placaTemporal}
+                onChangeText={setPlacaTemporal}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={10}
+                autoFocus
+              />
+
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalPlacaVisible(false);
+                    setModalTipoVisible(true);
+                  }}>
+                  <Text style={styles.cancelButtonText}>Atrás</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.guardarButton}
+                  onPress={handleGuardarPlaca}>
+                  <Text style={styles.guardarButtonText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </SafeAreaView>
+  );
+}

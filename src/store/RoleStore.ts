@@ -1,14 +1,15 @@
-// src/store/RoleStore.ts
 import { create } from "zustand";
 
-export type UserRole = "conductor" | "administrador" | "dueño";
+export type UserRole = "conductor" | "administrador" | "propietario";
 
-interface RoleStore {
+interface RoleState {
   role: UserRole | null;
   setRole: (role: UserRole) => void;
+  clearRole: () => void;
 }
 
-export const useRoleStore = create<RoleStore>((set) => ({
+export const useRoleStore = create<RoleState>((set) => ({
   role: null,
-  setRole: (role) => set({ role }),
+  setRole: (role: UserRole) => set({ role }),
+  clearRole: () => set({ role: null }),
 }));

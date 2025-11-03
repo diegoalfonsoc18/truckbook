@@ -14,7 +14,7 @@ import styles from "./LoginStyles";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { COLORS } from "../../constants/colors";
-import camionImage from "../../assets/img/T880.webp";
+import { CamionT800 } from "../../assets/img/img";
 
 type RootStackParamList = {
   Login: undefined;
@@ -67,7 +67,7 @@ export default function LoginScreen({ navigation }: Props) {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.containerLogin}>
         <View style={styles.imageContainer}>
-          <Image source={camionImage} style={styles.imageLogin} />
+          <CamionT800 source={CamionT800} style={styles.imageLogin} />
         </View>
 
         <View style={styles.LoginSingContainer}>

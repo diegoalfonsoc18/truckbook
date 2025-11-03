@@ -48,7 +48,7 @@ export default StyleSheet.create({
     marginBottom: 12,
   },
 
-  // ✅ ROLE CARD
+  // ✅ TARJETA ROL MEJORADA
   roleCard: {
     backgroundColor: "#F9F9F9",
     borderRadius: 12,
@@ -65,10 +65,21 @@ export default StyleSheet.create({
     elevation: 1,
   },
 
+  roleCardLeft: {
+    flex: 1,
+  },
+
   roleLabel: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: "#000",
+    marginBottom: 4,
+  },
+
+  roleDescription: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "500",
   },
 
   changeRoleButton: {
@@ -165,5 +176,90 @@ export default StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
     letterSpacing: 0.3,
+  },
+
+  // ✅ MODAL OVERLAY
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 24,
+    maxWidth: "90%",
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  // ✅ OPCIONES DE ROL
+  rolOption: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+
+  rolOptionActive: {
+    backgroundColor: "#E8F4FF",
+    borderColor: COLORS.primary || "#2196F3",
+    borderWidth: 2,
+  },
+
+  rolOptionContent: {
+    flex: 1,
+  },
+
+  rolOptionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 2,
+  },
+
+  rolOptionDescription: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "400",
+  },
+
+  rolOptionCheck: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.primary || "#2196F3",
+    marginLeft: 12,
+  },
+
+  // ✅ BOTÓN CANCELAR MODAL
+  cancelButton: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+
+  cancelButtonText: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
