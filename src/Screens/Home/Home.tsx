@@ -38,7 +38,6 @@ interface HomeBaseAdaptedProps {
   onItemPress?: (item: Item) => void;
 }
 
-// ✅ Mapeo de iconos
 const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
   estacas: EstacasIcon,
   volqueta: VolquetaIcon,
@@ -46,7 +45,6 @@ const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
   grua: GruaIcon,
 };
 
-// ✅ Definición de tipos de camión
 const TIPOS_CAMION: {
   id: TipoCamion;
   label: string;
@@ -78,6 +76,10 @@ export default function HomeBaseAdapted({
   const [modalTipoVisible, setModalTipoVisible] = useState(false);
   const [modalPlacaVisible, setModalPlacaVisible] = useState(false);
 
+  const getTipoCamionLabel = (tipo: TipoCamion | null) => {
+    return TIPOS_CAMION.find((t) => t.id === tipo)?.label || "";
+  };
+
   const handleAbrirModalTipo = () => {
     setModalTipoVisible(true);
   };
@@ -88,7 +90,7 @@ export default function HomeBaseAdapted({
     setModalPlacaVisible(true);
   };
 
-  const handleGuardarPlaca = () => {
+  const handleGuardarPlaca = async () => {
     const placaLimpia = placaTemporal.trim().toUpperCase();
 
     if (!placaLimpia) {
@@ -101,13 +103,17 @@ export default function HomeBaseAdapted({
       return;
     }
 
-    setPlaca(placaLimpia);
-    setModalPlacaVisible(false);
-    setPlacaTemporal("");
-  };
-
-  const getTipoCamionLabel = (tipo: TipoCamion | null) => {
-    return TIPOS_CAMION.find((t) => t.id === tipo)?.label || "";
+    try {
+      console.log("📝 Guardando placa:", placaLimpia);
+      await setPlaca(placaLimpia);
+      console.log("✅ Placa guardada");
+      Alert.alert("Éxito", `Placa ${placaLimpia} registrada correctamente`);
+      setModalPlacaVisible(false);
+      setPlacaTemporal("");
+    } catch (err) {
+      console.error("❌ Error:", err);
+      Alert.alert("Error", "No se pudo registrar la placa");
+    }
   };
 
   const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
