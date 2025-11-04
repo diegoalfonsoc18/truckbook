@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import GastoItem from "../../components/Gastos/GastoItem";
-import { styles } from "../../constants/GastosStyles";
+import { styles } from "./GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 import { useGastosConductor } from "../../hooks/UseGastosConductor";
@@ -205,6 +205,7 @@ export default function Gastos() {
           data={gastosIngresados}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          placa={placaActual} // ← AGREGAR ESTA LÍNEA
         />
 
         {/* Selector y lista de gastos */}

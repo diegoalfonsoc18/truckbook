@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { COLORS } from "../../constants/colors";
-import { styles } from "../../constants/GastosStyles";
+import { styles } from "../../Screens/Gastos/GastosStyles";
 
 interface IngresGastProps {
   selectedDate: string;

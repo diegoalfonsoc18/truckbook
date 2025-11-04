@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, FlatList } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { styles } from "../constants/GastosStyles";
+import { styles } from "../Screens/Gastos/GastosStyles";
 
 type PickerItemProps = {
   data: Array<Record<string, any>>;

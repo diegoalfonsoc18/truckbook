@@ -11,7 +11,7 @@ import {
   Button,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { styles } from "../../constants/GastosStyles";
+import { styles } from "../Gastos/GastosStyles";
 import PickerItem from "../../components/PickerItem";
 import { ingresosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
@@ -206,6 +206,7 @@ export default function Ingresos() {
           data={ingresos}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          placa={placaActual} // ✅ AGREGAR
         />
 
         {/* Selector y lista de ingresos */}
