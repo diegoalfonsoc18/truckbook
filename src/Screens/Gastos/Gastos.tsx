@@ -7,6 +7,8 @@ import {
   Button,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,16 +16,24 @@ import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import GastoItem from "../../components/Gastos/GastoItem";
 import { styles } from "../../constants/GastosStyles";
-import { useGastosStore } from "../../store/CurrencyStore";
 import PickerItem from "../../components/PickerItem";
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
+import { useGastosConductor } from "../../hooks/UseGastosConductor";
+import { useVehiculoStore } from "../../store/VehiculoStore";
+import { useAuth } from "../../hooks/useAuth"; // ← Si tienes este hook
 
 export default function Gastos() {
-  // Zustand store
-  const gastosIngresados = useGastosStore((state) => state.gastos);
-  const addGasto = useGastosStore((state) => state.addGasto);
-  const editGasto = useGastosStore((state) => state.editGasto);
-  const deleteGasto = useGastosStore((state) => state.deleteGasto);
+  // ✅ Obtener placa actual y usuario DENTRO del componente
+  const { placa: placaActual } = useVehiculoStore();
+  const { user } = useAuth(); // ← Si tienes este hook
+
+  // ✅ Hook para obtener gastos desde Supabase
+  const {
+    gastos: gastosIngresados,
+    agregarGasto,
+    actualizarGasto,
+    eliminarGasto,
+  } = useGastosConductor(placaActual);
 
   // Estados locales
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -36,56 +46,155 @@ export default function Gastos() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState<string>(selectedDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Agregar gasto usando Zustand
+  // ✅ Agregar gasto a Supabase
   const handleAddGasto = useCallback(
-    (id: string, value: string) => {
+    async (id: string, value: string) => {
+      if (!placaActual) {
+        Alert.alert("Error", "Por favor selecciona una placa primero");
+        return;
+      }
+
+      if (!user?.id) {
+        Alert.alert("Error", "Usuario no identificado");
+        return;
+      }
+
       const gasto = gastosData.find((g) => g.id === id);
       if (!gasto) {
         console.error("Gasto no encontrado");
         return;
       }
-      addGasto({ name: gasto.name, value, fecha: selectedDate });
-      Keyboard.dismiss(); // Cerrar teclado después de agregar
+
+      setLoading(true);
+      try {
+        const resultado = await agregarGasto({
+          placa: placaActual,
+          conductor_id: user.id,
+          tipo_gasto: gasto.name,
+          descripcion: gasto.name,
+          monto: parseFloat(value),
+          fecha: selectedDate,
+          estado: "pendiente",
+        });
+
+        if (resultado.success) {
+          Keyboard.dismiss();
+          Alert.alert("Éxito", "Gasto agregado correctamente");
+        } else {
+          Alert.alert(
+            "Error",
+            resultado.error || "No se pudo agregar el gasto"
+          );
+        }
+      } catch (err) {
+        Alert.alert("Error", "Error al agregar el gasto");
+      } finally {
+        setLoading(false);
+      }
     },
-    [addGasto, selectedDate]
+    [agregarGasto, placaActual, selectedDate, user?.id]
   );
 
-  // Editar gasto (abrir modal)
+  // ✅ Editar gasto en Supabase
   const handleEditGasto = (id: string | number) => {
     const gasto = gastosIngresados.find((g) => g.id === String(id));
     if (gasto) {
-      setEditValue(gasto.value);
+      setEditValue(String(gasto.monto));
       setEditId(String(id));
-      setEditDate(gasto.fecha); // Usar la fecha original del gasto
+      setEditDate(gasto.fecha);
       setModalVisible(true);
     }
   };
 
-  // Guardar edición
-  const handleSaveEdit = () => {
-    if (editId) {
-      editGasto(editId, editValue, editDate);
-      setModalVisible(false);
-      setEditId(null);
-      setEditValue("");
+  // ✅ Guardar edición en Supabase
+  const handleSaveEdit = async () => {
+    if (editId && editValue) {
+      setLoading(true);
+      try {
+        const resultado = await actualizarGasto(editId, {
+          monto: parseFloat(editValue),
+          fecha: editDate,
+        });
+
+        if (resultado.success) {
+          setModalVisible(false);
+          setEditId(null);
+          setEditValue("");
+          Alert.alert("Éxito", "Gasto actualizado correctamente");
+        } else {
+          Alert.alert(
+            "Error",
+            resultado.error || "No se pudo actualizar el gasto"
+          );
+        }
+      } catch (err) {
+        Alert.alert("Error", "Error al actualizar el gasto");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  // Eliminar gasto
-  const handleDeleteGasto = (id: string | number) => {
-    deleteGasto(String(id), selectedDate);
+  // ✅ Eliminar gasto en Supabase
+  const handleDeleteGasto = async (id: string | number) => {
+    Alert.alert(
+      "Eliminar",
+      "¿Estás seguro de que deseas eliminar este gasto?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const resultado = await eliminarGasto(String(id));
+              if (resultado.success) {
+                Alert.alert("Éxito", "Gasto eliminado correctamente");
+              } else {
+                Alert.alert(
+                  "Error",
+                  resultado.error || "No se pudo eliminar el gasto"
+                );
+              }
+            } catch (err) {
+              Alert.alert("Error", "Error al eliminar el gasto");
+            } finally {
+              setLoading(false);
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
-  // Mostrar/ocultar calendario
-  const toggleCalendar = () => {
-    setShowCalendar((prev) => !prev);
-  };
+  // ✅ Filtrar gastos por fecha
+  const gastosFiltrados = gastosIngresados
+    .filter((g) => g.fecha === selectedDate)
+    .map((g) => ({
+      id: g.id,
+      name: g.tipo_gasto || g.descripcion,
+      value: g.monto,
+    }));
 
-  // Filtra los gastos por el mes seleccionado
-  const gastosFiltrados = gastosIngresados.filter(
-    (g) => g.fecha === selectedDate
-  );
+  if (!placaActual) {
+    return (
+      <SafeAreaView style={styles.container} edges={["left", "right"]}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}>
+          <Text style={{ fontSize: 16, color: "#999" }}>
+            Por favor selecciona una placa
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -97,6 +206,7 @@ export default function Gastos() {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
         />
+
         {/* Selector y lista de gastos */}
         <View style={styles.combinedContainer}>
           <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
@@ -133,10 +243,20 @@ export default function Gastos() {
                 style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
                 Editar valor del gasto
               </Text>
+
+              {loading && (
+                <ActivityIndicator
+                  size="large"
+                  color="#FFF"
+                  style={{ marginBottom: 10 }}
+                />
+              )}
+
               <TextInput
                 value={editValue}
                 onChangeText={setEditValue}
                 keyboardType="numeric"
+                editable={!loading}
                 style={{
                   borderWidth: 1,
                   borderColor: "#ccc",
@@ -146,10 +266,13 @@ export default function Gastos() {
                   marginBottom: 10,
                 }}
               />
+
               <Button
                 title={`Fecha: ${editDate}`}
                 onPress={() => setShowDatePicker(true)}
+                disabled={loading}
               />
+
               {showDatePicker && (
                 <DateTimePicker
                   value={new Date(editDate)}
@@ -157,16 +280,29 @@ export default function Gastos() {
                   display="default"
                   onChange={(_, date) => {
                     setShowDatePicker(false);
-                    if (date) setEditDate(date.toISOString().split("T")[0]);
+                    if (date) {
+                      setEditDate(date.toISOString().split("T")[0]);
+                    }
                   }}
                 />
               )}
-              <View style={{ flexDirection: "row", marginTop: 20 }}>
-                <Button title="Guardar" onPress={handleSaveEdit} />
-                <View style={{ width: 10 }} />
+
+              <View style={{ flexDirection: "row", marginTop: 20, gap: 10 }}>
+                <Button
+                  title="Guardar"
+                  onPress={handleSaveEdit}
+                  disabled={loading}
+                />
                 <Button
                   title="Cancelar"
-                  onPress={() => setModalVisible(false)}
+                  onPress={() => {
+                    if (!loading) {
+                      setModalVisible(false);
+                      setEditId(null);
+                      setEditValue("");
+                    }
+                  }}
+                  disabled={loading}
                 />
               </View>
             </View>
