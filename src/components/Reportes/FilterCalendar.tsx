@@ -7,6 +7,7 @@ import { styles } from "./stylesFilCalendar";
 
 type FilterCalendarProps = {
   onChangeRango: (rango: { inicio: string; fin: string }) => void;
+  placa?: string | null; // ✅ AGREGAR PROP
 };
 
 function getFirstDayOfMonth(date = new Date()) {
@@ -14,6 +15,7 @@ function getFirstDayOfMonth(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}-01`;
 }
+
 function getLastDayOfMonth(date = new Date()) {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
@@ -24,16 +26,17 @@ function getLastDayOfMonth(date = new Date()) {
   )}`;
 }
 
-export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
+export default function FilterCalendar({
+  onChangeRango,
+  placa, // ✅ AGREGAR PARÁMETRO
+}: FilterCalendarProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [showInicio, setShowInicio] = useState(false);
   const [showFin, setShowFin] = useState(false);
 
-  // Estados internos para las fechas
   const [fechaInicio, setFechaInicio] = useState(getFirstDayOfMonth());
   const [fechaFin, setFechaFin] = useState(getLastDayOfMonth());
 
-  // Actualiza el padre cuando cambian las fechas
   useEffect(() => {
     onChangeRango({ inicio: fechaInicio, fin: fechaFin });
   }, [fechaInicio, fechaFin]);
@@ -62,11 +65,29 @@ export default function FilterCalendar({ onChangeRango }: FilterCalendarProps) {
         <MaterialIcons
           name="notifications-active"
           size={24}
-          r
           color={COLORS.black}
         />
       </View>
       <View style={styles.containerMain}>
+        {/* ✅ MOSTRAR PLACA AQUÍ */}
+        {placa && (
+          <View style={{ alignItems: "center", marginBottom: 10 }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                backgroundColor: "#ffe415",
+                borderColor: "#000",
+                borderWidth: 1,
+                borderRadius: 5,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                fontSize: 14,
+              }}>
+              {placa}
+            </Text>
+          </View>
+        )}
+
         <TouchableOpacity
           style={styles.containerFilter}
           activeOpacity={0.3}

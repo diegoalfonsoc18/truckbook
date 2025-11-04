@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Text, Dimensions, View, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { useGastosStore } from "../../store/CurrencyStore";
-import { useIngresosStore } from "../../store/IngresosStore";
 import { styles } from "./StylesFinanzas";
 import FilterCalendar from "../../components/Reportes/FilterCalendar";
 import { COLORS } from "../../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useVehiculoStore } from "../../store/VehiculoStore";
+import { useGastosConductor } from "../../hooks/UseGastosConductor";
+import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 
 function groupBy<T extends { fecha: string; value: number | string }>(
   items: T[],
@@ -32,7 +33,6 @@ function filtrarPorRango<T extends { fecha: string }>(
   });
 }
 
-// Formatea las etiquetas del eje X
 function formatLabel(fecha: string) {
   const meses = [
     "Ene",
@@ -53,7 +53,6 @@ function formatLabel(fecha: string) {
   return `${dia} ${meses[parseInt(mes, 10) - 1]}`;
 }
 
-// Formatea los valores del eje Y (K/M) sin decimales
 function abreviarNumero(valor: number | string): string {
   const num = Number(valor);
   if (isNaN(num)) return String(valor);
@@ -63,6 +62,8 @@ function abreviarNumero(valor: number | string): string {
 }
 
 export default function FinanzasGenerales() {
+  const { placa: placaActual } = useVehiculoStore();
+
   const [view, setView] = useState<"dias" | "meses" | "años">("meses");
   const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
     const now = new Date();
@@ -74,12 +75,26 @@ export default function FinanzasGenerales() {
     return { inicio: first, fin: last };
   });
 
-  const gastos = useGastosStore((state) => state.gastos);
-  const ingresos = useIngresosStore((state) => state.ingresos);
+  // ✅ OBTENER DATOS DE LOS HOOKS
+  const { gastos: gastosRaw } = useGastosConductor(placaActual);
+  const { ingresos: ingresosRaw } = useIngresosConductor(placaActual);
 
+  // ✅ TRANSFORMAR AL FORMATO ESPERADO
+  const gastos = gastosRaw.map((g) => ({
+    fecha: g.fecha,
+    value: g.monto,
+  }));
+
+  const ingresos = ingresosRaw.map((i) => ({
+    fecha: i.fecha,
+    value: i.monto,
+  }));
+
+  // ✅ FILTRAR POR RANGO
   const gastosFiltrados = filtrarPorRango(gastos, rango.inicio, rango.fin);
   const ingresosFiltrados = filtrarPorRango(ingresos, rango.inicio, rango.fin);
 
+  // ✅ AGRUPAR SEGÚN VISTA
   let groupedGastos: Record<string, number> = {};
   let groupedIngresos: Record<string, number> = {};
 
@@ -98,32 +113,28 @@ export default function FinanzasGenerales() {
     new Set([...Object.keys(groupedGastos), ...Object.keys(groupedIngresos)])
   ).sort();
 
-  const gastosData = allKeys.map((k) => {
+  const chartGastosData = allKeys.map((k) => {
     const val = Number(groupedGastos[k]);
     return isFinite(val) ? val : 0;
   });
-  const ingresosData = allKeys.map((k) => {
+
+  const chartIngresosData = allKeys.map((k) => {
     const val = Number(groupedIngresos[k]);
     return isFinite(val) ? val : 0;
   });
 
-  const balanceData = allKeys.map((k, idx) => {
-    const ingreso = ingresosData[idx] || 0;
-    const gasto = gastosData[idx] || 0;
-    return ingreso - gasto;
-  });
-
-  const totalGastos = gastosData.reduce((a, b) => a + b, 0);
-  const totalIngresos = ingresosData.reduce((a, b) => a + b, 0);
+  const totalGastos = chartGastosData.reduce((a, b) => a + b, 0);
+  const totalIngresos = chartIngresosData.reduce((a, b) => a + b, 0);
   const rentabilidad =
     totalIngresos === 0
       ? 0
       : (((totalIngresos - totalGastos) / totalIngresos) * 100).toFixed(2);
+
   const formattedLabels = view === "dias" ? allKeys.map(formatLabel) : allKeys;
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <FilterCalendar onChangeRango={setRango} />
+      <FilterCalendar onChangeRango={setRango} placa={placaActual} />
       <View style={styles.graphicContainer}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -188,19 +199,19 @@ export default function FinanzasGenerales() {
                 formattedLabels.length > 0 ? formattedLabels : ["Sin datos"],
               datasets: [
                 {
-                  data: gastosData.length > 0 ? gastosData : [0],
+                  data: chartGastosData.length > 0 ? chartGastosData : [0],
                   color: () => "#DA1212",
                   strokeWidth: 2,
                 },
                 {
-                  data: ingresosData.length > 0 ? ingresosData : [0],
+                  data: chartIngresosData.length > 0 ? chartIngresosData : [0],
                   color: () => "#19b11e",
                   strokeWidth: 2,
                 },
               ],
               legend: ["Gastos", "Ingresos"],
             }}
-            width={Dimensions.get("window").width * 0.9} // ancho completo
+            width={Dimensions.get("window").width * 0.9}
             height={310}
             yAxisLabel="$"
             yAxisInterval={1}
@@ -220,7 +231,6 @@ export default function FinanzasGenerales() {
             }}
             bezier
             style={{
-              //marginVertical: 8,
               borderRadius: 16,
             }}
           />

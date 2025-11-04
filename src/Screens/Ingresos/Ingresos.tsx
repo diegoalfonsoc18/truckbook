@@ -23,22 +23,23 @@ import {
 } from "react-native-safe-area-context";
 import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useVehiculoStore } from "../../store/VehiculoStore";
-import { useAuth } from "../../hooks/useAuth"; // ← Si tienes este hook
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Ingresos() {
-  // ✅ Obtener placa actual y usuario DENTRO del componente
   const { placa: placaActual } = useVehiculoStore();
-  const { user } = useAuth(); // ← Si tienes este hook
+  const { user } = useAuth();
 
-  // ✅ Hook para obtener ingresos desde Supabase
-  const { ingresos, agregarIngreso, actualizarIngreso, eliminarIngreso } =
-    useIngresosConductor(placaActual);
+  const {
+    ingresos,
+    agregarIngreso,
+    actualizarIngreso,
+    eliminarIngreso,
+    recargar,
+  } = useIngresosConductor(placaActual);
 
-  // Estados locales
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedIngreso, setSelectedIngreso] = useState<string>(
     ingresosData[0].id
@@ -50,7 +51,6 @@ export default function Ingresos() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Agregar ingreso a Supabase
   const handleAddIngreso = useCallback(
     async (id: string, value: string) => {
       if (!placaActual) {
@@ -82,6 +82,7 @@ export default function Ingresos() {
         });
 
         if (resultado.success) {
+          await recargar();
           Keyboard.dismiss();
           Alert.alert("Éxito", "Ingreso agregado correctamente");
         } else {
@@ -96,10 +97,9 @@ export default function Ingresos() {
         setLoading(false);
       }
     },
-    [agregarIngreso, placaActual, selectedDate, user?.id]
+    [agregarIngreso, placaActual, selectedDate, user?.id, recargar]
   );
 
-  // ✅ Editar ingreso en Supabase
   const handleEditGasto = (id: string | number) => {
     const ingreso = ingresos.find((g) => g.id === String(id));
     if (ingreso) {
@@ -110,7 +110,6 @@ export default function Ingresos() {
     }
   };
 
-  // ✅ Guardar edición en Supabase
   const handleSaveEdit = async () => {
     if (editId && editValue) {
       setLoading(true);
@@ -121,6 +120,7 @@ export default function Ingresos() {
         });
 
         if (resultado.success) {
+          await recargar();
           setModalVisible(false);
           setEditId(null);
           setEditValue("");
@@ -139,7 +139,6 @@ export default function Ingresos() {
     }
   };
 
-  // ✅ Eliminar ingreso en Supabase
   const handleDeleteIngreso = async (id: string | number) => {
     Alert.alert(
       "Eliminar",
@@ -153,6 +152,7 @@ export default function Ingresos() {
             try {
               const resultado = await eliminarIngreso(String(id));
               if (resultado.success) {
+                await recargar();
                 Alert.alert("Éxito", "Ingreso eliminado correctamente");
               } else {
                 Alert.alert(
@@ -172,7 +172,6 @@ export default function Ingresos() {
     );
   };
 
-  // ✅ Transforma los datos para que coincidan con el tipo esperado
   const IngresosFiltrados = ingresos
     .filter((g) => g.fecha === selectedDate)
     .map((i) => ({
@@ -206,10 +205,9 @@ export default function Ingresos() {
           data={ingresos}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          placa={placaActual} // ✅ AGREGAR
+          placa={placaActual}
         />
 
-        {/* Selector y lista de ingresos */}
         <View style={styles.combinedContainer}>
           <Text style={styles.titlePicker}>Seleccione un ingreso:</Text>
           <PickerItem
@@ -224,7 +222,6 @@ export default function Ingresos() {
           />
         </View>
 
-        {/* Modal para editar ingreso */}
         <Modal visible={modalVisible} transparent animationType="slide">
           <View
             style={{
@@ -311,7 +308,6 @@ export default function Ingresos() {
           </View>
         </Modal>
 
-        {/* Resumen de ingresos ingresados para la fecha seleccionada */}
         <IngresGast
           selectedDate={selectedDate}
           itemsFiltrados={IngresosFiltrados}
