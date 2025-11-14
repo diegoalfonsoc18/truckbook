@@ -54,29 +54,8 @@ export default function HeaderCalendar({
 
       {/* Fecha seleccionada, placa y botón para mostrar el calendario */}
       <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
-        <View style={styles.iconContainer}>
-          <CamionIcon style={styles.calendarIcon} />
-        </View>
-
         {/* ✅ MOSTRAR PLACA AQUÍ */}
-        {placa && (
-          <Text
-            style={[
-              styles.dateText,
-              {
-                marginHorizontal: 8,
-                fontWeight: "bold",
-                backgroundColor: "#ffe415",
-                borderColor: "#000",
-                borderRadius: 5, // ✅ Sin comillas
-                borderWidth: 1, // ✅ AGREGAR para que se vea el borde
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-              },
-            ]}>
-            {placa}
-          </Text>
-        )}
+        {placa && <Text style={[styles.placaImage]}>{placa}</Text>}
 
         <Text style={styles.dateText}>{selectedDate}</Text>
       </TouchableOpacity>

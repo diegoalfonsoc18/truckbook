@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
@@ -14,7 +13,7 @@ import { COLORS } from "./src/constants/colors";
 import "react-native-get-random-values";
 import type { Session } from "@supabase/supabase-js";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-
+import { DataProvider } from "./src/context/DataProvider"; // ✅ AGREGAR
 import AppStack from "./src/navigation/AppStack";
 import AuthStack from "./src/navigation/AuthStack";
 import supabase from "./src/config/SupaBaseConfig";
@@ -24,7 +23,6 @@ const AppTheme = {
   colors: {
     ...DefaultTheme.colors,
     background: COLORS.background,
-    //background: COLORS.backgroundDark, // Cambia el fondo a un color oscuro
     text: COLORS.text,
   },
 };
@@ -61,7 +59,6 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.globalContainer} edges={["top"]}>
-        {/* Solo para Android, evita usar translucent en iOS */}
         {Platform.OS === "android" && (
           <View
             style={{
@@ -75,9 +72,18 @@ export default function App() {
           translucent={Platform.OS === "android"}
           backgroundColor={COLORS.primary}
         />
-        <NavigationContainer theme={AppTheme}>
-          {session ? <AppStack /> : <AuthStack />}
-        </NavigationContainer>
+        {/* ✅ AGREGAR DataProvider SOLO si hay sesión */}
+        {session ? (
+          <DataProvider>
+            <NavigationContainer theme={AppTheme}>
+              <AppStack />
+            </NavigationContainer>
+          </DataProvider>
+        ) : (
+          <NavigationContainer theme={AppTheme}>
+            <AuthStack />
+          </NavigationContainer>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -86,10 +92,9 @@ export default function App() {
 const styles = StyleSheet.create({
   globalContainer: {
     flex: 1,
-    backgroundColor: COLORS.background, // Cambia el fondo a un color oscuro
+    backgroundColor: COLORS.background,
     paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
-    paddingBottom: 0, // Evita el padding inferior en iOS
-    //paddingHorizontal: 16, // Añade un padding horizontal para evitar que el contenido toque
+    paddingBottom: 0,
   },
   loadingContainer: {
     flex: 1,

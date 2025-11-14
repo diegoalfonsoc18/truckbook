@@ -28,6 +28,7 @@ export const styles = StyleSheet.create({
   dateContainer: {
     flex: 0,
     width: "90%",
+    height: 60,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -44,11 +45,31 @@ export const styles = StyleSheet.create({
     elevation: 0, // ✅ Sin elevación en Android
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "bold",
-    color: COLORS.text, // Color del texto de la fecha
+    color: COLORS.text,
     textAlign: "center",
+    textAlignVertical: "center",
+    flex: 0,
+    // ✅ Quita el fontWeight duplicado
   },
+
+  placaImage: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: COLORS.text,
+    textAlign: "center",
+    textAlignVertical: "center",
+    flex: 0,
+    backgroundColor: "#ffe415",
+    borderColor: "#000",
+    borderRadius: 5,
+    borderWidth: 1,
+    paddingHorizontal: 10, // ✅ Agrégalo para espaciado interno
+    paddingVertical: 4, // ✅ Agrégalo para mejor apariencia
+    // ✅ Quita el fontWeight duplicado
+  },
+
   iconContainer: {
     justifyContent: "center",
     alignItems: "center",

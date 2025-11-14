@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Modal,
@@ -20,22 +20,21 @@ import PickerItem from "../../components/PickerItem";
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 import { useGastosConductor } from "../../hooks/UseGastosConductor";
 import { useVehiculoStore } from "../../store/VehiculoStore";
-import { useAuth } from "../../hooks/useAuth"; // ← Si tienes este hook
+import { useAuth } from "../../hooks/useAuth";
+import { useGastosStore } from "../../store/GastosStore";
+import { useShallow } from "zustand/react/shallow";
 
 export default function Gastos() {
-  // ✅ Obtener placa actual y usuario DENTRO del componente
   const { placa: placaActual } = useVehiculoStore();
-  const { user } = useAuth(); // ← Si tienes este hook
+  const { user } = useAuth();
 
-  // ✅ Hook para obtener gastos desde Supabase
-  const {
-    gastos: gastosIngresados,
-    agregarGasto,
-    actualizarGasto,
-    eliminarGasto,
-  } = useGastosConductor(placaActual);
+  // ✅ OPTIMIZACIÓN 1: Obtener datos directamente del store (con Realtime)
+  const gastos = useGastosStore(useShallow((state) => state.gastos));
 
-  // Estados locales
+  // Usar el hook solo para las funciones CRUD
+  const { agregarGasto, actualizarGasto, eliminarGasto } =
+    useGastosConductor(placaActual);
+
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -48,7 +47,14 @@ export default function Gastos() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Agregar gasto a Supabase
+  // ✅ OPTIMIZACIÓN 2: Cargar UNA SOLA VEZ al montar
+  // Realtime mantiene los datos actualizados después
+  useEffect(() => {
+    if (placaActual) {
+      useGastosStore.getState().cargarGastosDelDB(placaActual);
+    }
+  }, [placaActual]);
+
   const handleAddGasto = useCallback(
     async (id: string, value: string) => {
       if (!placaActual) {
@@ -80,6 +86,8 @@ export default function Gastos() {
         });
 
         if (resultado.success) {
+          // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
+          // Realtime actualiza automáticamente
           Keyboard.dismiss();
           Alert.alert("Éxito", "Gasto agregado correctamente");
         } else {
@@ -89,6 +97,7 @@ export default function Gastos() {
           );
         }
       } catch (err) {
+        console.error("Error al agregar gasto:", err);
         Alert.alert("Error", "Error al agregar el gasto");
       } finally {
         setLoading(false);
@@ -97,9 +106,8 @@ export default function Gastos() {
     [agregarGasto, placaActual, selectedDate, user?.id]
   );
 
-  // ✅ Editar gasto en Supabase
   const handleEditGasto = (id: string | number) => {
-    const gasto = gastosIngresados.find((g) => g.id === String(id));
+    const gasto = gastos.find((g) => g.id === String(id));
     if (gasto) {
       setEditValue(String(gasto.monto));
       setEditId(String(id));
@@ -108,36 +116,40 @@ export default function Gastos() {
     }
   };
 
-  // ✅ Guardar edición en Supabase
   const handleSaveEdit = async () => {
-    if (editId && editValue) {
-      setLoading(true);
-      try {
-        const resultado = await actualizarGasto(editId, {
-          monto: parseFloat(editValue),
-          fecha: editDate,
-        });
+    if (!editId || !editValue) {
+      Alert.alert("Error", "Todos los campos son requeridos");
+      return;
+    }
 
-        if (resultado.success) {
-          setModalVisible(false);
-          setEditId(null);
-          setEditValue("");
-          Alert.alert("Éxito", "Gasto actualizado correctamente");
-        } else {
-          Alert.alert(
-            "Error",
-            resultado.error || "No se pudo actualizar el gasto"
-          );
-        }
-      } catch (err) {
-        Alert.alert("Error", "Error al actualizar el gasto");
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    try {
+      const resultado = await actualizarGasto(editId, {
+        monto: parseFloat(editValue),
+        fecha: editDate,
+      });
+
+      if (resultado.success) {
+        // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
+        // Realtime actualiza automáticamente
+        setModalVisible(false);
+        setEditId(null);
+        setEditValue("");
+        Alert.alert("Éxito", "Gasto actualizado correctamente");
+      } else {
+        Alert.alert(
+          "Error",
+          resultado.error || "No se pudo actualizar el gasto"
+        );
       }
+    } catch (err) {
+      console.error("Error al actualizar gasto:", err);
+      Alert.alert("Error", "Error al actualizar el gasto");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ Eliminar gasto en Supabase
   const handleDeleteGasto = async (id: string | number) => {
     Alert.alert(
       "Eliminar",
@@ -151,6 +163,8 @@ export default function Gastos() {
             try {
               const resultado = await eliminarGasto(String(id));
               if (resultado.success) {
+                // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
+                // Realtime actualiza automáticamente
                 Alert.alert("Éxito", "Gasto eliminado correctamente");
               } else {
                 Alert.alert(
@@ -159,6 +173,7 @@ export default function Gastos() {
                 );
               }
             } catch (err) {
+              console.error("Error al eliminar gasto:", err);
               Alert.alert("Error", "Error al eliminar el gasto");
             } finally {
               setLoading(false);
@@ -170,8 +185,9 @@ export default function Gastos() {
     );
   };
 
-  // ✅ Filtrar gastos por fecha
-  const gastosFiltrados = gastosIngresados
+  // ✅ OPTIMIZACIÓN 4: Filtrar por placa actual y fecha
+  const gastosFiltrados = gastos
+    .filter((g) => g.placa === placaActual)
     .filter((g) => g.fecha === selectedDate)
     .map((g) => ({
       id: g.id,
@@ -199,16 +215,14 @@ export default function Gastos() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={["left", "right"]}>
-        {/* Header */}
         <HeaderCalendar
           title="Gastos"
-          data={gastosIngresados}
+          data={gastos.filter((g) => g.placa === placaActual)}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          placa={placaActual} // ← AGREGAR ESTA LÍNEA
+          placa={placaActual}
         />
 
-        {/* Selector y lista de gastos */}
         <View style={styles.combinedContainer}>
           <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
           <PickerItem
@@ -223,7 +237,6 @@ export default function Gastos() {
           />
         </View>
 
-        {/* Modal para editar gasto */}
         <Modal visible={modalVisible} transparent animationType="slide">
           <View
             style={{
@@ -258,6 +271,7 @@ export default function Gastos() {
                 onChangeText={setEditValue}
                 keyboardType="numeric"
                 editable={!loading}
+                placeholder="Ingrese el monto"
                 style={{
                   borderWidth: 1,
                   borderColor: "#ccc",
@@ -310,7 +324,6 @@ export default function Gastos() {
           </View>
         </Modal>
 
-        {/* Resumen de gastos ingresados para la fecha seleccionada */}
         <IngresGast
           selectedDate={selectedDate}
           itemsFiltrados={gastosFiltrados}

@@ -219,7 +219,6 @@ export default StyleSheet.create({
   },
 
   // ✅ Styles Role
-
   buttonDisabled: {
     opacity: 0.6,
   },
@@ -233,6 +232,116 @@ export default StyleSheet.create({
   textLoginLink: {
     color: COLORS.primary || "#2196F3",
     fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
+
+  // ✅ ============================================
+  // ✅ NUEVOS ESTILOS PARA VALIDACIÓN DE CONTRASEÑA
+  // ✅ ============================================
+
+  // Mensaje de error (email, contraseña)
+  errorText: {
+    color: "#FF3B30", // Rojo iOS
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 8,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+
+  // Contenedor de la barra de fortaleza
+  passwordStrengthContainer: {
+    height: 6,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  // Barra de fortaleza que se llena (dinámico)
+  passwordStrengthBar: {
+    height: "100%",
+    borderRadius: 3,
+    // backgroundColor se maneja dinámicamente en el componente
+    // backgroundColor: "#34C759" (verde fuerte) o "#FF9500" (naranja débil)
+  },
+
+  // Texto de estado de fortaleza
+  passwordStrengthText: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 4,
+    marginBottom: 8,
+  },
+
+  passwordStrengthStrong: {
+    color: "#34C759", // Verde iOS
+  },
+
+  passwordStrengthWeak: {
+    color: "#FF9500", // Naranja iOS
+  },
+
+  // Contenedor para requisitos individuales
+  requirementContainer: {
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  // Requisito individual (✓ o ○)
+  requirementText: {
+    fontSize: 11,
+    fontWeight: "500",
+    marginVertical: 2,
+    marginLeft: 4,
+  },
+
+  requirementMet: {
+    color: "#34C759", // Verde
+  },
+
+  requirementUnmet: {
+    color: "#999",
+  },
+
+  // Indicador de puntos (○ o ✓)
+  requirementIndicator: {
+    marginRight: 4,
+  },
+
+  // ✅ ESTILO PARA DIVIDER/SEPARATOR
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E5E5",
+    marginVertical: 12,
+  },
+
+  // ✅ ESTILO PARA LOADING OVERLAY (si lo necesitas)
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // ✅ ESTILO PARA DISCLAIMER/POLÍTICA
+  disclaimerContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 8,
+  },
+
+  disclaimerText: {
+    fontSize: 11,
+    color: "#666",
+    fontWeight: "400",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+
+  disclaimerLink: {
+    color: COLORS.primary || "#2196F3",
     fontWeight: "600",
     textDecorationLine: "underline",
   },

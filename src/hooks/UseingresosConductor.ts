@@ -30,7 +30,6 @@ interface UseIngresosConductorReturn {
   recargar: () => Promise<void>;
 }
 
-// ✅ Acepta string | null | undefined
 export const useIngresosConductor = (
   placa?: string | null
 ): UseIngresosConductorReturn => {
@@ -39,7 +38,6 @@ export const useIngresosConductor = (
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // ✅ Valida que placa sea válida
     if (!placa) {
       setCargando(false);
       setIngresos([]);
@@ -47,6 +45,39 @@ export const useIngresosConductor = (
     }
 
     cargarIngresos();
+
+    // ✅ SUSCRIBIRSE A CAMBIOS EN TIEMPO REAL
+    const subscription = supabase
+      .channel(`ingresos-${placa}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "conductor_ingresos",
+          filter: `placa=eq.${placa}`,
+        },
+        (payload) => {
+          console.log("📡 Cambio detectado en ingresos:", payload);
+
+          if (payload.eventType === "INSERT") {
+            setIngresos((prev) => [payload.new as Ingreso, ...prev]);
+          } else if (payload.eventType === "UPDATE") {
+            setIngresos((prev) =>
+              prev.map((i) =>
+                i.id === payload.new.id ? (payload.new as Ingreso) : i
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            setIngresos((prev) => prev.filter((i) => i.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [placa]);
 
   const cargarIngresos = async () => {
@@ -61,7 +92,6 @@ export const useIngresosConductor = (
         .order("created_at", { ascending: false });
 
       if (err) throw err;
-
       setIngresos(data || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar ingresos");
@@ -81,10 +111,6 @@ export const useIngresosConductor = (
         .select();
 
       if (err) throw err;
-
-      if (data && data.length > 0) {
-        setIngresos([data[0], ...ingresos]);
-      }
       return { success: true };
     } catch (err: any) {
       const errorMsg = err.message || "Error al agregar ingreso";
@@ -104,10 +130,6 @@ export const useIngresosConductor = (
         .eq("id", id);
 
       if (err) throw err;
-
-      setIngresos(
-        ingresos.map((i) => (i.id === id ? { ...i, ...updates } : i))
-      );
       return { success: true };
     } catch (err: any) {
       const errorMsg = err.message || "Error al actualizar ingreso";
@@ -126,8 +148,6 @@ export const useIngresosConductor = (
         .eq("id", id);
 
       if (err) throw err;
-
-      setIngresos(ingresos.filter((i) => i.id !== id));
       return { success: true };
     } catch (err: any) {
       const errorMsg = err.message || "Error al eliminar ingreso";

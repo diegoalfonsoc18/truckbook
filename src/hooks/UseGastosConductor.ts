@@ -1,50 +1,62 @@
 import { useEffect, useState } from "react";
 import supabase from "../config/SupaBaseConfig";
+import { useGastosStore, type Gasto } from "../store/GastosStore";
 
-export interface Gasto {
-  id: string;
-  placa: string;
-  conductor_id: string;
-  tipo_gasto: string;
-  descripcion: string;
-  monto: number;
-  fecha: string;
-  estado: "pendiente" | "aprobado" | "rechazado";
-  created_at: string;
-}
+let isSubscribed = false; // ✅ Control global para evitar múltiples suscripciones
 
-interface UseGastosConductorReturn {
-  gastos: Gasto[];
-  cargando: boolean;
-  error: string | null;
-  agregarGasto: (
-    gasto: Omit<Gasto, "id" | "created_at">
-  ) => Promise<{ success: boolean; error?: string }>;
-  actualizarGasto: (
-    id: string,
-    updates: Partial<Gasto>
-  ) => Promise<{ success: boolean; error?: string }>;
-  eliminarGasto: (id: string) => Promise<{ success: boolean; error?: string }>;
-  recargar: () => Promise<void>;
-}
-
-// ✅ Acepta string | null | undefined
-export const useGastosConductor = (
-  placa?: string | null
-): UseGastosConductorReturn => {
-  const [gastos, setGastos] = useState<Gasto[]>([]);
+export const useGastosConductor = (placa?: string | null) => {
+  const {
+    gastos,
+    setGastosPorPlaca,
+    agregarGasto,
+    editarGasto,
+    eliminarGasto,
+  } = useGastosStore();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ CARGAR DATOS UNA SOLA VEZ
   useEffect(() => {
-    // ✅ Valida que placa sea válida
     if (!placa) {
       setCargando(false);
-      setGastos([]);
       return;
     }
 
     cargarGastos();
+  }, [placa]);
+
+  // ✅ SUSCRIBIRSE UNA SOLA VEZ
+  useEffect(() => {
+    if (!placa || isSubscribed) return;
+
+    isSubscribed = true;
+
+    const subscription = supabase
+      .channel(`gastos-${placa}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "conductor_gastos",
+          filter: `placa=eq.${placa}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            agregarGasto(payload.new as Gasto);
+          } else if (payload.eventType === "UPDATE") {
+            editarGasto(payload.new.id, payload.new);
+          } else if (payload.eventType === "DELETE") {
+            eliminarGasto(payload.old.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      isSubscribed = false;
+    };
   }, [placa]);
 
   const cargarGastos = async () => {
@@ -59,17 +71,15 @@ export const useGastosConductor = (
         .order("created_at", { ascending: false });
 
       if (err) throw err;
-
-      setGastos(data || []);
+      setGastosPorPlaca(placa || "", data || []);
     } catch (err: any) {
-      setError(err.message || "Error al cargar gastos");
-      setGastos([]);
+      setError(err.message);
     } finally {
       setCargando(false);
     }
   };
 
-  const agregarGasto = async (
+  const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">
   ): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -80,18 +90,18 @@ export const useGastosConductor = (
 
       if (err) throw err;
 
-      if (data && data.length > 0) {
-        setGastos([data[0], ...gastos]);
+      if (data && data[0]) {
+        agregarGasto(data[0] as Gasto);
       }
+
       return { success: true };
     } catch (err: any) {
-      const errorMsg = err.message || "Error al agregar gasto";
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      setError(err.message);
+      return { success: false, error: err.message };
     }
   };
 
-  const actualizarGasto = async (
+  const editarGastoAsync = async (
     id: string,
     updates: Partial<Gasto>
   ): Promise<{ success: boolean; error?: string }> => {
@@ -103,16 +113,15 @@ export const useGastosConductor = (
 
       if (err) throw err;
 
-      setGastos(gastos.map((g) => (g.id === id ? { ...g, ...updates } : g)));
+      editarGasto(id, updates);
       return { success: true };
     } catch (err: any) {
-      const errorMsg = err.message || "Error al actualizar gasto";
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      setError(err.message);
+      return { success: false, error: err.message };
     }
   };
 
-  const eliminarGasto = async (
+  const eliminarGastoAsync = async (
     id: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -123,22 +132,21 @@ export const useGastosConductor = (
 
       if (err) throw err;
 
-      setGastos(gastos.filter((g) => g.id !== id));
+      eliminarGasto(id);
       return { success: true };
     } catch (err: any) {
-      const errorMsg = err.message || "Error al eliminar gasto";
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      setError(err.message);
+      return { success: false, error: err.message };
     }
   };
 
   return {
-    gastos,
+    gastos: gastos.filter((g) => g.placa === placa),
     cargando,
     error,
-    agregarGasto,
-    actualizarGasto,
-    eliminarGasto,
+    agregarGasto: agregarGastoAsync,
+    actualizarGasto: editarGastoAsync,
+    eliminarGasto: eliminarGastoAsync,
     recargar: cargarGastos,
   };
 };
