@@ -18,22 +18,17 @@ import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import IngresosItem from "../../components/Ingresos/IngresosItem";
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
+import supabase from "../../config/SupaBaseConfig";
 
 export default function Ingresos() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
 
-  // ✅ OPTIMIZACIÓN 1: Obtener datos directamente del store (con Realtime)
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
-
-  // Usar el hook solo para las funciones CRUD
-  const { agregarIngreso, actualizarIngreso, eliminarIngreso } =
-    useIngresosConductor(placaActual);
 
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -49,8 +44,6 @@ export default function Ingresos() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ OPTIMIZACIÓN 2: Cargar UNA SOLA VEZ al montar
-  // Realtime mantiene los datos actualizados después
   useEffect(() => {
     if (placaActual) {
       useIngresosStore.getState().cargarIngresosDelDB(placaActual);
@@ -71,41 +64,34 @@ export default function Ingresos() {
 
       const ingreso = ingresosData.find((i) => i.id === id);
       if (!ingreso) {
-        console.error("Ingreso no encontrado");
         return;
       }
 
       setLoading(true);
       try {
-        const resultado = await agregarIngreso({
-          placa: placaActual,
-          conductor_id: user.id,
-          tipo_ingreso: ingreso.name,
-          descripcion: ingreso.name,
-          monto: parseFloat(value),
-          fecha: selectedDate,
-          estado: "confirmado",
-        });
+        const { error } = await supabase.from("conductor_ingresos").insert([
+          {
+            placa: placaActual,
+            conductor_id: user.id,
+            tipo_ingreso: ingreso.name,
+            descripcion: ingreso.name,
+            monto: parseFloat(value),
+            fecha: selectedDate,
+            estado: "confirmado",
+          },
+        ]);
 
-        if (resultado.success) {
-          // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-          // Realtime actualiza automáticamente
-          Keyboard.dismiss();
-          Alert.alert("Éxito", "Ingreso agregado correctamente");
-        } else {
-          Alert.alert(
-            "Error",
-            resultado.error || "No se pudo agregar el ingreso"
-          );
-        }
+        if (error) throw error;
+
+        Keyboard.dismiss();
+        Alert.alert("Éxito", "Ingreso agregado correctamente");
       } catch (err) {
-        console.error("Error al agregar ingreso:", err);
         Alert.alert("Error", "Error al agregar el ingreso");
       } finally {
         setLoading(false);
       }
     },
-    [agregarIngreso, placaActual, selectedDate, user?.id]
+    [placaActual, selectedDate, user?.id]
   );
 
   const handleEditGasto = (id: string | number) => {
@@ -126,26 +112,21 @@ export default function Ingresos() {
 
     setLoading(true);
     try {
-      const resultado = await actualizarIngreso(editId, {
-        monto: parseFloat(editValue),
-        fecha: editDate,
-      });
+      const { error } = await supabase
+        .from("conductor_ingresos")
+        .update({
+          monto: parseFloat(editValue),
+          fecha: editDate,
+        })
+        .eq("id", editId);
 
-      if (resultado.success) {
-        // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-        // Realtime actualiza automáticamente
-        setModalVisible(false);
-        setEditId(null);
-        setEditValue("");
-        Alert.alert("Éxito", "Ingreso actualizado correctamente");
-      } else {
-        Alert.alert(
-          "Error",
-          resultado.error || "No se pudo actualizar el ingreso"
-        );
-      }
+      if (error) throw error;
+
+      setModalVisible(false);
+      setEditId(null);
+      setEditValue("");
+      Alert.alert("Éxito", "Ingreso actualizado correctamente");
     } catch (err) {
-      console.error("Error al actualizar ingreso:", err);
       Alert.alert("Error", "Error al actualizar el ingreso");
     } finally {
       setLoading(false);
@@ -163,19 +144,15 @@ export default function Ingresos() {
           onPress: async () => {
             setLoading(true);
             try {
-              const resultado = await eliminarIngreso(String(id));
-              if (resultado.success) {
-                // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-                // Realtime actualiza automáticamente
-                Alert.alert("Éxito", "Ingreso eliminado correctamente");
-              } else {
-                Alert.alert(
-                  "Error",
-                  resultado.error || "No se pudo eliminar el ingreso"
-                );
-              }
+              const { error } = await supabase
+                .from("conductor_ingresos")
+                .delete()
+                .eq("id", String(id));
+
+              if (error) throw error;
+
+              Alert.alert("Éxito", "Ingreso eliminado correctamente");
             } catch (err) {
-              console.error("Error al eliminar ingreso:", err);
               Alert.alert("Error", "Error al eliminar el ingreso");
             } finally {
               setLoading(false);
@@ -187,7 +164,6 @@ export default function Ingresos() {
     );
   };
 
-  // ✅ OPTIMIZACIÓN 4: Filtrar por placa actual y fecha
   const IngresosFiltrados = ingresos
     .filter((i) => i.placa === placaActual)
     .filter((g) => g.fecha === selectedDate)

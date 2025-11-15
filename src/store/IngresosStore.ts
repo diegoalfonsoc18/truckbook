@@ -62,15 +62,24 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
   desuscribir: () => {
     const currentSubscription = get().subscription;
     if (currentSubscription) {
-      supabase.removeChannel(currentSubscription);
+      try {
+        currentSubscription.unsubscribe?.();
+      } catch (e) {
+        // Silent error handling
+      }
+
+      try {
+        supabase.removeChannel(currentSubscription);
+      } catch (e) {
+        // Silent error handling
+      }
+
       set({ subscription: null });
-      console.log("🔌 Desuscrito de Realtime (Ingresos)");
     }
   },
 
   cargarIngresosDelDB: async (placaActual?: string | null) => {
     try {
-      // Desuscribir de suscripción anterior
       get().desuscribir();
 
       let query = supabase
@@ -87,39 +96,34 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
       if (error) throw error;
 
       set({ ingresos: data || [] });
-      console.log("✅ Ingresos cargados:", data?.length || 0);
 
-      // ✅ CREAR NUEVA SUSCRIPCIÓN REALTIME (SIN FILTRO)
-      const channel = supabase.channel(`conductor_ingresos:${placaActual}`).on(
+      const channel = supabase.channel("conductor_ingresos_realtime").on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "conductor_ingresos",
-          filter: undefined, // ✅ Sin filtro (el componente filtra por placa)
         },
         (payload) => {
-          console.log(
-            "📡 Cambio en ingresos detectado:",
-            payload.eventType,
-            payload.new || payload.old
-          );
-
           set((state) => {
             if (payload.eventType === "INSERT") {
-              console.log("➕ INSERT detectado");
+              const yaExiste = state.ingresos.some(
+                (i) => i.id === payload.new.id
+              );
+              if (yaExiste) {
+                return state;
+              }
+
               return {
                 ingresos: [payload.new as Ingreso, ...state.ingresos],
               };
             } else if (payload.eventType === "UPDATE") {
-              console.log("✏️ UPDATE detectado");
               return {
                 ingresos: state.ingresos.map((i) =>
                   i.id === payload.new.id ? (payload.new as Ingreso) : i
                 ),
               };
             } else if (payload.eventType === "DELETE") {
-              console.log("🗑️ DELETE detectado");
               return {
                 ingresos: state.ingresos.filter((i) => i.id !== payload.old.id),
               };
@@ -129,12 +133,10 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
         }
       );
 
-      // ✅ SUBSCRIBE Y ESPERAR
       const subscription = await channel.subscribe();
       set({ subscription });
-      console.log("🔌 Suscrito a Realtime (Ingresos)");
     } catch (err) {
-      console.error("Error cargando ingresos:", err);
+      console.error("Error loading ingresos:", err);
     }
   },
 }));

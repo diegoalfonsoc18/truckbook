@@ -28,10 +28,8 @@ export default function Gastos() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
 
-  // ✅ OPTIMIZACIÓN 1: Obtener datos directamente del store (con Realtime)
   const gastos = useGastosStore(useShallow((state) => state.gastos));
 
-  // Usar el hook solo para las funciones CRUD
   const { agregarGasto, actualizarGasto, eliminarGasto } =
     useGastosConductor(placaActual);
 
@@ -47,8 +45,6 @@ export default function Gastos() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ OPTIMIZACIÓN 2: Cargar UNA SOLA VEZ al montar
-  // Realtime mantiene los datos actualizados después
   useEffect(() => {
     if (placaActual) {
       useGastosStore.getState().cargarGastosDelDB(placaActual);
@@ -69,7 +65,6 @@ export default function Gastos() {
 
       const gasto = gastosData.find((g) => g.id === id);
       if (!gasto) {
-        console.error("Gasto no encontrado");
         return;
       }
 
@@ -86,8 +81,6 @@ export default function Gastos() {
         });
 
         if (resultado.success) {
-          // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-          // Realtime actualiza automáticamente
           Keyboard.dismiss();
           Alert.alert("Éxito", "Gasto agregado correctamente");
         } else {
@@ -97,7 +90,6 @@ export default function Gastos() {
           );
         }
       } catch (err) {
-        console.error("Error al agregar gasto:", err);
         Alert.alert("Error", "Error al agregar el gasto");
       } finally {
         setLoading(false);
@@ -130,8 +122,6 @@ export default function Gastos() {
       });
 
       if (resultado.success) {
-        // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-        // Realtime actualiza automáticamente
         setModalVisible(false);
         setEditId(null);
         setEditValue("");
@@ -143,7 +133,6 @@ export default function Gastos() {
         );
       }
     } catch (err) {
-      console.error("Error al actualizar gasto:", err);
       Alert.alert("Error", "Error al actualizar el gasto");
     } finally {
       setLoading(false);
@@ -163,8 +152,6 @@ export default function Gastos() {
             try {
               const resultado = await eliminarGasto(String(id));
               if (resultado.success) {
-                // ✅ OPTIMIZACIÓN 3: Sin recargas manuales
-                // Realtime actualiza automáticamente
                 Alert.alert("Éxito", "Gasto eliminado correctamente");
               } else {
                 Alert.alert(
@@ -173,7 +160,6 @@ export default function Gastos() {
                 );
               }
             } catch (err) {
-              console.error("Error al eliminar gasto:", err);
               Alert.alert("Error", "Error al eliminar el gasto");
             } finally {
               setLoading(false);
@@ -185,7 +171,6 @@ export default function Gastos() {
     );
   };
 
-  // ✅ OPTIMIZACIÓN 4: Filtrar por placa actual y fecha
   const gastosFiltrados = gastos
     .filter((g) => g.placa === placaActual)
     .filter((g) => g.fecha === selectedDate)
