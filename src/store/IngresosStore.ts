@@ -65,15 +65,13 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
       try {
         currentSubscription.unsubscribe?.();
       } catch (e) {
-        // Silent error handling
+        // Silent
       }
-
       try {
         supabase.removeChannel(currentSubscription);
       } catch (e) {
-        // Silent error handling
+        // Silent
       }
-
       set({ subscription: null });
     }
   },
@@ -97,23 +95,17 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
 
       set({ ingresos: data || [] });
 
-      const channel = supabase.channel("conductor_ingresos_realtime").on(
+      const channel = supabase.channel(`conductor_ingresos:${placaActual}`).on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "conductor_ingresos",
+          filter: placaActual ? `placa=eq.${placaActual}` : undefined,
         },
         (payload) => {
           set((state) => {
             if (payload.eventType === "INSERT") {
-              const yaExiste = state.ingresos.some(
-                (i) => i.id === payload.new.id
-              );
-              if (yaExiste) {
-                return state;
-              }
-
               return {
                 ingresos: [payload.new as Ingreso, ...state.ingresos],
               };

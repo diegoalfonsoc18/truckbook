@@ -1,14 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
-  Modal,
   Text,
-  TextInput,
-  Button,
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,34 +12,38 @@ import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
 import GastoItem from "../../components/Gastos/GastoItem";
 import { styles } from "./GastosStyles";
-import PickerItem from "../../components/PickerItem";
+import { CategorySelector } from "../../components/CategorySelector"; // ← NUEVO
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";
 import { useGastosConductor } from "../../hooks/UseGastosConductor";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
+import { ModalGastIngre } from "../../components/Modales/ModalGastIngre";
 
 export default function Gastos() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
-
   const { agregarGasto, actualizarGasto, eliminarGasto } =
     useGastosConductor(placaActual);
 
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedGasto, setSelectedGasto] = useState<string>(gastosData[0].id);
+
+  // Modal para agregar/editar
   const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState<string>(selectedDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Modal label para saber si es agregar o editar
+  const isEditing = editId !== null;
 
   useEffect(() => {
     if (placaActual) {
@@ -64,9 +64,7 @@ export default function Gastos() {
       }
 
       const gasto = gastosData.find((g) => g.id === id);
-      if (!gasto) {
-        return;
-      }
+      if (!gasto) return;
 
       setLoading(true);
       try {
@@ -98,7 +96,7 @@ export default function Gastos() {
     [agregarGasto, placaActual, selectedDate, user?.id]
   );
 
-  const handleEditGasto = (id: string | number) => {
+  const handleEditClick = (id: string | number) => {
     const gasto = gastos.find((g) => g.id === String(id));
     if (gasto) {
       setEditValue(String(gasto.monto));
@@ -122,9 +120,7 @@ export default function Gastos() {
       });
 
       if (resultado.success) {
-        setModalVisible(false);
-        setEditId(null);
-        setEditValue("");
+        closeModal();
         Alert.alert("Éxito", "Gasto actualizado correctamente");
       } else {
         Alert.alert(
@@ -139,7 +135,7 @@ export default function Gastos() {
     }
   };
 
-  const handleDeleteGasto = async (id: string | number) => {
+  const handleDeleteClick = (id: string | number) => {
     Alert.alert(
       "Eliminar",
       "¿Estás seguro de que deseas eliminar este gasto?",
@@ -171,6 +167,14 @@ export default function Gastos() {
     );
   };
 
+  const closeModal = () => {
+    setModalVisible(false);
+    setEditId(null);
+    setEditValue("");
+    setEditDate(selectedDate);
+    setShowDatePicker(false);
+  };
+
   const gastosFiltrados = gastos
     .filter((g) => g.placa === placaActual)
     .filter((g) => g.fecha === selectedDate)
@@ -184,11 +188,7 @@ export default function Gastos() {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right"]}>
         <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}>
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ fontSize: 16, color: "#999" }}>
             Por favor selecciona una placa
           </Text>
@@ -200,6 +200,7 @@ export default function Gastos() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={["left", "right"]}>
+        {/* Header */}
         <HeaderCalendar
           title="Gastos"
           data={gastos.filter((g) => g.placa === placaActual)}
@@ -208,120 +209,57 @@ export default function Gastos() {
           placa={placaActual}
         />
 
+        {/* Agregar Gasto */}
         <View style={styles.combinedContainer}>
-          <Text style={styles.titlePicker}>Seleccione un gasto:</Text>
-          <PickerItem
-            data={gastosData}
-            pickerLabelKey="name"
-            pickerValueKey="id"
-            onSelect={setSelectedGasto}
-            pickerStyle={styles.picker}
-            renderSelectedItem={(item) => (
-              <GastoItem item={item} onSend={handleAddGasto} />
-            )}
+          <CategorySelector
+            options={gastosData}
+            value={selectedGasto}
+            onSelect={(id) => {
+              setSelectedGasto(id);
+              setEditValue(""); // Limpiar valor anterior
+              setEditId(null); // No es edición, es nuevo gasto
+              setEditDate(selectedDate);
+              setModalVisible(true); // Abrir modal
+            }}
+            title="Selecciona un gasto:"
           />
         </View>
 
-        <Modal visible={modalVisible} transparent animationType="slide">
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "rgba(0,0,0,0.3)",
-            }}>
-            <View
-              style={{
-                backgroundColor: "#c64c4c",
-                borderRadius: 10,
-                padding: 20,
-                width: "80%",
-                alignItems: "center",
-              }}>
-              <Text
-                style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
-                Editar valor del gasto
-              </Text>
-
-              {loading && (
-                <ActivityIndicator
-                  size="large"
-                  color="#FFF"
-                  style={{ marginBottom: 10 }}
-                />
-              )}
-
-              <TextInput
-                value={editValue}
-                onChangeText={setEditValue}
-                keyboardType="numeric"
-                editable={!loading}
-                placeholder="Ingrese el monto"
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  borderRadius: 5,
-                  padding: 10,
-                  width: "100%",
-                  marginBottom: 10,
-                }}
-              />
-
-              <Button
-                title={`Fecha: ${editDate}`}
-                onPress={() => setShowDatePicker(true)}
-                disabled={loading}
-              />
-
-              {showDatePicker && (
-                <DateTimePicker
-                  value={new Date(editDate)}
-                  mode="date"
-                  display="default"
-                  onChange={(_, date) => {
-                    setShowDatePicker(false);
-                    if (date) {
-                      setEditDate(date.toISOString().split("T")[0]);
-                    }
-                  }}
-                />
-              )}
-
-              <View style={{ flexDirection: "row", marginTop: 20, gap: 10 }}>
-                <Button
-                  title="Guardar"
-                  onPress={handleSaveEdit}
-                  disabled={loading}
-                />
-                <Button
-                  title="Cancelar"
-                  onPress={() => {
-                    if (!loading) {
-                      setModalVisible(false);
-                      setEditId(null);
-                      setEditValue("");
-                    }
-                  }}
-                  disabled={loading}
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
-
+        {/* Modal para ingresar/editar gasto */}
+        <ModalGastIngre
+          visible={modalVisible}
+          onClose={closeModal}
+          isEditing={isEditing}
+          editValue={editValue}
+          setEditValue={setEditValue}
+          editDate={editDate}
+          setEditDate={setEditDate}
+          loading={loading}
+          selectedItem={
+            selectedGasto
+              ? gastosData.find((g) => g.id === selectedGasto) || null
+              : null
+          }
+          onSave={() => {
+            if (isEditing) {
+              handleSaveEdit();
+            } else {
+              handleAddGasto(selectedGasto, editValue);
+              closeModal();
+            }
+          }}
+          showDatePicker={showDatePicker}
+          setShowDatePicker={setShowDatePicker}
+          type="gasto"
+        />
+        {/* Resumen */}
         <IngresGast
           selectedDate={selectedDate}
           itemsFiltrados={gastosFiltrados}
-          handleEdit={handleEditGasto}
-          handleDelete={handleDeleteGasto}
-          totalLabel="Total"
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          totalLabel="Total Gastos"
           title="Resumen"
-          modalLabel="Editar valor del gasto"
-          editValue={editValue}
-          setEditValue={setEditValue}
-          modalVisible={modalVisible}
-          setModalVisible={setModalVisible}
-          handleSaveEdit={handleSaveEdit}
         />
       </SafeAreaView>
     </TouchableWithoutFeedback>

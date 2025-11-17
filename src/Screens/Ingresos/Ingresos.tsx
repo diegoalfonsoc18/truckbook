@@ -1,14 +1,14 @@
 import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
-  Text,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Alert,
-  ActivityIndicator,
   Modal,
+  Text,
   TextInput,
   Button,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { styles } from "../Gastos/GastosStyles";
@@ -33,10 +33,11 @@ export default function Ingresos() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedIngreso, setSelectedIngreso] = useState<string>(
     ingresosData[0].id
   );
+
+  // Modal para editar
   const [modalVisible, setModalVisible] = useState(false);
   const [editValue, setEditValue] = useState<string>("");
   const [editId, setEditId] = useState<string | null>(null);
@@ -44,9 +45,16 @@ export default function Ingresos() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Modal label para saber si es agregar o editar
+  const isEditing = editId !== null;
+
   useEffect(() => {
+    console.log("📍 useEffect - placaActual:", placaActual);
     if (placaActual) {
+      console.log("📍 Llamando cargarIngresosDelDB...");
       useIngresosStore.getState().cargarIngresosDelDB(placaActual);
+    } else {
+      console.log("📍 placaActual está vacío");
     }
   }, [placaActual]);
 
@@ -63,9 +71,7 @@ export default function Ingresos() {
       }
 
       const ingreso = ingresosData.find((i) => i.id === id);
-      if (!ingreso) {
-        return;
-      }
+      if (!ingreso) return;
 
       setLoading(true);
       try {
@@ -94,7 +100,7 @@ export default function Ingresos() {
     [placaActual, selectedDate, user?.id]
   );
 
-  const handleEditGasto = (id: string | number) => {
+  const handleEditClick = (id: string | number) => {
     const ingreso = ingresos.find((g) => g.id === String(id));
     if (ingreso) {
       setEditValue(String(ingreso.monto));
@@ -122,9 +128,7 @@ export default function Ingresos() {
 
       if (error) throw error;
 
-      setModalVisible(false);
-      setEditId(null);
-      setEditValue("");
+      closeModal();
       Alert.alert("Éxito", "Ingreso actualizado correctamente");
     } catch (err) {
       Alert.alert("Error", "Error al actualizar el ingreso");
@@ -133,7 +137,7 @@ export default function Ingresos() {
     }
   };
 
-  const handleDeleteIngreso = async (id: string | number) => {
+  const handleDeleteClick = (id: string | number) => {
     Alert.alert(
       "Eliminar",
       "¿Estás seguro de que deseas eliminar este ingreso?",
@@ -164,6 +168,14 @@ export default function Ingresos() {
     );
   };
 
+  const closeModal = () => {
+    setModalVisible(false);
+    setEditId(null);
+    setEditValue("");
+    setEditDate(selectedDate);
+    setShowDatePicker(false);
+  };
+
   const IngresosFiltrados = ingresos
     .filter((i) => i.placa === placaActual)
     .filter((g) => g.fecha === selectedDate)
@@ -177,11 +189,7 @@ export default function Ingresos() {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right"]}>
         <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}>
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ fontSize: 16, color: "#999" }}>
             Por favor selecciona una placa
           </Text>
@@ -193,6 +201,7 @@ export default function Ingresos() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={["left", "right"]}>
+        {/* Header */}
         <HeaderCalendar
           title="Ingresos"
           data={ingresos.filter((i) => i.placa === placaActual)}
@@ -201,6 +210,7 @@ export default function Ingresos() {
           placa={placaActual}
         />
 
+        {/* Agregar Ingreso */}
         <View style={styles.combinedContainer}>
           <Text style={styles.titlePicker}>Seleccione un ingreso:</Text>
           <PickerItem
@@ -215,6 +225,7 @@ export default function Ingresos() {
           />
         </View>
 
+        {/* Modal para editar */}
         <Modal visible={modalVisible} transparent animationType="slide">
           <View
             style={{
@@ -233,7 +244,7 @@ export default function Ingresos() {
               }}>
               <Text
                 style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>
-                Editar valor del ingreso
+                {isEditing ? "Editar" : "Agregar"} ingreso
               </Text>
 
               {loading && (
@@ -288,33 +299,23 @@ export default function Ingresos() {
                 />
                 <Button
                   title="Cancelar"
-                  onPress={() => {
-                    if (!loading) {
-                      setModalVisible(false);
-                      setEditId(null);
-                      setEditValue("");
-                    }
-                  }}
+                  onPress={closeModal}
                   disabled={loading}
+                  color="red"
                 />
               </View>
             </View>
           </View>
         </Modal>
 
+        {/* Resumen */}
         <IngresGast
           selectedDate={selectedDate}
           itemsFiltrados={IngresosFiltrados}
-          handleEdit={handleEditGasto}
-          handleDelete={handleDeleteIngreso}
-          totalLabel="Total"
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          totalLabel="Total Ingresos"
           title="Resumen"
-          modalLabel="Editar valor del ingreso"
-          editValue={editValue}
-          setEditValue={setEditValue}
-          modalVisible={modalVisible}
-          setModalVisible={setModalVisible}
-          handleSaveEdit={handleSaveEdit}
         />
       </SafeAreaView>
     </TouchableWithoutFeedback>
