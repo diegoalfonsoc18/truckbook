@@ -73,8 +73,6 @@ function CategoryButton({
         styles.button,
         {
           backgroundColor: isSelected ? option.color : "#F3F4F6",
-          opacity: isSelected ? 1 : 0.7,
-          shadowOpacity: isSelected ? 0.3 : 0.1,
         },
       ]}>
       <Icon
@@ -82,14 +80,7 @@ function CategoryButton({
         height={iconSize}
         color={isSelected ? "#FFFFFF" : "#666666"}
       />
-      <Text
-        style={[
-          styles.buttonText,
-          {
-            color: isSelected ? "#FFFFFF" : "#374151",
-          },
-        ]}
-        numberOfLines={2}>
+      <Text style={[styles.buttonText, {}]} numberOfLines={2}>
         {option.name}
       </Text>
     </Pressable>
