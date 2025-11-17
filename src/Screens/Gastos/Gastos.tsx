@@ -10,7 +10,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { gastosData } from "../../data/data";
 import HeaderCalendar from "../../components/Gastos/HeaderCalendar";
-import GastoItem from "../../components/Gastos/GastoItem";
 import { styles } from "./GastosStyles";
 import { CategorySelector } from "../../components/CategorySelector"; // ← NUEVO
 import IngresGast from "../../components/Ingresos/ResumenIngreGast";

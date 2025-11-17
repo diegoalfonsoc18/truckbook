@@ -18,6 +18,7 @@ interface CategorySelectorProps {
   value: string;
   onSelect: (id: string) => void;
   title?: string;
+  iconSize?: number;
 }
 
 export function CategorySelector({
@@ -25,6 +26,7 @@ export function CategorySelector({
   value,
   onSelect,
   title = "Selecciona una categoría:",
+  iconSize = 28,
 }: CategorySelectorProps) {
   return (
     <View style={styles.container}>
@@ -42,6 +44,7 @@ export function CategorySelector({
               option={option}
               isSelected={value === option.id}
               onPress={() => onSelect(option.id)}
+              iconSize={iconSize}
             />
           ))}
         </View>
@@ -54,10 +57,12 @@ function CategoryButton({
   option,
   isSelected,
   onPress,
+  iconSize = 28,
 }: {
   option: CategoryOption;
   isSelected: boolean;
   onPress: () => void;
+  iconSize?: number;
 }) {
   const Icon = option.icon;
 
@@ -72,7 +77,11 @@ function CategoryButton({
           shadowOpacity: isSelected ? 0.3 : 0.1,
         },
       ]}>
-      <Icon width={28} height={28} color={isSelected ? "#FFFFFF" : "#666666"} />
+      <Icon
+        width={iconSize}
+        height={iconSize}
+        color={isSelected ? "#FFFFFF" : "#666666"}
+      />
       <Text
         style={[
           styles.buttonText,
@@ -114,7 +123,7 @@ const styles = StyleSheet.create({
   button: {
     width: "31%",
     aspectRatio: 1,
-    borderRadius: 16,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

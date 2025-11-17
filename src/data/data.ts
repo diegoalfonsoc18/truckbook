@@ -1,5 +1,5 @@
 // gastos-ingresos.ts
-import { IconGas } from "../assets/icons/icons";
+import { IconGas, GruaIcon } from "../assets/icons/icons";
 
 export interface GastoOption {
   id: string;
@@ -13,7 +13,7 @@ export interface GastoOption {
 }
 
 export const gastosData: GastoOption[] = [
-  { id: "1", name: "Combustible", icon: IconGas, color: "#F59E0B" },
+  { id: "1", name: "Combustible", icon: GruaIcon, color: "#0bf551ff" },
   { id: "2", name: "Mantenimiento", icon: IconGas, color: "#EF4444" },
   { id: "3", name: "Peajes-Permisos", icon: IconGas, color: "#06B6D4" },
   { id: "4", name: "SOAT", icon: IconGas, color: "#10B981" },

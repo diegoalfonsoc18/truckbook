@@ -5,12 +5,10 @@ import {
   View,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Image,
 } from "react-native";
 import { styles } from "../../Screens/Gastos/GastosStyles";
 import { COLORS } from "../../constants/colors";
 import CustomCalendar from "../CustomCalendar";
-import { CamionIcon } from "../../assets/icons/icons";
 
 type HeaderCalendarProps = {
   title: string;
