@@ -1,4 +1,9 @@
-import { IconGas, IconRepair, IconPeaje } from "../assets/icons/icons";
+import {
+  IconGas,
+  IconRepair,
+  IconPeaje,
+  IconViaticos,
+} from "../assets/icons/icons";
 
 export interface GastoOption {
   id: string;
@@ -15,6 +20,9 @@ export const gastosData: GastoOption[] = [
   { id: "2", name: "Reparación", icon: IconRepair },
   { id: "3", name: "Peajes", icon: IconPeaje },
   { id: "4", name: "Imprevistos", icon: IconGas },
+  { id: "5", name: "Viaticos", icon: IconViaticos },
+  { id: "6", name: "Lavado", icon: IconGas },
+  { id: "7", name: "Parqueadero", icon: IconGas },
 ];
 
 export const ingresosData: GastoOption[] = [

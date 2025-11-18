@@ -10,7 +10,8 @@ interface CategoryOption {
     height?: number;
     color?: string;
   }>;
-  color: string;
+  color?: string;
+  iconColor?: string;
 }
 
 interface CategorySelectorProps {
@@ -19,6 +20,10 @@ interface CategorySelectorProps {
   onSelect: (id: string) => void;
   title?: string;
   iconSize?: number;
+  defaultBgColor?: string;
+  defaultIconColor?: string;
+  selectedBgColor?: string;
+  selectedIconColor?: string;
 }
 
 export function CategorySelector({
@@ -26,7 +31,11 @@ export function CategorySelector({
   value,
   onSelect,
   title = "Selecciona una categoría:",
-  iconSize = 28,
+  iconSize = 40,
+  defaultBgColor = "#F5F5F5",
+  defaultIconColor = "#1F2937",
+  selectedBgColor = "#0851e2",
+  selectedIconColor = "#FFD700",
 }: CategorySelectorProps) {
   return (
     <View style={styles.container}>
@@ -45,6 +54,10 @@ export function CategorySelector({
               isSelected={value === option.id}
               onPress={() => onSelect(option.id)}
               iconSize={iconSize}
+              defaultBgColor={defaultBgColor}
+              defaultIconColor={defaultIconColor}
+              selectedBgColor={selectedBgColor}
+              selectedIconColor={selectedIconColor}
             />
           ))}
         </View>
@@ -57,14 +70,30 @@ function CategoryButton({
   option,
   isSelected,
   onPress,
-  iconSize = 28,
+  iconSize = 40,
+  defaultBgColor,
+  defaultIconColor,
+  selectedBgColor,
+  selectedIconColor,
 }: {
   option: CategoryOption;
   isSelected: boolean;
   onPress: () => void;
   iconSize?: number;
+  defaultBgColor?: string;
+  defaultIconColor?: string;
+  selectedBgColor?: string;
+  selectedIconColor?: string;
 }) {
   const Icon = option.icon;
+
+  const buttonBgColor = isSelected
+    ? option.color || selectedBgColor || "#0851e2"
+    : defaultBgColor || "#F5F5F5";
+
+  const iconColor = isSelected
+    ? option.iconColor || selectedIconColor || "#FFD700"
+    : option.iconColor || defaultIconColor || "#1F2937";
 
   return (
     <Pressable
@@ -72,17 +101,28 @@ function CategoryButton({
       style={[
         styles.button,
         {
-          backgroundColor: isSelected ? option.color : "#F3F4F6",
+          backgroundColor: buttonBgColor,
+          transform: isSelected ? [{ scale: 1.05 }] : [{ scale: 1 }],
         },
       ]}>
-      <Icon
-        width={iconSize}
-        height={iconSize}
-        color={isSelected ? "#FFFFFF" : "#666666"}
-      />
-      <Text style={[styles.buttonText, {}]} numberOfLines={2}>
-        {option.name}
-      </Text>
+      <View style={styles.contentContainer}>
+        <View style={styles.iconContainer}>
+          <Icon width={iconSize} height={iconSize} color={iconColor} />
+        </View>
+        <View style={styles.textContainer}>
+          <Text
+            style={[
+              styles.buttonText,
+              {
+                color: isSelected ? "#FFFFFF" : "#1F2937",
+                fontWeight: isSelected ? "700" : "600",
+              },
+            ]}
+            numberOfLines={1}>
+            {option.name}
+          </Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
@@ -108,25 +148,44 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 10,
     justifyContent: "space-around",
+    paddingHorizontal: 10,
   },
   button: {
-    width: "31%",
+    width: "30%",
     aspectRatio: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    shadowOpacity: 0.15,
+    elevation: 4,
+    padding: 0,
+  },
+  contentContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  iconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+  textContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
   },
   buttonText: {
     fontSize: 12,
     fontWeight: "600",
-    marginTop: 8,
     textAlign: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
   },
 });
