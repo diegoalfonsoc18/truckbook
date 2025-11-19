@@ -176,13 +176,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flex: 8,
-    backgroundColor: "#cc0",
+    //backgroundColor: "#cc0",
+    width: 90,
   },
   textContainer: {
     justifyContent: "center",
     alignItems: "center",
     flex: 2,
-    backgroundColor: "#30cc00",
+    //backgroundColor: "#30cc00",
   },
   buttonText: {
     fontSize: 12,

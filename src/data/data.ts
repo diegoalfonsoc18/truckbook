@@ -3,6 +3,7 @@ import {
   IconRepair,
   IconPeaje,
   IconViaticos,
+  IconLavado,
 } from "../assets/icons/icons";
 
 export interface GastoOption {
@@ -21,7 +22,7 @@ export const gastosData: GastoOption[] = [
   { id: "3", name: "Peajes", icon: IconPeaje },
   { id: "4", name: "Imprevistos", icon: IconGas },
   { id: "5", name: "Viaticos", icon: IconViaticos },
-  { id: "6", name: "Lavado", icon: IconGas },
+  { id: "6", name: "Lavado", icon: IconLavado },
   { id: "7", name: "Parqueadero", icon: IconGas },
 ];
 
