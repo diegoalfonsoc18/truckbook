@@ -13,7 +13,7 @@ import {
   BORDER_RADIUS,
   SPACING,
   getShadow,
-} from "./ThemeContext";
+} from "./themecontext";
 
 interface ThemeSelectorProps {
   visible: boolean;

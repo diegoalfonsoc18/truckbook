@@ -14,27 +14,15 @@ import {
 import supabase from "../../config/SupaBaseConfig";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoleStore } from "../../store/RoleStore";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
+import {
+  useTheme,
+  SPACING,
+  BORDER_RADIUS,
+  getShadow,
+} from "../../constants/themecontext";
+import ThemeSelector from "../../constants/ThemeSelector";
 
 const { width } = Dimensions.get("window");
-
-// ✅ Colores del tema - Estilo industrial/trucking premium
-const COLORS = {
-  primary: "#1A1A2E",
-  secondary: "#16213E",
-  accent: "#E94560",
-  accentLight: "#FF6B6B",
-  surface: "#0F0F1A",
-  surfaceLight: "#1F1F35",
-  text: "#FFFFFF",
-  textSecondary: "#8A8A9A",
-  textMuted: "#5A5A6A",
-  border: "#2A2A40",
-  success: "#00D9A5",
-  warning: "#FFB800",
-  cardBg: "rgba(31, 31, 53, 0.8)",
-};
 
 const ROLES_DISPONIBLES = [
   {
@@ -43,7 +31,6 @@ const ROLES_DISPONIBLES = [
     label: "Conductor",
     description: "Registra gastos, viajes y kilometraje",
     color: "#00D9A5",
-    gradient: ["#00D9A5", "#00B894"],
   },
   {
     id: "administrador",
@@ -51,7 +38,6 @@ const ROLES_DISPONIBLES = [
     label: "Administrador",
     description: "Gestiona conductores y flotas",
     color: "#FFB800",
-    gradient: ["#FFB800", "#FF9500"],
   },
   {
     id: "propietario",
@@ -59,7 +45,6 @@ const ROLES_DISPONIBLES = [
     label: "Propietario",
     description: "Dashboard financiero completo",
     color: "#E94560",
-    gradient: ["#E94560", "#FF6B6B"],
   },
 ] as const;
 
@@ -79,6 +64,14 @@ const MENU_OPTIONS = [
     color: "#00D9A5",
   },
   {
+    id: "theme",
+    icon: "🎨",
+    title: "Apariencia",
+    subtitle: "Tema claro u oscuro",
+    color: "#FF6B6B",
+    action: "theme",
+  },
+  {
     id: "security",
     icon: "🔐",
     title: "Seguridad",
@@ -90,28 +83,24 @@ const MENU_OPTIONS = [
     icon: "🔔",
     title: "Notificaciones",
     subtitle: "Alertas y avisos",
-    color: "#FF6B6B",
+    color: "#74B9FF",
   },
   {
     id: "help",
     icon: "💬",
     title: "Ayuda",
     subtitle: "Soporte y FAQ",
-    color: "#74B9FF",
-  },
-  {
-    id: "privacy",
-    icon: "📋",
-    title: "Privacidad",
-    subtitle: "Términos y políticas",
     color: "#A29BFE",
   },
 ];
 
 export default function Account({ navigation }: any) {
+  const { colors, isDark } = useTheme();
+
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [modalRolesVisible, setModalRolesVisible] = useState(false);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
 
   // Animaciones
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -124,7 +113,6 @@ export default function Account({ navigation }: any) {
 
   useEffect(() => {
     cargarUsuario();
-    // Animación de entrada
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -176,7 +164,6 @@ export default function Account({ navigation }: any) {
   const handleCambiarRol = async (nuevoRol: string) => {
     try {
       setLoading(true);
-
       if (!user?.id) {
         Alert.alert("Error", "Usuario no identificado");
         return;
@@ -238,11 +225,15 @@ export default function Account({ navigation }: any) {
     );
   };
 
-  const handleMenuPress = (optionId: string) => {
-    Alert.alert(
-      "En desarrollo",
-      `La sección "${optionId}" estará disponible pronto.`,
-    );
+  const handleMenuPress = (option: (typeof MENU_OPTIONS)[0]) => {
+    if (option.action === "theme") {
+      setThemeModalVisible(true);
+    } else {
+      Alert.alert(
+        "En desarrollo",
+        `La sección "${option.title}" estará disponible pronto.`,
+      );
+    }
   };
 
   const currentRole = ROLES_DISPONIBLES.find((r) => r.id === role);
@@ -250,107 +241,148 @@ export default function Account({ navigation }: any) {
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Usuario";
 
-  return (
-    <View style={styles.container}>
-      {/* Background Gradient */}
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.surface, COLORS.primary]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+  // Estilos dinámicos
+  const dynamicStyles = {
+    container: {
+      flex: 1,
+      backgroundColor: colors.primary,
+    },
+    cardBg: {
+      backgroundColor: colors.cardBg,
+      borderColor: colors.border,
+    },
+    text: {
+      color: colors.text,
+    },
+    textSecondary: {
+      color: colors.textSecondary,
+    },
+    textMuted: {
+      color: colors.textMuted,
+    },
+  };
 
+  return (
+    <View style={dynamicStyles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <Animated.ScrollView
           style={[styles.scrollView, { opacity: fadeAnim }]}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
-          {/* ✅ HEADER CON AVATAR */}
+          {/* HEADER CON AVATAR */}
           <Animated.View
             style={[
               styles.headerSection,
               { transform: [{ translateY: slideAnim }] },
             ]}>
             <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={
-                  currentRole?.gradient || [COLORS.accent, COLORS.accentLight]
-                }
-                style={styles.avatarGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}>
+              <View
+                style={[
+                  styles.avatarGradient,
+                  { backgroundColor: currentRole?.color || colors.accent },
+                  getShadow(isDark, "lg"),
+                ]}>
                 <Text style={styles.avatarText}>{userInitial}</Text>
-              </LinearGradient>
-              <View style={styles.avatarBadge}>
+              </View>
+              <View
+                style={[
+                  styles.avatarBadge,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.primary,
+                  },
+                ]}>
                 <Text style={styles.avatarBadgeText}>
                   {currentRole?.icon || "👤"}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.userName}>{userName}</Text>
-            <Text style={styles.userEmail}>{user?.email || "Cargando..."}</Text>
+            <Text style={[styles.userName, dynamicStyles.text]}>
+              {userName}
+            </Text>
+            <Text style={[styles.userEmail, dynamicStyles.textSecondary]}>
+              {user?.email || "Cargando..."}
+            </Text>
 
             {/* Rol Badge */}
             <TouchableOpacity
-              style={styles.roleBadge}
+              style={[
+                styles.roleBadge,
+                { backgroundColor: currentRole?.color || colors.accent },
+              ]}
               onPress={() => setModalRolesVisible(true)}
               activeOpacity={0.8}>
-              <LinearGradient
-                colors={
-                  currentRole?.gradient || [COLORS.accent, COLORS.accentLight]
-                }
-                style={styles.roleBadgeGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}>
-                <Text style={styles.roleBadgeIcon}>
-                  {currentRole?.icon || "👤"}
-                </Text>
-                <Text style={styles.roleBadgeText}>
-                  {currentRole?.label || "Sin rol"}
-                </Text>
-                <Text style={styles.roleBadgeArrow}>›</Text>
-              </LinearGradient>
+              <Text style={styles.roleBadgeIcon}>
+                {currentRole?.icon || "👤"}
+              </Text>
+              <Text style={styles.roleBadgeText}>
+                {currentRole?.label || "Sin rol"}
+              </Text>
+              <Text style={styles.roleBadgeArrow}>›</Text>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* ✅ ESTADÍSTICAS RÁPIDAS */}
+          {/* ESTADÍSTICAS RÁPIDAS */}
           <Animated.View
             style={[
               styles.statsContainer,
+              dynamicStyles.cardBg,
               { transform: [{ translateY: slideAnim }] },
+              getShadow(isDark, "md"),
             ]}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Viajes</Text>
+              <Text style={[styles.statValue, dynamicStyles.text]}>12</Text>
+              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+                Viajes
+              </Text>
             </View>
-            <View style={[styles.statCard, styles.statCardMiddle]}>
-              <Text style={styles.statValue}>2.4K</Text>
-              <Text style={styles.statLabel}>Km</Text>
+            <View
+              style={[
+                styles.statCard,
+                styles.statCardMiddle,
+                { borderColor: colors.border },
+              ]}>
+              <Text style={[styles.statValue, dynamicStyles.text]}>2.4K</Text>
+              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+                Km
+              </Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>$1.2M</Text>
-              <Text style={styles.statLabel}>Mes</Text>
+              <Text style={[styles.statValue, dynamicStyles.text]}>$1.2M</Text>
+              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+                Mes
+              </Text>
             </View>
           </Animated.View>
 
-          {/* ✅ MENÚ DE OPCIONES */}
+          {/* MENÚ DE OPCIONES */}
           <Animated.View
             style={[
               styles.menuSection,
               { transform: [{ translateY: slideAnim }] },
             ]}>
-            <Text style={styles.sectionTitle}>Configuración</Text>
+            <Text style={[styles.sectionTitle, dynamicStyles.textSecondary]}>
+              Configuración
+            </Text>
 
-            <View style={styles.menuCard}>
+            <View
+              style={[
+                styles.menuCard,
+                dynamicStyles.cardBg,
+                getShadow(isDark, "sm"),
+              ]}>
               {MENU_OPTIONS.map((option, index) => (
                 <TouchableOpacity
                   key={option.id}
                   style={[
                     styles.menuItem,
-                    index < MENU_OPTIONS.length - 1 && styles.menuItemBorder,
+                    index < MENU_OPTIONS.length - 1 && [
+                      styles.menuItemBorder,
+                      { borderBottomColor: colors.border },
+                    ],
                   ]}
-                  onPress={() => handleMenuPress(option.id)}
+                  onPress={() => handleMenuPress(option)}
                   activeOpacity={0.7}>
                   <View
                     style={[
@@ -360,42 +392,61 @@ export default function Account({ navigation }: any) {
                     <Text style={styles.menuIcon}>{option.icon}</Text>
                   </View>
                   <View style={styles.menuTextContainer}>
-                    <Text style={styles.menuTitle}>{option.title}</Text>
-                    <Text style={styles.menuSubtitle}>{option.subtitle}</Text>
+                    <Text style={[styles.menuTitle, dynamicStyles.text]}>
+                      {option.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.menuSubtitle,
+                        dynamicStyles.textSecondary,
+                      ]}>
+                      {option.subtitle}
+                    </Text>
                   </View>
-                  <Text style={styles.menuArrow}>›</Text>
+                  <Text style={[styles.menuArrow, dynamicStyles.textMuted]}>
+                    ›
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </Animated.View>
 
-          {/* ✅ BOTÓN LOGOUT */}
+          {/* BOTÓN LOGOUT */}
           <Animated.View
             style={[
               styles.logoutSection,
               { transform: [{ translateY: slideAnim }] },
             ]}>
             <TouchableOpacity
-              style={styles.logoutButton}
+              style={[
+                styles.logoutButton,
+                dynamicStyles.cardBg,
+                { borderColor: colors.danger + "40" },
+                getShadow(isDark, "sm"),
+              ]}
               onPress={handleLogout}
               disabled={loading}
               activeOpacity={0.8}>
               {loading ? (
-                <ActivityIndicator color={COLORS.accent} />
+                <ActivityIndicator color={colors.danger} />
               ) : (
                 <>
                   <Text style={styles.logoutIcon}>🚪</Text>
-                  <Text style={styles.logoutText}>Cerrar Sesión</Text>
+                  <Text style={[styles.logoutText, { color: colors.danger }]}>
+                    Cerrar Sesión
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
 
-            <Text style={styles.versionText}>TruckBook v1.0.0</Text>
+            <Text style={[styles.versionText, dynamicStyles.textMuted]}>
+              TruckBook v1.0.0
+            </Text>
           </Animated.View>
         </Animated.ScrollView>
       </SafeAreaView>
 
-      {/* ✅ MODAL CAMBIAR ROL */}
+      {/* MODAL CAMBIAR ROL */}
       <Modal
         visible={modalRolesVisible}
         transparent
@@ -405,10 +456,11 @@ export default function Account({ navigation }: any) {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setModalRolesVisible(false)}>
-          <BlurView
-            intensity={20}
-            style={StyleSheet.absoluteFill}
-            tint="dark"
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.overlay },
+            ]}
           />
 
           <Animated.View
@@ -420,97 +472,127 @@ export default function Account({ navigation }: any) {
               },
             ]}>
             <TouchableOpacity activeOpacity={1}>
-              <LinearGradient
-                colors={[COLORS.surfaceLight, COLORS.surface]}
-                style={styles.modalContent}>
+              <View
+                style={[
+                  styles.modalContent,
+                  {
+                    backgroundColor: colors.modalBg,
+                    borderColor: colors.border,
+                  },
+                ]}>
                 {/* Modal Header */}
                 <View style={styles.modalHeader}>
-                  <View style={styles.modalHandle} />
-                  <Text style={styles.modalTitle}>Cambiar Rol</Text>
-                  <Text style={styles.modalSubtitle}>
+                  <View
+                    style={[
+                      styles.modalHandle,
+                      { backgroundColor: colors.textMuted },
+                    ]}
+                  />
+                  <Text style={[styles.modalTitle, dynamicStyles.text]}>
+                    Cambiar Rol
+                  </Text>
+                  <Text
+                    style={[styles.modalSubtitle, dynamicStyles.textSecondary]}>
                     Selecciona cómo quieres usar TruckBook
                   </Text>
                 </View>
 
                 {/* Roles */}
                 <View style={styles.rolesContainer}>
-                  {ROLES_DISPONIBLES.map((rol) => (
-                    <TouchableOpacity
-                      key={rol.id}
-                      style={[
-                        styles.roleOption,
-                        role === rol.id && styles.roleOptionActive,
-                      ]}
-                      onPress={() => handleCambiarRol(rol.id)}
-                      disabled={loading}
-                      activeOpacity={0.8}>
-                      <LinearGradient
-                        colors={
-                          role === rol.id
-                            ? rol.gradient
-                            : ["transparent", "transparent"]
-                        }
-                        style={[
-                          styles.roleOptionGradient,
-                          role === rol.id && styles.roleOptionGradientActive,
-                        ]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}>
+                  {ROLES_DISPONIBLES.map((rol) => {
+                    const isActive = role === rol.id;
+                    return (
+                      <TouchableOpacity
+                        key={rol.id}
+                        style={styles.roleOption}
+                        onPress={() => handleCambiarRol(rol.id)}
+                        disabled={loading}
+                        activeOpacity={0.8}>
                         <View
                           style={[
-                            styles.roleIconContainer,
-                            { backgroundColor: `${rol.color}20` },
+                            styles.roleOptionGradient,
+                            {
+                              backgroundColor: isActive
+                                ? rol.color
+                                : colors.cardBg,
+                              borderColor: isActive ? rol.color : colors.border,
+                            },
                           ]}>
-                          <Text style={styles.roleIcon}>{rol.icon}</Text>
-                        </View>
-                        <View style={styles.roleTextContainer}>
-                          <Text
+                          <View
                             style={[
-                              styles.roleLabel,
-                              role === rol.id && styles.roleLabelActive,
+                              styles.roleIconContainer,
+                              {
+                                backgroundColor: isActive
+                                  ? "rgba(255,255,255,0.2)"
+                                  : `${rol.color}20`,
+                              },
                             ]}>
-                            {rol.label}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.roleDescription,
-                              role === rol.id && styles.roleDescriptionActive,
-                            ]}>
-                            {rol.description}
-                          </Text>
-                        </View>
-                        {role === rol.id && (
-                          <View style={styles.roleCheck}>
-                            <Text style={styles.roleCheckText}>✓</Text>
+                            <Text style={styles.roleIcon}>{rol.icon}</Text>
                           </View>
-                        )}
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  ))}
+                          <View style={styles.roleTextContainer}>
+                            <Text
+                              style={[
+                                styles.roleLabel,
+                                { color: isActive ? "#FFFFFF" : colors.text },
+                              ]}>
+                              {rol.label}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.roleDescription,
+                                {
+                                  color: isActive
+                                    ? "rgba(255,255,255,0.8)"
+                                    : colors.textSecondary,
+                                },
+                              ]}>
+                              {rol.description}
+                            </Text>
+                          </View>
+                          {isActive && (
+                            <View style={styles.roleCheck}>
+                              <Text style={styles.roleCheckText}>✓</Text>
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
 
                 {/* Cancel Button */}
                 <TouchableOpacity
-                  style={styles.modalCancelButton}
+                  style={[
+                    styles.modalCancelButton,
+                    { backgroundColor: colors.cardBg },
+                  ]}
                   onPress={() => setModalRolesVisible(false)}
                   disabled={loading}
                   activeOpacity={0.8}>
-                  <Text style={styles.modalCancelText}>Cancelar</Text>
+                  <Text
+                    style={[
+                      styles.modalCancelText,
+                      dynamicStyles.textSecondary,
+                    ]}>
+                    Cancelar
+                  </Text>
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </Animated.View>
         </TouchableOpacity>
       </Modal>
+
+      {/* MODAL SELECTOR DE TEMA */}
+      <ThemeSelector
+        visible={themeModalVisible}
+        onClose={() => setThemeModalVisible(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
   safeArea: {
     flex: 1,
   },
@@ -521,7 +603,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // ✅ HEADER
+  // HEADER
   headerSection: {
     alignItems: "center",
     paddingTop: 20,
@@ -538,16 +620,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
   },
   avatarText: {
     fontSize: 40,
     fontWeight: "700",
-    color: COLORS.text,
+    color: "#FFFFFF",
   },
   avatarBadge: {
     position: "absolute",
@@ -556,11 +633,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.surface,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: COLORS.primary,
   },
   avatarBadgeText: {
     fontSize: 16,
@@ -568,24 +643,19 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: "700",
-    color: COLORS.text,
     marginBottom: 4,
     letterSpacing: -0.5,
   },
   userEmail: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     marginBottom: 16,
   },
   roleBadge: {
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  roleBadgeGradient: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 8,
     paddingHorizontal: 16,
+    borderRadius: 20,
     gap: 8,
   },
   roleBadgeIcon: {
@@ -594,25 +664,23 @@ const styles = StyleSheet.create({
   roleBadgeText: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.text,
+    color: "#FFFFFF",
   },
   roleBadgeArrow: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.text,
+    color: "#FFFFFF",
     opacity: 0.7,
   },
 
-  // ✅ STATS
+  // STATS
   statsContainer: {
     flexDirection: "row",
     marginHorizontal: 24,
     marginBottom: 24,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   statCard: {
     flex: 1,
@@ -621,22 +689,19 @@ const styles = StyleSheet.create({
   statCardMiddle: {
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: COLORS.border,
   },
   statValue: {
     fontSize: 22,
     fontWeight: "700",
-    color: COLORS.text,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
 
-  // ✅ MENU
+  // MENU
   menuSection: {
     paddingHorizontal: 24,
     marginBottom: 24,
@@ -644,18 +709,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: COLORS.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 12,
     marginLeft: 4,
   },
   menuCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   menuItem: {
     flexDirection: "row",
@@ -664,7 +726,6 @@ const styles = StyleSheet.create({
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   menuIconContainer: {
     width: 44,
@@ -683,20 +744,17 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.text,
     marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 13,
-    color: COLORS.textSecondary,
   },
   menuArrow: {
     fontSize: 22,
-    color: COLORS.textMuted,
     fontWeight: "300",
   },
 
-  // ✅ LOGOUT
+  // LOGOUT
   logoutSection: {
     paddingHorizontal: 24,
     alignItems: "center",
@@ -705,12 +763,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.cardBg,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.accent + "40",
     gap: 10,
     width: "100%",
   },
@@ -720,15 +776,13 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.accent,
   },
   versionText: {
     fontSize: 12,
-    color: COLORS.textMuted,
     marginTop: 20,
   },
 
-  // ✅ MODAL
+  // MODAL
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -741,7 +795,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   modalHeader: {
     alignItems: "center",
@@ -752,19 +805,16 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: COLORS.textMuted,
     borderRadius: 2,
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: COLORS.text,
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: COLORS.textSecondary,
   },
   rolesContainer: {
     paddingHorizontal: 16,
@@ -774,18 +824,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
   },
-  roleOptionActive: {},
   roleOptionGradient: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  roleOptionGradientActive: {
-    borderColor: "transparent",
   },
   roleIconContainer: {
     width: 48,
@@ -804,18 +848,10 @@ const styles = StyleSheet.create({
   roleLabel: {
     fontSize: 17,
     fontWeight: "600",
-    color: COLORS.text,
     marginBottom: 2,
-  },
-  roleLabelActive: {
-    color: COLORS.text,
   },
   roleDescription: {
     fontSize: 13,
-    color: COLORS.textSecondary,
-  },
-  roleDescriptionActive: {
-    color: "rgba(255,255,255,0.8)",
   },
   roleCheck: {
     width: 28,
@@ -828,7 +864,7 @@ const styles = StyleSheet.create({
   roleCheckText: {
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.text,
+    color: "#FFFFFF",
   },
   modalCancelButton: {
     alignItems: "center",
@@ -836,12 +872,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginHorizontal: 16,
     marginBottom: 16,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 14,
   },
   modalCancelText: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.textSecondary,
   },
 });
