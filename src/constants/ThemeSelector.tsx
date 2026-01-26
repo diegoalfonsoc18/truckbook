@@ -7,7 +7,13 @@ import {
   Modal,
   Pressable,
 } from "react-native";
-import { useTheme, ThemeMode, BORDER_RADIUS, SPACING, getShadow } from "./";
+import {
+  useTheme,
+  ThemeMode,
+  BORDER_RADIUS,
+  SPACING,
+  getShadow,
+} from "./Themecontext";
 
 interface ThemeSelectorProps {
   visible: boolean;

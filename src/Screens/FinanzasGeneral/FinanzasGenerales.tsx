@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Modal,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,29 +17,9 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
-import { Modal } from "react-native";
+import { useTheme, getShadow } from "../../constants/Themecontext";
 
 const { width } = Dimensions.get("window");
-
-// ✅ Tema Premium Oscuro
-const COLORS = {
-  primary: "#1A1A2E",
-  secondary: "#16213E",
-  accent: "#6C5CE7",
-  accentLight: "#A29BFE",
-  surface: "#0F0F1A",
-  surfaceLight: "#1F1F35",
-  text: "#FFFFFF",
-  textSecondary: "#8A8A9A",
-  textMuted: "#5A5A6A",
-  border: "#2A2A40",
-  success: "#00D9A5",
-  danger: "#E94560",
-  warning: "#FFB800",
-  cardBg: "rgba(31, 31, 53, 0.8)",
-  chartGradientFrom: "#1F1F35",
-  chartGradientTo: "#2A2A45",
-};
 
 // ✅ Utilidades
 function groupBy<T extends { fecha: string; value: number | string }>(
@@ -110,6 +91,7 @@ function formatCurrency(value: number) {
 type ViewType = "dias" | "meses" | "años";
 
 export default function FinanzasGenerales() {
+  const { colors, isDark } = useTheme();
   const { placa: placaActual } = useVehiculoStore();
 
   const [loading, setLoading] = useState(true);
@@ -130,7 +112,6 @@ export default function FinanzasGenerales() {
     return { inicio: first, fin: last };
   });
 
-  // Animaciones
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -162,10 +143,7 @@ export default function FinanzasGenerales() {
         ]).start();
       }
     };
-
-    if (placaActual) {
-      cargarDatos();
-    }
+    if (placaActual) cargarDatos();
   }, [placaActual]);
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
@@ -178,7 +156,6 @@ export default function FinanzasGenerales() {
     fecha: g.fecha,
     value: g.monto,
   }));
-
   const ingresosTransformados = ingresosPorPlaca.map((i) => ({
     fecha: i.fecha,
     value: i.monto,
@@ -212,12 +189,10 @@ export default function FinanzasGenerales() {
   const allKeys = Array.from(
     new Set([...Object.keys(groupedGastos), ...Object.keys(groupedIngresos)]),
   ).sort();
-
   const chartGastosData = allKeys.map((k) => {
     const val = Number(groupedGastos[k]);
     return isFinite(val) ? val : 0;
   });
-
   const chartIngresosData = allKeys.map((k) => {
     const val = Number(groupedIngresos[k]);
     return isFinite(val) ? val : 0;
@@ -236,10 +211,7 @@ export default function FinanzasGenerales() {
 
   const formatDateShort = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");
-    return date.toLocaleDateString("es-CO", {
-      day: "numeric",
-      month: "short",
-    });
+    return date.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
   };
 
   const openCalendar = (type: "inicio" | "fin") => {
@@ -247,13 +219,25 @@ export default function FinanzasGenerales() {
     setCalendarVisible(true);
   };
 
+  // Estilos dinámicos
+  const ds = {
+    container: { backgroundColor: colors.primary },
+    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
+    text: { color: colors.text },
+    textSecondary: { color: colors.textSecondary },
+    textMuted: { color: colors.textMuted },
+    modalBg: { backgroundColor: colors.modalBg },
+  };
+
   // ✅ LOADING
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, ds.container]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
-          <Text style={styles.loadingText}>Cargando datos...</Text>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={[styles.loadingText, ds.textSecondary]}>
+            Cargando datos...
+          </Text>
         </View>
       </View>
     );
@@ -262,10 +246,12 @@ export default function FinanzasGenerales() {
   // ✅ ERROR
   if (error) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, ds.container]}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorText, { color: colors.danger }]}>
+            {error}
+          </Text>
         </View>
       </View>
     );
@@ -274,11 +260,13 @@ export default function FinanzasGenerales() {
   // ✅ SIN PLACA
   if (!placaActual) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, ds.container]}>
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>📊</Text>
-          <Text style={styles.emptyTitle}>Sin vehículo seleccionado</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, ds.text]}>
+            Sin vehículo seleccionado
+          </Text>
+          <Text style={[styles.emptySubtitle, ds.textSecondary]}>
             Selecciona una placa para ver las finanzas
           </Text>
         </View>
@@ -287,7 +275,7 @@ export default function FinanzasGenerales() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, ds.container]}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <Animated.ScrollView
           style={[styles.scrollView, { opacity: fadeAnim }]}
@@ -296,8 +284,10 @@ export default function FinanzasGenerales() {
           {/* ✅ HEADER */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.headerTitle}>Finanzas</Text>
-              <Text style={styles.headerSubtitle}>Análisis financiero</Text>
+              <Text style={[styles.headerTitle, ds.text]}>Finanzas</Text>
+              <Text style={[styles.headerSubtitle, ds.textSecondary]}>
+                Análisis financiero
+              </Text>
             </View>
             <View style={styles.placaBadge}>
               <Text style={styles.placaText}>{placaActual}</Text>
@@ -305,25 +295,26 @@ export default function FinanzasGenerales() {
           </View>
 
           {/* ✅ SELECTOR DE RANGO */}
-          <View style={styles.rangeSelector}>
+          <View
+            style={[styles.rangeSelector, ds.cardBg, getShadow(isDark, "sm")]}>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => openCalendar("inicio")}
               activeOpacity={0.8}>
-              <Text style={styles.dateButtonLabel}>Desde</Text>
-              <Text style={styles.dateButtonValue}>
+              <Text style={[styles.dateButtonLabel, ds.textMuted]}>Desde</Text>
+              <Text style={[styles.dateButtonValue, ds.text]}>
                 {formatDateShort(rango.inicio)}
               </Text>
             </TouchableOpacity>
             <View style={styles.rangeDivider}>
-              <Text style={styles.rangeDividerText}>→</Text>
+              <Text style={[styles.rangeDividerText, ds.textMuted]}>→</Text>
             </View>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => openCalendar("fin")}
               activeOpacity={0.8}>
-              <Text style={styles.dateButtonLabel}>Hasta</Text>
-              <Text style={styles.dateButtonValue}>
+              <Text style={[styles.dateButtonLabel, ds.textMuted]}>Hasta</Text>
+              <Text style={[styles.dateButtonValue, ds.text]}>
                 {formatDateShort(rango.fin)}
               </Text>
             </TouchableOpacity>
@@ -331,10 +322,17 @@ export default function FinanzasGenerales() {
 
           {/* ✅ CARDS DE RESUMEN */}
           <View style={styles.summaryCards}>
-            <View style={[styles.summaryCard, styles.incomeCard]}>
-              <Text style={styles.summaryCardLabel}>Ingresos</Text>
-              <Text
-                style={[styles.summaryCardValue, { color: COLORS.success }]}>
+            <View
+              style={[
+                styles.summaryCard,
+                ds.cardBg,
+                { borderColor: colors.income + "40" },
+                getShadow(isDark, "sm"),
+              ]}>
+              <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
+                Ingresos
+              </Text>
+              <Text style={[styles.summaryCardValue, { color: colors.income }]}>
                 {formatCurrency(totalIngresos)}
               </Text>
               <View style={styles.summaryCardIcon}>
@@ -342,9 +340,18 @@ export default function FinanzasGenerales() {
               </View>
             </View>
 
-            <View style={[styles.summaryCard, styles.expenseCard]}>
-              <Text style={styles.summaryCardLabel}>Gastos</Text>
-              <Text style={[styles.summaryCardValue, { color: COLORS.danger }]}>
+            <View
+              style={[
+                styles.summaryCard,
+                ds.cardBg,
+                { borderColor: colors.expense + "40" },
+                getShadow(isDark, "sm"),
+              ]}>
+              <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
+                Gastos
+              </Text>
+              <Text
+                style={[styles.summaryCardValue, { color: colors.expense }]}>
                 {formatCurrency(totalGastos)}
               </Text>
               <View style={styles.summaryCardIcon}>
@@ -357,18 +364,22 @@ export default function FinanzasGenerales() {
           <View
             style={[
               styles.balanceCard,
-              { borderColor: balance >= 0 ? COLORS.success : COLORS.danger },
+              ds.cardBg,
+              { borderColor: balance >= 0 ? colors.income : colors.expense },
+              getShadow(isDark, "md"),
             ]}>
             <View style={styles.balanceHeader}>
-              <Text style={styles.balanceLabel}>Balance Neto</Text>
+              <Text style={[styles.balanceLabel, ds.textSecondary]}>
+                Balance Neto
+              </Text>
               <View
                 style={[
                   styles.rentabilidadBadge,
                   {
                     backgroundColor:
                       Number(rentabilidad) >= 0
-                        ? COLORS.success + "20"
-                        : COLORS.danger + "20",
+                        ? colors.income + "20"
+                        : colors.expense + "20",
                   },
                 ]}>
                 <Text
@@ -377,8 +388,8 @@ export default function FinanzasGenerales() {
                     {
                       color:
                         Number(rentabilidad) >= 0
-                          ? COLORS.success
-                          : COLORS.danger,
+                          ? colors.income
+                          : colors.expense,
                     },
                   ]}>
                   {Number(rentabilidad) >= 0 ? "+" : ""}
@@ -389,11 +400,11 @@ export default function FinanzasGenerales() {
             <Text
               style={[
                 styles.balanceValue,
-                { color: balance >= 0 ? COLORS.success : COLORS.danger },
+                { color: balance >= 0 ? colors.income : colors.expense },
               ]}>
               {formatCurrency(balance)}
             </Text>
-            <Text style={styles.balanceSubtext}>
+            <Text style={[styles.balanceSubtext, ds.textMuted]}>
               {balance >= 0
                 ? "Ganancia en el período"
                 : "Pérdida en el período"}
@@ -401,17 +412,21 @@ export default function FinanzasGenerales() {
           </View>
 
           {/* ✅ TABS DE VISTA */}
-          <View style={styles.viewTabs}>
+          <View style={[styles.viewTabs, ds.cardBg]}>
             {(["dias", "meses", "años"] as ViewType[]).map((v) => (
               <TouchableOpacity
                 key={v}
-                style={[styles.viewTab, view === v && styles.viewTabActive]}
+                style={[
+                  styles.viewTab,
+                  view === v && { backgroundColor: colors.accent },
+                ]}
                 onPress={() => setView(v)}
                 activeOpacity={0.7}>
                 <Text
                   style={[
                     styles.viewTabText,
-                    view === v && styles.viewTabTextActive,
+                    ds.textSecondary,
+                    view === v && { color: "#FFFFFF" },
                   ]}>
                   {v.charAt(0).toUpperCase() + v.slice(1)}
                 </Text>
@@ -420,27 +435,32 @@ export default function FinanzasGenerales() {
           </View>
 
           {/* ✅ GRÁFICO */}
-          <View style={styles.chartContainer}>
+          <View
+            style={[styles.chartContainer, ds.cardBg, getShadow(isDark, "sm")]}>
             <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Comparativa</Text>
+              <Text style={[styles.chartTitle, ds.text]}>Comparativa</Text>
               <View style={styles.chartLegend}>
                 <View style={styles.legendItem}>
                   <View
                     style={[
                       styles.legendDot,
-                      { backgroundColor: COLORS.success },
+                      { backgroundColor: colors.income },
                     ]}
                   />
-                  <Text style={styles.legendText}>Ingresos</Text>
+                  <Text style={[styles.legendText, ds.textSecondary]}>
+                    Ingresos
+                  </Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View
                     style={[
                       styles.legendDot,
-                      { backgroundColor: COLORS.danger },
+                      { backgroundColor: colors.expense },
                     ]}
                   />
-                  <Text style={styles.legendText}>Gastos</Text>
+                  <Text style={[styles.legendText, ds.textSecondary]}>
+                    Gastos
+                  </Text>
                 </View>
               </View>
             </View>
@@ -452,12 +472,12 @@ export default function FinanzasGenerales() {
                   {
                     data:
                       chartIngresosData.length > 0 ? chartIngresosData : [0],
-                    color: () => COLORS.success,
+                    color: () => colors.income,
                     strokeWidth: 3,
                   },
                   {
                     data: chartGastosData.length > 0 ? chartGastosData : [0],
-                    color: () => COLORS.danger,
+                    color: () => colors.expense,
                     strokeWidth: 3,
                   },
                 ],
@@ -472,20 +492,21 @@ export default function FinanzasGenerales() {
               formatYLabel={abreviarNumero}
               chartConfig={{
                 backgroundColor: "transparent",
-                backgroundGradientFrom: COLORS.surfaceLight,
-                backgroundGradientTo: COLORS.surfaceLight,
+                backgroundGradientFrom: colors.cardBg,
+                backgroundGradientTo: colors.cardBg,
                 decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255,255,255,${opacity * 0.3})`,
-                labelColor: () => COLORS.textSecondary,
+                color: (opacity = 1) =>
+                  `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
+                labelColor: () => colors.textSecondary,
                 style: { borderRadius: 16 },
                 propsForDots: {
                   r: "5",
                   strokeWidth: "2",
-                  stroke: COLORS.surfaceLight,
+                  stroke: colors.cardBg,
                 },
                 propsForBackgroundLines: {
                   strokeDasharray: "",
-                  stroke: COLORS.border,
+                  stroke: colors.border,
                   strokeWidth: 1,
                 },
               }}
@@ -495,19 +516,28 @@ export default function FinanzasGenerales() {
           </View>
 
           {/* ✅ DETALLES */}
-          <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>Detalles del período</Text>
+          <View
+            style={[styles.detailsSection, ds.cardBg, getShadow(isDark, "sm")]}>
+            <Text style={[styles.sectionTitle, ds.textSecondary]}>
+              Detalles del período
+            </Text>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Transacciones totales</Text>
-              <Text style={styles.detailValue}>
+            <View
+              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.detailLabel, ds.textSecondary]}>
+                Transacciones totales
+              </Text>
+              <Text style={[styles.detailValue, ds.text]}>
                 {gastosFiltrados.length + ingresosFiltrados.length}
               </Text>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Promedio ingresos/día</Text>
-              <Text style={[styles.detailValue, { color: COLORS.success }]}>
+            <View
+              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.detailLabel, ds.textSecondary]}>
+                Promedio ingresos/día
+              </Text>
+              <Text style={[styles.detailValue, { color: colors.income }]}>
                 {formatCurrency(
                   ingresosFiltrados.length > 0
                     ? totalIngresos / Math.max(allKeys.length, 1)
@@ -516,9 +546,12 @@ export default function FinanzasGenerales() {
               </Text>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Promedio gastos/día</Text>
-              <Text style={[styles.detailValue, { color: COLORS.danger }]}>
+            <View
+              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.detailLabel, ds.textSecondary]}>
+                Promedio gastos/día
+              </Text>
+              <Text style={[styles.detailValue, { color: colors.expense }]}>
                 {formatCurrency(
                   gastosFiltrados.length > 0
                     ? totalGastos / Math.max(allKeys.length, 1)
@@ -537,12 +570,17 @@ export default function FinanzasGenerales() {
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
           activeOpacity={1}
           onPress={() => setCalendarVisible(false)}>
-          <View style={styles.calendarModal}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>
+          <View style={[styles.calendarModal, ds.modalBg]}>
+            <View
+              style={[
+                styles.modalHandle,
+                { backgroundColor: colors.textMuted },
+              ]}
+            />
+            <Text style={[styles.modalTitle, ds.text]}>
               Seleccionar fecha{" "}
               {selectingDate === "inicio" ? "inicial" : "final"}
             </Text>
@@ -558,28 +596,28 @@ export default function FinanzasGenerales() {
               markedDates={{
                 [rango.inicio]: {
                   selected: selectingDate === "inicio",
-                  selectedColor: COLORS.accent,
+                  selectedColor: colors.accent,
                   startingDay: true,
-                  color: COLORS.accent + "40",
+                  color: colors.accent + "40",
                 },
                 [rango.fin]: {
                   selected: selectingDate === "fin",
-                  selectedColor: COLORS.accent,
+                  selectedColor: colors.accent,
                   endingDay: true,
-                  color: COLORS.accent + "40",
+                  color: colors.accent + "40",
                 },
               }}
               theme={{
-                backgroundColor: COLORS.surfaceLight,
-                calendarBackground: COLORS.surfaceLight,
-                textSectionTitleColor: COLORS.textSecondary,
-                selectedDayBackgroundColor: COLORS.accent,
-                selectedDayTextColor: COLORS.text,
-                todayTextColor: COLORS.accent,
-                dayTextColor: COLORS.text,
-                textDisabledColor: COLORS.textMuted,
-                monthTextColor: COLORS.text,
-                arrowColor: COLORS.accent,
+                backgroundColor: colors.modalBg,
+                calendarBackground: colors.modalBg,
+                textSectionTitleColor: colors.textSecondary,
+                selectedDayBackgroundColor: colors.accent,
+                selectedDayTextColor: colors.text,
+                todayTextColor: colors.accent,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textMuted,
+                monthTextColor: colors.text,
+                arrowColor: colors.accent,
               }}
               style={styles.calendar}
             />
@@ -591,89 +629,43 @@ export default function FinanzasGenerales() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  // ✅ LOADING & ERROR
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
+  // LOADING & ERROR
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 12, fontSize: 14 },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
   },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.danger,
-    textAlign: "center",
-  },
+  errorIcon: { fontSize: 48, marginBottom: 16 },
+  errorText: { fontSize: 16, textAlign: "center" },
 
-  // ✅ EMPTY STATE
+  // EMPTY STATE
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-  },
+  emptyIcon: { fontSize: 64, marginBottom: 16 },
+  emptyTitle: { fontSize: 20, fontWeight: "600", marginBottom: 8 },
+  emptySubtitle: { fontSize: 14, textAlign: "center" },
 
-  // ✅ HEADER
+  // HEADER
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 16,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: COLORS.text,
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
+  headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 14, marginTop: 2 },
   placaBadge: {
     backgroundColor: "#FFE415",
     paddingHorizontal: 14,
@@ -682,92 +674,44 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  placaText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#000",
-  },
+  placaText: { fontSize: 16, fontWeight: "700", color: "#000" },
 
-  // ✅ RANGE SELECTOR
+  // RANGE SELECTOR
   rangeSelector: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  dateButton: {
-    flex: 1,
-    alignItems: "center",
-    padding: 8,
-  },
+  dateButton: { flex: 1, alignItems: "center", padding: 8 },
   dateButtonLabel: {
     fontSize: 11,
-    color: COLORS.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  dateButtonValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginTop: 4,
-  },
-  rangeDivider: {
-    paddingHorizontal: 12,
-  },
-  rangeDividerText: {
-    fontSize: 18,
-    color: COLORS.textMuted,
-  },
+  dateButtonValue: { fontSize: 16, fontWeight: "600", marginTop: 4 },
+  rangeDivider: { paddingHorizontal: 12 },
+  rangeDividerText: { fontSize: 18 },
 
-  // ✅ SUMMARY CARDS
-  summaryCards: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
+  // SUMMARY CARDS
+  summaryCards: { flexDirection: "row", gap: 12, marginBottom: 16 },
   summaryCard: {
     flex: 1,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
     position: "relative",
     overflow: "hidden",
   },
-  incomeCard: {
-    borderColor: COLORS.success + "40",
-  },
-  expenseCard: {
-    borderColor: COLORS.danger + "40",
-  },
-  summaryCardLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  summaryCardValue: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  summaryCardIcon: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    opacity: 0.3,
-  },
-  cardIconText: {
-    fontSize: 24,
-  },
+  summaryCardLabel: { fontSize: 12, marginBottom: 4 },
+  summaryCardValue: { fontSize: 18, fontWeight: "700" },
+  summaryCardIcon: { position: "absolute", right: 12, top: 12, opacity: 0.3 },
+  cardIconText: { fontSize: 24 },
 
-  // ✅ BALANCE CARD
+  // BALANCE CARD
   balanceCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
@@ -779,34 +723,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  balanceLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
+  balanceLabel: { fontSize: 14 },
   rentabilidadBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  rentabilidadText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  balanceValue: {
-    fontSize: 36,
-    fontWeight: "700",
-    letterSpacing: -1,
-  },
-  balanceSubtext: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 4,
-  },
+  rentabilidadText: { fontSize: 13, fontWeight: "700" },
+  balanceValue: { fontSize: 36, fontWeight: "700", letterSpacing: -1 },
+  balanceSubtext: { fontSize: 12, marginTop: 4 },
 
-  // ✅ VIEW TABS
+  // VIEW TABS
   viewTabs: {
     flexDirection: "row",
-    backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     padding: 4,
     marginBottom: 16,
@@ -817,26 +746,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
-  viewTabActive: {
-    backgroundColor: COLORS.accent,
-  },
-  viewTabText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-  viewTabTextActive: {
-    color: COLORS.text,
-  },
+  viewTabText: { fontSize: 14, fontWeight: "600" },
 
-  // ✅ CHART
+  // CHART
   chartContainer: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   chartHeader: {
     flexDirection: "row",
@@ -844,46 +761,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  chartLegend: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  chart: {
-    borderRadius: 16,
-    marginLeft: -16,
-  },
+  chartTitle: { fontSize: 16, fontWeight: "600" },
+  chartLegend: { flexDirection: "row", gap: 16 },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 12 },
+  chart: { borderRadius: 16, marginLeft: -16 },
 
-  // ✅ DETAILS
-  detailsSection: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
+  // DETAILS
+  detailsSection: { borderRadius: 16, padding: 16, borderWidth: 1 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: COLORS.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 16,
@@ -894,26 +783,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  detailLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  detailValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
+  detailLabel: { fontSize: 14 },
+  detailValue: { fontSize: 15, fontWeight: "600" },
 
-  // ✅ MODAL
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    justifyContent: "flex-end",
-  },
+  // MODAL
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   calendarModal: {
-    backgroundColor: COLORS.surfaceLight,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 12,
@@ -923,7 +799,6 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: COLORS.textMuted,
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: 20,
@@ -931,12 +806,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: COLORS.text,
     textAlign: "center",
     marginBottom: 16,
   },
-  calendar: {
-    borderRadius: 16,
-    overflow: "hidden",
-  },
+  calendar: { borderRadius: 16, overflow: "hidden" },
 });
