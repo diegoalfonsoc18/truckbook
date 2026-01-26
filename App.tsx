@@ -15,17 +15,12 @@ import {
 import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
 import type { Session } from "@supabase/supabase-js";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { DataProvider } from "./src/context/DataProvider";
 import AppStack from "./src/navigation/AppStack";
 import AuthStack from "./src/navigation/AuthStack";
 import supabase from "./src/config/SupaBaseConfig";
-import {
-  ThemeProvider,
-  useTheme,
-  LIGHT_COLORS,
-  DARK_COLORS,
-} from "./src/constants/Themecontext";
+import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 
 // Componente interno que usa el tema
 function AppContent() {
@@ -73,21 +68,11 @@ function AppContent() {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.globalContainer, { backgroundColor: colors.primary }]}
-      edges={["top"]}>
-      {Platform.OS === "android" && (
-        <View
-          style={{
-            height: RNStatusBar.currentHeight,
-            backgroundColor: colors.primary,
-          }}
-        />
-      )}
+    <View style={[styles.container, { backgroundColor: colors.primary }]}>
       <StatusBar
         style={isDark ? "light" : "dark"}
         translucent={Platform.OS === "android"}
-        backgroundColor={colors.primary}
+        backgroundColor="transparent"
       />
       {session ? (
         <DataProvider>
@@ -100,7 +85,7 @@ function AppContent() {
           <AuthStack />
         </NavigationContainer>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -116,10 +101,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  globalContainer: {
+  container: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
-    paddingBottom: 0,
   },
   loadingContainer: {
     flex: 1,

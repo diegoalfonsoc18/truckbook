@@ -12,7 +12,6 @@ import {
   StyleSheet,
 } from "react-native";
 import supabase from "../../config/SupaBaseConfig";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoleStore } from "../../store/RoleStore";
 import {
   useTheme,
@@ -272,187 +271,180 @@ export default function Account({ navigation }: any) {
 
   return (
     <View style={dynamicStyles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <Animated.ScrollView
-          style={[styles.scrollView, { opacity: fadeAnim }]}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
-          {/* HEADER CON AVATAR */}
-          <Animated.View
-            style={[
-              styles.headerSection,
-              { transform: [{ translateY: slideAnim }] },
-            ]}>
-            <View style={styles.avatarContainer}>
-              <View
-                style={[
-                  styles.avatarGradient,
-                  { backgroundColor: currentRole?.color || colors.accent },
-                  getShadow(isDark, "lg"),
-                ]}>
-                <Text style={styles.avatarText}>{userInitial}</Text>
-              </View>
-              <View
-                style={[
-                  styles.avatarBadge,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.primary,
-                  },
-                ]}>
-                <Text style={styles.avatarBadgeText}>
-                  {currentRole?.icon || "👤"}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={[styles.userName, dynamicStyles.text]}>
-              {userName}
-            </Text>
-            <Text style={[styles.userEmail, dynamicStyles.textSecondary]}>
-              {user?.email || "Cargando..."}
-            </Text>
-
-            {/* Rol Badge */}
-            <TouchableOpacity
+      <Animated.ScrollView
+        style={[styles.scrollView, { opacity: fadeAnim }]}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        {/* HEADER CON AVATAR */}
+        <Animated.View
+          style={[
+            styles.headerSection,
+            { transform: [{ translateY: slideAnim }] },
+          ]}>
+          <View style={styles.avatarContainer}>
+            <View
               style={[
-                styles.roleBadge,
+                styles.avatarGradient,
                 { backgroundColor: currentRole?.color || colors.accent },
-              ]}
-              onPress={() => setModalRolesVisible(true)}
-              activeOpacity={0.8}>
-              <Text style={styles.roleBadgeIcon}>
+                getShadow(isDark, "lg"),
+              ]}>
+              <Text style={styles.avatarText}>{userInitial}</Text>
+            </View>
+            <View
+              style={[
+                styles.avatarBadge,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.primary,
+                },
+              ]}>
+              <Text style={styles.avatarBadgeText}>
                 {currentRole?.icon || "👤"}
               </Text>
-              <Text style={styles.roleBadgeText}>
-                {currentRole?.label || "Sin rol"}
-              </Text>
-              <Text style={styles.roleBadgeArrow}>›</Text>
-            </TouchableOpacity>
-          </Animated.View>
+            </View>
+          </View>
 
-          {/* ESTADÍSTICAS RÁPIDAS */}
-          <Animated.View
+          <Text style={[styles.userName, dynamicStyles.text]}>{userName}</Text>
+          <Text style={[styles.userEmail, dynamicStyles.textSecondary]}>
+            {user?.email || "Cargando..."}
+          </Text>
+
+          {/* Rol Badge */}
+          <TouchableOpacity
             style={[
-              styles.statsContainer,
+              styles.roleBadge,
+              { backgroundColor: currentRole?.color || colors.accent },
+            ]}
+            onPress={() => setModalRolesVisible(true)}
+            activeOpacity={0.8}>
+            <Text style={styles.roleBadgeIcon}>
+              {currentRole?.icon || "👤"}
+            </Text>
+            <Text style={styles.roleBadgeText}>
+              {currentRole?.label || "Sin rol"}
+            </Text>
+            <Text style={styles.roleBadgeArrow}>›</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* ESTADÍSTICAS RÁPIDAS */}
+        <Animated.View
+          style={[
+            styles.statsContainer,
+            dynamicStyles.cardBg,
+            { transform: [{ translateY: slideAnim }] },
+            getShadow(isDark, "md"),
+          ]}>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, dynamicStyles.text]}>12</Text>
+            <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+              Viajes
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.statCard,
+              styles.statCardMiddle,
+              { borderColor: colors.border },
+            ]}>
+            <Text style={[styles.statValue, dynamicStyles.text]}>2.4K</Text>
+            <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+              Km
+            </Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, dynamicStyles.text]}>$1.2M</Text>
+            <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
+              Mes
+            </Text>
+          </View>
+        </Animated.View>
+
+        {/* MENÚ DE OPCIONES */}
+        <Animated.View
+          style={[
+            styles.menuSection,
+            { transform: [{ translateY: slideAnim }] },
+          ]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textSecondary]}>
+            Configuración
+          </Text>
+
+          <View
+            style={[
+              styles.menuCard,
               dynamicStyles.cardBg,
-              { transform: [{ translateY: slideAnim }] },
-              getShadow(isDark, "md"),
+              getShadow(isDark, "sm"),
             ]}>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, dynamicStyles.text]}>12</Text>
-              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
-                Viajes
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.statCard,
-                styles.statCardMiddle,
-                { borderColor: colors.border },
-              ]}>
-              <Text style={[styles.statValue, dynamicStyles.text]}>2.4K</Text>
-              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
-                Km
-              </Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, dynamicStyles.text]}>$1.2M</Text>
-              <Text style={[styles.statLabel, dynamicStyles.textSecondary]}>
-                Mes
-              </Text>
-            </View>
-          </Animated.View>
-
-          {/* MENÚ DE OPCIONES */}
-          <Animated.View
-            style={[
-              styles.menuSection,
-              { transform: [{ translateY: slideAnim }] },
-            ]}>
-            <Text style={[styles.sectionTitle, dynamicStyles.textSecondary]}>
-              Configuración
-            </Text>
-
-            <View
-              style={[
-                styles.menuCard,
-                dynamicStyles.cardBg,
-                getShadow(isDark, "sm"),
-              ]}>
-              {MENU_OPTIONS.map((option, index) => (
-                <TouchableOpacity
-                  key={option.id}
+            {MENU_OPTIONS.map((option, index) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.menuItem,
+                  index < MENU_OPTIONS.length - 1 && [
+                    styles.menuItemBorder,
+                    { borderBottomColor: colors.border },
+                  ],
+                ]}
+                onPress={() => handleMenuPress(option)}
+                activeOpacity={0.7}>
+                <View
                   style={[
-                    styles.menuItem,
-                    index < MENU_OPTIONS.length - 1 && [
-                      styles.menuItemBorder,
-                      { borderBottomColor: colors.border },
-                    ],
-                  ]}
-                  onPress={() => handleMenuPress(option)}
-                  activeOpacity={0.7}>
-                  <View
-                    style={[
-                      styles.menuIconContainer,
-                      { backgroundColor: `${option.color}20` },
-                    ]}>
-                    <Text style={styles.menuIcon}>{option.icon}</Text>
-                  </View>
-                  <View style={styles.menuTextContainer}>
-                    <Text style={[styles.menuTitle, dynamicStyles.text]}>
-                      {option.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.menuSubtitle,
-                        dynamicStyles.textSecondary,
-                      ]}>
-                      {option.subtitle}
-                    </Text>
-                  </View>
-                  <Text style={[styles.menuArrow, dynamicStyles.textMuted]}>
-                    ›
+                    styles.menuIconContainer,
+                    { backgroundColor: `${option.color}20` },
+                  ]}>
+                  <Text style={styles.menuIcon}>{option.icon}</Text>
+                </View>
+                <View style={styles.menuTextContainer}>
+                  <Text style={[styles.menuTitle, dynamicStyles.text]}>
+                    {option.title}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Animated.View>
+                  <Text
+                    style={[styles.menuSubtitle, dynamicStyles.textSecondary]}>
+                    {option.subtitle}
+                  </Text>
+                </View>
+                <Text style={[styles.menuArrow, dynamicStyles.textMuted]}>
+                  ›
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
 
-          {/* BOTÓN LOGOUT */}
-          <Animated.View
+        {/* BOTÓN LOGOUT */}
+        <Animated.View
+          style={[
+            styles.logoutSection,
+            { transform: [{ translateY: slideAnim }] },
+          ]}>
+          <TouchableOpacity
             style={[
-              styles.logoutSection,
-              { transform: [{ translateY: slideAnim }] },
-            ]}>
-            <TouchableOpacity
-              style={[
-                styles.logoutButton,
-                dynamicStyles.cardBg,
-                { borderColor: colors.danger + "40" },
-                getShadow(isDark, "sm"),
-              ]}
-              onPress={handleLogout}
-              disabled={loading}
-              activeOpacity={0.8}>
-              {loading ? (
-                <ActivityIndicator color={colors.danger} />
-              ) : (
-                <>
-                  <Text style={styles.logoutIcon}>🚪</Text>
-                  <Text style={[styles.logoutText, { color: colors.danger }]}>
-                    Cerrar Sesión
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+              styles.logoutButton,
+              dynamicStyles.cardBg,
+              { borderColor: colors.danger + "40" },
+              getShadow(isDark, "sm"),
+            ]}
+            onPress={handleLogout}
+            disabled={loading}
+            activeOpacity={0.8}>
+            {loading ? (
+              <ActivityIndicator color={colors.danger} />
+            ) : (
+              <>
+                <Text style={styles.logoutIcon}>🚪</Text>
+                <Text style={[styles.logoutText, { color: colors.danger }]}>
+                  Cerrar Sesión
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-            <Text style={[styles.versionText, dynamicStyles.textMuted]}>
-              TruckBook v1.0.0
-            </Text>
-          </Animated.View>
-        </Animated.ScrollView>
-      </SafeAreaView>
+          <Text style={[styles.versionText, dynamicStyles.textMuted]}>
+            TruckBook v1.0.0
+          </Text>
+        </Animated.View>
+      </Animated.ScrollView>
 
       {/* MODAL CAMBIAR ROL */}
       <Modal
@@ -601,9 +593,6 @@ export default function Account({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
@@ -614,7 +603,7 @@ const styles = StyleSheet.create({
   // HEADER
   headerSection: {
     alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 24,
     paddingHorizontal: 24,
   },

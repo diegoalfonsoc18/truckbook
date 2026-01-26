@@ -13,22 +13,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // ============================================
 
 export const LIGHT_COLORS = {
-  // Fondos
-  primary: "#F5F5F7",
-  secondary: "#FFFFFF",
+  // Fondos - Más blancos y limpios
+  primary: "#FFFFFF",
+  secondary: "#F8F9FA",
   surface: "#FFFFFF",
   cardBg: "#FFFFFF",
   modalBg: "#FFFFFF",
 
-  // Texto
+  // Texto - Mayor contraste
   text: "#1A1A2E",
-  textSecondary: "#6B6B7B",
-  textMuted: "#9A9AAA",
+  textSecondary: "#555566",
+  textMuted: "#888899",
   textInverse: "#FFFFFF",
 
-  // Bordes y divisores
-  border: "#E5E5EA",
-  divider: "#E5E5EA",
+  // Bordes y divisores - Más sutiles
+  border: "#E8E8ED",
+  divider: "#E8E8ED",
 
   // Acentos principales
   accent: "#007AFF",

@@ -11,7 +11,6 @@ import {
   Modal,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -276,292 +275,279 @@ export default function FinanzasGenerales() {
 
   return (
     <View style={[styles.container, ds.container]}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <Animated.ScrollView
-          style={[styles.scrollView, { opacity: fadeAnim }]}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
-          {/* ✅ HEADER */}
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, ds.text]}>Finanzas</Text>
-              <Text style={[styles.headerSubtitle, ds.textSecondary]}>
-                Análisis financiero
-              </Text>
-            </View>
-            <View style={styles.placaBadge}>
-              <Text style={styles.placaText}>{placaActual}</Text>
-            </View>
+      <Animated.ScrollView
+        style={[styles.scrollView, { opacity: fadeAnim }]}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        {/* ✅ HEADER */}
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.headerTitle, ds.text]}>Finanzas</Text>
+            <Text style={[styles.headerSubtitle, ds.textSecondary]}>
+              Análisis financiero
+            </Text>
           </View>
-
-          {/* ✅ SELECTOR DE RANGO */}
-          <View
-            style={[styles.rangeSelector, ds.cardBg, getShadow(isDark, "sm")]}>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => openCalendar("inicio")}
-              activeOpacity={0.8}>
-              <Text style={[styles.dateButtonLabel, ds.textMuted]}>Desde</Text>
-              <Text style={[styles.dateButtonValue, ds.text]}>
-                {formatDateShort(rango.inicio)}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.rangeDivider}>
-              <Text style={[styles.rangeDividerText, ds.textMuted]}>→</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => openCalendar("fin")}
-              activeOpacity={0.8}>
-              <Text style={[styles.dateButtonLabel, ds.textMuted]}>Hasta</Text>
-              <Text style={[styles.dateButtonValue, ds.text]}>
-                {formatDateShort(rango.fin)}
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.placaBadge}>
+            <Text style={styles.placaText}>{placaActual}</Text>
           </View>
+        </View>
 
-          {/* ✅ CARDS DE RESUMEN */}
-          <View style={styles.summaryCards}>
-            <View
-              style={[
-                styles.summaryCard,
-                ds.cardBg,
-                { borderColor: colors.income + "40" },
-                getShadow(isDark, "sm"),
-              ]}>
-              <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
-                Ingresos
-              </Text>
-              <Text style={[styles.summaryCardValue, { color: colors.income }]}>
-                {formatCurrency(totalIngresos)}
-              </Text>
-              <View style={styles.summaryCardIcon}>
-                <Text style={styles.cardIconText}>📈</Text>
-              </View>
-            </View>
-
-            <View
-              style={[
-                styles.summaryCard,
-                ds.cardBg,
-                { borderColor: colors.expense + "40" },
-                getShadow(isDark, "sm"),
-              ]}>
-              <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
-                Gastos
-              </Text>
-              <Text
-                style={[styles.summaryCardValue, { color: colors.expense }]}>
-                {formatCurrency(totalGastos)}
-              </Text>
-              <View style={styles.summaryCardIcon}>
-                <Text style={styles.cardIconText}>📉</Text>
-              </View>
-            </View>
+        {/* ✅ SELECTOR DE RANGO */}
+        <View
+          style={[styles.rangeSelector, ds.cardBg, getShadow(isDark, "sm")]}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => openCalendar("inicio")}
+            activeOpacity={0.8}>
+            <Text style={[styles.dateButtonLabel, ds.textMuted]}>Desde</Text>
+            <Text style={[styles.dateButtonValue, ds.text]}>
+              {formatDateShort(rango.inicio)}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.rangeDivider}>
+            <Text style={[styles.rangeDividerText, ds.textMuted]}>→</Text>
           </View>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => openCalendar("fin")}
+            activeOpacity={0.8}>
+            <Text style={[styles.dateButtonLabel, ds.textMuted]}>Hasta</Text>
+            <Text style={[styles.dateButtonValue, ds.text]}>
+              {formatDateShort(rango.fin)}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* ✅ BALANCE CARD */}
+        {/* ✅ CARDS DE RESUMEN */}
+        <View style={styles.summaryCards}>
           <View
             style={[
-              styles.balanceCard,
+              styles.summaryCard,
               ds.cardBg,
-              { borderColor: balance >= 0 ? colors.income : colors.expense },
-              getShadow(isDark, "md"),
+              { borderColor: colors.income + "40" },
+              getShadow(isDark, "sm"),
             ]}>
-            <View style={styles.balanceHeader}>
-              <Text style={[styles.balanceLabel, ds.textSecondary]}>
-                Balance Neto
-              </Text>
-              <View
+            <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
+              Ingresos
+            </Text>
+            <Text style={[styles.summaryCardValue, { color: colors.income }]}>
+              {formatCurrency(totalIngresos)}
+            </Text>
+            <View style={styles.summaryCardIcon}>
+              <Text style={styles.cardIconText}>📈</Text>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.summaryCard,
+              ds.cardBg,
+              { borderColor: colors.expense + "40" },
+              getShadow(isDark, "sm"),
+            ]}>
+            <Text style={[styles.summaryCardLabel, ds.textSecondary]}>
+              Gastos
+            </Text>
+            <Text style={[styles.summaryCardValue, { color: colors.expense }]}>
+              {formatCurrency(totalGastos)}
+            </Text>
+            <View style={styles.summaryCardIcon}>
+              <Text style={styles.cardIconText}>📉</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ✅ BALANCE CARD */}
+        <View
+          style={[
+            styles.balanceCard,
+            ds.cardBg,
+            { borderColor: balance >= 0 ? colors.income : colors.expense },
+            getShadow(isDark, "md"),
+          ]}>
+          <View style={styles.balanceHeader}>
+            <Text style={[styles.balanceLabel, ds.textSecondary]}>
+              Balance Neto
+            </Text>
+            <View
+              style={[
+                styles.rentabilidadBadge,
+                {
+                  backgroundColor:
+                    Number(rentabilidad) >= 0
+                      ? colors.income + "20"
+                      : colors.expense + "20",
+                },
+              ]}>
+              <Text
                 style={[
-                  styles.rentabilidadBadge,
+                  styles.rentabilidadText,
                   {
-                    backgroundColor:
+                    color:
                       Number(rentabilidad) >= 0
-                        ? colors.income + "20"
-                        : colors.expense + "20",
+                        ? colors.income
+                        : colors.expense,
                   },
                 ]}>
-                <Text
-                  style={[
-                    styles.rentabilidadText,
-                    {
-                      color:
-                        Number(rentabilidad) >= 0
-                          ? colors.income
-                          : colors.expense,
-                    },
-                  ]}>
-                  {Number(rentabilidad) >= 0 ? "+" : ""}
-                  {rentabilidad}%
-                </Text>
-              </View>
+                {Number(rentabilidad) >= 0 ? "+" : ""}
+                {rentabilidad}%
+              </Text>
             </View>
-            <Text
+          </View>
+          <Text
+            style={[
+              styles.balanceValue,
+              { color: balance >= 0 ? colors.income : colors.expense },
+            ]}>
+            {formatCurrency(balance)}
+          </Text>
+          <Text style={[styles.balanceSubtext, ds.textMuted]}>
+            {balance >= 0 ? "Ganancia en el período" : "Pérdida en el período"}
+          </Text>
+        </View>
+
+        {/* ✅ TABS DE VISTA */}
+        <View style={[styles.viewTabs, ds.cardBg]}>
+          {(["dias", "meses", "años"] as ViewType[]).map((v) => (
+            <TouchableOpacity
+              key={v}
               style={[
-                styles.balanceValue,
-                { color: balance >= 0 ? colors.income : colors.expense },
-              ]}>
-              {formatCurrency(balance)}
-            </Text>
-            <Text style={[styles.balanceSubtext, ds.textMuted]}>
-              {balance >= 0
-                ? "Ganancia en el período"
-                : "Pérdida en el período"}
-            </Text>
-          </View>
-
-          {/* ✅ TABS DE VISTA */}
-          <View style={[styles.viewTabs, ds.cardBg]}>
-            {(["dias", "meses", "años"] as ViewType[]).map((v) => (
-              <TouchableOpacity
-                key={v}
+                styles.viewTab,
+                view === v && { backgroundColor: colors.accent },
+              ]}
+              onPress={() => setView(v)}
+              activeOpacity={0.7}>
+              <Text
                 style={[
-                  styles.viewTab,
-                  view === v && { backgroundColor: colors.accent },
-                ]}
-                onPress={() => setView(v)}
-                activeOpacity={0.7}>
-                <Text
-                  style={[
-                    styles.viewTabText,
-                    ds.textSecondary,
-                    view === v && { color: "#FFFFFF" },
-                  ]}>
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                  styles.viewTabText,
+                  ds.textSecondary,
+                  view === v && { color: "#FFFFFF" },
+                ]}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          {/* ✅ GRÁFICO */}
-          <View
-            style={[styles.chartContainer, ds.cardBg, getShadow(isDark, "sm")]}>
-            <View style={styles.chartHeader}>
-              <Text style={[styles.chartTitle, ds.text]}>Comparativa</Text>
-              <View style={styles.chartLegend}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      { backgroundColor: colors.income },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, ds.textSecondary]}>
-                    Ingresos
-                  </Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      { backgroundColor: colors.expense },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, ds.textSecondary]}>
-                    Gastos
-                  </Text>
-                </View>
+        {/* ✅ GRÁFICO */}
+        <View
+          style={[styles.chartContainer, ds.cardBg, getShadow(isDark, "sm")]}>
+          <View style={styles.chartHeader}>
+            <Text style={[styles.chartTitle, ds.text]}>Comparativa</Text>
+            <View style={styles.chartLegend}>
+              <View style={styles.legendItem}>
+                <View
+                  style={[styles.legendDot, { backgroundColor: colors.income }]}
+                />
+                <Text style={[styles.legendText, ds.textSecondary]}>
+                  Ingresos
+                </Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View
+                  style={[
+                    styles.legendDot,
+                    { backgroundColor: colors.expense },
+                  ]}
+                />
+                <Text style={[styles.legendText, ds.textSecondary]}>
+                  Gastos
+                </Text>
               </View>
             </View>
-
-            <LineChart
-              data={{
-                labels: formattedLabels.slice(0, 6),
-                datasets: [
-                  {
-                    data:
-                      chartIngresosData.length > 0 ? chartIngresosData : [0],
-                    color: () => colors.income,
-                    strokeWidth: 3,
-                  },
-                  {
-                    data: chartGastosData.length > 0 ? chartGastosData : [0],
-                    color: () => colors.expense,
-                    strokeWidth: 3,
-                  },
-                ],
-              }}
-              width={width - 40}
-              height={220}
-              yAxisLabel="$"
-              yAxisInterval={1}
-              fromZero={true}
-              withVerticalLines={false}
-              withHorizontalLines={true}
-              formatYLabel={abreviarNumero}
-              chartConfig={{
-                backgroundColor: "transparent",
-                backgroundGradientFrom: colors.cardBg,
-                backgroundGradientTo: colors.cardBg,
-                decimalPlaces: 0,
-                color: (opacity = 1) =>
-                  `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
-                labelColor: () => colors.textSecondary,
-                style: { borderRadius: 16 },
-                propsForDots: {
-                  r: "5",
-                  strokeWidth: "2",
-                  stroke: colors.cardBg,
-                },
-                propsForBackgroundLines: {
-                  strokeDasharray: "",
-                  stroke: colors.border,
-                  strokeWidth: 1,
-                },
-              }}
-              bezier
-              style={styles.chart}
-            />
           </View>
 
-          {/* ✅ DETALLES */}
+          <LineChart
+            data={{
+              labels: formattedLabels.slice(0, 6),
+              datasets: [
+                {
+                  data: chartIngresosData.length > 0 ? chartIngresosData : [0],
+                  color: () => colors.income,
+                  strokeWidth: 3,
+                },
+                {
+                  data: chartGastosData.length > 0 ? chartGastosData : [0],
+                  color: () => colors.expense,
+                  strokeWidth: 3,
+                },
+              ],
+            }}
+            width={width - 40}
+            height={220}
+            yAxisLabel="$"
+            yAxisInterval={1}
+            fromZero={true}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            formatYLabel={abreviarNumero}
+            chartConfig={{
+              backgroundColor: "transparent",
+              backgroundGradientFrom: colors.cardBg,
+              backgroundGradientTo: colors.cardBg,
+              decimalPlaces: 0,
+              color: (opacity = 1) =>
+                `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
+              labelColor: () => colors.textSecondary,
+              style: { borderRadius: 16 },
+              propsForDots: { r: "5", strokeWidth: "2", stroke: colors.cardBg },
+              propsForBackgroundLines: {
+                strokeDasharray: "",
+                stroke: colors.border,
+                strokeWidth: 1,
+              },
+            }}
+            bezier
+            style={styles.chart}
+          />
+        </View>
+
+        {/* ✅ DETALLES */}
+        <View
+          style={[styles.detailsSection, ds.cardBg, getShadow(isDark, "sm")]}>
+          <Text style={[styles.sectionTitle, ds.textSecondary]}>
+            Detalles del período
+          </Text>
+
           <View
-            style={[styles.detailsSection, ds.cardBg, getShadow(isDark, "sm")]}>
-            <Text style={[styles.sectionTitle, ds.textSecondary]}>
-              Detalles del período
+            style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.detailLabel, ds.textSecondary]}>
+              Transacciones totales
             </Text>
-
-            <View
-              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.detailLabel, ds.textSecondary]}>
-                Transacciones totales
-              </Text>
-              <Text style={[styles.detailValue, ds.text]}>
-                {gastosFiltrados.length + ingresosFiltrados.length}
-              </Text>
-            </View>
-
-            <View
-              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.detailLabel, ds.textSecondary]}>
-                Promedio ingresos/día
-              </Text>
-              <Text style={[styles.detailValue, { color: colors.income }]}>
-                {formatCurrency(
-                  ingresosFiltrados.length > 0
-                    ? totalIngresos / Math.max(allKeys.length, 1)
-                    : 0,
-                )}
-              </Text>
-            </View>
-
-            <View
-              style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.detailLabel, ds.textSecondary]}>
-                Promedio gastos/día
-              </Text>
-              <Text style={[styles.detailValue, { color: colors.expense }]}>
-                {formatCurrency(
-                  gastosFiltrados.length > 0
-                    ? totalGastos / Math.max(allKeys.length, 1)
-                    : 0,
-                )}
-              </Text>
-            </View>
+            <Text style={[styles.detailValue, ds.text]}>
+              {gastosFiltrados.length + ingresosFiltrados.length}
+            </Text>
           </View>
-        </Animated.ScrollView>
-      </SafeAreaView>
+
+          <View
+            style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.detailLabel, ds.textSecondary]}>
+              Promedio ingresos/día
+            </Text>
+            <Text style={[styles.detailValue, { color: colors.income }]}>
+              {formatCurrency(
+                ingresosFiltrados.length > 0
+                  ? totalIngresos / Math.max(allKeys.length, 1)
+                  : 0,
+              )}
+            </Text>
+          </View>
+
+          <View
+            style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.detailLabel, ds.textSecondary]}>
+              Promedio gastos/día
+            </Text>
+            <Text style={[styles.detailValue, { color: colors.expense }]}>
+              {formatCurrency(
+                gastosFiltrados.length > 0
+                  ? totalGastos / Math.max(allKeys.length, 1)
+                  : 0,
+              )}
+            </Text>
+          </View>
+        </View>
+      </Animated.ScrollView>
 
       {/* ✅ MODAL CALENDARIO */}
       <Modal
@@ -630,7 +616,6 @@ export default function FinanzasGenerales() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  safeArea: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
@@ -662,7 +647,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
   headerSubtitle: { fontSize: 14, marginTop: 2 },
