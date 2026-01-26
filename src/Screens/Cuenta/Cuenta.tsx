@@ -19,12 +19,20 @@ import {
   SPACING,
   BORDER_RADIUS,
   getShadow,
-} from "../../constants/themecontext";
+} from "../../constants/Themecontext";
 import ThemeSelector from "../../constants/ThemeSelector";
 
 const { width } = Dimensions.get("window");
 
-const ROLES_DISPONIBLES = [
+type UserRole = "conductor" | "administrador" | "propietario";
+
+const ROLES_DISPONIBLES: {
+  id: UserRole;
+  icon: string;
+  label: string;
+  description: string;
+  color: string;
+}[] = [
   {
     id: "conductor",
     icon: "🚛",
@@ -46,7 +54,7 @@ const ROLES_DISPONIBLES = [
     description: "Dashboard financiero completo",
     color: "#E94560",
   },
-] as const;
+];
 
 const MENU_OPTIONS = [
   {
@@ -161,7 +169,7 @@ export default function Account({ navigation }: any) {
     }
   };
 
-  const handleCambiarRol = async (nuevoRol: string) => {
+  const handleCambiarRol = async (nuevoRol: UserRole) => {
     try {
       setLoading(true);
       if (!user?.id) {

@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import supabase from "../../config/SupaBaseConfig";
-import { useTheme, getShadow } from "../../constants/themecontext";
+import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
   VolquetaIcon,
   EstacasIcon,

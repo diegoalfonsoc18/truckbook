@@ -25,7 +25,7 @@ import {
   useTheme,
   LIGHT_COLORS,
   DARK_COLORS,
-} from "./src/constants/";
+} from "./src/constants/Themecontext";
 
 // Componente interno que usa el tema
 function AppContent() {
