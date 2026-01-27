@@ -13,6 +13,8 @@ import {
   Dimensions,
   ActivityIndicator,
   StyleSheet,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
@@ -462,108 +464,118 @@ export default function Ingresos() {
         transparent
         animationType="slide"
         onRequestClose={closeModal}>
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
-          activeOpacity={1}
-          onPress={closeModal}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.addModal, ds.modalBg]}>
-              <View
-                style={[
-                  styles.modalHandle,
-                  { backgroundColor: colors.textMuted },
-                ]}
-              />
-              <Text style={[styles.modalTitle, ds.text]}>
-                {isEditing ? "Editar ingreso" : "Nuevo ingreso"}
-              </Text>
-
-              {selectedIngreso && (
-                <View style={styles.selectedCat}>
-                  <Text style={styles.selectedCatIcon}>
-                    {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
-                      ?.icon || "💰"}
-                  </Text>
-                  <Text style={[styles.selectedCatName, ds.text]}>
-                    {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
-                      ?.name || selectedIngreso}
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, ds.textSecondary]}>Monto</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+            activeOpacity={1}
+            onPress={closeModal}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.addModal, ds.modalBg]}>
                 <View
                   style={[
-                    styles.inputWrapper,
-                    ds.inputBg,
-                    { borderColor: colors.border },
-                  ]}>
-                  <Text style={[styles.inputPrefix, ds.textSecondary]}>$</Text>
-                  <TextInput
-                    style={[styles.input, ds.text]}
-                    placeholder="0"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="numeric"
-                    value={editValue}
-                    onChangeText={setEditValue}
-                    autoFocus
-                  />
+                    styles.modalHandle,
+                    { backgroundColor: colors.textMuted },
+                  ]}
+                />
+                <Text style={[styles.modalTitle, ds.text]}>
+                  {isEditing ? "Editar ingreso" : "Nuevo ingreso"}
+                </Text>
+
+                {selectedIngreso && (
+                  <View style={styles.selectedCat}>
+                    <Text style={styles.selectedCatIcon}>
+                      {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
+                        ?.icon || "💰"}
+                    </Text>
+                    <Text style={[styles.selectedCatName, ds.text]}>
+                      {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
+                        ?.name || selectedIngreso}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, ds.textSecondary]}>
+                    Monto
+                  </Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      ds.inputBg,
+                      { borderColor: colors.border },
+                    ]}>
+                    <Text style={[styles.inputPrefix, ds.textSecondary]}>
+                      $
+                    </Text>
+                    <TextInput
+                      style={[styles.input, ds.text]}
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numeric"
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      autoFocus
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, ds.textSecondary]}>
+                    Fecha
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.dateInput,
+                      ds.inputBg,
+                      { borderColor: colors.border },
+                    ]}
+                    onPress={() => {
+                      setModalVisible(false);
+                      setTimeout(() => setCalendarVisible(true), 300);
+                    }}>
+                    <Text style={[styles.dateInputText, ds.text]}>
+                      {formatDate(editDate)}
+                    </Text>
+                    <Text>📅</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, ds.cardBg]}
+                    onPress={closeModal}>
+                    <Text style={[styles.cancelBtnText, ds.textSecondary]}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.saveBtn,
+                      { backgroundColor: ds.accent },
+                      (!editValue || loading) && styles.saveBtnDisabled,
+                    ]}
+                    onPress={() => {
+                      isEditing
+                        ? handleSaveEdit()
+                        : selectedIngreso &&
+                          handleAddIngreso(selectedIngreso, editValue);
+                    }}
+                    disabled={!editValue || loading}>
+                    {loading ? (
+                      <ActivityIndicator color="#FFF" size="small" />
+                    ) : (
+                      <Text style={styles.saveBtnText}>
+                        {isEditing ? "Actualizar" : "Guardar"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, ds.textSecondary]}>Fecha</Text>
-                <TouchableOpacity
-                  style={[
-                    styles.dateInput,
-                    ds.inputBg,
-                    { borderColor: colors.border },
-                  ]}
-                  onPress={() => {
-                    setModalVisible(false);
-                    setTimeout(() => setCalendarVisible(true), 300);
-                  }}>
-                  <Text style={[styles.dateInputText, ds.text]}>
-                    {formatDate(editDate)}
-                  </Text>
-                  <Text>📅</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalBtns}>
-                <TouchableOpacity
-                  style={[styles.cancelBtn, ds.cardBg]}
-                  onPress={closeModal}>
-                  <Text style={[styles.cancelBtnText, ds.textSecondary]}>
-                    Cancelar
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.saveBtn,
-                    { backgroundColor: ds.accent },
-                    (!editValue || loading) && styles.saveBtnDisabled,
-                  ]}
-                  onPress={() => {
-                    isEditing
-                      ? handleSaveEdit()
-                      : selectedIngreso &&
-                        handleAddIngreso(selectedIngreso, editValue);
-                  }}
-                  disabled={!editValue || loading}>
-                  {loading ? (
-                    <ActivityIndicator color="#FFF" size="small" />
-                  ) : (
-                    <Text style={styles.saveBtnText}>
-                      {isEditing ? "Actualizar" : "Guardar"}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </TouchableOpacity>
+            </TouchableWithoutFeedback>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

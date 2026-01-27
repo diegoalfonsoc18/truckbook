@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useRoleStore, UserRole } from "../store/RoleStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
@@ -8,7 +8,6 @@ import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorHome from "../Screens/conductor/ConductorHome";
 import AdministradorHome from "../Screens/administrador/AdministradorHome";
 import PropietarioHome from "../Screens/propietario/PropietarioHome ";
-
 import Account from "../Screens/Cuenta/Cuenta";
 import {
   renderGastos,
@@ -17,17 +16,26 @@ import {
   renderFinanzas,
   renderCuenta,
 } from "../assets/icons/icons";
-import { COLORS } from "../constants/colors";
+import { useTheme } from "../constants/Themecontext";
 
 const Tab = createBottomTabNavigator();
 
 export default function AppStack() {
+  const { colors, isDark } = useTheme();
   const role = useRoleStore((state) => state.role) as UserRole | null;
 
-  // ✅ Determinar initialRouteName según el rol
   const getInitialRouteName = (): "Home" | "Cuenta" => {
     if (!role) return "Cuenta";
     return "Home";
+  };
+
+  // Estilos dinámicos para el tab bar
+  const tabBarStyle = {
+    ...styles.tabBar,
+    backgroundColor: colors.cardBg,
+    borderTopColor: colors.border,
+    shadowColor: isDark ? "#000" : "#000",
+    shadowOpacity: isDark ? 0.4 : 0.12,
   };
 
   return (
@@ -35,9 +43,10 @@ export default function AppStack() {
       initialRouteName={getInitialRouteName()}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textTertiary,
+        tabBarStyle: tabBarStyle,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: styles.tabBarLabel,
 
         tabBarIcon: ({ focused, color, size }) => {
           switch (route.name) {
@@ -56,7 +65,7 @@ export default function AppStack() {
           }
         },
       })}>
-      {/* ✅ CONDUCTOR */}
+      {/* CONDUCTOR */}
       {role === "conductor" && (
         <>
           <Tab.Screen name="Gastos" component={GastosNavigation} />
@@ -67,7 +76,7 @@ export default function AppStack() {
         </>
       )}
 
-      {/* ✅ ADMINISTRADOR */}
+      {/* ADMINISTRADOR */}
       {role === "administrador" && (
         <>
           <Tab.Screen name="Home" component={AdministradorHome} />
@@ -77,7 +86,7 @@ export default function AppStack() {
         </>
       )}
 
-      {/* ✅ PROPIETARIO */}
+      {/* PROPIETARIO */}
       {role === "propietario" && (
         <>
           <Tab.Screen name="Home" component={PropietarioHome} />
@@ -88,7 +97,7 @@ export default function AppStack() {
         </>
       )}
 
-      {/* ✅ SIN ROL: Solo mostrar Cuenta */}
+      {/* SIN ROL */}
       {!role && <Tab.Screen name="Cuenta" component={Account} />}
     </Tab.Navigator>
   );
@@ -96,22 +105,23 @@ export default function AppStack() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    width: "100%",
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: COLORS.background,
-    borderTopWidth: 0,
-    height: 94,
-    paddingTop: 10,
+    height: 88,
+    paddingTop: 8,
+    paddingBottom: 28,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.18,
+    borderTopWidth: 1,
+    shadowOffset: { width: 0, height: -4 },
     shadowRadius: 12,
     elevation: 16,
-    overflow: "visible",
+  },
+  tabBarLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    marginTop: 2,
   },
 });
