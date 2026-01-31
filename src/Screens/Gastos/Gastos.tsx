@@ -25,7 +25,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
-
+import { IconGasStation } from "../../assets/icons/icons";
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
 const GRID_GAP = 12;
@@ -35,7 +35,12 @@ const ITEM_WIDTH =
   COLUMN_COUNT;
 
 const GASTOS_CATEGORIAS = [
-  { id: "combustible", name: "Combustible", icon: "⛽", color: "#FFB800" },
+  {
+    id: "combustible",
+    name: "Combustible",
+    icon: <IconGasStation />,
+    color: "#FFB800",
+  },
   { id: "peajes", name: "Peajes", icon: "🛣️", color: "#00D9A5" },
   { id: "comida", name: "Comida", icon: "🍔", color: "#FF6B6B" },
   { id: "hospedaje", name: "Hospedaje", icon: "🏨", color: "#6C5CE7" },
@@ -325,11 +330,6 @@ export default function Gastos() {
               {GASTOS_CATEGORIAS.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[
-                    styles.categoryItem,
-                    ds.cardBg,
-                    getShadow(isDark, "sm"),
-                  ]}
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
                   <View
@@ -365,6 +365,10 @@ export default function Gastos() {
                   (c) =>
                     c.name.toLowerCase() === item.tipo_gasto?.toLowerCase(),
                 );
+                const IconComponent =
+                  categoria && typeof categoria.icon === "function"
+                    ? categoria.icon
+                    : null;
                 return (
                   <View
                     key={`${item.id}-${index}`}
@@ -384,6 +388,13 @@ export default function Gastos() {
                         {categoria?.icon || "📦"}
                       </Text>
                     </View>
+                    ) : (
+                    <Text style={styles.gastoEmoji}>
+                      {typeof categoria?.icon === "string"
+                        ? categoria.icon
+                        : "📦"}
+                    </Text>
+                    )
                     <View style={styles.gastoInfo}>
                       <Text style={[styles.gastoName, ds.text]}>
                         {item.tipo_gasto || item.descripcion}
@@ -485,18 +496,22 @@ export default function Gastos() {
                   {isEditing ? "Editar gasto" : "Nuevo gasto"}
                 </Text>
 
-                {selectedGasto && (
-                  <View style={styles.selectedCat}>
-                    <Text style={styles.selectedCatIcon}>
-                      {GASTOS_CATEGORIAS.find((c) => c.id === selectedGasto)
-                        ?.icon || "📦"}
-                    </Text>
-                    <Text style={[styles.selectedCatName, ds.text]}>
-                      {GASTOS_CATEGORIAS.find((c) => c.id === selectedGasto)
-                        ?.name || selectedGasto}
-                    </Text>
-                  </View>
-                )}
+                {selectedGasto &&
+                  (() => {
+                    const cat = GASTOS_CATEGORIAS.find(
+                      (c) => c.id === selectedGasto,
+                    );
+                    return (
+                      <View style={styles.selectedCat}>
+                        <Text style={styles.selectedCatIcon}>
+                          {cat?.icon || "📦"}
+                        </Text>
+                        <Text style={[styles.selectedCatName, ds.text]}>
+                          {cat?.name || selectedGasto}
+                        </Text>
+                      </View>
+                    );
+                  })()}
 
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>
@@ -674,8 +689,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   categoryIcon: {
-    width: 44,
-    height: 44,
+    width: 84,
+    height: 84,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
