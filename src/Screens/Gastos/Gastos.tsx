@@ -25,7 +25,14 @@ import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
-import { IconGasStation } from "../../assets/icons/icons";
+import {
+  IconGasStation,
+  IconPeaje,
+  IconRepair,
+  IconViaticos,
+  IconLavado,
+  IconParqueadero,
+} from "../../assets/icons/icons";
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
 const GRID_GAP = 12;
@@ -41,13 +48,23 @@ const GASTOS_CATEGORIAS = [
     icon: <IconGasStation />,
     color: "#FFB800",
   },
-  { id: "peajes", name: "Peajes", icon: "🛣️", color: "#00D9A5" },
-  { id: "comida", name: "Comida", icon: "🍔", color: "#FF6B6B" },
+  { id: "peajes", name: "Peajes", icon: <IconPeaje />, color: "#00D9A5" },
+  { id: "comida", name: "Comida", icon: <IconViaticos />, color: "#FF6B6B" },
   { id: "hospedaje", name: "Hospedaje", icon: "🏨", color: "#6C5CE7" },
-  { id: "mantenimiento", name: "Manteni...", icon: "🔧", color: "#74B9FF" },
+  {
+    id: "mantenimiento",
+    name: "Manteni...",
+    icon: <IconRepair />,
+    color: "#74B9FF",
+  },
   { id: "llantas", name: "Llantas", icon: "🛞", color: "#A29BFE" },
-  { id: "lavado", name: "Lavado", icon: "🧼", color: "#00CEC9" },
-  { id: "parqueadero", name: "Parqueo", icon: "🅿️", color: "#FD79A8" },
+  { id: "lavado", name: "Lavado", icon: <IconLavado />, color: "#00CEC9" },
+  {
+    id: "parqueadero",
+    name: "Parqueo",
+    icon: <IconParqueadero />,
+    color: "#FD79A8",
+  },
   { id: "otros", name: "Otros", icon: "📦", color: "#636E72" },
 ];
 
