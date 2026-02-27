@@ -370,10 +370,7 @@ export default function Gastos() {
                   (c) =>
                     c.name.toLowerCase() === item.tipo_gasto?.toLowerCase(),
                 );
-                const IconComponent =
-                  categoria && typeof categoria.icon === "function"
-                    ? categoria.icon
-                    : null;
+                const CatIcon = categoria?.Icon ?? Package;
                 return (
                   <View
                     key={`${item.id}-${index}`}
@@ -389,17 +386,12 @@ export default function Gastos() {
                           backgroundColor: `${categoria?.color || ds.accent}20`,
                         },
                       ]}>
-                      <Text style={styles.gastoEmoji}>
-                        {categoria?.icon || "📦"}
-                      </Text>
+                      <CatIcon
+                        size={20}
+                        color={categoria?.color || ds.accent}
+                        strokeWidth={1.5}
+                      />
                     </View>
-                    ) : (
-                    <Text style={styles.gastoEmoji}>
-                      {typeof categoria?.icon === "string"
-                        ? categoria.icon
-                        : "📦"}
-                    </Text>
-                    )
                     <View style={styles.gastoInfo}>
                       <Text style={[styles.gastoName, ds.text]}>
                         {item.tipo_gasto || item.descripcion}
@@ -508,9 +500,19 @@ export default function Gastos() {
                     );
                     return (
                       <View style={styles.selectedCat}>
-                        <Text style={styles.selectedCatIcon}>
-                          {cat?.icon || "📦"}
-                        </Text>
+                        {cat && (
+                          <View
+                            style={[
+                              styles.selectedCatIconBox,
+                              { backgroundColor: cat.color + "20" },
+                            ]}>
+                            <cat.Icon
+                              size={22}
+                              color={cat.color}
+                              strokeWidth={1.5}
+                            />
+                          </View>
+                        )}
                         <Text style={[styles.selectedCatName, ds.text]}>
                           {cat?.name || selectedGasto}
                         </Text>
@@ -730,7 +732,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
   },
-  gastoEmoji: { fontSize: 18 },
   gastoInfo: { flex: 1 },
   gastoName: { fontSize: 14, fontWeight: "600", marginBottom: 2 },
   gastoDate: { fontSize: 11, textTransform: "capitalize" },
@@ -787,7 +788,13 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 20,
   },
-  selectedCatIcon: { fontSize: 28 },
+  selectedCatIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   selectedCatName: { fontSize: 16, fontWeight: "600" },
 
   inputGroup: { marginBottom: 16 },

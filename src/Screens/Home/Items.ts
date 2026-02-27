@@ -1,57 +1,55 @@
-// src/screens/Home/Items.ts
+import {
+  TriangleAlert,
+  ShieldCheck,
+  Settings2,
+  Wrench,
+  CreditCard,
+} from "lucide-react-native";
 
-import { MultasIcon } from "../../assets/icons/icons";
-import { SoatIcon } from "../../assets/icons/icons";
-import { MantenimientoIcon } from "../../assets/icons/icons";
-import { LicenciaIcon } from "../../assets/icons/icons";
-import { tecnoIcon } from "../../assets/icons/icons";
-
-// Definir el tipo Item
 export interface Item {
-  id: string; // ✅ ID único para cada item
-  icon: any; // Puede ser componente o require()
-  title: string;
-  subtitle?: string;
-  backgroundColor?: string;
-  mostrarBadge?: boolean; // ✅ Para saber si mostrar badge de estado
+  id: string;
+  icon: any;
+  color: string;
+  name: string;
+  description?: string;
+  mostrarBadge?: boolean;
 }
 
 export const items: Item[] = [
   {
     id: "multas",
-    icon: MultasIcon, // ✅ Usar el componente importado
-    title: "Multas",
-    subtitle: "Consultar multas",
-    backgroundColor: "#f5f5f5",
-    mostrarBadge: true, // 👈 Este mostrará el badge de pendiente/al día
+    icon: TriangleAlert,
+    color: "#E94560",
+    name: "Multas",
+    description: "Consultar multas",
+    mostrarBadge: true,
   },
   {
     id: "soat",
-    icon: SoatIcon,
-    title: "SOAT",
-    subtitle: "Verificar SOAT",
-    backgroundColor: "#f5f5f5",
+    icon: ShieldCheck,
+    color: "#00D9A5",
+    name: "SOAT",
+    description: "Verificar SOAT",
   },
   {
     id: "tecnicomecanica",
-    icon: tecnoIcon,
-    title: "Tecnicomecánica",
-    subtitle: "Estado",
-    backgroundColor: "#f5f5f5",
+    icon: Settings2,
+    color: "#74B9FF",
+    name: "Tecnicomecánica",
+    description: "Estado",
   },
   {
     id: "mantenimiento",
-    icon: MantenimientoIcon,
-    title: "Mantenimiento",
-    subtitle: "Próximo",
-    backgroundColor: "#f5f5f5",
+    icon: Wrench,
+    color: "#FFB800",
+    name: "Mantenimiento",
+    description: "Próximo",
   },
   {
     id: "licencia",
-    icon: LicenciaIcon,
-    title: "Licencia",
-    subtitle: "Vijente",
-    backgroundColor: "#f5f5f5",
+    icon: CreditCard,
+    color: "#6C5CE7",
+    name: "Licencia",
+    description: "Vigente",
   },
-  // Agrega más items según necesites
 ];

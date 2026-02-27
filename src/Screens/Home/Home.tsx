@@ -290,7 +290,11 @@ export default function HomeBaseAdapted({
                           backgroundColor: (item.color || colors.accent) + "20",
                         },
                       ]}>
-                      <Text style={styles.itemIcon}>{item.icon}</Text>
+                      <item.icon
+                        size={28}
+                        color={item.color || colors.accent}
+                        strokeWidth={1.5}
+                      />
                     </View>
                     <Text style={[styles.itemName, ds.text]}>{item.name}</Text>
                     {item.description && (
