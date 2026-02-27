@@ -26,13 +26,16 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
-  IconGasStation,
-  IconPeaje,
-  IconRepair,
-  IconViaticos,
-  IconLavado,
-  IconParqueadero,
-} from "../../assets/icons/icons";
+  Fuel,
+  Milestone,
+  Utensils,
+  Hotel,
+  Wrench,
+  Disc3,
+  WashingMachine,
+  SquareParking,
+  Package,
+} from "lucide-react-native";
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
 const GRID_GAP = 12;
@@ -42,30 +45,15 @@ const ITEM_WIDTH =
   COLUMN_COUNT;
 
 const GASTOS_CATEGORIAS = [
-  {
-    id: "combustible",
-    name: "Combustible",
-    icon: <IconGasStation />,
-    color: "#FFB800",
-  },
-  { id: "peajes", name: "Peajes", icon: <IconPeaje />, color: "#00D9A5" },
-  { id: "comida", name: "Comida", icon: <IconViaticos />, color: "#FF6B6B" },
-  { id: "hospedaje", name: "Hospedaje", icon: "🏨", color: "#6C5CE7" },
-  {
-    id: "mantenimiento",
-    name: "Manteni...",
-    icon: <IconRepair />,
-    color: "#74B9FF",
-  },
-  { id: "llantas", name: "Llantas", icon: "🛞", color: "#A29BFE" },
-  { id: "lavado", name: "Lavado", icon: <IconLavado />, color: "#00CEC9" },
-  {
-    id: "parqueadero",
-    name: "Parqueo",
-    icon: <IconParqueadero />,
-    color: "#FD79A8",
-  },
-  { id: "otros", name: "Otros", icon: "📦", color: "#636E72" },
+  { id: "combustible", name: "Combustible", Icon: Fuel, color: "#FFB800" },
+  { id: "peajes", name: "Peajes", Icon: Milestone, color: "#00D9A5" },
+  { id: "comida", name: "Comida", Icon: Utensils, color: "#FF6B6B" },
+  { id: "hospedaje", name: "Hospedaje", Icon: Hotel, color: "#6C5CE7" },
+  { id: "mantenimiento", name: "Manteni...", Icon: Wrench, color: "#74B9FF" },
+  { id: "llantas", name: "Llantas", Icon: Disc3, color: "#A29BFE" },
+  { id: "lavado", name: "Lavado", Icon: WashingMachine, color: "#00CEC9" },
+  { id: "parqueadero", name: "Parqueo", Icon: SquareParking, color: "#FD79A8" },
+  { id: "otros", name: "Otros", Icon: Package, color: "#636E72" },
 ];
 
 export default function Gastos() {
@@ -354,7 +342,7 @@ export default function Gastos() {
                       styles.categoryIcon,
                       { backgroundColor: `${cat.color}20` },
                     ]}>
-                    <Text style={styles.categoryEmoji}>{cat.icon}</Text>
+                    <cat.Icon size={28} color={cat.color} strokeWidth={1.5} />
                   </View>
                   <Text
                     style={[styles.categoryName, ds.textSecondary]}
@@ -713,7 +701,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  categoryEmoji: { fontSize: 22 },
   categoryName: { fontSize: 10, textAlign: "center", paddingHorizontal: 2 },
 
   // EMPTY LIST
