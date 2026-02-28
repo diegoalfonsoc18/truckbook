@@ -1,10 +1,15 @@
+import React from "react";
 import {
   TriangleAlert,
   ShieldCheck,
   Settings2,
-  Wrench,
   CreditCard,
 } from "lucide-react-native";
+import { IconMantenimiento } from "../../assets/icons/icons";
+
+// Adaptador para que IconMantenimiento acepte prop 'size' como Lucide
+const MantenimientoIcon = ({ size = 28, color = "currentColor", ...props }: any) =>
+  React.createElement(IconMantenimiento, { width: size, height: size, color, ...props });
 
 export interface Item {
   id: string;
@@ -40,7 +45,7 @@ export const items: Item[] = [
   },
   {
     id: "mantenimiento",
-    icon: Wrench,
+    icon: MantenimientoIcon,
     color: "#FFB800",
     name: "Mantenimiento",
     description: "Próximo",
