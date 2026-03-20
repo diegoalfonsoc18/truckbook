@@ -25,17 +25,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
-import {
-  Fuel,
-  Milestone,
-  Utensils,
-  Hotel,
-  Wrench,
-  Disc3,
-  WashingMachine,
-  SquareParking,
-  Package,
-} from "lucide-react-native";
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
 const GRID_GAP = 12;
@@ -44,17 +33,23 @@ const ITEM_WIDTH =
   (width - HORIZONTAL_PADDING * 2 - GRID_GAP * (COLUMN_COUNT - 1)) /
   COLUMN_COUNT;
 
-const GASTOS_CATEGORIAS = [
-  { id: "combustible", name: "Combustible", Icon: Fuel, color: "#FFB800" },
-  { id: "peajes", name: "Peajes", Icon: Milestone, color: "#00D9A5" },
-  { id: "comida", name: "Comida", Icon: Utensils, color: "#FF6B6B" },
-  { id: "hospedaje", name: "Hospedaje", Icon: Hotel, color: "#6C5CE7" },
-  { id: "mantenimiento", name: "Manteni...", Icon: Wrench, color: "#74B9FF" },
-  { id: "llantas", name: "Llantas", Icon: Disc3, color: "#A29BFE" },
-  { id: "lavado", name: "Lavado", Icon: WashingMachine, color: "#00CEC9" },
-  { id: "parqueadero", name: "Parqueo", Icon: SquareParking, color: "#FD79A8" },
-  { id: "otros", name: "Otros", Icon: Package, color: "#636E72" },
+const MANTENIMIENTO_SUBCATEGORIAS = [
+  { id: "reparacion", name: "Reparación", emoji: "🔧", color: "#74B9FF" },
+  { id: "llantas", name: "Llantas", emoji: "🛞", color: "#A29BFE" },
+  { id: "lavado", name: "Lavado", emoji: "🧼", color: "#00CEC9" },
 ];
+
+const GASTOS_CATEGORIAS = [
+  { id: "combustible", name: "Combustible", emoji: "⛽", color: "#FFB800" },
+  { id: "peajes", name: "Peajes", emoji: "🛣️", color: "#00D9A5" },
+  { id: "comida", name: "Comida", emoji: "🍽️", color: "#FF6B6B" },
+  { id: "hospedaje", name: "Hospedaje", emoji: "🏨", color: "#6C5CE7" },
+  { id: "mantenimiento", name: "Manteni...", emoji: "🔧", color: "#74B9FF" },
+  { id: "parqueadero", name: "Parqueo", emoji: "🅿️", color: "#FD79A8" },
+  { id: "otros", name: "Otros", emoji: "📦", color: "#636E72" },
+];
+
+const ALL_CATEGORIAS = [...GASTOS_CATEGORIAS, ...MANTENIMIENTO_SUBCATEGORIAS];
 
 export default function Gastos() {
   const { colors, isDark } = useTheme();
@@ -74,6 +69,8 @@ export default function Gastos() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState<string>(selectedDate);
   const [loading, setLoading] = useState(false);
+  const [mantenimientoVisible, setMantenimientoVisible] = useState(false);
+  const [customDescription, setCustomDescription] = useState("");
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isEditing = editId !== null;
@@ -101,9 +98,17 @@ export default function Gastos() {
         return;
       }
       const gasto =
-        GASTOS_CATEGORIAS.find((g) => g.id === id) ||
+        ALL_CATEGORIAS.find((g) => g.id === id) ||
         gastosData.find((g) => g.id === id);
       if (!gasto) return;
+
+      if (id === "otros" && !customDescription.trim()) {
+        Alert.alert("Error", "Ingresa una descripción para el gasto");
+        return;
+      }
+
+      const descripcion =
+        id === "otros" ? customDescription.trim() : gasto.name;
 
       setLoading(true);
       try {
@@ -111,7 +116,7 @@ export default function Gastos() {
           placa: placaActual,
           conductor_id: user.id,
           tipo_gasto: gasto.name,
-          descripcion: gasto.name,
+          descripcion,
           monto: parseFloat(value),
           fecha: editDate,
           estado: "pendiente",
@@ -192,9 +197,14 @@ export default function Gastos() {
     setEditValue("");
     setSelectedGasto(null);
     setEditDate(selectedDate);
+    setCustomDescription("");
   };
 
   const openAddModal = (categoriaId: string) => {
+    if (categoriaId === "mantenimiento") {
+      setMantenimientoVisible(true);
+      return;
+    }
     setSelectedGasto(categoriaId);
     setEditId(null);
     setEditValue("");
@@ -342,7 +352,7 @@ export default function Gastos() {
                       styles.categoryIcon,
                       { backgroundColor: `${cat.color}20` },
                     ]}>
-                    <cat.Icon size={28} color={cat.color} strokeWidth={1.5} />
+                    <Text style={{ fontSize: 28 }}>{cat.emoji}</Text>
                   </View>
                   <Text
                     style={[styles.categoryName, ds.textSecondary]}
@@ -366,14 +376,10 @@ export default function Gastos() {
               </View>
             ) : (
               gastosFiltrados.map((item, index) => {
-                const categoria = GASTOS_CATEGORIAS.find(
+                const categoria = ALL_CATEGORIAS.find(
                   (c) =>
                     c.name.toLowerCase() === item.tipo_gasto?.toLowerCase(),
                 );
-                const IconComponent =
-                  categoria && typeof categoria.icon === "function"
-                    ? categoria.icon
-                    : null;
                 return (
                   <View
                     key={`${item.id}-${index}`}
@@ -390,16 +396,9 @@ export default function Gastos() {
                         },
                       ]}>
                       <Text style={styles.gastoEmoji}>
-                        {categoria?.icon || "📦"}
+                        {categoria?.emoji || "📦"}
                       </Text>
                     </View>
-                    ) : (
-                    <Text style={styles.gastoEmoji}>
-                      {typeof categoria?.icon === "string"
-                        ? categoria.icon
-                        : "📦"}
-                    </Text>
-                    )
                     <View style={styles.gastoInfo}>
                       <Text style={[styles.gastoName, ds.text]}>
                         {item.tipo_gasto || item.descripcion}
@@ -476,6 +475,53 @@ export default function Gastos() {
         </TouchableOpacity>
       </Modal>
 
+      {/* MODAL MANTENIMIENTO SUBCATEGORÍAS */}
+      <Modal
+        visible={mantenimientoVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMantenimientoVisible(false)}>
+        <TouchableOpacity
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+          activeOpacity={1}
+          onPress={() => setMantenimientoVisible(false)}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.addModal, ds.modalBg]}>
+              <View
+                style={[
+                  styles.modalHandle,
+                  { backgroundColor: colors.textMuted },
+                ]}
+              />
+              <Text style={[styles.modalTitle, ds.text]}>Mantenimiento</Text>
+              <View style={styles.subCategoriesGrid}>
+                {MANTENIMIENTO_SUBCATEGORIAS.map((sub) => (
+                  <TouchableOpacity
+                    key={sub.id}
+                    onPress={() => {
+                      setMantenimientoVisible(false);
+                      setTimeout(() => openAddModal(sub.id), 300);
+                    }}
+                    activeOpacity={0.7}
+                    style={styles.subCategoryItem}>
+                    <View
+                      style={[
+                        styles.subCategoryIcon,
+                        { backgroundColor: `${sub.color}20` },
+                      ]}>
+                      <Text style={{ fontSize: 32 }}>{sub.emoji}</Text>
+                    </View>
+                    <Text style={[styles.subCategoryName, ds.text]}>
+                      {sub.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
+
       {/* MODAL AGREGAR/EDITAR */}
       <Modal
         visible={modalVisible}
@@ -503,13 +549,13 @@ export default function Gastos() {
 
                 {selectedGasto &&
                   (() => {
-                    const cat = GASTOS_CATEGORIAS.find(
+                    const cat = ALL_CATEGORIAS.find(
                       (c) => c.id === selectedGasto,
                     );
                     return (
                       <View style={styles.selectedCat}>
                         <Text style={styles.selectedCatIcon}>
-                          {cat?.icon || "📦"}
+                          {cat?.emoji || "📦"}
                         </Text>
                         <Text style={[styles.selectedCatName, ds.text]}>
                           {cat?.name || selectedGasto}
@@ -517,6 +563,29 @@ export default function Gastos() {
                       </View>
                     );
                   })()}
+
+                {selectedGasto === "otros" && !isEditing && (
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, ds.textSecondary]}>
+                      Descripción
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        ds.inputBg,
+                        { borderColor: colors.border },
+                      ]}>
+                      <TextInput
+                        style={[styles.customInput, ds.text]}
+                        placeholder="Ej: Multa, Seguro, Perito..."
+                        placeholderTextColor={colors.textMuted}
+                        value={customDescription}
+                        onChangeText={setCustomDescription}
+                        autoFocus
+                      />
+                    </View>
+                  </View>
+                )}
 
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>
@@ -538,7 +607,7 @@ export default function Gastos() {
                       keyboardType="numeric"
                       value={editValue}
                       onChangeText={setEditValue}
-                      autoFocus
+                      autoFocus={selectedGasto !== "otros"}
                     />
                   </View>
                 </View>
@@ -576,7 +645,12 @@ export default function Gastos() {
                     style={[
                       styles.saveBtn,
                       { backgroundColor: ds.accent },
-                      (!editValue || loading) && styles.saveBtnDisabled,
+                      (!editValue ||
+                        loading ||
+                        (selectedGasto === "otros" &&
+                          !isEditing &&
+                          !customDescription.trim())) &&
+                        styles.saveBtnDisabled,
                     ]}
                     onPress={() => {
                       isEditing
@@ -584,7 +658,13 @@ export default function Gastos() {
                         : selectedGasto &&
                           handleAddGasto(selectedGasto, editValue);
                     }}
-                    disabled={!editValue || loading}>
+                    disabled={
+                      !editValue ||
+                      loading ||
+                      (selectedGasto === "otros" &&
+                        !isEditing &&
+                        !customDescription.trim())
+                    }>
                     {loading ? (
                       <ActivityIndicator color="#FFF" size="small" />
                     ) : (
@@ -703,6 +783,24 @@ const styles = StyleSheet.create({
   },
   categoryName: { fontSize: 10, textAlign: "center", paddingHorizontal: 2 },
 
+  // SUBCATEGORIES (mantenimiento modal)
+  subCategoriesGrid: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 20,
+    marginBottom: 20,
+  },
+  subCategoryItem: { alignItems: "center" },
+  subCategoryIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  subCategoryName: { fontSize: 13, fontWeight: "600" },
+
   // EMPTY LIST
   emptyList: {
     padding: 30,
@@ -805,6 +903,7 @@ const styles = StyleSheet.create({
   },
   inputPrefix: { fontSize: 18, fontWeight: "600", paddingLeft: 14 },
   input: { flex: 1, fontSize: 22, fontWeight: "600", padding: 14 },
+  customInput: { flex: 1, fontSize: 16, padding: 14 },
   dateInput: {
     flexDirection: "row",
     alignItems: "center",
