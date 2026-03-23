@@ -22,6 +22,10 @@ import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { TipoCamion } from "../../store/VehiculoStore";
 import supabase from "../../config/SupaBaseConfig";
+import {
+  cargarTodosVehiculosConConductores,
+  cargarVehiculosPropietarioConConductores,
+} from "../../services/vehiculoAutorizacionService";
 
 interface VehiculoInfo {
   placa: string;
@@ -71,62 +75,21 @@ export default function GestionVehiculos() {
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
 
-    let placas: string[] = [];
+    // Usar las mismas funciones que funcionan en Conductores
+    const { data } =
+      role === "administrador"
+        ? await cargarTodosVehiculosConConductores()
+        : await cargarVehiculosPropietarioConConductores(user.id);
 
-    if (role === "administrador") {
-      // Admin ve todos los vehiculos
-      const { data } = await supabase
-        .from("vehiculos")
-        .select("placa")
-        .order("placa");
-      placas = (data || []).map((v) => v.placa);
-    } else {
-      // Propietario ve solo los suyos
-      const { data } = await supabase
-        .from("vehiculo_conductores")
-        .select("vehiculo_placa")
-        .eq("conductor_id", user.id)
-        .eq("rol", "propietario")
-        .eq("estado", "autorizado");
-      placas = (data || []).map((v) => v.vehiculo_placa);
-    }
-
-    const resultado: VehiculoInfo[] = [];
-
-    for (const placa of placas) {
-      const { data: vehiculo } = await supabase
-        .from("vehiculos")
-        .select("tipo_camion")
-        .eq("placa", placa)
-        .maybeSingle();
-
-      // Cargar conductores asignados
-      const { data: relaciones } = await supabase
-        .from("vehiculo_conductores")
-        .select("conductor_id, estado")
-        .eq("vehiculo_placa", placa)
-        .eq("rol", "conductor");
-
-      const conductores: { nombre: string; estado: string }[] = [];
-      for (const rel of relaciones || []) {
-        const { data: usr } = await supabase
-          .from("usuarios")
-          .select("nombre")
-          .eq("user_id", rel.conductor_id)
-          .maybeSingle();
-        conductores.push({
-          nombre: usr?.nombre || "Sin nombre",
-          estado: rel.estado,
-        });
-      }
-
-      resultado.push({
-        placa,
-        tipo_camion: vehiculo?.tipo_camion || "estacas",
-        conductoresCount: conductores.length,
-        conductores,
-      });
-    }
+    const resultado: VehiculoInfo[] = data.map((v) => ({
+      placa: v.placa,
+      tipo_camion: v.tipo_camion,
+      conductoresCount: v.conductores.length,
+      conductores: v.conductores.map((c) => ({
+        nombre: c.nombre,
+        estado: c.estado,
+      })),
+    }));
 
     setVehiculos(resultado);
   }, [user?.id, role]);
