@@ -1,6 +1,28 @@
 import supabase from "../config/SupaBaseConfig";
 
 export type EstadoAutorizacion = "pendiente" | "autorizado" | "rechazado";
+
+/**
+ * Verificar si un usuario esta autorizado para operar un vehiculo
+ */
+export async function verificarAutorizacion(
+  userId: string,
+  placa: string
+): Promise<{ autorizado: boolean; estado?: EstadoAutorizacion; rol?: string }> {
+  const { data, error } = await supabase
+    .from("vehiculo_conductores")
+    .select("estado, rol")
+    .eq("conductor_id", userId)
+    .eq("vehiculo_placa", placa)
+    .eq("estado", "autorizado")
+    .maybeSingle();
+
+  if (error || !data) {
+    return { autorizado: false };
+  }
+
+  return { autorizado: true, estado: data.estado, rol: data.rol };
+}
 export type RolVehiculo = "propietario" | "conductor";
 
 export interface VehiculoConductor {
@@ -297,6 +319,59 @@ export async function buscarConductorPorCedula(
 }
 
 /**
+ * Buscar conductor por correo electronico
+ */
+export async function buscarConductorPorEmail(
+  email: string
+): Promise<{ data: { user_id: string; nombre: string; email: string; cedula: string } | null; error?: string }> {
+  const emailLimpio = email.toLowerCase().trim();
+  console.log("🔍 Buscando conductor por email:", emailLimpio);
+
+  // Primero intentar buscar por email en la tabla usuarios
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("user_id, nombre, email, cedula")
+    .ilike("email", emailLimpio)
+    .maybeSingle();
+
+  console.log("📦 Resultado busqueda:", JSON.stringify({ data, error }));
+
+  if (error) {
+    console.error("❌ Error buscando conductor:", error);
+    // Si el error es que la columna email no existe, informar
+    if (error.message.includes("column") || error.code === "42703") {
+      return { data: null, error: "La columna 'email' no existe en la tabla usuarios. Agregala en Supabase." };
+    }
+    return { data: null, error: error.message };
+  }
+
+  // Si no lo encontro por email, puede que el registro no tenga email guardado
+  // Intentar buscar todos los usuarios y ver si alguno coincide
+  if (!data) {
+    console.log("⚠️ No encontrado por email directo, buscando todos los usuarios...");
+    const { data: todos, error: errorTodos } = await supabase
+      .from("usuarios")
+      .select("user_id, nombre, email, cedula");
+
+    console.log("📦 Todos los usuarios:", JSON.stringify(todos?.map(u => ({ nombre: u.nombre, email: u.email }))));
+
+    if (!errorTodos && todos) {
+      // Buscar match manual (por si el email tiene espacios o diferencias)
+      const encontrado = todos.find(
+        (u) => u.email?.toLowerCase()?.trim() === emailLimpio
+      );
+      if (encontrado) {
+        return { data: encontrado };
+      }
+    }
+
+    return { data: null, error: "No se encontro un usuario con ese correo. Verifica que el usuario este registrado en la app." };
+  }
+
+  return { data };
+}
+
+/**
  * Agregar conductor a un vehiculo (por propietario/admin)
  */
 export async function agregarConductorAVehiculo(
@@ -316,28 +391,30 @@ export async function agregarConductorAVehiculo(
     if (existente.estado === "autorizado") {
       return { success: false, error: "Este conductor ya tiene acceso a este vehículo" };
     }
-    // Si esta pendiente o rechazado, actualizar a autorizado
+    if (existente.estado === "pendiente") {
+      return { success: false, error: "Ya hay una invitación pendiente para este conductor" };
+    }
+    // Si esta rechazado, reenviar invitacion como pendiente
     const { error } = await supabase
       .from("vehiculo_conductores")
       .update({
-        estado: "autorizado",
+        estado: "pendiente",
         autorizado_por: autorizadoPor,
-        autorizado_at: new Date().toISOString(),
+        autorizado_at: null,
       })
       .eq("id", existente.id);
     if (error) return { success: false, error: error.message };
     return { success: true };
   }
 
-  // Crear nueva relacion autorizada
+  // Crear nueva relacion como invitacion pendiente
   const { error } = await supabase.from("vehiculo_conductores").insert([
     {
       vehiculo_placa: placa,
       conductor_id: conductorId,
       rol: "conductor",
-      estado: "autorizado",
+      estado: "pendiente",
       autorizado_por: autorizadoPor,
-      autorizado_at: new Date().toISOString(),
     },
   ]);
 
@@ -393,5 +470,185 @@ export async function removerConductorDeVehiculo(
     .eq("id", relacionId);
 
   if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+/**
+ * Cambiar estado de autorizacion de un conductor
+ */
+export async function cambiarAutorizacionConductor(
+  relacionId: string,
+  nuevoEstado: EstadoAutorizacion,
+  autorizadoPor: string
+): Promise<{ success: boolean; error?: string }> {
+  console.log("🔄 Cambiando autorizacion:", { relacionId, nuevoEstado, autorizadoPor });
+
+  const { data, error } = await supabase
+    .from("vehiculo_conductores")
+    .update({
+      estado: nuevoEstado,
+      autorizado_por: autorizadoPor,
+      autorizado_at: new Date().toISOString(),
+    })
+    .eq("id", relacionId)
+    .select();
+
+  console.log("📦 Resultado update:", JSON.stringify({ data, error }));
+
+  if (error) return { success: false, error: error.message };
+  if (!data || data.length === 0) {
+    return { success: false, error: "No se pudo actualizar. Verifica permisos en Supabase (RLS)." };
+  }
+  return { success: true };
+}
+
+export interface VehiculoConConductores {
+  placa: string;
+  tipo_camion: string;
+  conductores: ConductorAsignado[];
+}
+
+/**
+ * Cargar todos los vehiculos con sus conductores asignados
+ */
+export async function cargarTodosVehiculosConConductores(): Promise<{
+  data: VehiculoConConductores[];
+  error: any;
+}> {
+  // Cargar todos los vehiculos
+  const { data: vehiculos, error: vError } = await supabase
+    .from("vehiculos")
+    .select("placa, tipo_camion")
+    .order("placa", { ascending: true });
+
+  if (vError) return { data: [], error: vError };
+
+  const resultado: VehiculoConConductores[] = [];
+
+  for (const v of vehiculos || []) {
+    const { data: conductores } = await cargarConductoresDeVehiculo(v.placa);
+    resultado.push({
+      placa: v.placa,
+      tipo_camion: v.tipo_camion || "estacas",
+      conductores: conductores || [],
+    });
+  }
+
+  return { data: resultado, error: null };
+}
+
+/**
+ * Cargar vehiculos de un propietario con sus conductores
+ */
+export async function cargarVehiculosPropietarioConConductores(
+  userId: string
+): Promise<{ data: VehiculoConConductores[]; error: any }> {
+  // Obtener placas donde soy propietario
+  const { data: misVehiculos, error: vError } = await supabase
+    .from("vehiculo_conductores")
+    .select("vehiculo_placa")
+    .eq("conductor_id", userId)
+    .eq("rol", "propietario")
+    .eq("estado", "autorizado");
+
+  if (vError) return { data: [], error: vError };
+
+  const resultado: VehiculoConConductores[] = [];
+
+  for (const v of misVehiculos || []) {
+    const { data: vehiculo } = await supabase
+      .from("vehiculos")
+      .select("tipo_camion")
+      .eq("placa", v.vehiculo_placa)
+      .maybeSingle();
+
+    const { data: conductores } = await cargarConductoresDeVehiculo(v.vehiculo_placa);
+    resultado.push({
+      placa: v.vehiculo_placa,
+      tipo_camion: vehiculo?.tipo_camion || "estacas",
+      conductores: conductores || [],
+    });
+  }
+
+  return { data: resultado, error: null };
+}
+
+/**
+ * Invitaciones pendientes para un conductor
+ */
+export interface InvitacionPendiente {
+  relacion_id: string;
+  placa: string;
+  tipo_camion: string;
+  invitado_por_nombre: string;
+  fecha: string;
+}
+
+export async function cargarInvitacionesPendientes(
+  userId: string
+): Promise<{ data: InvitacionPendiente[]; error: any }> {
+  const { data, error } = await supabase
+    .from("vehiculo_conductores")
+    .select("id, vehiculo_placa, autorizado_por, created_at")
+    .eq("conductor_id", userId)
+    .eq("rol", "conductor")
+    .eq("estado", "pendiente")
+    .order("created_at", { ascending: false });
+
+  if (error) return { data: [], error };
+
+  const invitaciones: InvitacionPendiente[] = [];
+
+  for (const rel of data || []) {
+    const { data: vehiculo } = await supabase
+      .from("vehiculos")
+      .select("tipo_camion")
+      .eq("placa", rel.vehiculo_placa)
+      .maybeSingle();
+
+    let invitadoPorNombre = "Administrador";
+    if (rel.autorizado_por) {
+      const { data: usr } = await supabase
+        .from("usuarios")
+        .select("nombre")
+        .eq("user_id", rel.autorizado_por)
+        .maybeSingle();
+      invitadoPorNombre = usr?.nombre || "Administrador";
+    }
+
+    invitaciones.push({
+      relacion_id: rel.id,
+      placa: rel.vehiculo_placa,
+      tipo_camion: vehiculo?.tipo_camion || "estacas",
+      invitado_por_nombre: invitadoPorNombre,
+      fecha: rel.created_at,
+    });
+  }
+
+  return { data: invitaciones, error: null };
+}
+
+/**
+ * Conductor responde a invitacion (aceptar o rechazar)
+ */
+export async function responderInvitacion(
+  relacionId: string,
+  aceptar: boolean
+): Promise<{ success: boolean; error?: string }> {
+  const nuevoEstado = aceptar ? "autorizado" : "rechazado";
+
+  const { data, error } = await supabase
+    .from("vehiculo_conductores")
+    .update({
+      estado: nuevoEstado,
+      autorizado_at: new Date().toISOString(),
+    })
+    .eq("id", relacionId)
+    .select();
+
+  if (error) return { success: false, error: error.message };
+  if (!data || data.length === 0) {
+    return { success: false, error: "No se pudo actualizar. Verifica permisos en Supabase." };
+  }
   return { success: true };
 }

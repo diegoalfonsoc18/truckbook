@@ -1,113 +1,202 @@
-// src/screens/Auth/SelectRole.tsx
-import React from "react";
-import { View, Text, TouchableOpacity, SafeAreaView } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useRoleStore, UserRole } from "../../store/RoleStore";
-import styles from "./SelectRoleStyles";
-import { PersonIcon, AdminIcon, TruckIcon } from "../../assets/icons/icons"; // Ajusta según tus iconos
+import { useAuth } from "../../hooks/useAuth";
+import { useTheme, getShadow } from "../../constants/Themecontext";
 
-type RootStackParamList = {
+const { width } = Dimensions.get("window");
+
+type AuthStackParamList = {
   SelectRole: undefined;
-  Home: undefined;
+  Login: undefined;
+  Register: undefined;
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, "SelectRole">;
+type Props = NativeStackScreenProps<AuthStackParamList, "SelectRole">;
 
-const ROLES = [
+const ROLES: { id: UserRole; label: string; description: string; emoji: string }[] = [
   {
-    id: "conductor" as UserRole,
+    id: "conductor",
     label: "Conductor",
-    description: "Maneja los vehículos",
-    icon: PersonIcon,
+    description: "Conduzco vehiculos",
+    emoji: "🧑‍✈️",
   },
   {
-    id: "administrador" as UserRole,
+    id: "administrador",
     label: "Administrador",
-    description: "Gestiona la empresa",
-    icon: AdminIcon,
+    description: "Gestiono la operacion",
+    emoji: "📋",
   },
   {
-    id: "dueño" as UserRole,
-    label: "Dueño del Camión",
-    description: "Propietario del vehículo",
-    icon: TruckIcon,
+    id: "propietario",
+    label: "Propietario",
+    description: "Soy dueño de vehiculos",
+    emoji: "🚛",
   },
 ];
 
 export default function SelectRoleScreen({ navigation }: Props) {
-  const setRole = useRoleStore((state) => state.setRole);
-  const [selectedRole, setSelectedRole] = React.useState<UserRole | null>(null);
+  const { colors, isDark } = useTheme();
+  const { user } = useAuth();
+  const { guardarRolEnDB } = useRoleStore();
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSelectRole = (role: UserRole) => {
+  const ds = {
+    container: { backgroundColor: colors.primary },
+    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
+    text: { color: colors.text },
+    textSecondary: { color: colors.textSecondary },
+    textMuted: { color: colors.textMuted },
+  };
+
+  const handleSelectRole = async (role: UserRole) => {
     setSelectedRole(role);
-    setRole(role);
-    // Navega a Home después de 300ms
-    setTimeout(() => {
-      navigation.replace("Home");
-    }, 300);
+    setLoading(true);
+    try {
+      if (user?.id) {
+        await guardarRolEnDB(user.id, role);
+      } else {
+        useRoleStore.getState().setRole(role);
+      }
+    } catch (err) {
+      console.error("Error guardando rol:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>¿Cuál es tu rol?</Text>
-        <Text style={styles.subtitle}>
-          Selecciona el rol que mejor te describe
-        </Text>
-      </View>
+    <View style={[styles.container, ds.container]}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <View style={styles.content}>
+          {/* HEADER */}
+          <View style={styles.headerSection}>
+            <Text style={styles.headerEmoji}>👋</Text>
+            <Text style={[styles.title, ds.text]}>Cual es tu rol?</Text>
+            <Text style={[styles.subtitle, ds.textSecondary]}>
+              Puedes cambiarlo en cualquier momento. Un usuario puede tener
+              todos los roles.
+            </Text>
+          </View>
 
-      <View style={styles.rolesContainer}>
-        {ROLES.map((role) => {
-          const IconComponent = role.icon;
-          const isSelected = selectedRole === role.id;
+          {/* ROLES */}
+          <View style={styles.rolesContainer}>
+            {ROLES.map((role) => {
+              const isSelected = selectedRole === role.id;
+              return (
+                <TouchableOpacity
+                  key={role.id}
+                  style={[
+                    styles.roleCard,
+                    ds.cardBg,
+                    getShadow(isDark, "sm"),
+                    isSelected && {
+                      borderColor: colors.accent,
+                      borderWidth: 2,
+                      backgroundColor: colors.accent + "10",
+                    },
+                  ]}
+                  onPress={() => handleSelectRole(role.id)}
+                  activeOpacity={0.7}
+                  disabled={loading}>
+                  <View
+                    style={[
+                      styles.roleIconContainer,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.accent + "20"
+                          : colors.primary,
+                      },
+                    ]}>
+                    <Text style={styles.roleEmoji}>{role.emoji}</Text>
+                  </View>
+                  <View style={styles.roleInfo}>
+                    <Text style={[styles.roleLabel, ds.text]}>
+                      {role.label}
+                    </Text>
+                    <Text style={[styles.roleDescription, ds.textSecondary]}>
+                      {role.description}
+                    </Text>
+                  </View>
+                  {isSelected && (
+                    <View
+                      style={[
+                        styles.checkBadge,
+                        { backgroundColor: colors.accent },
+                      ]}>
+                      {loading ? (
+                        <ActivityIndicator color="#FFF" size="small" />
+                      ) : (
+                        <Text style={styles.checkText}>✓</Text>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-          return (
-            <TouchableOpacity
-              key={role.id}
-              style={[styles.roleCard, isSelected && styles.roleCardSelected]}
-              onPress={() => handleSelectRole(role.id)}
-              activeOpacity={0.8}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  isSelected && styles.iconContainerSelected,
-                ]}>
-                <IconComponent
-                  width={40}
-                  height={40}
-                  color={isSelected ? "#FFFFFF" : "#2196F3"}
-                />
-              </View>
-
-              <Text
-                style={[
-                  styles.roleLabel,
-                  isSelected && styles.roleLabelSelected,
-                ]}>
-                {role.label}
-              </Text>
-
-              <Text
-                style={[
-                  styles.roleDescription,
-                  isSelected && styles.roleDescriptionSelected,
-                ]}>
-                {role.description}
-              </Text>
-
-              {isSelected && (
-                <View style={styles.checkmark}>
-                  <Text style={styles.checkmarkText}>✓</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      <Text style={styles.footerText}>
-        Puedes cambiar tu rol más tarde en la configuración
-      </Text>
-    </SafeAreaView>
+          {/* FOOTER */}
+          <Text style={[styles.footerText, ds.textMuted]}>
+            Puedes cambiar tu rol desde la pantalla de Cuenta
+          </Text>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 24, justifyContent: "center" },
+
+  // HEADER
+  headerSection: { alignItems: "center", marginBottom: 32 },
+  headerEmoji: { fontSize: 48, marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 8 },
+  subtitle: { fontSize: 14, textAlign: "center", lineHeight: 20 },
+
+  // ROLES
+  rolesContainer: { gap: 12, marginBottom: 32 },
+  roleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+  roleIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+  roleEmoji: { fontSize: 26 },
+  roleInfo: { flex: 1 },
+  roleLabel: { fontSize: 17, fontWeight: "700", marginBottom: 2 },
+  roleDescription: { fontSize: 13 },
+  checkBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkText: { fontSize: 16, fontWeight: "700", color: "#FFF" },
+
+  // FOOTER
+  footerText: { fontSize: 12, textAlign: "center" },
+});

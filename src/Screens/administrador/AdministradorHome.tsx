@@ -51,7 +51,7 @@ export default function AdministradorHome() {
         navigation.navigate("AdminConductores");
         break;
       case "vehiculos":
-        Alert.alert("En desarrollo", "Gestion de vehiculos proximamente");
+        navigation.navigate("AdminVehiculos");
         break;
       case "gastos":
         Alert.alert("En desarrollo", "Aprobacion de gastos proximamente");

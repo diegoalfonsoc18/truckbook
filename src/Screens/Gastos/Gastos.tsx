@@ -25,6 +25,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
 const GRID_GAP = 12;
@@ -37,6 +38,7 @@ const MANTENIMIENTO_SUBCATEGORIAS = [
   { id: "reparacion", name: "Reparación", emoji: "🔧", color: "#74B9FF" },
   { id: "llantas", name: "Llantas", emoji: "🛞", color: "#A29BFE" },
   { id: "lavado", name: "Lavado", emoji: "🧼", color: "#00CEC9" },
+  { id: "aceite", name: "Aceite", emoji: "🛢️", color: "#FDCB6E" },
 ];
 
 const GASTOS_CATEGORIAS = [
@@ -97,6 +99,17 @@ export default function Gastos() {
         );
         return;
       }
+
+      // Verificar autorizacion
+      const { autorizado } = await verificarAutorizacion(user.id, placaActual);
+      if (!autorizado) {
+        Alert.alert(
+          "Sin autorizacion",
+          "No tienes autorizacion para registrar datos en este vehiculo. El propietario o administrador debe autorizarte primero."
+        );
+        return;
+      }
+
       const gasto =
         ALL_CATEGORIAS.find((g) => g.id === id) ||
         gastosData.find((g) => g.id === id);

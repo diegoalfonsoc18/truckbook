@@ -144,14 +144,37 @@ export default function Register({ navigation }: Props) {
 
       if (data.user) {
         // Guardar datos en tabla usuarios
-        await supabase.from("usuarios").insert([
-          {
-            user_id: data.user.id,
-            nombre: nombre.trim(),
-            cedula: cedula.trim(),
-            email: email.toLowerCase().trim(),
-          },
-        ]);
+        const { error: insertError } = await supabase.from("usuarios").upsert(
+          [
+            {
+              user_id: data.user.id,
+              nombre: nombre.trim(),
+              cedula: cedula.trim(),
+              email: email.toLowerCase().trim(),
+            },
+          ],
+          { onConflict: "user_id" }
+        );
+
+        if (insertError) {
+          console.error("❌ Error insertando usuario:", JSON.stringify(insertError));
+          // Intentar sin cedula por si la columna no existe
+          const { error: retryError } = await supabase.from("usuarios").upsert(
+            [
+              {
+                user_id: data.user.id,
+                nombre: nombre.trim(),
+                email: email.toLowerCase().trim(),
+              },
+            ],
+            { onConflict: "user_id" }
+          );
+          if (retryError) {
+            console.error("❌ Error en reintento:", JSON.stringify(retryError));
+          }
+        } else {
+          console.log("✅ Usuario guardado en tabla usuarios");
+        }
       }
 
       if (data.session) {

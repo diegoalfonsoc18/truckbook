@@ -1,13 +1,15 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../Screens/Login/Login";
-import ForgotPasswordScreen from "../Screens/Login/ForgotPassword"; // Ajusta la ruta si es diferente
-import Register from "../Screens/Login/Register"; // Asegúrate de que esta pantalla exista
+import ForgotPasswordScreen from "../Screens/Login/ForgotPassword";
+import Register from "../Screens/Login/Register";
+import SelectRoleScreen from "../Screens/Login/SelectRole";
+
 type AuthStackParamList = {
   Login: undefined;
   ForgotPassword: undefined;
   Register: undefined;
-  // otras rutas...
+  SelectRole: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -18,8 +20,7 @@ export default function AuthStack() {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Register" component={Register} />
-
-      {/* otras pantallas */}
+      <Stack.Screen name="SelectRole" component={SelectRoleScreen} />
     </Stack.Navigator>
   );
 }

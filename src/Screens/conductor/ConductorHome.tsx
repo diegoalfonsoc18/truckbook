@@ -1,35 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import HomeBaseAdapted from "../Home/Home"; // ✅ Importar desde ubicación correcta
-import llantas from "../../assets/img/llantas.webp";
-import { items, Item } from "../Home/Items";
+import HomeBaseAdapted from "../Home/Home";
+import { items as baseItems, Item } from "../Home/Items";
 import { useMultas } from "../../hooks/useMultas";
 import { useVehiculoStore } from "../../store/VehiculoStore";
+import { useAuth } from "../../hooks/useAuth";
 import { styles as homeStyles } from "../Home/HomeStyles";
+import { cargarInvitacionesPendientes } from "../../services/vehiculoAutorizacionService";
+import { ConductorStackParamList } from "../../navigation/ConductorNavigation";
 
-type ConductorNavigationProp = NativeStackNavigationProp<any, "ConductorHome">;
+type ConductorNavProp = NativeStackNavigationProp<ConductorStackParamList, "ConductorHome">;
 
 export default function ConductorHome() {
-  const navigation = useNavigation<ConductorNavigationProp>();
+  const navigation = useNavigation<ConductorNavProp>();
   const { placa: placaActual } = useVehiculoStore();
+  const { user } = useAuth();
   const [refrescando, setRefrescando] = useState(false);
+  const [invitacionesCount, setInvitacionesCount] = useState(0);
 
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
     useMultas(placaActual, !!placaActual);
 
-  const handleRefresh = async () => {
-    setRefrescando(true);
-    try {
-      await recargar();
-    } finally {
-      setRefrescando(false);
-    }
-  };
+  // Cargar cantidad de invitaciones pendientes
+  useEffect(() => {
+    const cargar = async () => {
+      if (!user?.id) return;
+      const { data } = await cargarInvitacionesPendientes(user.id);
+      setInvitacionesCount(data.length);
+    };
+    cargar();
+  }, [user?.id]);
 
-  // ✅ Manejar la navegación según el item
+  // Items del conductor con invitaciones
+  const conductorItems: Item[] = [
+    {
+      id: "invitaciones",
+      icon: "📩",
+      name: "Invitaciones",
+      subtitle: invitacionesCount > 0 ? `${invitacionesCount} pendiente${invitacionesCount > 1 ? "s" : ""}` : "Sin pendientes",
+      backgroundColor: "#FFF8E1",
+    },
+    ...baseItems,
+  ];
+
   const handleItemPress = (item: Item) => {
+    if (item.id === "invitaciones") {
+      navigation.navigate("Invitaciones");
+      return;
+    }
+
     if (!placaActual) {
       Alert.alert("Error", "Por favor selecciona una placa primero");
       return;
@@ -37,16 +58,16 @@ export default function ConductorHome() {
 
     switch (item.id) {
       case "multas":
-        navigation.navigate("Multas", { placa: placaActual });
+        navigation.navigate("Multas" as any, { placa: placaActual });
         break;
       case "soat":
-        navigation.navigate("SOAT", { placa: placaActual });
+        navigation.navigate("SOAT" as any, { placa: placaActual });
         break;
       case "tecnicomecanica":
-        navigation.navigate("RTM", { placa: placaActual });
+        navigation.navigate("RTM" as any, { placa: placaActual });
         break;
       case "licencia":
-        navigation.navigate("Licencia", { documento: "1234567890" });
+        navigation.navigate("Licencia" as any, { documento: "1234567890" });
         break;
       case "mantenimiento":
         Alert.alert("Mantenimiento", "Funcionalidad en desarrollo");
@@ -56,7 +77,6 @@ export default function ConductorHome() {
     }
   };
 
-  // ✅ Renderizar badge personalizado (igual al Home original)
   const renderBadgeConductor = (item: Item) => {
     if (item.id !== "multas" || !item.mostrarBadge) {
       return null;
@@ -91,13 +111,10 @@ export default function ConductorHome() {
 
   return (
     <HomeBaseAdapted
-      items={items} // ✅ Usar items del Home original
-      imageSource={llantas}
-      onRefresh={handleRefresh}
-      refreshing={refrescando}
+      items={conductorItems}
       showCamionHeader={true}
       renderBadge={renderBadgeConductor}
-      onItemPress={handleItemPress} // ✅ Manejar navegación
+      onItemPress={handleItemPress}
     />
   );
 }

@@ -15,6 +15,20 @@ export default function PropietarioHome() {
 
   const propietarioItems: Item[] = [
     {
+      id: "conductores",
+      name: "Conductores",
+      subtitle: "Gestionar equipo",
+      icon: "👥",
+      backgroundColor: "#E3F2FD",
+    },
+    {
+      id: "flota",
+      name: "Vehiculos",
+      subtitle: "Gestionar flota",
+      icon: "🚛",
+      backgroundColor: "#FFF3E0",
+    },
+    {
       id: "solicitudes",
       name: "Solicitudes",
       subtitle: "Autorizar conductores",
@@ -22,32 +36,25 @@ export default function PropietarioHome() {
       backgroundColor: "#FFF8E1",
     },
     {
-      id: "rentabilidad",
-      name: "Rentabilidad",
-      subtitle: "Analisis financiero",
-      icon: "💰",
-      backgroundColor: "#E3F2FD",
-    },
-    {
-      id: "flota",
-      name: "Flota",
-      subtitle: "Gestionar vehiculos",
-      icon: "🚛",
-      backgroundColor: "#FFF3E0",
-    },
-    {
-      id: "conductores",
-      name: "Conductores",
-      subtitle: "Gestionar equipo",
-      icon: "👥",
+      id: "gastos",
+      name: "Aprobar Gastos",
+      subtitle: "Revisar solicitudes",
+      icon: "💸",
       backgroundColor: "#FCE4EC",
     },
     {
       id: "reportes",
       name: "Reportes",
-      subtitle: "Estadisticas",
+      subtitle: "Ver actividad",
       icon: "📊",
       backgroundColor: "#F3E5F5",
+    },
+    {
+      id: "rentabilidad",
+      name: "Rentabilidad",
+      subtitle: "Analisis financiero",
+      icon: "💰",
+      backgroundColor: "#E8F5E9",
     },
   ];
 
@@ -60,13 +67,16 @@ export default function PropietarioHome() {
         Alert.alert("En desarrollo", "Rentabilidad proximamente");
         break;
       case "flota":
-        Alert.alert("En desarrollo", "Gestion de flota proximamente");
+        navigation.navigate("PropietarioVehiculos");
         break;
       case "conductores":
         navigation.navigate("GestionConductores");
         break;
       case "reportes":
-        Alert.alert("En desarrollo", "Reportes proximamente");
+        navigation.navigate("PropietarioReportes");
+        break;
+      case "gastos":
+        Alert.alert("En desarrollo", "Aprobacion de gastos proximamente");
         break;
       default:
         break;

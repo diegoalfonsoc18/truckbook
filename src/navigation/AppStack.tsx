@@ -5,7 +5,7 @@ import { useRoleStore, UserRole } from "../store/RoleStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
-import ConductorHome from "../Screens/conductor/ConductorHome";
+import ConductorNavigation from "./ConductorNavigation";
 import AdministradorNavigation from "./AdministradorNavigation";
 import PropietarioNavigation from "./PropietarioNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
@@ -70,7 +70,7 @@ export default function AppStack() {
         <>
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />
-          <Tab.Screen name="Home" component={ConductorHome} />
+          <Tab.Screen name="Home" component={ConductorNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
           <Tab.Screen name="Cuenta" component={Account} />
         </>

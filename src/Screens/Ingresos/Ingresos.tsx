@@ -25,6 +25,7 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 
 const { width } = Dimensions.get("window");
 const COLUMN_COUNT = 4;
@@ -86,6 +87,17 @@ export default function Ingresos() {
         );
         return;
       }
+
+      // Verificar autorizacion
+      const { autorizado } = await verificarAutorizacion(user.id, placaActual);
+      if (!autorizado) {
+        Alert.alert(
+          "Sin autorizacion",
+          "No tienes autorizacion para registrar datos en este vehiculo. El propietario o administrador debe autorizarte primero."
+        );
+        return;
+      }
+
       const ingreso =
         INGRESOS_CATEGORIAS.find((i) => i.id === id) ||
         ingresosData.find((i) => i.id === id);

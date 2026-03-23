@@ -13,6 +13,8 @@ import {
   Animated,
   Dimensions,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
@@ -42,6 +44,7 @@ interface IconProps {
   color?: string;
 }
 
+import type { Item } from "./Items";
 export type { Item } from "./Items";
 
 interface HomeBaseAdaptedProps {
@@ -57,6 +60,7 @@ interface Vehiculo {
   tipo_camion: TipoCamion;
   estado?: EstadoAutorizacion;
   rol?: string;
+  conductorNombre?: string;
 }
 
 const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
@@ -119,6 +123,7 @@ export default function HomeBaseAdapted({
   const [modalPlacaVisible, setModalPlacaVisible] = useState(false);
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [conductorActual, setConductorActual] = useState<string | undefined>();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -145,15 +150,46 @@ export default function HomeBaseAdapted({
     try {
       const { data, error } = await cargarVehiculosConEstado(user.id);
       if (error) throw error;
-      setVehiculos(
-        (data || []).map((v) => ({
-          id: v.relacion_id,
-          placa: v.placa,
-          tipo_camion: v.tipo_camion as TipoCamion,
-          estado: v.estado,
-          rol: v.rol,
-        }))
+
+      const vehiculosConConductor = await Promise.all(
+        (data || []).map(async (v) => {
+          // Buscar conductor activo asignado a este vehiculo
+          let conductorNombre: string | undefined;
+          const { data: relaciones } = await supabase
+            .from("vehiculo_conductores")
+            .select("conductor_id")
+            .eq("vehiculo_placa", v.placa)
+            .eq("rol", "conductor")
+            .eq("estado", "autorizado")
+            .limit(1);
+
+          if (relaciones && relaciones.length > 0) {
+            const { data: usuario } = await supabase
+              .from("usuarios")
+              .select("nombre")
+              .eq("user_id", relaciones[0].conductor_id)
+              .maybeSingle();
+            conductorNombre = usuario?.nombre;
+          }
+
+          return {
+            id: v.relacion_id,
+            placa: v.placa,
+            tipo_camion: v.tipo_camion as TipoCamion,
+            estado: v.estado,
+            rol: v.rol,
+            conductorNombre,
+          };
+        })
       );
+
+      setVehiculos(vehiculosConConductor);
+
+      // Actualizar conductor del vehiculo seleccionado
+      if (placaActual) {
+        const actual = vehiculosConConductor.find((v) => v.placa === placaActual);
+        if (actual) setConductorActual(actual.conductorNombre);
+      }
     } catch (err) {
       console.error("Error cargando vehículos:", err);
     } finally {
@@ -181,6 +217,7 @@ export default function HomeBaseAdapted({
     }
     setPlaca(vehiculo.placa);
     setTipoCamion(vehiculo.tipo_camion);
+    setConductorActual(vehiculo.conductorNombre);
     setModalVehiculosVisible(false);
   };
 
@@ -284,9 +321,16 @@ export default function HomeBaseAdapted({
                     {tipoCamionData?.label || "Seleccionar vehículo"}
                   </Text>
                   {placaActual ? (
-                    <View style={styles.placaBadge}>
-                      <Text style={styles.placaText}>{placaActual}</Text>
-                    </View>
+                    <>
+                      <View style={styles.placaBadge}>
+                        <Text style={styles.placaText}>{placaActual}</Text>
+                      </View>
+                      {conductorActual && (
+                        <Text style={[styles.conductorLabel, ds.textSecondary]}>
+                          👤 {conductorActual}
+                        </Text>
+                      )}
+                    </>
                   ) : (
                     <Text style={[styles.vehicleSubtitle, ds.textSecondary]}>
                       Toca para seleccionar
@@ -417,6 +461,15 @@ export default function HomeBaseAdapted({
                               ]}>
                               {v.placa}
                             </Text>
+                            {v.conductorNombre && (
+                              <Text
+                                style={[
+                                  styles.vehicleOptionConductor,
+                                  ds.textMuted,
+                                ]}>
+                                👤 {v.conductorNombre}
+                              </Text>
+                            )}
                           </View>
                           {v.estado === "pendiente" ? (
                             <View
@@ -460,11 +513,19 @@ export default function HomeBaseAdapted({
                   style={[styles.addButton, { backgroundColor: colors.accent }]}
                   onPress={() => {
                     setModalVehiculosVisible(false);
-                    setModalTipoVisible(true);
+                    if (role === "conductor") {
+                      // Conductor solo ingresa placa para solicitar acceso
+                      setModalPlacaVisible(true);
+                    } else {
+                      // Propietario/Admin selecciona tipo primero
+                      setModalTipoVisible(true);
+                    }
                   }}>
                   <Text style={styles.addButtonIcon}>+</Text>
                   <Text style={styles.addButtonText}>
-                    Agregar nuevo vehículo
+                    {role === "conductor"
+                      ? "Solicitar acceso a vehículo"
+                      : "Agregar nuevo vehículo"}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -549,6 +610,9 @@ export default function HomeBaseAdapted({
         transparent
         animationType="slide"
         onRequestClose={() => setModalPlacaVisible(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View
             style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
@@ -561,10 +625,14 @@ export default function HomeBaseAdapted({
                   ]}
                 />
                 <Text style={[styles.modalTitle, ds.text]}>
-                  Placa del Vehículo
+                  {role === "conductor"
+                    ? "Solicitar acceso"
+                    : "Placa del Vehículo"}
                 </Text>
                 <Text style={[styles.modalSubtitle, ds.textSecondary]}>
-                  Ingresa la placa de tu {tipoCamionData?.label}
+                  {role === "conductor"
+                    ? "Ingresa la placa del vehículo al que deseas acceder"
+                    : `Ingresa la placa de tu ${tipoCamionData?.label}`}
                 </Text>
 
                 <View style={styles.placaInputContainer}>
@@ -589,10 +657,12 @@ export default function HomeBaseAdapted({
                     style={[styles.backButton, ds.cardBg]}
                     onPress={() => {
                       setModalPlacaVisible(false);
-                      setModalTipoVisible(true);
+                      if (role !== "conductor") {
+                        setModalTipoVisible(true);
+                      }
                     }}>
                     <Text style={[styles.backButtonText, ds.textSecondary]}>
-                      Atrás
+                      {role === "conductor" ? "Cancelar" : "Atrás"}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -607,7 +677,9 @@ export default function HomeBaseAdapted({
                     {cargando ? (
                       <ActivityIndicator color="#FFF" />
                     ) : (
-                      <Text style={styles.saveButtonText}>Guardar</Text>
+                      <Text style={styles.saveButtonText}>
+                        {role === "conductor" ? "Enviar solicitud" : "Guardar"}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -615,6 +687,7 @@ export default function HomeBaseAdapted({
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -662,6 +735,7 @@ const styles = StyleSheet.create({
     color: "#000",
     letterSpacing: 1,
   },
+  conductorLabel: { fontSize: 12, marginTop: 4 },
   vehicleHeaderRight: { flexDirection: "row", alignItems: "center" },
   changeText: { fontSize: 14, fontWeight: "600", marginRight: 4 },
   chevron: { fontSize: 22, fontWeight: "600" },
@@ -740,6 +814,7 @@ const styles = StyleSheet.create({
   vehicleOptionInfo: { flex: 1 },
   vehicleOptionType: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
   vehicleOptionPlaca: { fontSize: 13 },
+  vehicleOptionConductor: { fontSize: 11, marginTop: 2 },
   checkBadge: {
     width: 28,
     height: 28,
