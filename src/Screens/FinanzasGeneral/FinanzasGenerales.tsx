@@ -15,9 +15,15 @@ import { LineChart } from "react-native-chart-kit";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
+import { useRoleStore } from "../../store/RoleStore";
+import { useAuth } from "../../hooks/useAuth";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import {
+  cargarTodosVehiculosConConductores,
+  cargarVehiculosPropietarioConConductores,
+} from "../../services/vehiculoAutorizacionService";
 
 const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
@@ -93,6 +99,8 @@ type ViewType = "dias" | "meses" | "años";
 export default function FinanzasGenerales() {
   const { colors, isDark } = useTheme();
   const { placa: placaActual } = useVehiculoStore();
+  const { user } = useAuth();
+  const role = useRoleStore((s) => s.role);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +109,10 @@ export default function FinanzasGenerales() {
   const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">(
     "inicio",
   );
+
+  const [placasDisponibles, setPlacasDisponibles] = useState<string[]>([]);
+  const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(new Set());
+  const esMultiVehiculo = role === "administrador" || role === "propietario";
 
   const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
     const now = new Date();
@@ -114,15 +126,63 @@ export default function FinanzasGenerales() {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Cargar placas disponibles para admin/propietario
+  useEffect(() => {
+    if (!esMultiVehiculo || !user?.id) return;
+    const cargarPlacas = async () => {
+      const { data } =
+        role === "administrador"
+          ? await cargarTodosVehiculosConConductores()
+          : await cargarVehiculosPropietarioConConductores(user.id);
+      const placas = data.map((v) => v.placa);
+      setPlacasDisponibles(placas);
+      setPlacasSeleccionadas(new Set(placas));
+    };
+    cargarPlacas();
+  }, [user?.id, role, esMultiVehiculo]);
+
+  const togglePlaca = (placa: string) => {
+    setPlacasSeleccionadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(placa)) {
+        next.delete(placa);
+      } else {
+        next.add(placa);
+      }
+      return next;
+    });
+  };
+
+  const toggleTodas = () => {
+    if (placasSeleccionadas.size === placasDisponibles.length) {
+      setPlacasSeleccionadas(new Set());
+    } else {
+      setPlacasSeleccionadas(new Set(placasDisponibles));
+    }
+  };
+
+  // Determinar placas activas para filtrado
+  const placasActivas = esMultiVehiculo
+    ? Array.from(placasSeleccionadas)
+    : placaActual ? [placaActual] : [];
+
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
         setError(null);
-        await Promise.all([
-          useGastosStore.getState().cargarGastosDelDB(placaActual),
-          useIngresosStore.getState().cargarIngresosDelDB(placaActual),
-        ]);
+        if (esMultiVehiculo) {
+          // Cargar datos de todas las placas disponibles
+          await Promise.all([
+            useGastosStore.getState().cargarGastosDelDB(),
+            useIngresosStore.getState().cargarIngresosDelDB(),
+          ]);
+        } else {
+          await Promise.all([
+            useGastosStore.getState().cargarGastosDelDB(placaActual),
+            useIngresosStore.getState().cargarIngresosDelDB(placaActual),
+          ]);
+        }
       } catch (err) {
         setError("Error al cargar datos");
       } finally {
@@ -134,14 +194,15 @@ export default function FinanzasGenerales() {
         }).start();
       }
     };
-    if (placaActual) cargarDatos();
-  }, [placaActual]);
+    if (esMultiVehiculo || placaActual) cargarDatos();
+  }, [placaActual, esMultiVehiculo]);
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
 
-  const gastosPorPlaca = gastos.filter((g) => g.placa === placaActual);
-  const ingresosPorPlaca = ingresos.filter((i) => i.placa === placaActual);
+  const placasSet = new Set(placasActivas);
+  const gastosPorPlaca = gastos.filter((g) => placasSet.has(g.placa));
+  const ingresosPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
 
   const gastosTransformados = gastosPorPlaca.map((g) => ({
     fecha: g.fecha,
@@ -249,7 +310,7 @@ export default function FinanzasGenerales() {
     );
   }
 
-  if (!placaActual) {
+  if (!esMultiVehiculo && !placaActual) {
     return (
       <View style={[styles.container, ds.container]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -279,10 +340,59 @@ export default function FinanzasGenerales() {
                 Análisis financiero
               </Text>
             </View>
-            <View style={styles.placaBadge}>
-              <Text style={styles.placaText}>{placaActual}</Text>
-            </View>
+            {!esMultiVehiculo && (
+              <View style={styles.placaBadge}>
+                <Text style={styles.placaText}>{placaActual}</Text>
+              </View>
+            )}
           </View>
+
+          {/* FILTRO MULTI-VEHÍCULO */}
+          {esMultiVehiculo && placasDisponibles.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterContent}>
+              <TouchableOpacity
+                style={[
+                  styles.filterChip,
+                  { backgroundColor: colors.cardBg, borderColor: colors.border },
+                  placasSeleccionadas.size === placasDisponibles.length && styles.filterChipActive,
+                ]}
+                onPress={toggleTodas}
+                activeOpacity={0.7}>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: colors.textSecondary },
+                    placasSeleccionadas.size === placasDisponibles.length && styles.filterChipTextActive,
+                  ]}>
+                  Todos ({placasDisponibles.length})
+                </Text>
+              </TouchableOpacity>
+              {placasDisponibles.map((placa) => (
+                <TouchableOpacity
+                  key={placa}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: colors.cardBg, borderColor: colors.border },
+                    placasSeleccionadas.has(placa) && styles.filterChipActive,
+                  ]}
+                  onPress={() => togglePlaca(placa)}
+                  activeOpacity={0.7}>
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.textSecondary },
+                      placasSeleccionadas.has(placa) && styles.filterChipTextActive,
+                    ]}>
+                    {placa}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* CONTENIDO SCROLLEABLE */}
@@ -661,6 +771,27 @@ const styles = StyleSheet.create({
     borderColor: "#000",
   },
   placaText: { fontSize: 14, fontWeight: "700", color: "#000" },
+
+  // FILTER CHIPS
+  filterScroll: { marginBottom: 4 },
+  filterContent: { gap: 8, paddingVertical: 4 },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filterChipActive: {
+    backgroundColor: "#FFE415",
+    borderColor: "#000",
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  filterChipTextActive: {
+    color: "#000",
+  },
 
   // SCROLL
   scrollView: { flex: 1 },
