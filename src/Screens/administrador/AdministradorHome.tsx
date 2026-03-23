@@ -1,79 +1,60 @@
-import React, { useState } from "react";
+import React from "react";
 import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import HomeBaseAdapted from "../Home/Home"; // ✅ Importar desde ubicación correcta
+import HomeBaseAdapted from "../Home/Home";
 import { Item } from "../Home/Items";
-import {
-  VolquetaIcon,
-  EstacasIcon,
-  FurgonIcon,
-  GruaIcon,
-} from "../../assets/icons/icons";
+import { AdministradorStackParamList } from "../../navigation/AdministradorNavigation";
 
-type AdministradorNavigationProp = NativeStackNavigationProp<
-  any,
-  "AdministradorHome"
->;
+type AdminNavProp = NativeStackNavigationProp<AdministradorStackParamList, "AdminHome">;
 
 export default function AdministradorHome() {
-  const navigation = useNavigation<AdministradorNavigationProp>();
-  const [refrescando, setRefrescando] = useState(false);
+  const navigation = useNavigation<AdminNavProp>();
 
-  const handleRefresh = async () => {
-    setRefrescando(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } finally {
-      setRefrescando(false);
-    }
-  };
-
-  // ✅ Items específicos del ADMINISTRADOR
   const adminItems: Item[] = [
     {
       id: "conductores",
-      title: "Conductores",
+      name: "Conductores",
       subtitle: "Gestionar lista",
-      icon: EstacasIcon,
+      icon: "👥",
       backgroundColor: "#E3F2FD",
     },
     {
       id: "vehiculos",
-      title: "Vehículos",
+      name: "Vehiculos",
       subtitle: "Gestionar flota",
-      icon: VolquetaIcon,
+      icon: "🚛",
       backgroundColor: "#FFF3E0",
     },
     {
       id: "gastos",
-      title: "Aprobar Gastos",
+      name: "Aprobar Gastos",
       subtitle: "Revisar solicitudes",
-      icon: FurgonIcon,
+      icon: "💸",
       backgroundColor: "#FCE4EC",
     },
     {
       id: "reportes",
-      title: "Reportes",
-      subtitle: "Estadísticas",
-      icon: GruaIcon,
+      name: "Reportes",
+      subtitle: "Ver actividad",
+      icon: "📊",
       backgroundColor: "#F3E5F5",
     },
   ];
 
   const handleItemPress = (item: Item) => {
     switch (item.id) {
+      case "reportes":
+        navigation.navigate("AdminReportes");
+        break;
       case "conductores":
-        Alert.alert("En desarrollo", "Gestión de conductores próximamente");
+        navigation.navigate("AdminConductores");
         break;
       case "vehiculos":
-        Alert.alert("En desarrollo", "Gestión de vehículos próximamente");
+        Alert.alert("En desarrollo", "Gestion de vehiculos proximamente");
         break;
       case "gastos":
-        Alert.alert("En desarrollo", "Aprobación de gastos próximamente");
-        break;
-      case "reportes":
-        Alert.alert("En desarrollo", "Reportes próximamente");
+        Alert.alert("En desarrollo", "Aprobacion de gastos proximamente");
         break;
       default:
         break;
@@ -83,9 +64,7 @@ export default function AdministradorHome() {
   return (
     <HomeBaseAdapted
       items={adminItems}
-      onRefresh={handleRefresh}
-      refreshing={refrescando}
-      showCamionHeader={false} // ✅ Sin header de camión
+      showCamionHeader={true}
       onItemPress={handleItemPress}
     />
   );

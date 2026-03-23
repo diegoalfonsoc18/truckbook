@@ -31,6 +31,8 @@ type AuthStackParamList = {
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 type ValidationErrors = {
+  nombre?: string;
+  cedula?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -38,6 +40,8 @@ type ValidationErrors = {
 
 export default function Register({ navigation }: Props) {
   const { colors, isDark } = useTheme();
+  const [nombre, setNombre] = useState("");
+  const [cedula, setCedula] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -65,6 +69,16 @@ export default function Register({ navigation }: Props) {
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
+
+    if (!nombre.trim()) {
+      newErrors.nombre = "El nombre es requerido";
+    }
+
+    if (!cedula.trim()) {
+      newErrors.cedula = "La cédula/DNI es requerida";
+    } else if (cedula.trim().length < 5) {
+      newErrors.cedula = "Cédula/DNI inválida";
+    }
 
     if (!email.trim()) {
       newErrors.email = "El email es requerido";
@@ -100,6 +114,12 @@ export default function Register({ navigation }: Props) {
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
+        options: {
+          data: {
+            nombre: nombre.trim(),
+            cedula: cedula.trim(),
+          },
+        },
       });
 
       if (error?.message.includes("compromised")) {
@@ -120,6 +140,18 @@ export default function Register({ navigation }: Props) {
           Alert.alert("Error", error.message);
         }
         return;
+      }
+
+      if (data.user) {
+        // Guardar datos en tabla usuarios
+        await supabase.from("usuarios").insert([
+          {
+            user_id: data.user.id,
+            nombre: nombre.trim(),
+            cedula: cedula.trim(),
+            email: email.toLowerCase().trim(),
+          },
+        ]);
       }
 
       if (data.session) {
@@ -205,6 +237,82 @@ export default function Register({ navigation }: Props) {
                 {/* FORM */}
                 <View
                   style={[styles.formCard, ds.cardBg, getShadow(isDark, "md")]}>
+                  {/* Nombre */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, ds.textSecondary]}>
+                      Nombre completo
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        ds.inputBg,
+                        {
+                          borderColor: errors.nombre
+                            ? colors.danger
+                            : colors.border,
+                        },
+                      ]}>
+                      <Text style={styles.inputIcon}>👤</Text>
+                      <TextInput
+                        placeholder="Tu nombre completo"
+                        placeholderTextColor={colors.textMuted}
+                        onChangeText={(text) => {
+                          setNombre(text);
+                          if (errors.nombre)
+                            setErrors({ ...errors, nombre: undefined });
+                        }}
+                        value={nombre}
+                        style={[styles.input, ds.text]}
+                        autoCapitalize="words"
+                        editable={!loading}
+                      />
+                    </View>
+                    {errors.nombre && (
+                      <Text
+                        style={[styles.errorText, { color: colors.danger }]}>
+                        {errors.nombre}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Cedula / DNI */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, ds.textSecondary]}>
+                      Cédula / DNI
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        ds.inputBg,
+                        {
+                          borderColor: errors.cedula
+                            ? colors.danger
+                            : colors.border,
+                        },
+                      ]}>
+                      <Text style={styles.inputIcon}>🪪</Text>
+                      <TextInput
+                        placeholder="Número de documento"
+                        placeholderTextColor={colors.textMuted}
+                        onChangeText={(text) => {
+                          setCedula(text);
+                          if (errors.cedula)
+                            setErrors({ ...errors, cedula: undefined });
+                        }}
+                        value={cedula}
+                        style={[styles.input, ds.text]}
+                        keyboardType="numeric"
+                        editable={!loading}
+                      />
+                    </View>
+                    {errors.cedula && (
+                      <Text
+                        style={[styles.errorText, { color: colors.danger }]}>
+                        {errors.cedula}
+                      </Text>
+                    )}
+                  </View>
+
                   {/* Email */}
                   <View style={styles.inputGroup}>
                     <Text style={[styles.inputLabel, ds.textSecondary]}>

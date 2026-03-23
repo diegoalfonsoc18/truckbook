@@ -6,8 +6,8 @@ import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorHome from "../Screens/conductor/ConductorHome";
-import AdministradorHome from "../Screens/administrador/AdministradorHome";
-import PropietarioHome from "../Screens/propietario/PropietarioHome ";
+import AdministradorNavigation from "./AdministradorNavigation";
+import PropietarioNavigation from "./PropietarioNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
 import {
   renderGastos,
@@ -79,7 +79,7 @@ export default function AppStack() {
       {/* ADMINISTRADOR */}
       {role === "administrador" && (
         <>
-          <Tab.Screen name="Home" component={AdministradorHome} />
+          <Tab.Screen name="Home" component={AdministradorNavigation} />
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
           <Tab.Screen name="Cuenta" component={Account} />
@@ -89,7 +89,7 @@ export default function AppStack() {
       {/* PROPIETARIO */}
       {role === "propietario" && (
         <>
-          <Tab.Screen name="Home" component={PropietarioHome} />
+          <Tab.Screen name="Home" component={PropietarioNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />

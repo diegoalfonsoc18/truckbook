@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
+import { useRoleStore } from "../../store/RoleStore";
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
@@ -25,6 +26,13 @@ import {
   FurgonIcon,
   GruaIcon,
 } from "../../assets/icons/icons";
+import {
+  cargarVehiculosConEstado,
+  registrarVehiculoPropietario,
+  solicitarAccesoVehiculo,
+  type VehiculoConEstado,
+  type EstadoAutorizacion,
+} from "../../services/vehiculoAutorizacionService";
 
 const { width } = Dimensions.get("window");
 
@@ -34,14 +42,7 @@ interface IconProps {
   color?: string;
 }
 
-export interface Item {
-  id: string;
-  name: string;
-  icon?: string;
-  color?: string;
-  description?: string;
-  route?: string;
-}
+export type { Item } from "./Items";
 
 interface HomeBaseAdaptedProps {
   items: Item[];
@@ -54,6 +55,8 @@ interface Vehiculo {
   id: string;
   placa: string;
   tipo_camion: TipoCamion;
+  estado?: EstadoAutorizacion;
+  rol?: string;
 }
 
 const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
@@ -108,6 +111,7 @@ export default function HomeBaseAdapted({
     setTipoCamion,
   } = useVehiculoStore();
   const { user } = useAuth();
+  const role = useRoleStore((state) => state.role);
 
   const [placaTemporal, setPlacaTemporal] = useState("");
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
@@ -139,13 +143,17 @@ export default function HomeBaseAdapted({
     if (!user?.id) return;
     setCargando(true);
     try {
-      const { data, error } = await supabase
-        .from("vehiculos")
-        .select("id, placa, tipo_camion")
-        .eq("conductor_id", user.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await cargarVehiculosConEstado(user.id);
       if (error) throw error;
-      setVehiculos(data || []);
+      setVehiculos(
+        (data || []).map((v) => ({
+          id: v.relacion_id,
+          placa: v.placa,
+          tipo_camion: v.tipo_camion as TipoCamion,
+          estado: v.estado,
+          rol: v.rol,
+        }))
+      );
     } catch (err) {
       console.error("Error cargando vehículos:", err);
     } finally {
@@ -157,6 +165,20 @@ export default function HomeBaseAdapted({
     TIPOS_CAMION.find((t) => t.id === tipo);
 
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
+    if (vehiculo.estado === "pendiente") {
+      Alert.alert(
+        "Esperando autorización",
+        "El propietario aún no ha autorizado tu acceso a este vehículo."
+      );
+      return;
+    }
+    if (vehiculo.estado === "rechazado") {
+      Alert.alert(
+        "Acceso denegado",
+        "El propietario rechazó tu solicitud. Contacta al propietario."
+      );
+      return;
+    }
     setPlaca(vehiculo.placa);
     setTipoCamion(vehiculo.tipo_camion);
     setModalVehiculosVisible(false);
@@ -180,21 +202,39 @@ export default function HomeBaseAdapted({
     }
     try {
       setCargando(true);
-      const { error } = await supabase.from("vehiculos").insert([
-        {
-          conductor_id: user.id,
-          placa: placaLimpia,
-          tipo_camion: tipoCamion,
-        },
-      ]);
-      if (error) throw error;
-      Alert.alert("✅ Éxito", `Vehículo ${placaLimpia} registrado`);
-      await cargarVehiculos();
-      setPlaca(placaLimpia);
+
+      if (role === "propietario") {
+        // Propietario: registra vehiculo y queda autorizado
+        const resultado = await registrarVehiculoPropietario(
+          user.id,
+          placaLimpia,
+          tipoCamion
+        );
+        if (!resultado.success) {
+          Alert.alert("Error", resultado.error || "No se pudo registrar");
+          return;
+        }
+        Alert.alert("✅ Éxito", `Vehículo ${placaLimpia} registrado`);
+        await cargarVehiculos();
+        setPlaca(placaLimpia);
+      } else {
+        // Conductor/Admin: solicita acceso (queda pendiente)
+        const resultado = await solicitarAccesoVehiculo(user.id, placaLimpia);
+        if (!resultado.success) {
+          Alert.alert("Error", resultado.error || "No se pudo solicitar");
+          return;
+        }
+        Alert.alert(
+          "Solicitud enviada",
+          `Se envió la solicitud de acceso al vehículo ${placaLimpia}. El propietario debe autorizarla.`
+        );
+        await cargarVehiculos();
+      }
+
       setModalPlacaVisible(false);
       setPlacaTemporal("");
     } catch (err) {
-      Alert.alert("Error", "No se pudo registrar el vehículo");
+      Alert.alert("Error", "No se pudo procesar la solicitud");
     } finally {
       setCargando(false);
     }
@@ -378,7 +418,23 @@ export default function HomeBaseAdapted({
                               {v.placa}
                             </Text>
                           </View>
-                          {isActive && (
+                          {v.estado === "pendiente" ? (
+                            <View
+                              style={[
+                                styles.checkBadge,
+                                { backgroundColor: "#FFB800" },
+                              ]}>
+                              <Text style={styles.checkText}>⏳</Text>
+                            </View>
+                          ) : v.estado === "rechazado" ? (
+                            <View
+                              style={[
+                                styles.checkBadge,
+                                { backgroundColor: "#E94560" },
+                              ]}>
+                              <Text style={styles.checkText}>✕</Text>
+                            </View>
+                          ) : isActive ? (
                             <View
                               style={[
                                 styles.checkBadge,
@@ -386,7 +442,7 @@ export default function HomeBaseAdapted({
                               ]}>
                               <Text style={styles.checkText}>✓</Text>
                             </View>
-                          )}
+                          ) : null}
                         </TouchableOpacity>
                       );
                     })}
