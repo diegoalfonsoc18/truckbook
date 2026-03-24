@@ -47,6 +47,27 @@ export default function AdministradorHome() {
       icon: "🏆",
       backgroundColor: "#E8F5E9",
     },
+    {
+      id: "soat",
+      name: "SOAT",
+      subtitle: "Seguro obligatorio",
+      icon: "🛡️",
+      backgroundColor: "#E8EAF6",
+    },
+    {
+      id: "tecnomecanica",
+      name: "Tecnomecánica",
+      subtitle: "Revisión técnica",
+      icon: "🔧",
+      backgroundColor: "#FFF8E1",
+    },
+    {
+      id: "comparendos",
+      name: "Comparendos",
+      subtitle: "Multas de tránsito",
+      icon: "📝",
+      backgroundColor: "#FFEBEE",
+    },
   ];
 
   const handleItemPress = (item: Item) => {
@@ -65,6 +86,15 @@ export default function AdministradorHome() {
         break;
       case "rendimiento":
         navigation.navigate("AdminRendimiento");
+        break;
+      case "soat":
+        navigation.navigate("AdminSoat");
+        break;
+      case "tecnomecanica":
+        navigation.navigate("AdminTecnomecanica");
+        break;
+      case "comparendos":
+        navigation.navigate("AdminComparendos");
         break;
       default:
         break;

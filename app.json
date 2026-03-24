@@ -5,8 +5,8 @@
     "scheme": "truckbook",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/TruckBook/TruckBook-iOS-Default-1024x1024@1x.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -14,22 +14,23 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.MyProject"
+      "bundleIdentifier": "com.anonymous.MyProject",
+      "icon": {
+        "light": "./assets/TruckBook/TruckBook-iOS-Default-1024x1024@1x.png",
+        "dark": "./assets/TruckBook/TruckBook-iOS-Dark-1024x1024@1x.png",
+        "tinted": "./assets/TruckBook/TruckBook-iOS-TintedDark-1024x1024@1x.png"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/TruckBook/TruckBook-iOS-Default-1024x1024@1x.png",
+        "backgroundColor": "#393E46"
       },
       "package": "com.anonymous.MyProject"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-localization",
-      "expo-web-browser",
-      "expo-font"
-    ]
+    "plugins": ["expo-localization", "expo-web-browser", "expo-font"]
   }
 }

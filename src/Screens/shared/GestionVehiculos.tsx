@@ -75,7 +75,6 @@ export default function GestionVehiculos() {
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
 
-    // Usar las mismas funciones que funcionan en Conductores
     const { data } =
       role === "administrador"
         ? await cargarTodosVehiculosConConductores()
@@ -118,7 +117,6 @@ export default function GestionVehiculos() {
     if (!user?.id) return;
     setGuardando(true);
 
-    // Verificar si ya existe
     const { data: existe } = await supabase
       .from("vehiculos")
       .select("placa")
@@ -131,7 +129,6 @@ export default function GestionVehiculos() {
       return;
     }
 
-    // Crear vehiculo
     const { error: vError } = await supabase
       .from("vehiculos")
       .insert([{ placa: placaLimpia, tipo_camion: nuevoTipo, conductor_id: user.id }]);
@@ -142,7 +139,6 @@ export default function GestionVehiculos() {
       return;
     }
 
-    // Crear relacion como propietario
     await supabase.from("vehiculo_conductores").insert([
       {
         vehiculo_placa: placaLimpia,
@@ -196,13 +192,11 @@ export default function GestionVehiculos() {
           text: "Eliminar",
           style: "destructive",
           onPress: async () => {
-            // Eliminar relaciones primero
             await supabase
               .from("vehiculo_conductores")
               .delete()
               .eq("vehiculo_placa", v.placa);
 
-            // Eliminar vehiculo
             const { error } = await supabase
               .from("vehiculos")
               .delete()
@@ -249,7 +243,6 @@ export default function GestionVehiculos() {
           </TouchableOpacity>
         </View>
 
-        {/* Conductores asignados */}
         {v.conductores.length > 0 ? (
           <View style={styles.conductoresList}>
             <Text style={[styles.conductoresLabel, ds.textMuted]}>
@@ -320,7 +313,6 @@ export default function GestionVehiculos() {
   return (
     <View style={[styles.container, ds.container]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={{ fontSize: 24 }}>←</Text>
@@ -391,7 +383,6 @@ export default function GestionVehiculos() {
                     Registra un nuevo vehículo a tu flota
                   </Text>
 
-                  {/* Placa */}
                   <Text style={[styles.inputLabel, ds.textSecondary]}>Placa</Text>
                   <TextInput
                     style={[
@@ -408,7 +399,6 @@ export default function GestionVehiculos() {
                     autoFocus
                   />
 
-                  {/* Tipo */}
                   <Text style={[styles.inputLabel, ds.textSecondary, { marginTop: 16 }]}>
                     Tipo de vehículo
                   </Text>
@@ -580,7 +570,6 @@ const styles = StyleSheet.create({
 
   listContent: { paddingHorizontal: 16, paddingBottom: 100 },
 
-  // VEHICULO CARD
   vehiculoCard: {
     borderRadius: 16,
     padding: 16,
@@ -615,7 +604,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E9456015",
   },
 
-  // CONDUCTORES
   conductoresList: { marginTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#8882", paddingTop: 10 },
   conductoresLabel: { fontSize: 11, fontWeight: "600", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 },
   conductorChipRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
@@ -632,13 +620,11 @@ const styles = StyleSheet.create({
   miniEstado: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   sinConductores: { fontSize: 12, marginTop: 10 },
 
-  // EMPTY
   emptyGlobal: { alignItems: "center", padding: 40, marginTop: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: "600", marginBottom: 6 },
   emptySubtitle: { fontSize: 13, textAlign: "center" },
 
-  // MODAL
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalContent: {
     borderTopLeftRadius: 28,
@@ -657,7 +643,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 4 },
   modalSubtitle: { fontSize: 14, textAlign: "center", marginBottom: 24 },
 
-  // INPUTS
   inputLabel: { fontSize: 13, fontWeight: "600", marginBottom: 8 },
   placaInput: {
     borderRadius: 14,
@@ -682,7 +667,6 @@ const styles = StyleSheet.create({
   tipoOptionLabel: { fontSize: 13 },
   editPlacaDisplay: {},
 
-  // BUTTONS
   saveBtn: { borderRadius: 14, padding: 16, alignItems: "center", marginBottom: 10 },
   saveBtnText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
   cancelBtn: { alignItems: "center", padding: 12 },

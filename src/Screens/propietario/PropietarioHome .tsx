@@ -56,6 +56,27 @@ export default function PropietarioHome() {
       icon: "💰",
       backgroundColor: "#E8F5E9",
     },
+    {
+      id: "soat",
+      name: "SOAT",
+      subtitle: "Seguro obligatorio",
+      icon: "🛡️",
+      backgroundColor: "#E8EAF6",
+    },
+    {
+      id: "tecnomecanica",
+      name: "Tecnomecánica",
+      subtitle: "Revisión técnica",
+      icon: "🔧",
+      backgroundColor: "#FFF8E1",
+    },
+    {
+      id: "comparendos",
+      name: "Comparendos",
+      subtitle: "Multas de tránsito",
+      icon: "📝",
+      backgroundColor: "#FFEBEE",
+    },
   ];
 
   const handleItemPress = (item: Item) => {
@@ -77,6 +98,15 @@ export default function PropietarioHome() {
         break;
       case "gastos":
         Alert.alert("En desarrollo", "Aprobacion de gastos proximamente");
+        break;
+      case "soat":
+        navigation.navigate("PropietarioSoat");
+        break;
+      case "tecnomecanica":
+        navigation.navigate("PropietarioTecnomecanica");
+        break;
+      case "comparendos":
+        navigation.navigate("PropietarioComparendos");
         break;
       default:
         break;
