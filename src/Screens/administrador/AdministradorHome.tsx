@@ -40,6 +40,13 @@ export default function AdministradorHome() {
       icon: "📊",
       backgroundColor: "#F3E5F5",
     },
+    {
+      id: "rendimiento",
+      name: "Rendimiento",
+      subtitle: "Comparar vehículos",
+      icon: "🏆",
+      backgroundColor: "#E8F5E9",
+    },
   ];
 
   const handleItemPress = (item: Item) => {
@@ -55,6 +62,9 @@ export default function AdministradorHome() {
         break;
       case "gastos":
         Alert.alert("En desarrollo", "Aprobacion de gastos proximamente");
+        break;
+      case "rendimiento":
+        navigation.navigate("AdminRendimiento");
         break;
       default:
         break;

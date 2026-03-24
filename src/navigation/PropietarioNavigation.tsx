@@ -5,6 +5,7 @@ import SolicitudesVehiculo from "../Screens/propietario/SolicitudesVehiculo";
 import GestionConductores from "../Screens/propietario/GestionConductores";
 import GestionVehiculos from "../Screens/shared/GestionVehiculos";
 import AdministradorReportes from "../Screens/administrador/AdministradorReportes";
+import RendimientoVehiculos from "../Screens/shared/RendimientoVehiculos";
 
 export type PropietarioStackParamList = {
   PropietarioHome: undefined;
@@ -12,6 +13,7 @@ export type PropietarioStackParamList = {
   GestionConductores: undefined;
   PropietarioVehiculos: undefined;
   PropietarioReportes: undefined;
+  PropietarioRendimiento: undefined;
 };
 
 const Stack = createNativeStackNavigator<PropietarioStackParamList>();
@@ -39,6 +41,10 @@ export default function PropietarioNavigation() {
       <Stack.Screen
         name="PropietarioReportes"
         component={AdministradorReportes}
+      />
+      <Stack.Screen
+        name="PropietarioRendimiento"
+        component={RendimientoVehiculos}
       />
     </Stack.Navigator>
   );

@@ -64,7 +64,7 @@ export default function PropietarioHome() {
         navigation.navigate("SolicitudesVehiculo");
         break;
       case "rentabilidad":
-        Alert.alert("En desarrollo", "Rentabilidad proximamente");
+        navigation.navigate("PropietarioRendimiento");
         break;
       case "flota":
         navigation.navigate("PropietarioVehiculos");
