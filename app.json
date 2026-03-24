@@ -14,11 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.MyProject",
+      "bundleIdentifier": "com.truckbook.app",
       "icon": {
         "light": "./assets/TruckBook/TruckBook-iOS-Default-1024x1024@1x.png",
         "dark": "./assets/TruckBook/TruckBook-iOS-Dark-1024x1024@1x.png",
         "tinted": "./assets/TruckBook/TruckBook-iOS-TintedDark-1024x1024@1x.png"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,11 +29,20 @@
         "foregroundImage": "./assets/TruckBook/TruckBook-iOS-Default-1024x1024@1x.png",
         "backgroundColor": "#393E46"
       },
-      "package": "com.anonymous.MyProject"
+      "package": "com.truckbook.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-localization", "expo-web-browser", "expo-font"]
+    "plugins": [
+      "expo-localization",
+      "expo-web-browser",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "494c025d-768e-41f8-a040-ee0dd05aaaf0"
+      }
+    }
   }
 }
