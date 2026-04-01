@@ -28,12 +28,7 @@ import { useTheme, getShadow } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 
 const { width } = Dimensions.get("window");
-const COLUMN_COUNT = 4;
-const GRID_GAP = 12;
 const HORIZONTAL_PADDING = 20;
-const ITEM_WIDTH =
-  (width - HORIZONTAL_PADDING * 2 - GRID_GAP * (COLUMN_COUNT - 1)) /
-  COLUMN_COUNT;
 
 const INGRESOS_CATEGORIAS = [
   { id: "flete", name: "Flete", icon: "📦", color: "#00D9A5" },
@@ -47,6 +42,7 @@ const INGRESOS_CATEGORIAS = [
 
 export default function Ingresos() {
   const { colors, isDark } = useTheme();
+  const c = colors;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
@@ -88,7 +84,6 @@ export default function Ingresos() {
         return;
       }
 
-      // Verificar autorizacion
       const { autorizado } = await verificarAutorizacion(user.id, placaActual);
       if (!autorizado) {
         Alert.alert(
@@ -120,7 +115,7 @@ export default function Ingresos() {
         Keyboard.dismiss();
         closeModal();
         useIngresosStore.getState().cargarIngresosDelDB(placaActual);
-        Alert.alert("✅ Éxito", "Ingreso registrado");
+        Alert.alert("Éxito", "Ingreso registrado");
       } catch {
         Alert.alert("Error", "Error al agregar el ingreso");
       } finally {
@@ -152,7 +147,7 @@ export default function Ingresos() {
       if (error) throw error;
       closeModal();
       useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
-      Alert.alert("✅ Éxito", "Ingreso actualizado");
+      Alert.alert("Éxito", "Ingreso actualizado");
     } catch {
       Alert.alert("Error", "Error al actualizar");
     } finally {
@@ -161,7 +156,7 @@ export default function Ingresos() {
   };
 
   const handleDeleteClick = (id: string | number) => {
-    Alert.alert("🗑️ Eliminar", "¿Eliminar este ingreso?", [
+    Alert.alert("Eliminar", "¿Eliminar este ingreso?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Eliminar",
@@ -175,7 +170,7 @@ export default function Ingresos() {
               .eq("id", String(id));
             if (error) throw error;
             useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
-            Alert.alert("✅", "Eliminado");
+            Alert.alert("Listo", "Eliminado");
           } catch {
             Alert.alert("Error", "Error al eliminar");
           } finally {
@@ -221,33 +216,41 @@ export default function Ingresos() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");
     return date.toLocaleDateString("es-CO", {
-      weekday: "short",
       day: "numeric",
       month: "short",
     });
   };
 
-  const ds = {
-    container: { backgroundColor: colors.primary },
-    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
-    text: { color: colors.text },
-    textSecondary: { color: colors.textSecondary },
-    textMuted: { color: colors.textMuted },
-    inputBg: { backgroundColor: isDark ? "#252540" : "#F0F0F5" },
-    modalBg: { backgroundColor: colors.modalBg },
-    accent: colors.income,
+  const formatDateFriendly = (dateString: string) => {
+    const date = new Date(dateString + "T12:00:00");
+    const formatted = date.toLocaleDateString("es-CO", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  const getStatusColor = (estado?: string) => {
+    if (estado === "confirmado") return c.success;
+    return c.accent;
+  };
+
+  const getStatusLabel = (estado?: string) => {
+    if (estado === "confirmado") return "Confirmado";
+    return "Pendiente";
   };
 
   if (!placaActual) {
     return (
-      <View style={[styles.container, ds.container]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🚛</Text>
-            <Text style={[styles.emptyTitle, ds.text]}>
-              Sin vehículo seleccionado
-            </Text>
-            <Text style={[styles.emptySubtitle, ds.textSecondary]}>
+      <View style={[s.container, { backgroundColor: c.primary }]}>
+        <SafeAreaView style={s.safeArea} edges={["top"]}>
+          <View style={s.emptyState}>
+            <View style={[s.emptyIconContainer, { backgroundColor: c.incomeLight }]}>
+              <Text style={{ fontSize: 48 }}>🚛</Text>
+            </View>
+            <Text style={[s.emptyTitle, { color: c.text }]}>Sin vehículo seleccionado</Text>
+            <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
               Selecciona una placa para registrar ingresos
             </Text>
           </View>
@@ -256,102 +259,59 @@ export default function Ingresos() {
     );
   }
 
+  const shadow = getShadow(isDark, "sm");
+
   return (
-    <View style={[styles.container, ds.container]}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {/* HEADER FIJO */}
-        <View style={styles.headerFixed}>
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, ds.text]}>Ingresos</Text>
-              <Text style={[styles.headerSubtitle, ds.textSecondary]}>
-                Control de entradas
-              </Text>
-            </View>
-            <View style={styles.placaBadge}>
-              <Text style={styles.placaText}>{placaActual}</Text>
-            </View>
+    <View style={[s.container, { backgroundColor: c.primary }]}>
+      <SafeAreaView style={s.safeArea} edges={["top"]}>
+        {/* HEADER */}
+        <View style={s.header}>
+          <View>
+            <Text style={[s.headerTitle, { color: c.text }]}>Ingresos</Text>
+            <TouchableOpacity
+              onPress={() => setCalendarVisible(true)}
+              activeOpacity={0.7}
+              style={[s.dateButton, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+              <Text style={s.dateButtonIcon}>📅</Text>
+              <Text style={[s.headerDate, { color: c.text }]}>{formatDateFriendly(selectedDate)}</Text>
+              <Text style={[s.dateArrow, { color: c.textMuted }]}>▾</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[s.placaBadge, { backgroundColor: c.accent }, shadow]}>
+            <Text style={[s.placaText, { color: c.accentText }]}>{placaActual}</Text>
           </View>
         </View>
 
-        {/* CONTENIDO SCROLLEABLE */}
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={s.scrollView}
+          contentContainerStyle={s.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <Animated.View style={{ opacity: fadeAnim }}>
-            {/* SELECTOR DE FECHA */}
-            <TouchableOpacity
-              style={[styles.dateSelector, ds.cardBg, getShadow(isDark, "sm")]}
-              onPress={() => setCalendarVisible(true)}
-              activeOpacity={0.8}>
-              <View style={styles.dateSelectorLeft}>
-                <Text style={styles.dateIcon}>📅</Text>
-                <View>
-                  <Text style={[styles.dateLabel, ds.textSecondary]}>
-                    Fecha
-                  </Text>
-                  <Text style={[styles.dateValue, ds.text]}>
-                    {formatDate(selectedDate)}
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.dateArrow, ds.textMuted]}>›</Text>
-            </TouchableOpacity>
 
-            {/* RESUMEN */}
-            <View
-              style={[
-                styles.summaryCard,
-                ds.cardBg,
-                { borderColor: ds.accent + "40" },
-                getShadow(isDark, "md"),
-              ]}>
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, ds.textSecondary]}>
-                  Total del día
-                </Text>
-                <View
-                  style={[
-                    styles.countBadge,
-                    { backgroundColor: ds.accent + "20" },
-                  ]}>
-                  <Text style={[styles.countText, { color: ds.accent }]}>
-                    {ingresosFiltrados.length}
-                  </Text>
+            {/* RESUMEN CARD */}
+            <View style={[s.summaryCard, { backgroundColor: c.cardBg }, shadow]}>
+              <View style={s.summaryTop}>
+                <Text style={[s.summaryLabel, { color: c.textSecondary }]}>Total del día</Text>
+                <View style={[s.countBadge, { backgroundColor: c.incomeLight }]}>
+                  <Text style={[s.countText, { color: c.income }]}>{ingresosFiltrados.length} ingresos</Text>
                 </View>
               </View>
-              <Text style={[styles.summaryTotal, { color: ds.accent }]}>
-                {formatCurrency(totalIngresos)}
-              </Text>
+              <Text style={[s.summaryTotal, { color: c.text }]}>{formatCurrency(totalIngresos)}</Text>
             </View>
 
-            {/* GRID DE CATEGORÍAS */}
-            <Text style={[styles.sectionTitle, ds.textSecondary]}>
-              Registrar ingreso
-            </Text>
-            <View style={styles.categoriesGrid}>
+            {/* CATEGORÍAS */}
+            <View style={s.categoriesGrid}>
               {INGRESOS_CATEGORIAS.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[
-                    styles.categoryItem,
-                    ds.cardBg,
-                    getShadow(isDark, "sm"),
-                  ]}
+                  style={[s.categoryCard, { backgroundColor: c.cardBg }, shadow]}
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
-                  <View
-                    style={[
-                      styles.categoryIcon,
-                      { backgroundColor: `${cat.color}20` },
-                    ]}>
-                    <Text style={styles.categoryEmoji}>{cat.icon}</Text>
+                  <View style={[s.categoryCircle, { backgroundColor: `${cat.color}15` }]}>
+                    <Text style={{ fontSize: 26 }}>{cat.icon}</Text>
                   </View>
-                  <Text
-                    style={[styles.categoryName, ds.textSecondary]}
-                    numberOfLines={1}>
+                  <Text style={[s.categoryLabel, { color: c.text }]} numberOfLines={1}>
                     {cat.name}
                   </Text>
                 </TouchableOpacity>
@@ -359,65 +319,51 @@ export default function Ingresos() {
             </View>
 
             {/* LISTA DE INGRESOS */}
-            <Text style={[styles.sectionTitle, ds.textSecondary]}>
-              Ingresos registrados
-            </Text>
+            <View style={s.listHeader}>
+              <Text style={[s.listTitle, { color: c.text }]}>Registrados</Text>
+              <Text style={[s.listCount, { color: c.textSecondary }]}>{ingresosFiltrados.length}</Text>
+            </View>
+
             {ingresosFiltrados.length === 0 ? (
-              <View style={[styles.emptyList, ds.cardBg]}>
-                <Text style={styles.emptyListIcon}>💸</Text>
-                <Text style={[styles.emptyListText, ds.textMuted]}>
-                  Sin ingresos este día
-                </Text>
+              <View style={[s.emptyList, { backgroundColor: c.cardBg }, shadow]}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>💸</Text>
+                <Text style={[s.emptyListText, { color: c.textSecondary }]}>Sin ingresos este día</Text>
               </View>
             ) : (
               ingresosFiltrados.map((item, index) => {
                 const categoria = INGRESOS_CATEGORIAS.find(
-                  (c) =>
-                    c.name.toLowerCase() === item.tipo_ingreso?.toLowerCase(),
+                  (cat) =>
+                    cat.name.toLowerCase() === item.tipo_ingreso?.toLowerCase(),
                 );
+                const statusColor = getStatusColor(item.estado);
+                const statusLabel = getStatusLabel(item.estado);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={`${item.id}-${index}`}
-                    style={[
-                      styles.ingresoItem,
-                      ds.cardBg,
-                      getShadow(isDark, "sm"),
-                    ]}>
-                    <View
-                      style={[
-                        styles.ingresoIcon,
-                        {
-                          backgroundColor: `${categoria?.color || ds.accent}20`,
-                        },
-                      ]}>
-                      <Text style={styles.ingresoEmoji}>
-                        {categoria?.icon || "💰"}
-                      </Text>
+                    style={[s.ingresoCard, { backgroundColor: c.cardBg }, shadow]}
+                    activeOpacity={0.8}
+                    onPress={() => handleEditClick(item.id)}
+                    onLongPress={() => handleDeleteClick(item.id)}>
+                    <View style={[s.ingresoIconCircle, { backgroundColor: `${categoria?.color || c.income}15` }]}>
+                      <Text style={{ fontSize: 22 }}>{categoria?.icon || "💰"}</Text>
                     </View>
-                    <View style={styles.ingresoInfo}>
-                      <Text style={[styles.ingresoName, ds.text]}>
+                    <View style={s.ingresoInfo}>
+                      <Text style={[s.ingresoName, { color: c.text }]}>
                         {item.tipo_ingreso || item.descripcion}
                       </Text>
-                      <Text style={[styles.ingresoDate, ds.textSecondary]}>
-                        {formatDate(item.fecha)}
+                      <Text style={[s.ingresoDate, { color: c.textSecondary }]}>{formatDate(item.fecha)}</Text>
+                    </View>
+                    <View style={s.ingresoRight}>
+                      <Text style={[s.ingresoAmount, { color: c.text }]}>
+                        {formatCurrency(item.monto)}
                       </Text>
+                      <View style={[s.statusBadge, { backgroundColor: statusColor + "15" }]}>
+                        <Text style={[s.statusText, { color: statusColor }]}>
+                          {statusLabel}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={[styles.ingresoMonto, { color: ds.accent }]}>
-                      {formatCurrency(item.monto)}
-                    </Text>
-                    <View style={styles.ingresoActions}>
-                      <TouchableOpacity
-                        style={styles.actionBtn}
-                        onPress={() => handleEditClick(item.id)}>
-                        <Text>✏️</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.actionBtn}
-                        onPress={() => handleDeleteClick(item.id)}>
-                        <Text>🗑️</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })
             )}
@@ -426,23 +372,11 @@ export default function Ingresos() {
       </SafeAreaView>
 
       {/* MODAL CALENDARIO */}
-      <Modal
-        visible={calendarVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCalendarVisible(false)}>
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
-          activeOpacity={1}
-          onPress={() => setCalendarVisible(false)}>
-          <View style={[styles.calendarModal, ds.modalBg]}>
-            <View
-              style={[
-                styles.modalHandle,
-                { backgroundColor: colors.textMuted },
-              ]}
-            />
-            <Text style={[styles.modalTitle, ds.text]}>Seleccionar fecha</Text>
+      <Modal visible={calendarVisible} transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
+        <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={() => setCalendarVisible(false)}>
+          <View style={[s.bottomModal, { backgroundColor: c.modalBg }]}>
+            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+            <Text style={[s.modalTitle, { color: c.text }]}>Seleccionar fecha</Text>
             <Calendar
               current={selectedDate}
               onDayPress={(day: any) => {
@@ -450,81 +384,54 @@ export default function Ingresos() {
                 setCalendarVisible(false);
               }}
               markedDates={{
-                [selectedDate]: { selected: true, selectedColor: ds.accent },
+                [selectedDate]: { selected: true, selectedColor: c.income },
               }}
               theme={{
-                backgroundColor: colors.modalBg,
-                calendarBackground: colors.modalBg,
-                textSectionTitleColor: colors.textSecondary,
-                selectedDayBackgroundColor: ds.accent,
-                selectedDayTextColor: "#FFF",
-                todayTextColor: ds.accent,
-                dayTextColor: colors.text,
-                textDisabledColor: colors.textMuted,
-                monthTextColor: colors.text,
-                arrowColor: ds.accent,
+                backgroundColor: c.modalBg, calendarBackground: c.modalBg,
+                textSectionTitleColor: c.textSecondary, selectedDayBackgroundColor: c.income,
+                selectedDayTextColor: "#FFF", todayTextColor: c.income,
+                dayTextColor: c.text, textDisabledColor: c.textMuted,
+                monthTextColor: c.text, arrowColor: c.income,
               }}
-              style={styles.calendar}
+              style={{ borderRadius: 14 }}
             />
           </View>
         </TouchableOpacity>
       </Modal>
 
       {/* MODAL AGREGAR/EDITAR */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={closeModal}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}>
-          <TouchableOpacity
-            style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
-            activeOpacity={1}
-            onPress={closeModal}>
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={closeModal}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+          <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={closeModal}>
             <TouchableWithoutFeedback>
-              <View style={[styles.addModal, ds.modalBg]}>
-                <View
-                  style={[
-                    styles.modalHandle,
-                    { backgroundColor: colors.textMuted },
-                  ]}
-                />
-                <Text style={[styles.modalTitle, ds.text]}>
+              <View style={[s.bottomModal, { backgroundColor: c.modalBg }]}>
+                <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+                <Text style={[s.modalTitle, { color: c.text }]}>
                   {isEditing ? "Editar ingreso" : "Nuevo ingreso"}
                 </Text>
 
-                {selectedIngreso && (
-                  <View style={styles.selectedCat}>
-                    <Text style={styles.selectedCatIcon}>
-                      {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
-                        ?.icon || "💰"}
-                    </Text>
-                    <Text style={[styles.selectedCatName, ds.text]}>
-                      {INGRESOS_CATEGORIAS.find((c) => c.id === selectedIngreso)
-                        ?.name || selectedIngreso}
-                    </Text>
-                  </View>
-                )}
+                {selectedIngreso && (() => {
+                  const cat = INGRESOS_CATEGORIAS.find((cat) => cat.id === selectedIngreso);
+                  return (
+                    <View style={s.selectedCat}>
+                      <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || c.income}15` }]}>
+                        <Text style={{ fontSize: 28 }}>{cat?.icon || "💰"}</Text>
+                      </View>
+                      <Text style={[s.selectedCatName, { color: c.text }]}>
+                        {cat?.name || selectedIngreso}
+                      </Text>
+                    </View>
+                  );
+                })()}
 
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, ds.textSecondary]}>
-                    Monto
-                  </Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      ds.inputBg,
-                      { borderColor: colors.border },
-                    ]}>
-                    <Text style={[styles.inputPrefix, ds.textSecondary]}>
-                      $
-                    </Text>
+                <View style={s.inputGroup}>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
+                  <View style={[s.inputWrapper, { backgroundColor: c.surface, borderColor: c.border }]}>
+                    <Text style={[s.inputPrefix, { color: c.text }]}>$</Text>
                     <TextInput
-                      style={[styles.input, ds.text]}
+                      style={[s.input, { color: c.text }]}
                       placeholder="0"
-                      placeholderTextColor={colors.textMuted}
+                      placeholderTextColor={c.textMuted}
                       keyboardType="numeric"
                       value={editValue}
                       onChangeText={setEditValue}
@@ -533,41 +440,25 @@ export default function Ingresos() {
                   </View>
                 </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, ds.textSecondary]}>
-                    Fecha
-                  </Text>
+                <View style={s.inputGroup}>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
                   <TouchableOpacity
-                    style={[
-                      styles.dateInput,
-                      ds.inputBg,
-                      { borderColor: colors.border },
-                    ]}
+                    style={[s.dateInput, { backgroundColor: c.surface, borderColor: c.border }]}
                     onPress={() => {
                       setModalVisible(false);
                       setTimeout(() => setCalendarVisible(true), 300);
                     }}>
-                    <Text style={[styles.dateInputText, ds.text]}>
-                      {formatDate(editDate)}
-                    </Text>
-                    <Text>📅</Text>
+                    <Text style={[s.dateInputText, { color: c.text }]}>{formatDate(editDate)}</Text>
+                    <Text style={{ color: c.textMuted, fontSize: 16 }}>📅</Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.modalBtns}>
-                  <TouchableOpacity
-                    style={[styles.cancelBtn, ds.cardBg]}
-                    onPress={closeModal}>
-                    <Text style={[styles.cancelBtnText, ds.textSecondary]}>
-                      Cancelar
-                    </Text>
+                <View style={s.modalBtns}>
+                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: c.surface, borderColor: c.border }]} onPress={closeModal}>
+                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.saveBtn,
-                      { backgroundColor: ds.accent },
-                      (!editValue || loading) && styles.saveBtnDisabled,
-                    ]}
+                    style={[s.saveBtn, { backgroundColor: c.income }, (!editValue || loading) && s.saveBtnDisabled]}
                     onPress={() => {
                       isEditing
                         ? handleSaveEdit()
@@ -578,7 +469,7 @@ export default function Ingresos() {
                     {loading ? (
                       <ActivityIndicator color="#FFF" size="small" />
                     ) : (
-                      <Text style={styles.saveBtnText}>
+                      <Text style={s.saveBtnText}>
                         {isEditing ? "Actualizar" : "Guardar"}
                       </Text>
                     )}
@@ -593,229 +484,65 @@ export default function Ingresos() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-
-  // HEADER FIJO
-  headerFixed: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 8,
-    borderBottomWidth: 0,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, marginTop: 2 },
-  placaBadge: {
-    backgroundColor: "#FFE415",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#000",
-  },
-  placaText: { fontSize: 14, fontWeight: "700", color: "#000" },
-
-  // SCROLL
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: HORIZONTAL_PADDING, paddingTop: 8, paddingBottom: 16 },
+  headerTitle: { fontSize: 26, fontWeight: "800" },
+  dateButton: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, alignSelf: "flex-start" as const },
+  dateButtonIcon: { fontSize: 13 },
+  headerDate: { fontSize: 13, fontWeight: "600", textTransform: "capitalize" as const },
+  dateArrow: { fontSize: 10 },
+  placaBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
+  placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 40 },
-
-  // DATE SELECTOR
-  dateSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  dateSelectorLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  dateIcon: { fontSize: 22 },
-  dateLabel: { fontSize: 11, textTransform: "uppercase" },
-  dateValue: { fontSize: 15, fontWeight: "600", textTransform: "capitalize" },
-  dateArrow: { fontSize: 22 },
-
-  // SUMMARY
-  summaryCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  summaryLabel: { fontSize: 13 },
-  countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  countText: { fontSize: 12, fontWeight: "600" },
-  summaryTotal: { fontSize: 32, fontWeight: "700", letterSpacing: -1 },
-
-  // SECTION TITLE
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    marginTop: 4,
-  },
-
-  // CATEGORIES GRID
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: GRID_GAP,
-    marginBottom: 20,
-  },
-  categoryItem: {
-    width: ITEM_WIDTH,
-    alignItems: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  categoryEmoji: { fontSize: 22 },
-  categoryName: { fontSize: 10, textAlign: "center", paddingHorizontal: 2 },
-
-  // EMPTY LIST
-  emptyList: {
-    padding: 30,
-    borderRadius: 14,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  emptyListIcon: { fontSize: 36, marginBottom: 8 },
-  emptyListText: { fontSize: 13 },
-
-  // INGRESO ITEM
-  ingresoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-  },
-  ingresoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  ingresoEmoji: { fontSize: 18 },
+  summaryCard: { borderRadius: 20, padding: 20, marginBottom: 20 },
+  summaryTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  summaryLabel: { fontSize: 14, fontWeight: "500" },
+  countBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  countText: { fontSize: 11, fontWeight: "700" },
+  summaryTotal: { fontSize: 36, fontWeight: "800", letterSpacing: -1 },
+  categoriesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 },
+  categoryCard: { width: (width - HORIZONTAL_PADDING * 2 - 10 * 3) / 4, alignItems: "center", borderRadius: 16, paddingVertical: 14, paddingHorizontal: 4 },
+  categoryCircle: { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center", marginBottom: 8 },
+  categoryLabel: { fontSize: 10, textAlign: "center", fontWeight: "600" },
+  listHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  listTitle: { fontSize: 18, fontWeight: "700" },
+  listCount: { fontSize: 14, fontWeight: "600" },
+  ingresoCard: { borderRadius: 16, marginBottom: 10, flexDirection: "row", alignItems: "center", padding: 14 },
+  ingresoIconCircle: { width: 46, height: 46, borderRadius: 14, justifyContent: "center", alignItems: "center", marginRight: 12 },
   ingresoInfo: { flex: 1 },
-  ingresoName: { fontSize: 14, fontWeight: "600", marginBottom: 2 },
-  ingresoDate: { fontSize: 11, textTransform: "capitalize" },
-  ingresoMonto: { fontSize: 15, fontWeight: "700", marginRight: 6 },
-  ingresoActions: { flexDirection: "row", gap: 2 },
-  actionBtn: { padding: 6 },
-
-  // EMPTY STATE
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  emptyIcon: { fontSize: 56, marginBottom: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", marginBottom: 6 },
-  emptySubtitle: { fontSize: 13, textAlign: "center" },
-
-  // MODALS
+  ingresoName: { fontSize: 15, fontWeight: "700", marginBottom: 2 },
+  ingresoDate: { fontSize: 12, fontWeight: "400" },
+  ingresoRight: { alignItems: "flex-end" as const, gap: 4 },
+  ingresoAmount: { fontSize: 16, fontWeight: "800" },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  statusText: { fontSize: 10, fontWeight: "700" },
+  emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
+  emptyIconContainer: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, textAlign: "center" },
+  emptyList: { padding: 40, borderRadius: 20, alignItems: "center" },
+  emptyListText: { fontSize: 14 },
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  calendarModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 10,
-    paddingBottom: 30,
-    paddingHorizontal: 16,
-  },
-  calendar: { borderRadius: 14 },
-  addModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 10,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-
-  selectedCat: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 20,
-  },
-  selectedCatIcon: { fontSize: 28 },
-  selectedCatName: { fontSize: 16, fontWeight: "600" },
-
+  bottomModal: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, paddingBottom: 30, paddingHorizontal: 20 },
+  modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
+  modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 16 },
+  selectedCat: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 20 },
+  selectedCatCircle: { width: 52, height: 52, borderRadius: 16, justifyContent: "center", alignItems: "center" },
+  selectedCatName: { fontSize: 16, fontWeight: "700" },
   inputGroup: { marginBottom: 16 },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 6,
-    textTransform: "uppercase",
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  inputPrefix: { fontSize: 18, fontWeight: "600", paddingLeft: 14 },
-  input: { flex: 1, fontSize: 22, fontWeight: "600", padding: 14 },
-  dateInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-  },
-  dateInputText: { fontSize: 15, textTransform: "capitalize" },
-
-  modalBtns: { flexDirection: "row", gap: 10, marginTop: 4 },
-  cancelBtn: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: "center",
-    borderWidth: 1,
-  },
+  inputLabel: { fontSize: 12, fontWeight: "600", marginBottom: 6, textTransform: "uppercase" as const, letterSpacing: 0.5 },
+  inputWrapper: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1 },
+  inputPrefix: { fontSize: 20, fontWeight: "700", paddingLeft: 14 },
+  input: { flex: 1, fontSize: 22, fontWeight: "700", padding: 14 },
+  dateInput: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 14, padding: 14, borderWidth: 1 },
+  dateInputText: { fontSize: 15, fontWeight: "500" },
+  modalBtns: { flexDirection: "row", gap: 10, marginTop: 8 },
+  cancelBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center", borderWidth: 1 },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
-  saveBtn: { flex: 1, borderRadius: 12, padding: 14, alignItems: "center" },
-  saveBtnDisabled: { opacity: 0.5 },
-  saveBtnText: { fontSize: 15, fontWeight: "600", color: "#FFF" },
+  saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
+  saveBtnDisabled: { opacity: 0.4 },
+  saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
 });

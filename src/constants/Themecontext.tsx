@@ -13,56 +13,54 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // ============================================
 
 export const LIGHT_COLORS = {
-  // Fondos - Más blancos y limpios
-  primary: "#FFFFFF",
-  secondary: "#F8F9FA",
-  surface: "#FFFFFF",
+  // Fondos
+  primary: "#F4F3EF",
+  secondary: "#F0EFEB",
+  surface: "#F0EFEB",
   cardBg: "#FFFFFF",
   modalBg: "#FFFFFF",
 
-  // Texto - Mayor contraste
-  text: "#1A1A2E",
-  textSecondary: "#555566",
-  textMuted: "#888899",
+  // Texto
+  text: "#1A1A1A",
+  textSecondary: "#7A7A7A",
+  textMuted: "#ABABAB",
   textInverse: "#FFFFFF",
 
-  // Bordes y divisores - Más sutiles
-  border: "#E8E8ED",
-  divider: "#E8E8ED",
+  // Bordes
+  border: "#E8E7E3",
+  divider: "#E8E7E3",
 
-  // Acentos principales
-  accent: "#007AFF",
-  accentLight: "#007AFF20",
+  // Acentos
+  accent: "#FFE500",
+  accentLight: "#FFF9D6",
+  accentText: "#000000",
 
-  // Colores semánticos
-  success: "#00D9A5",
-  successLight: "#00D9A520",
+  // Semánticos
+  success: "#34C759",
+  successLight: "#E6FBF5",
   successDark: "#00B894",
-
   danger: "#E94560",
-  dangerLight: "#E9456020",
+  dangerLight: "#FDE8EC",
   dangerDark: "#D63851",
-
   warning: "#FFB800",
-  warningLight: "#FFB80020",
-
+  warningLight: "#FFF5D6",
   info: "#6C5CE7",
-  infoLight: "#6C5CE720",
+  infoLight: "#EEECFB",
 
-  // Colores específicos de TruckBook
+  // TruckBook
   income: "#00D9A5",
-  incomeLight: "#00D9A520",
+  incomeLight: "#E6FBF5",
   expense: "#E94560",
-  expenseLight: "#E9456020",
+  expenseLight: "#FDE8EC",
   analytics: "#6C5CE7",
-  analyticsLight: "#6C5CE720",
+  analyticsLight: "#EEECFB",
 
-  // Placa colombiana
-  plateYellow: "#FFE415",
+  // Placa
+  plateYellow: "#FFE500",
   plateText: "#000000",
-  plateBorder: "#000000",
+  plateBorder: "transparent",
 
-  // Categorías de gastos
+  // Categorías
   catCombustible: "#FFB800",
   catPeajes: "#00D9A5",
   catComida: "#FF6B6B",
@@ -73,7 +71,7 @@ export const LIGHT_COLORS = {
   catParqueadero: "#FD79A8",
   catOtros: "#636E72",
 
-  // Tipos de vehículo
+  // Vehículos
   vehicleEstacas: "#00D9A5",
   vehicleVolqueta: "#FFB800",
   vehicleFurgon: "#6C5CE7",
@@ -81,68 +79,66 @@ export const LIGHT_COLORS = {
 
   // Estados
   active: "#00D9A5",
-  inactive: "#9A9AAA",
+  inactive: "#ABABAB",
 
   // Sombras
   shadowColor: "#000000",
-  shadowOpacity: 0.08,
+  shadowOpacity: 0.06,
 
   // Overlays
-  overlay: "rgba(0, 0, 0, 0.5)",
-  overlayLight: "rgba(0, 0, 0, 0.3)",
+  overlay: "rgba(0, 0, 0, 0.4)",
+  overlayLight: "rgba(0, 0, 0, 0.2)",
 };
 
 export const DARK_COLORS = {
   // Fondos
-  primary: "#0A0A12",
-  secondary: "#12121C",
-  surface: "#0F0F1A",
-  cardBg: "#1A1A28",
-  modalBg: "#1A1A28",
+  primary: "#000000",
+  secondary: "#1C1C1E",
+  surface: "#2C2C2E",
+  cardBg: "#1C1C1E",
+  modalBg: "#1C1C1E",
 
   // Texto
   text: "#FFFFFF",
-  textSecondary: "#8A8A9A",
-  textMuted: "#5A5A6A",
-  textInverse: "#1A1A2E",
+  textSecondary: "#8E8E93",
+  textMuted: "#5A5A5C",
+  textInverse: "#000000",
 
-  // Bordes y divisores
-  border: "#2A2A3A",
-  divider: "#2A2A3A",
+  // Bordes
+  border: "#3A3A3C",
+  divider: "#3A3A3C",
 
-  // Acentos principales
-  accent: "#0A84FF",
-  accentLight: "#0A84FF25",
+  // Acentos
+  accent: "#FFE500",
+  accentLight: "rgba(255, 229, 0, 0.15)",
+  accentText: "#000000",
 
-  // Colores semánticos
-  success: "#00D9A5",
-  successLight: "#00D9A520",
+  // Semánticos
+  success: "#34C759",
+  successLight: "rgba(52, 199, 89, 0.15)",
   successDark: "#00B894",
-
   danger: "#E94560",
-  dangerLight: "#E9456020",
+  dangerLight: "rgba(233, 69, 96, 0.15)",
   dangerDark: "#D63851",
-
   warning: "#FFB800",
-  warningLight: "#FFB80020",
-
+  warningLight: "rgba(255, 184, 0, 0.15)",
   info: "#6C5CE7",
-  infoLight: "#6C5CE720",
+  infoLight: "rgba(108, 92, 231, 0.15)",
 
-  // Colores específicos de TruckBook
+  // TruckBook
   income: "#00D9A5",
-  incomeLight: "#00D9A525",
+  incomeLight: "rgba(0, 217, 165, 0.15)",
   expense: "#E94560",
-  expenseLight: "#E9456025",
+  expenseLight: "rgba(233, 69, 96, 0.15)",
   analytics: "#6C5CE7",
-  analyticsLight: "#6C5CE725",
+  analyticsLight: "rgba(108, 92, 231, 0.15)",
 
-  // Placa colombiana
-  plateYellow: "#FFE415",
+  // Placa
+  plateYellow: "#FFE500",
   plateText: "#000000",
-  plateBorder: "#000000",
+  plateBorder: "transparent",
 
-  // Categorías de gastos
+  // Categorías
   catCombustible: "#FFB800",
   catPeajes: "#00D9A5",
   catComida: "#FF6B6B",
@@ -153,7 +149,7 @@ export const DARK_COLORS = {
   catParqueadero: "#FD79A8",
   catOtros: "#636E72",
 
-  // Tipos de vehículo
+  // Vehículos
   vehicleEstacas: "#00D9A5",
   vehicleVolqueta: "#FFB800",
   vehicleFurgon: "#6C5CE7",
@@ -161,7 +157,7 @@ export const DARK_COLORS = {
 
   // Estados
   active: "#00D9A5",
-  inactive: "#5A5A6A",
+  inactive: "#5A5A5C",
 
   // Sombras
   shadowColor: "#000000",
