@@ -12,6 +12,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation, CommonActions } from "@react-navigation/native";
 import supabase from "../../config/SupaBaseConfig";
 import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
@@ -103,9 +104,10 @@ const MENU_OPTIONS = [
   },
 ];
 
-export default function Account({ navigation }: any) {
+export default function Account() {
   const { colors, isDark } = useTheme();
   const c = colors; // shorthand
+  const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [modalRolesVisible, setModalRolesVisible] = useState(false);
@@ -187,6 +189,14 @@ export default function Account({ navigation }: any) {
 
       setRole(nuevoRol);
       setModalRolesVisible(false);
+
+      // Resetear navegación al Home del nuevo rol
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        }),
+      );
     } catch (error) {
       Alert.alert("Error", "No se pudo cambiar el rol");
     } finally {
@@ -233,6 +243,13 @@ export default function Account({ navigation }: any) {
         {/* HEADER FIJO */}
         <View style={styles.headerFixed}>
           <View style={styles.header}>
+            {navigation?.canGoBack() && (
+              <TouchableOpacity
+                style={[styles.backBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}
+                onPress={() => navigation.goBack()}>
+                <Text style={{ fontSize: 18 }}>←</Text>
+              </TouchableOpacity>
+            )}
             <Text style={[styles.headerTitle, { color: c.text }]}>Cuenta</Text>
           </View>
         </View>
@@ -512,7 +529,14 @@ const styles = StyleSheet.create({
 
   // HEADER FIJO
   headerFixed: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 8 },
-  header: { paddingVertical: 12 },
+  header: { paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 12 },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
 
   // SCROLL

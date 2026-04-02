@@ -15,8 +15,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useRoleStore } from "../../store/RoleStore";
@@ -109,6 +111,7 @@ export default function HomeBaseAdapted({
 }: HomeBaseAdaptedProps) {
   const { colors, isDark } = useTheme();
   const c = colors;
+  const navigation = useNavigation<any>();
   const {
     placa: placaActual,
     tipoCamion,
@@ -181,14 +184,16 @@ export default function HomeBaseAdapted({
             rol: v.rol,
             conductorNombre,
           };
-        })
+        }),
       );
 
       setVehiculos(vehiculosConConductor);
 
       // Actualizar conductor del vehiculo seleccionado
       if (placaActual) {
-        const actual = vehiculosConConductor.find((v) => v.placa === placaActual);
+        const actual = vehiculosConConductor.find(
+          (v) => v.placa === placaActual,
+        );
         if (actual) setConductorActual(actual.conductorNombre);
       }
     } catch (err) {
@@ -205,14 +210,14 @@ export default function HomeBaseAdapted({
     if (vehiculo.estado === "pendiente") {
       Alert.alert(
         "Esperando autorización",
-        "El propietario aún no ha autorizado tu acceso a este vehículo."
+        "El propietario aún no ha autorizado tu acceso a este vehículo.",
       );
       return;
     }
     if (vehiculo.estado === "rechazado") {
       Alert.alert(
         "Acceso denegado",
-        "El propietario rechazó tu solicitud. Contacta al propietario."
+        "El propietario rechazó tu solicitud. Contacta al propietario.",
       );
       return;
     }
@@ -246,7 +251,7 @@ export default function HomeBaseAdapted({
         const resultado = await registrarVehiculoPropietario(
           user.id,
           placaLimpia,
-          tipoCamion
+          tipoCamion,
         );
         if (!resultado.success) {
           Alert.alert("Error", resultado.error || "No se pudo registrar");
@@ -264,7 +269,7 @@ export default function HomeBaseAdapted({
         }
         Alert.alert(
           "Solicitud enviada",
-          `Se envió la solicitud de acceso al vehículo ${placaLimpia}. El propietario debe autorizarla.`
+          `Se envió la solicitud de acceso al vehículo ${placaLimpia}. El propietario debe autorizarla.`,
         );
         await cargarVehiculos();
       }
@@ -282,31 +287,61 @@ export default function HomeBaseAdapted({
   const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
 
   const userEmail = user?.email || "";
-  const userInitials = userEmail
-    .split("@")[0]
-    .slice(0, 2)
-    .toUpperCase() || "?";
+  const avatarUrl =
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userInitials = userEmail.split("@")[0].slice(0, 2).toUpperCase() || "?";
 
   return (
     <View style={{ flex: 1, backgroundColor: c.primary }}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {/* USER AVATAR + INFO */}
+          {/* USER AVATAR + EMAIL + SETTINGS */}
           <View style={styles.userHeader}>
-            <View style={[styles.avatarCircle, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
-              <Text style={[styles.avatarText, { color: c.income }]}>{userInitials}</Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={[styles.userEmail, { color: c.text }]} numberOfLines={1}>
-                {userEmail}
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.userHeaderLeft}
+              onPress={() => navigation.navigate("Cuenta")}
+              activeOpacity={0.7}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <View
+                  style={[
+                    styles.avatarCircle,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(0,217,165,0.15)"
+                        : c.incomeLight,
+                    },
+                  ]}>
+                  <Text style={[styles.avatarText, { color: c.income }]}>
+                    {userInitials}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.userInfo}>
+                <Text
+                  style={[styles.userEmail, { color: c.text }]}
+                  numberOfLines={1}>
+                  {userEmail}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.settingsButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}
+              onPress={() => navigation.navigate("Cuenta")}
+              activeOpacity={0.7}>
+              <Text style={{ fontSize: 20 }}>⚙️</Text>
+            </TouchableOpacity>
           </View>
 
           {/* HEADER CON VEHÍCULO */}
           {showCamionHeader && (
             <TouchableOpacity
-              style={[styles.vehicleHeader, { backgroundColor: c.cardBg, borderColor: c.border }, getShadow(isDark, "md")]}
+              style={[
+                styles.vehicleHeader,
+                { backgroundColor: c.cardBg, borderColor: c.border },
+                getShadow(isDark, "md"),
+              ]}
               onPress={() => setModalVehiculosVisible(true)}
               activeOpacity={0.8}>
               <View style={styles.vehicleHeaderLeft}>
@@ -330,17 +365,23 @@ export default function HomeBaseAdapted({
                   </Text>
                   {placaActual ? (
                     <>
-                      <View style={[styles.placaBadge, { backgroundColor: c.plateYellow }]}>
-                        <Text style={[styles.placaText, { color: c.plateText }]}>{placaActual}</Text>
-                      </View>
-                      {conductorActual && (
-                        <Text style={[styles.conductorLabel, { color: c.textSecondary }]}>
-                          👤 {conductorActual}
+                      <View
+                        style={[
+                          styles.placaBadge,
+                          { backgroundColor: c.plateYellow },
+                        ]}>
+                        <Text
+                          style={[styles.placaText, { color: c.plateText }]}>
+                          {placaActual}
                         </Text>
-                      )}
+                      </View>
                     </>
                   ) : (
-                    <Text style={[styles.vehicleSubtitle, { color: c.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.vehicleSubtitle,
+                        { color: c.textSecondary },
+                      ]}>
                       Toca para seleccionar
                     </Text>
                   )}
@@ -350,9 +391,7 @@ export default function HomeBaseAdapted({
                 <Text style={[styles.changeText, { color: c.accent }]}>
                   Cambiar
                 </Text>
-                <Text style={[styles.chevron, { color: c.accent }]}>
-                  ›
-                </Text>
+                <Text style={[styles.chevron, { color: c.accent }]}>›</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -384,9 +423,15 @@ export default function HomeBaseAdapted({
                       ]}>
                       <Text style={styles.itemIcon}>{item.icon}</Text>
                     </View>
-                    <Text style={[styles.itemName, { color: c.text }]}>{item.name}</Text>
+                    <Text style={[styles.itemName, { color: c.text }]}>
+                      {item.name}
+                    </Text>
                     {item.description && (
-                      <Text style={[styles.itemDescription, { color: c.textSecondary }]}>
+                      <Text
+                        style={[
+                          styles.itemDescription,
+                          { color: c.textSecondary },
+                        ]}>
                         {item.description}
                       </Text>
                     )}
@@ -407,18 +452,18 @@ export default function HomeBaseAdapted({
         onRequestClose={() => setModalVehiculosVisible(false)}>
         <TouchableWithoutFeedback
           onPress={() => setModalVehiculosVisible(false)}>
-          <View
-            style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+          <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
             <TouchableWithoutFeedback>
-              <View style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
+              <View
+                style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
                 <View
-                  style={[
-                    styles.modalHandle,
-                    { backgroundColor: c.textMuted },
-                  ]}
+                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
                 />
-                <Text style={[styles.modalTitle, { color: c.text }]}>Mis Vehículos</Text>
-                <Text style={[styles.modalSubtitle, { color: c.textSecondary }]}>
+                <Text style={[styles.modalTitle, { color: c.text }]}>
+                  Mis Vehículos
+                </Text>
+                <Text
+                  style={[styles.modalSubtitle, { color: c.textSecondary }]}>
                   Selecciona o agrega un vehículo
                 </Text>
 
@@ -437,7 +482,10 @@ export default function HomeBaseAdapted({
                           key={v.id}
                           style={[
                             styles.vehicleOption,
-                            { backgroundColor: c.cardBg, borderColor: c.border },
+                            {
+                              backgroundColor: c.cardBg,
+                              borderColor: c.border,
+                            },
                             isActive && {
                               borderColor: c.accent,
                               backgroundColor: c.accentLight,
@@ -459,7 +507,11 @@ export default function HomeBaseAdapted({
                             />
                           </View>
                           <View style={styles.vehicleOptionInfo}>
-                            <Text style={[styles.vehicleOptionType, { color: c.text }]}>
+                            <Text
+                              style={[
+                                styles.vehicleOptionType,
+                                { color: c.text },
+                              ]}>
                               {tipo?.label || "Vehículo"}
                             </Text>
                             <Text
@@ -511,7 +563,8 @@ export default function HomeBaseAdapted({
                 ) : (
                   <View style={styles.emptyVehicles}>
                     <Text style={styles.emptyIcon}>🚛</Text>
-                    <Text style={[styles.emptyText, { color: c.textSecondary }]}>
+                    <Text
+                      style={[styles.emptyText, { color: c.textSecondary }]}>
                       No tienes vehículos registrados
                     </Text>
                   </View>
@@ -529,7 +582,9 @@ export default function HomeBaseAdapted({
                       setModalTipoVisible(true);
                     }
                   }}>
-                  <Text style={[styles.addButtonIcon, { color: c.accentText }]}>+</Text>
+                  <Text style={[styles.addButtonIcon, { color: c.accentText }]}>
+                    +
+                  </Text>
                   <Text style={[styles.addButtonText, { color: c.accentText }]}>
                     {role === "conductor"
                       ? "Solicitar acceso a vehículo"
@@ -539,7 +594,11 @@ export default function HomeBaseAdapted({
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setModalVehiculosVisible(false)}>
-                  <Text style={[styles.cancelButtonText, { color: c.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.cancelButtonText,
+                      { color: c.textSecondary },
+                    ]}>
                     Cancelar
                   </Text>
                 </TouchableOpacity>
@@ -556,20 +615,18 @@ export default function HomeBaseAdapted({
         animationType="slide"
         onRequestClose={() => setModalTipoVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setModalTipoVisible(false)}>
-          <View
-            style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+          <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
             <TouchableWithoutFeedback>
-              <View style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
+              <View
+                style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
                 <View
-                  style={[
-                    styles.modalHandle,
-                    { backgroundColor: c.textMuted },
-                  ]}
+                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
                 />
                 <Text style={[styles.modalTitle, { color: c.text }]}>
                   Tipo de Vehículo
                 </Text>
-                <Text style={[styles.modalSubtitle, { color: c.textSecondary }]}>
+                <Text
+                  style={[styles.modalSubtitle, { color: c.textSecondary }]}>
                   ¿Qué tipo de camión vas a registrar?
                 </Text>
 
@@ -579,7 +636,10 @@ export default function HomeBaseAdapted({
                     return (
                       <TouchableOpacity
                         key={tipo.id}
-                        style={[styles.tipoCard, { backgroundColor: c.cardBg, borderColor: c.border }]}
+                        style={[
+                          styles.tipoCard,
+                          { backgroundColor: c.cardBg, borderColor: c.border },
+                        ]}
                         onPress={() => handleSeleccionarTipo(tipo.id)}>
                         <View
                           style={[
@@ -602,7 +662,11 @@ export default function HomeBaseAdapted({
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setModalTipoVisible(false)}>
-                  <Text style={[styles.cancelButtonText, { color: c.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.cancelButtonText,
+                      { color: c.textSecondary },
+                    ]}>
                     Cancelar
                   </Text>
                 </TouchableOpacity>
@@ -621,80 +685,94 @@ export default function HomeBaseAdapted({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View
-            style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+              <TouchableWithoutFeedback>
                 <View
-                  style={[
-                    styles.modalHandle,
-                    { backgroundColor: c.textMuted },
-                  ]}
-                />
-                <Text style={[styles.modalTitle, { color: c.text }]}>
-                  {role === "conductor"
-                    ? "Solicitar acceso"
-                    : "Placa del Vehículo"}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: c.textSecondary }]}>
-                  {role === "conductor"
-                    ? "Ingresa la placa del vehículo al que deseas acceder"
-                    : `Ingresa la placa de tu ${tipoCamionData?.label}`}
-                </Text>
-
-                <View style={styles.placaInputContainer}>
-                  <TextInput
+                  style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
+                  <View
                     style={[
-                      styles.placaInput,
-                      { backgroundColor: c.surface },
-                      { color: c.text, borderColor: c.border },
+                      styles.modalHandle,
+                      { backgroundColor: c.textMuted },
                     ]}
-                    placeholder="ABC123"
-                    placeholderTextColor={c.textMuted}
-                    value={placaTemporal}
-                    onChangeText={(t) => setPlacaTemporal(t.toUpperCase())}
-                    autoCapitalize="characters"
-                    maxLength={7}
-                    autoFocus
                   />
-                </View>
+                  <Text style={[styles.modalTitle, { color: c.text }]}>
+                    {role === "conductor"
+                      ? "Solicitar acceso"
+                      : "Placa del Vehículo"}
+                  </Text>
+                  <Text
+                    style={[styles.modalSubtitle, { color: c.textSecondary }]}>
+                    {role === "conductor"
+                      ? "Ingresa la placa del vehículo al que deseas acceder"
+                      : `Ingresa la placa de tu ${tipoCamionData?.label}`}
+                  </Text>
 
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.backButton, { backgroundColor: c.cardBg, borderColor: c.border }]}
-                    onPress={() => {
-                      setModalPlacaVisible(false);
-                      if (role !== "conductor") {
-                        setModalTipoVisible(true);
-                      }
-                    }}>
-                    <Text style={[styles.backButtonText, { color: c.textSecondary }]}>
-                      {role === "conductor" ? "Cancelar" : "Atrás"}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.saveButton,
-                      { backgroundColor: c.accent },
-                      (!placaTemporal.trim() || cargando) &&
-                        styles.saveButtonDisabled,
-                    ]}
-                    onPress={handleGuardarPlaca}
-                    disabled={!placaTemporal.trim() || cargando}>
-                    {cargando ? (
-                      <ActivityIndicator color={c.accentText} />
-                    ) : (
-                      <Text style={[styles.saveButtonText, { color: c.accentText }]}>
-                        {role === "conductor" ? "Enviar solicitud" : "Guardar"}
+                  <View style={styles.placaInputContainer}>
+                    <TextInput
+                      style={[
+                        styles.placaInput,
+                        { backgroundColor: c.surface },
+                        { color: c.text, borderColor: c.border },
+                      ]}
+                      placeholder="ABC123"
+                      placeholderTextColor={c.textMuted}
+                      value={placaTemporal}
+                      onChangeText={(t) => setPlacaTemporal(t.toUpperCase())}
+                      autoCapitalize="characters"
+                      maxLength={7}
+                      autoFocus
+                    />
+                  </View>
+
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={[
+                        styles.backButton,
+                        { backgroundColor: c.cardBg, borderColor: c.border },
+                      ]}
+                      onPress={() => {
+                        setModalPlacaVisible(false);
+                        if (role !== "conductor") {
+                          setModalTipoVisible(true);
+                        }
+                      }}>
+                      <Text
+                        style={[
+                          styles.backButtonText,
+                          { color: c.textSecondary },
+                        ]}>
+                        {role === "conductor" ? "Cancelar" : "Atrás"}
                       </Text>
-                    )}
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.saveButton,
+                        { backgroundColor: c.accent },
+                        (!placaTemporal.trim() || cargando) &&
+                          styles.saveButtonDisabled,
+                      ]}
+                      onPress={handleGuardarPlaca}
+                      disabled={!placaTemporal.trim() || cargando}>
+                      {cargando ? (
+                        <ActivityIndicator color={c.accentText} />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.saveButtonText,
+                            { color: c.accentText },
+                          ]}>
+                          {role === "conductor"
+                            ? "Enviar solicitud"
+                            : "Guardar"}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -709,20 +787,40 @@ const styles = StyleSheet.create({
   userHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 12,
     marginBottom: 4,
   },
-  avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
+  userHeaderLeft: {
+    flexDirection: "row",
     alignItems: "center",
+    flex: 1,
     marginRight: 12,
   },
-  avatarText: { fontSize: 16, fontWeight: "800" },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  avatarText: { fontSize: 15, fontWeight: "800" },
   userInfo: { flex: 1 },
   userEmail: { fontSize: 14, fontWeight: "600" },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   // Vehicle Header
   vehicleHeader: {

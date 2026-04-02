@@ -9,6 +9,7 @@ import RendimientoVehiculos from "../Screens/shared/RendimientoVehiculos";
 import SoatVehiculos from "../Screens/shared/SoatVehiculos";
 import TecnomecanicaVehiculos from "../Screens/shared/TecnomecanicaVehiculos";
 import ComparendosVehiculos from "../Screens/shared/ComparendosVehiculos";
+import Cuenta from "../Screens/Cuenta/Cuenta";
 
 export type PropietarioStackParamList = {
   PropietarioHome: undefined;
@@ -20,6 +21,7 @@ export type PropietarioStackParamList = {
   PropietarioSoat: undefined;
   PropietarioTecnomecanica: undefined;
   PropietarioComparendos: undefined;
+  Cuenta: undefined;
 };
 
 const Stack = createNativeStackNavigator<PropietarioStackParamList>();
@@ -55,6 +57,7 @@ export default function PropietarioNavigation() {
       <Stack.Screen name="PropietarioSoat" component={SoatVehiculos} />
       <Stack.Screen name="PropietarioTecnomecanica" component={TecnomecanicaVehiculos} />
       <Stack.Screen name="PropietarioComparendos" component={ComparendosVehiculos} />
+      <Stack.Screen name="Cuenta" component={Cuenta} options={{ presentation: "card" }} />
     </Stack.Navigator>
   );
 }

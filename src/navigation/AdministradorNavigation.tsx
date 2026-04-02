@@ -8,6 +8,7 @@ import RendimientoVehiculos from "../Screens/shared/RendimientoVehiculos";
 import SoatVehiculos from "../Screens/shared/SoatVehiculos";
 import TecnomecanicaVehiculos from "../Screens/shared/TecnomecanicaVehiculos";
 import ComparendosVehiculos from "../Screens/shared/ComparendosVehiculos";
+import Cuenta from "../Screens/Cuenta/Cuenta";
 
 export type AdministradorStackParamList = {
   AdminHome: undefined;
@@ -18,6 +19,7 @@ export type AdministradorStackParamList = {
   AdminSoat: undefined;
   AdminTecnomecanica: undefined;
   AdminComparendos: undefined;
+  Cuenta: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdministradorStackParamList>();
@@ -33,6 +35,7 @@ export default function AdministradorNavigation() {
       <Stack.Screen name="AdminSoat" component={SoatVehiculos} />
       <Stack.Screen name="AdminTecnomecanica" component={TecnomecanicaVehiculos} />
       <Stack.Screen name="AdminComparendos" component={ComparendosVehiculos} />
+      <Stack.Screen name="Cuenta" component={Cuenta} options={{ presentation: "card" }} />
     </Stack.Navigator>
   );
 }

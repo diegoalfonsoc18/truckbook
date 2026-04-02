@@ -7,6 +7,9 @@ interface User {
   user_metadata?: {
     name?: string;
     phone?: string;
+    avatar_url?: string;
+    picture?: string;
+    full_name?: string;
   };
 }
 

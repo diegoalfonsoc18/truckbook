@@ -14,7 +14,6 @@ import {
   renderIngresos,
   renderHome,
   renderFinanzas,
-  renderCuenta,
 } from "../assets/icons/icons";
 import { useTheme } from "../constants/Themecontext";
 
@@ -58,8 +57,6 @@ export default function AppStack() {
               return renderHome(color, size, focused);
             case "Reportes":
               return renderFinanzas(color, size, focused);
-            case "Cuenta":
-              return renderCuenta(color, size, focused);
             default:
               return null;
           }
@@ -72,7 +69,6 @@ export default function AppStack() {
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />
           <Tab.Screen name="Home" component={ConductorNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
-          <Tab.Screen name="Cuenta" component={Account} />
         </>
       )}
 
@@ -82,7 +78,6 @@ export default function AppStack() {
           <Tab.Screen name="Home" component={AdministradorNavigation} />
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
-          <Tab.Screen name="Cuenta" component={Account} />
         </>
       )}
 
@@ -93,7 +88,6 @@ export default function AppStack() {
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />
-          <Tab.Screen name="Cuenta" component={Account} />
         </>
       )}
 

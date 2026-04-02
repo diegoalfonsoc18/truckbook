@@ -11,7 +11,10 @@ import { styles as homeStyles } from "../Home/HomeStyles";
 import { cargarInvitacionesPendientes } from "../../services/vehiculoAutorizacionService";
 import { ConductorStackParamList } from "../../navigation/ConductorNavigation";
 
-type ConductorNavProp = NativeStackNavigationProp<ConductorStackParamList, "ConductorHome">;
+type ConductorNavProp = NativeStackNavigationProp<
+  ConductorStackParamList,
+  "ConductorHome"
+>;
 
 export default function ConductorHome() {
   const navigation = useNavigation<ConductorNavProp>();
@@ -39,7 +42,10 @@ export default function ConductorHome() {
       id: "invitaciones",
       icon: "📩",
       name: "Invitaciones",
-      subtitle: invitacionesCount > 0 ? `${invitacionesCount} pendiente${invitacionesCount > 1 ? "s" : ""}` : "Sin pendientes",
+      subtitle:
+        invitacionesCount > 0
+          ? `${invitacionesCount} pendiente${invitacionesCount > 1 ? "s" : ""}`
+          : "Sin pendientes",
       backgroundColor: "#FFF8E1",
     },
     ...baseItems,
