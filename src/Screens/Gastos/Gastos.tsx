@@ -26,10 +26,9 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
+
 const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
-
-// Los colores se obtienen de useTheme()
 
 const MANTENIMIENTO_SUBCATEGORIAS = [
   { id: "reparacion", name: "Reparación", emoji: "🔧", color: "#74B9FF" },
@@ -50,10 +49,9 @@ const GASTOS_CATEGORIAS = [
 
 const ALL_CATEGORIAS = [...GASTOS_CATEGORIAS, ...MANTENIMIENTO_SUBCATEGORIAS];
 
-
 export default function Gastos() {
   const { colors, isDark } = useTheme();
-  const c = colors; // shorthand
+  const c = colors;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
   const gastos = useGastosStore(useShallow((state) => state.gastos));
@@ -225,8 +223,7 @@ export default function Gastos() {
 
   const gastosFiltrados = gastos
     .filter((g) => g.placa === placaActual && g.fecha === selectedDate)
-    .filter((g, i, self) => i === self.findIndex((t) => t.id === g.id))
-;
+    .filter((g, i, self) => i === self.findIndex((t) => t.id === g.id));
 
   const totalGastos = gastosFiltrados.reduce(
     (sum, g) => sum + (g.monto || 0),
@@ -249,16 +246,12 @@ export default function Gastos() {
   };
 
   const formatDateFriendly = (dateString: string) => {
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
     const date = new Date(dateString + "T12:00:00");
     const formatted = date.toLocaleDateString("es-CO", {
       weekday: "long",
       day: "numeric",
       month: "long",
     });
-    if (dateString === today) return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-    if (dateString === yesterday) return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
@@ -272,12 +265,16 @@ export default function Gastos() {
     return "Pendiente";
   };
 
+  // Card border for dark mode glassmorphism effect
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {};
+  const shadow = getShadow(isDark, "md");
+
   if (!placaActual) {
     return (
       <View style={[s.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.emptyState}>
-            <View style={[s.emptyIconContainer, { backgroundColor: c.accentLight }]}>
+            <View style={[s.emptyIconContainer, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.accentLight }]}>
               <Text style={{ fontSize: 48 }}>🚛</Text>
             </View>
             <Text style={[s.emptyTitle, { color: c.text }]}>Sin vehículo seleccionado</Text>
@@ -290,8 +287,6 @@ export default function Gastos() {
     );
   }
 
-  const shadow = getShadow(isDark, "sm");
-
   return (
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
@@ -302,7 +297,7 @@ export default function Gastos() {
             <TouchableOpacity
               onPress={() => setCalendarVisible(true)}
               activeOpacity={0.7}
-              style={[s.dateButton, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+              style={[s.dateButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.cardBg, borderColor: isDark ? "rgba(255,255,255,0.12)" : c.border }]}>
               <Text style={s.dateButtonIcon}>📅</Text>
               <Text style={[s.headerDate, { color: c.text }]}>{formatDateFriendly(selectedDate)}</Text>
               <Text style={[s.dateArrow, { color: c.textMuted }]}>▾</Text>
@@ -321,26 +316,42 @@ export default function Gastos() {
           <Animated.View style={{ opacity: fadeAnim }}>
 
             {/* RESUMEN CARD */}
-            <View style={[s.summaryCard, { backgroundColor: c.cardBg }, shadow]}>
+            <View style={[
+              s.summaryCard,
+              { backgroundColor: isDark ? "rgba(0,217,165,0.08)" : c.cardBg },
+              isDark ? { borderWidth: 1, borderColor: "rgba(0,217,165,0.2)" } : {},
+              shadow,
+            ]}>
               <View style={s.summaryTop}>
-                <Text style={[s.summaryLabel, { color: c.textSecondary }]}>Total del día</Text>
-                <View style={[s.countBadge, { backgroundColor: c.accentLight }]}>
-                  <Text style={[s.countText, { color: c.accent }]}>{gastosFiltrados.length} gastos</Text>
+                <View>
+                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>Total del día</Text>
+                  <Text style={[s.summaryTotal, { color: c.text }]}>{formatCurrency(totalGastos)}</Text>
+                </View>
+                <View style={[s.countBadge, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
+                  <Text style={[s.countText, { color: c.income }]}>{gastosFiltrados.length}</Text>
                 </View>
               </View>
-              <Text style={[s.summaryTotal, { color: c.text }]}>{formatCurrency(totalGastos)}</Text>
+              <View style={s.summaryBar}>
+                <View style={[s.summaryBarFill, { backgroundColor: c.income, width: gastosFiltrados.length > 0 ? "100%" : "0%" }]} />
+              </View>
             </View>
 
             {/* CATEGORÍAS */}
+            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Categorías</Text>
             <View style={s.categoriesGrid}>
               {GASTOS_CATEGORIAS.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[s.categoryCard, { backgroundColor: c.cardBg }, shadow]}
+                  style={[
+                    s.categoryCard,
+                    { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                    cardBorder,
+                    shadow,
+                  ]}
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
-                  <View style={[s.categoryCircle, { backgroundColor: `${cat.color}15` }]}>
-                    <Text style={{ fontSize: 26 }}>{cat.emoji}</Text>
+                  <View style={[s.categoryCircle, { backgroundColor: `${cat.color}${isDark ? "25" : "15"}` }]}>
+                    <Text style={{ fontSize: 28 }}>{cat.emoji}</Text>
                   </View>
                   <Text style={[s.categoryLabel, { color: c.text }]} numberOfLines={1}>
                     {cat.name}
@@ -352,13 +363,16 @@ export default function Gastos() {
             {/* LISTA DE GASTOS */}
             <View style={s.listHeader}>
               <Text style={[s.listTitle, { color: c.text }]}>Registrados</Text>
-              <Text style={[s.listSeeAll, { color: c.textSecondary }]}>Ver todo</Text>
+              <View style={[s.listCountBadge, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}>
+                <Text style={[s.listCountText, { color: c.textSecondary }]}>{gastosFiltrados.length}</Text>
+              </View>
             </View>
 
             {gastosFiltrados.length === 0 ? (
-              <View style={[s.emptyList, { backgroundColor: c.cardBg }, shadow]}>
-                <Text style={{ fontSize: 32, marginBottom: 8 }}>📭</Text>
-                <Text style={[s.emptyListText, { color: c.textSecondary }]}>Sin gastos este día</Text>
+              <View style={[s.emptyList, { backgroundColor: isDark ? "rgba(255,255,255,0.04)" : c.cardBg }, cardBorder, shadow]}>
+                <Text style={{ fontSize: 36, marginBottom: 12 }}>📭</Text>
+                <Text style={[s.emptyListTitle, { color: c.text }]}>Sin gastos</Text>
+                <Text style={[s.emptyListText, { color: c.textSecondary }]}>No hay gastos registrados este día</Text>
               </View>
             ) : (
               gastosFiltrados.map((item, index) => {
@@ -370,27 +384,35 @@ export default function Gastos() {
                 return (
                   <TouchableOpacity
                     key={`${item.id}-${index}`}
-                    style={[s.gastoCard, { backgroundColor: c.cardBg }, shadow]}
+                    style={[
+                      s.gastoCard,
+                      { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                      cardBorder,
+                      shadow,
+                    ]}
                     activeOpacity={0.8}
                     onPress={() => handleEditClick(item.id)}
                     onLongPress={() => handleDeleteClick(item.id)}>
-                    <View style={[s.gastoIconCircle, { backgroundColor: `${categoria?.color || c.accent}15` }]}>
-                      <Text style={{ fontSize: 22 }}>{categoria?.emoji || "📦"}</Text>
+                    <View style={[s.gastoIconCircle, { backgroundColor: `${categoria?.color || c.accent}${isDark ? "25" : "15"}` }]}>
+                      <Text style={{ fontSize: 24 }}>{categoria?.emoji || "📦"}</Text>
                     </View>
                     <View style={s.gastoInfo}>
                       <Text style={[s.gastoName, { color: c.text }]}>
                         {item.tipo_gasto || item.descripcion}
                       </Text>
-                      <Text style={[s.gastoDate, { color: c.textSecondary }]}>{formatDate(item.fecha)}</Text>
-                    </View>
-                    <View style={s.gastoRight}>
-                      <Text style={[s.gastoAmount, { color: c.text }]}>
-                        {formatCurrency(item.monto)}
-                      </Text>
-                      <View style={[s.statusBadge, { backgroundColor: statusColor + "15" }]}>
-                        <Text style={[s.statusText, { color: statusColor }]}>{statusLabel}</Text>
+                      <View style={s.gastoMeta}>
+                        <View style={[s.gastoDatePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface }]}>
+                          <Text style={[s.gastoDateText, { color: c.textMuted }]}>{formatDate(item.fecha)}</Text>
+                        </View>
+                        <View style={[s.statusBadge, { backgroundColor: statusColor + (isDark ? "25" : "15") }]}>
+                          <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+                          <Text style={[s.statusText, { color: statusColor }]}>{statusLabel}</Text>
+                        </View>
                       </View>
                     </View>
+                    <Text style={[s.gastoAmount, { color: c.text }]}>
+                      {formatCurrency(item.monto)}
+                    </Text>
                   </TouchableOpacity>
                 );
               })
@@ -402,19 +424,19 @@ export default function Gastos() {
       {/* MODAL CALENDARIO */}
       <Modal visible={calendarVisible} transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
         <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={() => setCalendarVisible(false)}>
-          <View style={[s.bottomModal, { backgroundColor: c.modalBg }]}>
-            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+          <View style={[s.bottomModal, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
+            <View style={[s.modalHandle, { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border }]} />
             <Text style={[s.modalTitle, { color: c.text }]}>Seleccionar fecha</Text>
             <Calendar
               current={selectedDate}
               onDayPress={(day: any) => { setSelectedDate(day.dateString); setCalendarVisible(false); }}
-              markedDates={{ [selectedDate]: { selected: true, selectedColor: c.accent } }}
+              markedDates={{ [selectedDate]: { selected: true, selectedColor: c.income } }}
               theme={{
                 backgroundColor: c.modalBg, calendarBackground: c.modalBg,
-                textSectionTitleColor: c.textSecondary, selectedDayBackgroundColor: c.accent,
-                selectedDayTextColor: c.accentText, todayTextColor: c.accent,
+                textSectionTitleColor: c.textSecondary, selectedDayBackgroundColor: c.income,
+                selectedDayTextColor: "#FFF", todayTextColor: c.income,
                 dayTextColor: c.text, textDisabledColor: c.textMuted,
-                monthTextColor: c.text, arrowColor: c.accent,
+                monthTextColor: c.text, arrowColor: c.income,
               }}
               style={{ borderRadius: 14 }}
             />
@@ -426,13 +448,13 @@ export default function Gastos() {
       <Modal visible={mantenimientoVisible} transparent animationType="slide" onRequestClose={() => setMantenimientoVisible(false)}>
         <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={() => setMantenimientoVisible(false)}>
           <TouchableWithoutFeedback>
-            <View style={[s.bottomModal, { backgroundColor: c.modalBg }]}>
-              <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+            <View style={[s.bottomModal, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
+              <View style={[s.modalHandle, { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border }]} />
               <Text style={[s.modalTitle, { color: c.text }]}>Mantenimiento</Text>
               <View style={s.subCategoriesGrid}>
                 {MANTENIMIENTO_SUBCATEGORIAS.map((sub) => (
                   <TouchableOpacity key={sub.id} onPress={() => { setMantenimientoVisible(false); setTimeout(() => openAddModal(sub.id), 300); }} activeOpacity={0.7} style={s.subCategoryItem}>
-                    <View style={[s.subCategoryIcon, { backgroundColor: `${sub.color}15` }]}>
+                    <View style={[s.subCategoryIcon, { backgroundColor: `${sub.color}${isDark ? "25" : "15"}` }]}>
                       <Text style={{ fontSize: 32 }}>{sub.emoji}</Text>
                     </View>
                     <Text style={[s.subCategoryName, { color: c.text }]}>{sub.name}</Text>
@@ -449,16 +471,16 @@ export default function Gastos() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={closeModal}>
             <TouchableWithoutFeedback>
-              <View style={[s.bottomModal, { backgroundColor: c.modalBg }]}>
-                <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+              <View style={[s.bottomModal, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
+                <View style={[s.modalHandle, { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border }]} />
                 <Text style={[s.modalTitle, { color: c.text }]}>{isEditing ? "Editar gasto" : "Nuevo gasto"}</Text>
 
                 {selectedGasto && (() => {
                   const cat = ALL_CATEGORIAS.find((x) => x.id === selectedGasto);
                   return (
                     <View style={s.selectedCat}>
-                      <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || c.accent}15` }]}>
-                        <Text style={{ fontSize: 28 }}>{cat?.emoji || "📦"}</Text>
+                      <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || c.accent}${isDark ? "25" : "15"}` }]}>
+                        <Text style={{ fontSize: 30 }}>{cat?.emoji || "📦"}</Text>
                       </View>
                       <Text style={[s.selectedCatName, { color: c.text }]}>{cat?.name || selectedGasto}</Text>
                     </View>
@@ -468,7 +490,7 @@ export default function Gastos() {
                 {selectedGasto === "otros" && !isEditing && (
                   <View style={s.inputGroup}>
                     <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
-                    <View style={[s.inputWrapper, { backgroundColor: c.surface, borderColor: c.border }]}>
+                    <View style={[s.inputWrapper, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}>
                       <TextInput style={[s.customInput, { color: c.text }]} placeholder="Ej: Multa, Seguro, Perito..." placeholderTextColor={c.textMuted} value={customDescription} onChangeText={setCustomDescription} autoFocus />
                     </View>
                   </View>
@@ -476,7 +498,7 @@ export default function Gastos() {
 
                 <View style={s.inputGroup}>
                   <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
-                  <View style={[s.inputWrapper, { backgroundColor: c.surface, borderColor: c.border }]}>
+                  <View style={[s.inputWrapper, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}>
                     <Text style={[s.inputPrefix, { color: c.text }]}>$</Text>
                     <TextInput style={[s.input, { color: c.text }]} placeholder="0" placeholderTextColor={c.textMuted} keyboardType="numeric" value={editValue} onChangeText={setEditValue} autoFocus={selectedGasto !== "otros"} />
                   </View>
@@ -484,21 +506,21 @@ export default function Gastos() {
 
                 <View style={s.inputGroup}>
                   <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
-                  <TouchableOpacity style={[s.dateInput, { backgroundColor: c.surface, borderColor: c.border }]} onPress={() => { setModalVisible(false); setTimeout(() => setCalendarVisible(true), 300); }}>
+                  <TouchableOpacity style={[s.dateInput, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} onPress={() => { setModalVisible(false); setTimeout(() => setCalendarVisible(true), 300); }}>
                     <Text style={[s.dateInputText, { color: c.text }]}>{formatDate(editDate)}</Text>
                     <Text style={{ color: c.textMuted, fontSize: 16 }}>📅</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={s.modalBtns}>
-                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: c.surface, borderColor: c.border }]} onPress={closeModal}>
+                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} onPress={closeModal}>
                     <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[s.saveBtn, { backgroundColor: c.accent }, (!editValue || loading || (selectedGasto === "otros" && !isEditing && !customDescription.trim())) && s.saveBtnDisabled]}
+                    style={[s.saveBtn, { backgroundColor: c.income }, (!editValue || loading || (selectedGasto === "otros" && !isEditing && !customDescription.trim())) && s.saveBtnDisabled]}
                     onPress={() => { isEditing ? handleSaveEdit() : selectedGasto && handleAddGasto(selectedGasto, editValue); }}
                     disabled={!editValue || loading || (selectedGasto === "otros" && !isEditing && !customDescription.trim())}>
-                    {loading ? <ActivityIndicator color={c.accentText} size="small" /> : <Text style={[s.saveBtnText, { color: c.accentText }]}>{isEditing ? "Actualizar" : "Guardar"}</Text>}
+                    {loading ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={s.saveBtnText}>{isEditing ? "Actualizar" : "Guardar"}</Text>}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -513,55 +535,179 @@ export default function Gastos() {
 const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: HORIZONTAL_PADDING, paddingTop: 8, paddingBottom: 16 },
-  headerTitle: { fontSize: 26, fontWeight: "800" },
-  dateButton: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, alignSelf: "flex-start" as const },
-  dateButtonIcon: { fontSize: 13 },
+
+  // HEADER
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: HORIZONTAL_PADDING,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  headerTitle: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
+  dateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignSelf: "flex-start" as const,
+  },
+  dateButtonIcon: { fontSize: 14 },
   headerDate: { fontSize: 13, fontWeight: "600", textTransform: "capitalize" as const },
-  dateArrow: { fontSize: 10 },
-  placaBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
+  dateArrow: { fontSize: 11 },
+  placaBadge: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
+
+  // SCROLL
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 40 },
-  summaryCard: { borderRadius: 20, padding: 20, marginBottom: 20 },
-  summaryTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  summaryLabel: { fontSize: 14, fontWeight: "500" },
-  countBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  countText: { fontSize: 11, fontWeight: "700" },
-  summaryTotal: { fontSize: 36, fontWeight: "800", letterSpacing: -1 },
-  categoriesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 },
-  categoryCard: { width: (width - HORIZONTAL_PADDING * 2 - 10 * 3) / 4, alignItems: "center", borderRadius: 16, paddingVertical: 14, paddingHorizontal: 4 },
-  categoryCircle: { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center", marginBottom: 8 },
+
+  // SUMMARY
+  summaryCard: {
+    borderRadius: 22,
+    padding: 20,
+    marginBottom: 24,
+  },
+  summaryTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  summaryLabel: { fontSize: 13, fontWeight: "500", marginBottom: 4 },
+  summaryTotal: { fontSize: 34, fontWeight: "800", letterSpacing: -1 },
+  countBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  countText: { fontSize: 16, fontWeight: "800" },
+  summaryBar: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(128,128,128,0.15)",
+    overflow: "hidden",
+  },
+  summaryBarFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+
+  // SECTION LABEL
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    textTransform: "uppercase" as const,
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+
+  // CATEGORIES
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 28,
+  },
+  categoryCard: {
+    width: (width - HORIZONTAL_PADDING * 2 - 10 * 3) / 4,
+    alignItems: "center",
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  categoryCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   categoryLabel: { fontSize: 10, textAlign: "center", fontWeight: "600" },
-  listHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+
+  // LIST HEADER
+  listHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
   listTitle: { fontSize: 18, fontWeight: "700" },
-  listSeeAll: { fontSize: 13, fontWeight: "600" },
-  gastoCard: { borderRadius: 16, marginBottom: 10, flexDirection: "row", alignItems: "center", padding: 14 },
-  gastoIconCircle: { width: 46, height: 46, borderRadius: 14, justifyContent: "center", alignItems: "center", marginRight: 12 },
+  listCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  listCountText: { fontSize: 12, fontWeight: "700" },
+
+  // GASTO CARD
+  gastoCard: {
+    borderRadius: 18,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+  },
+  gastoIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
   gastoInfo: { flex: 1 },
-  gastoName: { fontSize: 15, fontWeight: "700", marginBottom: 2 },
-  gastoDate: { fontSize: 12, fontWeight: "400" },
-  gastoRight: { alignItems: "flex-end" as const, gap: 4 },
+  gastoName: { fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  gastoMeta: { flexDirection: "row", alignItems: "center", gap: 6 },
+  gastoDatePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  gastoDateText: { fontSize: 10, fontWeight: "600" },
   gastoAmount: { fontSize: 16, fontWeight: "800" },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+
+  // STATUS
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
+  },
+  statusDot: { width: 5, height: 5, borderRadius: 3 },
   statusText: { fontSize: 10, fontWeight: "700" },
+
+  // EMPTY STATES
   emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
-  emptyIconContainer: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  emptyIconContainer: { width: 88, height: 88, borderRadius: 28, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 14, textAlign: "center" },
-  emptyList: { padding: 40, borderRadius: 20, alignItems: "center" },
-  emptyListText: { fontSize: 14 },
+  emptyList: { padding: 40, borderRadius: 22, alignItems: "center" },
+  emptyListTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
+  emptyListText: { fontSize: 13 },
+
+  // MODALS
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   bottomModal: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, paddingBottom: 30, paddingHorizontal: 20 },
   modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
   modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 16 },
   subCategoriesGrid: { flexDirection: "row", justifyContent: "center", gap: 20, marginBottom: 20 },
   subCategoryItem: { alignItems: "center" as const },
-  subCategoryIcon: { width: 72, height: 72, borderRadius: 20, justifyContent: "center", alignItems: "center", marginBottom: 8 },
+  subCategoryIcon: { width: 72, height: 72, borderRadius: 22, justifyContent: "center", alignItems: "center", marginBottom: 8 },
   subCategoryName: { fontSize: 13, fontWeight: "600" },
-  selectedCat: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 20 },
-  selectedCatCircle: { width: 52, height: 52, borderRadius: 16, justifyContent: "center", alignItems: "center" },
-  selectedCatName: { fontSize: 16, fontWeight: "700" },
+  selectedCat: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 24 },
+  selectedCatCircle: { width: 56, height: 56, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+  selectedCatName: { fontSize: 17, fontWeight: "700" },
   inputGroup: { marginBottom: 16 },
   inputLabel: { fontSize: 12, fontWeight: "600", marginBottom: 6, textTransform: "uppercase" as const, letterSpacing: 0.5 },
   inputWrapper: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1 },
@@ -575,5 +721,5 @@ const s = StyleSheet.create({
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
   saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
   saveBtnDisabled: { opacity: 0.4 },
-  saveBtnText: { fontSize: 15, fontWeight: "700" },
+  saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
 });

@@ -281,10 +281,28 @@ export default function HomeBaseAdapted({
   const tipoCamionData = getTipoCamionData(tipoCamion);
   const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
 
+  const userEmail = user?.email || "";
+  const userInitials = userEmail
+    .split("@")[0]
+    .slice(0, 2)
+    .toUpperCase() || "?";
+
   return (
     <View style={{ flex: 1, backgroundColor: c.primary }}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {/* USER AVATAR + INFO */}
+          <View style={styles.userHeader}>
+            <View style={[styles.avatarCircle, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
+              <Text style={[styles.avatarText, { color: c.income }]}>{userInitials}</Text>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={[styles.userEmail, { color: c.text }]} numberOfLines={1}>
+                {userEmail}
+              </Text>
+            </View>
+          </View>
+
           {/* HEADER CON VEHÍCULO */}
           {showCamionHeader && (
             <TouchableOpacity
@@ -686,6 +704,25 @@ export default function HomeBaseAdapted({
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { flex: 1, paddingHorizontal: 20 },
+
+  // User Header
+  userHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  avatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  avatarText: { fontSize: 16, fontWeight: "800" },
+  userInfo: { flex: 1 },
+  userEmail: { fontSize: 14, fontWeight: "600" },
 
   // Vehicle Header
   vehicleHeader: {

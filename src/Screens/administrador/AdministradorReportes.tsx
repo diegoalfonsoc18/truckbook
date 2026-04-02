@@ -63,6 +63,7 @@ function formatFechaHeader(fecha: string) {
 export default function AdministradorReportes() {
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
+  const c = colors;
   const { user } = useAuth();
   const role = useRoleStore((s) => s.role);
 
@@ -86,7 +87,7 @@ export default function AdministradorReportes() {
 
       const placas = data.map((v) => v.placa);
       setPlacasDisponibles(placas);
-      setPlacasSeleccionadas(new Set(placas)); // Todas seleccionadas por defecto
+      setPlacasSeleccionadas(new Set(placas));
     };
     cargarPlacas();
   }, [user?.id, role]);
@@ -102,7 +103,6 @@ export default function AdministradorReportes() {
     const placasArray = Array.from(placasSeleccionadas);
 
     try {
-      // Cargar gastos e ingresos de todas las placas seleccionadas
       const [gastosRes, ingresosRes] = await Promise.all([
         supabase
           .from("conductor_gastos")
@@ -119,7 +119,6 @@ export default function AdministradorReportes() {
       const gastos = gastosRes.data || [];
       const ingresos = ingresosRes.data || [];
 
-      // Buscar nombres de conductores
       const conductorIds = new Set<string>();
       gastos.forEach((g) => conductorIds.add(g.conductor_id));
       ingresos.forEach((i) => conductorIds.add(i.conductor_id));
@@ -134,7 +133,6 @@ export default function AdministradorReportes() {
         nombresMap[id] = usuario?.nombre || "Desconocido";
       }
 
-      // Combinar registros
       const registros: RegistroActividad[] = [
         ...gastos.map((g) => ({
           id: g.id,
@@ -162,11 +160,9 @@ export default function AdministradorReportes() {
         })),
       ];
 
-      // Totales generales
       setTotalGastos(registros.filter((r) => r.tipo === "gasto").reduce((s, r) => s + r.monto, 0));
       setTotalIngresos(registros.filter((r) => r.tipo === "ingreso").reduce((s, r) => s + r.monto, 0));
 
-      // Agrupar por fecha
       const porFecha: Record<string, RegistroActividad[]> = {};
       for (const reg of registros) {
         if (!porFecha[reg.fecha]) porFecha[reg.fecha] = [];
@@ -236,21 +232,16 @@ export default function AdministradorReportes() {
 
   const todasSeleccionadas = placasSeleccionadas.size === placasDisponibles.length;
 
-  const ds = {
-    container: { backgroundColor: colors.primary },
-    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
-    text: { color: colors.text },
-    textSecondary: { color: colors.textSecondary },
-    textMuted: { color: colors.textMuted },
-  };
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {};
+  const shadow = getShadow(isDark, "md");
 
   if (loading && placasDisponibles.length === 0) {
     return (
-      <View style={[styles.container, ds.container]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.loadingText, ds.textSecondary]}>
+      <View style={[s.container, { backgroundColor: c.primary }]}>
+        <SafeAreaView style={s.safeArea} edges={["top"]}>
+          <View style={s.loadingContainer}>
+            <ActivityIndicator size="large" color={c.income} />
+            <Text style={[s.loadingText, { color: c.textSecondary }]}>
               Cargando reportes...
             </Text>
           </View>
@@ -259,18 +250,22 @@ export default function AdministradorReportes() {
     );
   }
 
+  const balance = totalIngresos - totalGastos;
+
   return (
-    <View style={[styles.container, ds.container]}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <View style={[s.container, { backgroundColor: c.primary }]}>
+      <SafeAreaView style={s.safeArea} edges={["top"]}>
         {/* HEADER */}
-        <View style={styles.headerFixed}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ fontSize: 24 }}>←</Text>
+        <View style={s.headerFixed}>
+          <View style={s.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[s.backButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.cardBg }, cardBorder]}>
+              <Text style={{ fontSize: 18 }}>←</Text>
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={[styles.headerTitle, ds.text]}>Reportes</Text>
-              <Text style={[styles.headerSubtitle, ds.textSecondary]}>
+              <Text style={[s.headerTitle, { color: c.text }]}>Reportes</Text>
+              <Text style={[s.headerSubtitle, { color: c.textSecondary }]}>
                 {todasSeleccionadas
                   ? "Toda la flota"
                   : `${placasSeleccionadas.size} vehículo${placasSeleccionadas.size !== 1 ? "s" : ""}`}
@@ -282,19 +277,20 @@ export default function AdministradorReportes() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtroContent}>
+            contentContainerStyle={s.filtroContent}>
             <TouchableOpacity
               style={[
-                styles.filtroChip,
+                s.filtroChip,
                 todasSeleccionadas
-                  ? { backgroundColor: colors.accent }
-                  : ds.cardBg,
+                  ? { backgroundColor: c.accent }
+                  : { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                cardBorder,
               ]}
               onPress={seleccionarTodas}>
               <Text
                 style={[
-                  styles.filtroChipText,
-                  { color: todasSeleccionadas ? "#FFF" : colors.text },
+                  s.filtroChipText,
+                  { color: todasSeleccionadas ? c.accentText : c.text },
                 ]}>
                 Todos
               </Text>
@@ -305,20 +301,21 @@ export default function AdministradorReportes() {
                 <TouchableOpacity
                   key={placa}
                   style={[
-                    styles.filtroChip,
+                    s.filtroChip,
                     selected && !todasSeleccionadas
-                      ? { backgroundColor: colors.accent }
-                      : ds.cardBg,
+                      ? { backgroundColor: c.accent }
+                      : { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                    cardBorder,
                   ]}
                   onPress={() => togglePlaca(placa)}>
                   <Text
                     style={[
-                      styles.filtroChipText,
+                      s.filtroChipText,
                       {
                         color:
                           selected && !todasSeleccionadas
-                            ? "#FFF"
-                            : colors.text,
+                            ? c.accentText
+                            : c.text,
                       },
                     ]}>
                     {placa}
@@ -330,34 +327,34 @@ export default function AdministradorReportes() {
 
           {/* RESUMEN GENERAL */}
           {(totalIngresos > 0 || totalGastos > 0) && (
-            <View style={[styles.resumenGeneral, ds.cardBg, getShadow(isDark, "sm")]}>
-              <View style={styles.resumenItem}>
-                <Text style={[styles.resumenLabel, ds.textMuted]}>Ingresos</Text>
-                <Text style={[styles.resumenMonto, { color: colors.income }]}>
+            <View style={[
+              s.resumenGeneral,
+              { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+              cardBorder,
+              shadow,
+            ]}>
+              <View style={s.resumenItem}>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Ingresos</Text>
+                <Text style={[s.resumenMonto, { color: c.income }]}>
                   +{formatCurrency(totalIngresos)}
                 </Text>
               </View>
-              <View style={[styles.resumenDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.resumenItem}>
-                <Text style={[styles.resumenLabel, ds.textMuted]}>Gastos</Text>
-                <Text style={[styles.resumenMonto, { color: colors.expense }]}>
+              <View style={[s.resumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} />
+              <View style={s.resumenItem}>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Gastos</Text>
+                <Text style={[s.resumenMonto, { color: c.expense }]}>
                   -{formatCurrency(totalGastos)}
                 </Text>
               </View>
-              <View style={[styles.resumenDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.resumenItem}>
-                <Text style={[styles.resumenLabel, ds.textMuted]}>Balance</Text>
+              <View style={[s.resumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} />
+              <View style={s.resumenItem}>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Balance</Text>
                 <Text
                   style={[
-                    styles.resumenMonto,
-                    {
-                      color:
-                        totalIngresos - totalGastos >= 0
-                          ? colors.income
-                          : colors.expense,
-                    },
+                    s.resumenMonto,
+                    { color: balance >= 0 ? c.income : c.expense },
                   ]}>
-                  {formatCurrency(totalIngresos - totalGastos)}
+                  {formatCurrency(balance)}
                 </Text>
               </View>
             </View>
@@ -366,8 +363,8 @@ export default function AdministradorReportes() {
 
         {/* LISTA POR FECHA */}
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
+          <View style={s.loadingContainer}>
+            <ActivityIndicator size="large" color={c.income} />
           </View>
         ) : (
           <SectionList
@@ -377,16 +374,16 @@ export default function AdministradorReportes() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.accent}
+                tintColor={c.income}
               />
             }
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={s.listContent}
             stickySectionHeadersEnabled={false}
             ListEmptyComponent={
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>📭</Text>
-                <Text style={[styles.emptyTitle, ds.text]}>Sin registros</Text>
-                <Text style={[styles.emptySubtitle, ds.textSecondary]}>
+              <View style={s.emptyState}>
+                <Text style={{ fontSize: 56, marginBottom: 12 }}>📭</Text>
+                <Text style={[s.emptyTitle, { color: c.text }]}>Sin registros</Text>
+                <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
                   No hay gastos ni ingresos para los vehículos seleccionados
                 </Text>
               </View>
@@ -394,27 +391,28 @@ export default function AdministradorReportes() {
             renderSectionHeader={({ section }) => (
               <View
                 style={[
-                  styles.sectionHeader,
-                  ds.cardBg,
-                  getShadow(isDark, "sm"),
+                  s.sectionHeader,
+                  { backgroundColor: isDark ? "rgba(0,217,165,0.06)" : c.cardBg },
+                  isDark ? { borderWidth: 1, borderColor: "rgba(0,217,165,0.15)" } : {},
+                  shadow,
                 ]}>
-                <Text style={[styles.sectionDate, ds.text]}>{section.title}</Text>
+                <Text style={[s.sectionDate, { color: c.text }]}>{section.title}</Text>
 
-                <View style={styles.conductoresRow}>
-                  <Text style={[styles.conductoresLabel, ds.textMuted]}>
+                <View style={s.conductoresRow}>
+                  <Text style={[s.conductoresLabel, { color: c.textMuted }]}>
                     Conductor(es):
                   </Text>
                   {section.conductores.map((nombre, idx) => (
                     <View
                       key={idx}
                       style={[
-                        styles.conductorChip,
-                        { backgroundColor: colors.accent + "20" },
+                        s.conductorChip,
+                        { backgroundColor: isDark ? "rgba(255,229,0,0.15)" : c.accentLight },
                       ]}>
                       <Text
                         style={[
-                          styles.conductorChipText,
-                          { color: colors.accent },
+                          s.conductorChipText,
+                          { color: isDark ? c.accent : "#8B7A00" },
                         ]}>
                         {nombre}
                       </Text>
@@ -422,113 +420,91 @@ export default function AdministradorReportes() {
                   ))}
                 </View>
 
-                <View style={styles.resumenRow}>
+                <View style={s.resumenRow}>
                   {section.totalIngresos > 0 && (
-                    <Text style={[styles.resumenIngreso, { color: colors.income }]}>
-                      +{formatCurrency(section.totalIngresos)}
-                    </Text>
-                  )}
-                  {section.totalGastos > 0 && (
-                    <Text style={[styles.resumenGasto, { color: colors.expense }]}>
-                      -{formatCurrency(section.totalGastos)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            )}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.registroCard,
-                  ds.cardBg,
-                  getShadow(isDark, "sm"),
-                ]}>
-                <View style={styles.registroHeader}>
-                  <View style={styles.registroHeaderLeft}>
-                    <View
-                      style={[
-                        styles.tipoBadge,
-                        {
-                          backgroundColor:
-                            item.tipo === "ingreso"
-                              ? colors.income + "20"
-                              : colors.expense + "20",
-                        },
-                      ]}>
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          fontWeight: "600",
-                          color:
-                            item.tipo === "ingreso"
-                              ? colors.income
-                              : colors.expense,
-                        }}>
-                        {item.tipo === "ingreso" ? "INGRESO" : "GASTO"}
+                    <View style={[s.resumenPill, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
+                      <Text style={[s.resumenIngreso, { color: c.income }]}>
+                        +{formatCurrency(section.totalIngresos)}
                       </Text>
                     </View>
-                    {/* Mostrar placa del registro */}
-                    <View style={styles.miniPlaca}>
-                      <Text style={styles.miniPlacaText}>{item.placa}</Text>
+                  )}
+                  {section.totalGastos > 0 && (
+                    <View style={[s.resumenPill, { backgroundColor: isDark ? "rgba(233,69,96,0.15)" : c.expenseLight }]}>
+                      <Text style={[s.resumenGasto, { color: c.expense }]}>
+                        -{formatCurrency(section.totalGastos)}
+                      </Text>
                     </View>
-                  </View>
-                  <Text
-                    style={[
-                      styles.registroMonto,
-                      {
-                        color:
-                          item.tipo === "ingreso"
-                            ? colors.income
-                            : colors.expense,
-                      },
-                    ]}>
-                    {item.tipo === "ingreso" ? "+" : "-"}
-                    {formatCurrency(item.monto)}
-                  </Text>
-                </View>
-
-                <Text style={[styles.registroTipo, ds.text]}>
-                  {item.tipo_movimiento}
-                </Text>
-                {item.descripcion ? (
-                  <Text style={[styles.registroDesc, ds.textSecondary]}>
-                    {item.descripcion}
-                  </Text>
-                ) : null}
-
-                <View style={styles.registroFooter}>
-                  <Text style={[styles.registroConductor, ds.textMuted]}>
-                    {item.conductor_nombre}
-                  </Text>
-                  <View
-                    style={[
-                      styles.estadoBadge,
-                      {
-                        backgroundColor:
-                          item.estado === "aprobado"
-                            ? colors.income + "20"
-                            : item.estado === "rechazado"
-                            ? colors.expense + "20"
-                            : colors.textMuted + "20",
-                      },
-                    ]}>
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "600",
-                        color:
-                          item.estado === "aprobado"
-                            ? colors.income
-                            : item.estado === "rechazado"
-                            ? colors.expense
-                            : colors.textMuted,
-                      }}>
-                      {item.estado?.toUpperCase()}
-                    </Text>
-                  </View>
+                  )}
                 </View>
               </View>
             )}
+            renderItem={({ item }) => {
+              const isIngreso = item.tipo === "ingreso";
+              const tipoColor = isIngreso ? c.income : c.expense;
+              const estadoColor =
+                item.estado === "aprobado" || item.estado === "confirmado"
+                  ? c.income
+                  : item.estado === "rechazado"
+                  ? c.expense
+                  : c.textMuted;
+
+              return (
+                <View
+                  style={[
+                    s.registroCard,
+                    { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                    cardBorder,
+                    getShadow(isDark, "sm"),
+                  ]}>
+                  <View style={s.registroHeader}>
+                    <View style={s.registroHeaderLeft}>
+                      <View
+                        style={[
+                          s.tipoBadge,
+                          { backgroundColor: tipoColor + (isDark ? "25" : "15") },
+                        ]}>
+                        <View style={[s.tipoDot, { backgroundColor: tipoColor }]} />
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: tipoColor }}>
+                          {isIngreso ? "INGRESO" : "GASTO"}
+                        </Text>
+                      </View>
+                      <View style={[s.miniPlaca, { backgroundColor: c.plateYellow }]}>
+                        <Text style={[s.miniPlacaText, { color: c.plateText }]}>{item.placa}</Text>
+                      </View>
+                    </View>
+                    <Text style={[s.registroMonto, { color: tipoColor }]}>
+                      {isIngreso ? "+" : "-"}
+                      {formatCurrency(item.monto)}
+                    </Text>
+                  </View>
+
+                  <Text style={[s.registroTipo, { color: c.text }]}>
+                    {item.tipo_movimiento}
+                  </Text>
+                  {item.descripcion ? (
+                    <Text style={[s.registroDesc, { color: c.textSecondary }]}>
+                      {item.descripcion}
+                    </Text>
+                  ) : null}
+
+                  <View style={s.registroFooter}>
+                    <Text style={[s.registroConductor, { color: c.textMuted }]}>
+                      {item.conductor_nombre}
+                    </Text>
+                    <View
+                      style={[
+                        s.estadoBadge,
+                        { backgroundColor: estadoColor + (isDark ? "25" : "15") },
+                      ]}>
+                      <View style={[s.estadoDot, { backgroundColor: estadoColor }]} />
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: estadoColor }}>
+                        {item.estado?.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            }}
           />
         )}
       </SafeAreaView>
@@ -536,126 +512,138 @@ export default function AdministradorReportes() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
 
   // HEADER
-  headerFixed: { paddingHorizontal: 16, paddingBottom: 8 },
+  headerFixed: { paddingHorizontal: 20, paddingBottom: 8 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
   },
-  headerTitle: { fontSize: 24, fontWeight: "700", letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 13, marginTop: 2 },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 13, marginTop: 2, fontWeight: "500" },
 
   // FILTRO PLACAS
   filtroContent: { gap: 8, paddingVertical: 8 },
   filtroChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderRadius: 12,
   },
   filtroChipText: { fontSize: 13, fontWeight: "700", letterSpacing: 0.5 },
 
   // RESUMEN GENERAL
   resumenGeneral: {
     flexDirection: "row",
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     marginTop: 8,
-    borderWidth: 1,
     alignItems: "center",
   },
   resumenItem: { flex: 1, alignItems: "center" },
-  resumenLabel: { fontSize: 11, fontWeight: "600", marginBottom: 4, textTransform: "uppercase" },
-  resumenMonto: { fontSize: 14, fontWeight: "700" },
+  resumenLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 },
+  resumenMonto: { fontSize: 14, fontWeight: "800" },
   resumenDivider: { width: 1, height: 30 },
 
   // LIST
-  listContent: { paddingHorizontal: 16, paddingBottom: 100 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 100 },
 
   // SECTION HEADER
   sectionHeader: {
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     marginTop: 16,
     marginBottom: 8,
-    borderWidth: 1,
   },
   sectionDate: { fontSize: 15, fontWeight: "700", textTransform: "capitalize" },
   conductoresRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 10,
     gap: 6,
   },
-  conductoresLabel: { fontSize: 12 },
+  conductoresLabel: { fontSize: 12, fontWeight: "500" },
   conductorChip: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
   },
   conductorChipText: { fontSize: 12, fontWeight: "600" },
   resumenRow: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 8,
+    gap: 8,
+    marginTop: 10,
   },
-  resumenIngreso: { fontSize: 14, fontWeight: "700" },
-  resumenGasto: { fontSize: 14, fontWeight: "700" },
+  resumenPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  resumenIngreso: { fontSize: 13, fontWeight: "700" },
+  resumenGasto: { fontSize: 13, fontWeight: "700" },
 
   // REGISTRO CARD
   registroCard: {
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     marginBottom: 8,
-    borderWidth: 1,
   },
   registroHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   registroHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   tipoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
+    gap: 4,
   },
+  tipoDot: { width: 5, height: 5, borderRadius: 3 },
   miniPlaca: {
-    backgroundColor: "#FFE415",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#000",
+    borderRadius: 5,
   },
-  miniPlacaText: { fontSize: 10, fontWeight: "800", color: "#000", letterSpacing: 0.5 },
-  registroMonto: { fontSize: 16, fontWeight: "700" },
+  miniPlacaText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  registroMonto: { fontSize: 16, fontWeight: "800" },
   registroTipo: { fontSize: 14, fontWeight: "600", marginBottom: 2 },
   registroDesc: { fontSize: 12, marginBottom: 6 },
   registroFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 6,
   },
-  registroConductor: { fontSize: 12 },
+  registroConductor: { fontSize: 12, fontWeight: "500" },
   estadoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 6,
+    gap: 4,
   },
+  estadoDot: { width: 5, height: 5, borderRadius: 3 },
 
   // EMPTY & LOADING
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 14 },
+  loadingText: { marginTop: 12, fontSize: 14, fontWeight: "500" },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -663,7 +651,6 @@ const styles = StyleSheet.create({
     padding: 40,
     marginTop: 60,
   },
-  emptyIcon: { fontSize: 56, marginBottom: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", marginBottom: 6 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 13, textAlign: "center" },
 });
