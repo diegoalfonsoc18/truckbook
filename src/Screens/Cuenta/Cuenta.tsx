@@ -105,6 +105,7 @@ const MENU_OPTIONS = [
 
 export default function Account({ navigation }: any) {
   const { colors, isDark } = useTheme();
+  const c = colors; // shorthand
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [modalRolesVisible, setModalRolesVisible] = useState(false);
@@ -226,21 +227,13 @@ export default function Account({ navigation }: any) {
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Usuario";
 
-  const ds = {
-    container: { backgroundColor: colors.primary },
-    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
-    text: { color: colors.text },
-    textSecondary: { color: colors.textSecondary },
-    textMuted: { color: colors.textMuted },
-  };
-
   return (
-    <View style={[styles.container, ds.container]}>
+    <View style={[styles.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* HEADER FIJO */}
         <View style={styles.headerFixed}>
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, ds.text]}>Cuenta</Text>
+            <Text style={[styles.headerTitle, { color: c.text }]}>Cuenta</Text>
           </View>
         </View>
 
@@ -255,7 +248,7 @@ export default function Account({ navigation }: any) {
               <View
                 style={[
                   styles.avatarContainer,
-                  { backgroundColor: currentRole?.color || colors.accent },
+                  { backgroundColor: currentRole?.color || c.accent },
                   getShadow(isDark, "lg"),
                 ]}>
                 <Text style={styles.avatarText}>{userInitial}</Text>
@@ -263,8 +256,8 @@ export default function Account({ navigation }: any) {
                   style={[
                     styles.avatarBadge,
                     {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.primary,
+                      backgroundColor: c.surface,
+                      borderColor: c.primary,
                     },
                   ]}>
                   <Text style={styles.avatarBadgeText}>
@@ -273,15 +266,15 @@ export default function Account({ navigation }: any) {
                 </View>
               </View>
 
-              <Text style={[styles.userName, ds.text]}>{userName}</Text>
-              <Text style={[styles.userEmail, ds.textSecondary]}>
+              <Text style={[styles.userName, { color: c.text }]}>{userName}</Text>
+              <Text style={[styles.userEmail, { color: c.textSecondary }]}>
                 {user?.email || "Cargando..."}
               </Text>
 
               <TouchableOpacity
                 style={[
                   styles.roleBadge,
-                  { backgroundColor: currentRole?.color || colors.accent },
+                  { backgroundColor: currentRole?.color || c.accent },
                 ]}
                 onPress={() => setModalRolesVisible(true)}
                 activeOpacity={0.8}>
@@ -299,37 +292,41 @@ export default function Account({ navigation }: any) {
             <View
               style={[
                 styles.statsContainer,
-                ds.cardBg,
+                { backgroundColor: c.cardBg, borderColor: c.border },
                 getShadow(isDark, "md"),
               ]}>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, ds.text]}>12</Text>
-                <Text style={[styles.statLabel, ds.textSecondary]}>Viajes</Text>
+                <Text style={[styles.statValue, { color: c.text }]}>12</Text>
+                <Text style={[styles.statLabel, { color: c.textSecondary }]}>Viajes</Text>
               </View>
               <View
                 style={[
                   styles.statItem,
                   styles.statItemBorder,
-                  { borderColor: colors.border },
+                  { borderColor: c.border },
                 ]}>
-                <Text style={[styles.statValue, ds.text]}>2.4K</Text>
-                <Text style={[styles.statLabel, ds.textSecondary]}>Km</Text>
+                <Text style={[styles.statValue, { color: c.text }]}>2.4K</Text>
+                <Text style={[styles.statLabel, { color: c.textSecondary }]}>Km</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, ds.text]}>$1.2M</Text>
-                <Text style={[styles.statLabel, ds.textSecondary]}>Mes</Text>
+                <Text style={[styles.statValue, { color: c.text }]}>$1.2M</Text>
+                <Text style={[styles.statLabel, { color: c.textSecondary }]}>Mes</Text>
               </View>
             </View>
 
             {/* MENÚ - GRID 3 COLUMNAS */}
-            <Text style={[styles.sectionTitle, ds.textSecondary]}>
+            <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
               Configuración
             </Text>
             <View style={styles.menuGrid}>
               {MENU_OPTIONS.map((option) => (
                 <TouchableOpacity
                   key={option.id}
-                  style={[styles.menuItem, ds.cardBg, getShadow(isDark, "sm")]}
+                  style={[
+                    styles.menuItem,
+                    { backgroundColor: c.cardBg, borderColor: c.border },
+                    getShadow(isDark, "sm"),
+                  ]}
                   onPress={() => handleMenuPress(option)}
                   activeOpacity={0.7}>
                   <View
@@ -339,11 +336,11 @@ export default function Account({ navigation }: any) {
                     ]}>
                     <Text style={styles.menuIcon}>{option.icon}</Text>
                   </View>
-                  <Text style={[styles.menuTitle, ds.text]} numberOfLines={1}>
+                  <Text style={[styles.menuTitle, { color: c.text }]} numberOfLines={1}>
                     {option.title}
                   </Text>
                   <Text
-                    style={[styles.menuSubtitle, ds.textMuted]}
+                    style={[styles.menuSubtitle, { color: c.textMuted }]}
                     numberOfLines={1}>
                     {option.subtitle}
                   </Text>
@@ -355,26 +352,25 @@ export default function Account({ navigation }: any) {
             <TouchableOpacity
               style={[
                 styles.logoutButton,
-                ds.cardBg,
-                { borderColor: colors.danger + "40" },
+                { backgroundColor: c.cardBg, borderColor: c.danger + "40" },
                 getShadow(isDark, "sm"),
               ]}
               onPress={handleLogout}
               disabled={loading}
               activeOpacity={0.8}>
               {loading ? (
-                <ActivityIndicator color={colors.danger} />
+                <ActivityIndicator color={c.danger} />
               ) : (
                 <>
                   <Text style={styles.logoutIcon}>🚪</Text>
-                  <Text style={[styles.logoutText, { color: colors.danger }]}>
+                  <Text style={[styles.logoutText, { color: c.danger }]}>
                     Cerrar Sesión
                   </Text>
                 </>
               )}
             </TouchableOpacity>
 
-            <Text style={[styles.versionText, ds.textMuted]}>
+            <Text style={[styles.versionText, { color: c.textMuted }]}>
               TruckBook v1.0.0
             </Text>
           </Animated.View>
@@ -394,7 +390,7 @@ export default function Account({ navigation }: any) {
           <View
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: colors.overlay },
+              { backgroundColor: c.overlay },
             ]}
           />
           <Animated.View
@@ -410,18 +406,18 @@ export default function Account({ navigation }: any) {
                 style={[
                   styles.modalContent,
                   {
-                    backgroundColor: colors.modalBg,
-                    borderColor: colors.border,
+                    backgroundColor: c.modalBg,
+                    borderColor: c.border,
                   },
                 ]}>
                 <View
                   style={[
                     styles.modalHandle,
-                    { backgroundColor: colors.textMuted },
+                    { backgroundColor: c.textMuted },
                   ]}
                 />
-                <Text style={[styles.modalTitle, ds.text]}>Cambiar Rol</Text>
-                <Text style={[styles.modalSubtitle, ds.textSecondary]}>
+                <Text style={[styles.modalTitle, { color: c.text }]}>Cambiar Rol</Text>
+                <Text style={[styles.modalSubtitle, { color: c.textSecondary }]}>
                   ¿Cómo usarás TruckBook?
                 </Text>
 
@@ -436,8 +432,8 @@ export default function Account({ navigation }: any) {
                           {
                             backgroundColor: isActive
                               ? rol.color
-                              : colors.cardBg,
-                            borderColor: isActive ? rol.color : colors.border,
+                              : c.cardBg,
+                            borderColor: isActive ? rol.color : c.border,
                           },
                         ]}
                         onPress={() => handleCambiarRol(rol.id)}
@@ -458,7 +454,7 @@ export default function Account({ navigation }: any) {
                           <Text
                             style={[
                               styles.roleLabel,
-                              { color: isActive ? "#FFF" : colors.text },
+                              { color: isActive ? "#FFF" : c.text },
                             ]}>
                             {rol.label}
                           </Text>
@@ -468,7 +464,7 @@ export default function Account({ navigation }: any) {
                               {
                                 color: isActive
                                   ? "rgba(255,255,255,0.8)"
-                                  : colors.textSecondary,
+                                  : c.textSecondary,
                               },
                             ]}>
                             {rol.description}
@@ -487,11 +483,11 @@ export default function Account({ navigation }: any) {
                 <TouchableOpacity
                   style={[
                     styles.modalCancelButton,
-                    { backgroundColor: colors.cardBg },
+                    { backgroundColor: c.cardBg },
                   ]}
                   onPress={() => setModalRolesVisible(false)}
                   disabled={loading}>
-                  <Text style={[styles.modalCancelText, ds.textSecondary]}>
+                  <Text style={[styles.modalCancelText, { color: c.textSecondary }]}>
                     Cancelar
                   </Text>
                 </TouchableOpacity>
