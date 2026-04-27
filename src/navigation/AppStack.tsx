@@ -9,12 +9,7 @@ import ConductorNavigation from "./ConductorNavigation";
 import AdministradorNavigation from "./AdministradorNavigation";
 import PropietarioNavigation from "./PropietarioNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
-import {
-  renderGastos,
-  renderIngresos,
-  renderHome,
-  renderFinanzas,
-} from "../assets/icons/icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../constants/Themecontext";
 
 const Tab = createBottomTabNavigator();
@@ -48,26 +43,33 @@ export default function AppStack() {
         tabBarLabelStyle: styles.tabBarLabel,
 
         tabBarIcon: ({ focused, color, size }) => {
+          let iconName: string;
+          const iconSize = 24;
           switch (route.name) {
-            case "Gastos":
-              return renderGastos(color, size, focused);
-            case "Ingresos":
-              return renderIngresos(color, size, focused);
             case "Home":
-              return renderHome(color, size, focused);
+              iconName = focused ? "home" : "home-outline";
+              break;
+            case "Gastos":
+              iconName = focused ? "wallet" : "wallet-outline";
+              break;
+            case "Ingresos":
+              iconName = focused ? "trending-up" : "trending-up-outline";
+              break;
             case "Reportes":
-              return renderFinanzas(color, size, focused);
+              iconName = focused ? "bar-chart" : "bar-chart-outline";
+              break;
             default:
-              return null;
+              iconName = "ellipse-outline";
           }
+          return <Ionicons name={iconName} size={iconSize} color={color} />;
         },
       })}>
       {/* CONDUCTOR */}
       {role === "conductor" && (
         <>
+          <Tab.Screen name="Home" component={ConductorNavigation} />
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />
-          <Tab.Screen name="Home" component={ConductorNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
         </>
       )}

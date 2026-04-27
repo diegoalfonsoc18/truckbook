@@ -6,6 +6,8 @@ const ICONS = {
   truck: require("../assets/icons/truck.webp"),
   volqueta: require("../assets/icons/volqueta.webp"),
   factura: require("../assets/icons/factura.webp"),
+  report: require("../assets/icons/report.webp"),
+  shield: require("../assets/icons/shield.webp"),
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -26,18 +26,19 @@ import { useShallow } from "zustand/react/shallow";
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
+import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
 
 const INGRESOS_CATEGORIAS = [
-  { id: "flete", name: "Flete", icon: "📦", color: "#00D9A5" },
-  { id: "viaje", name: "Viaje", icon: "🚛", color: "#00B894" },
-  { id: "bonificacion", name: "Bono", icon: "🎁", color: "#FFB800" },
-  { id: "anticipo", name: "Anticipo", icon: "💵", color: "#74B9FF" },
-  { id: "liquidacion", name: "Liquidac.", icon: "📋", color: "#A29BFE" },
-  { id: "reembolso", name: "Reembolso", icon: "🔄", color: "#FD79A8" },
-  { id: "otro", name: "Otro", icon: "💰", color: "#6C5CE7" },
+  { id: "flete", name: "Flete", icon: "cube", color: "#00D9A5" },
+  { id: "viaje", name: "Viaje", icon: "bus", color: "#00B894" },
+  { id: "bonificacion", name: "Bono", icon: "gift", color: "#FFB800" },
+  { id: "anticipo", name: "Anticipo", icon: "cash", color: "#74B9FF" },
+  { id: "liquidacion", name: "Liquidac.", icon: "document-text", color: "#A29BFE" },
+  { id: "reembolso", name: "Reembolso", icon: "swap-horizontal", color: "#FD79A8" },
+  { id: "otro", name: "Otro", icon: "ellipsis-horizontal-circle", color: "#6C5CE7" },
 ];
 
 export default function Ingresos() {
@@ -327,7 +328,7 @@ export default function Ingresos() {
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
                   <View style={[s.categoryCircle, { backgroundColor: `${cat.color}${isDark ? "25" : "15"}` }]}>
-                    <Text style={{ fontSize: 28 }}>{cat.icon}</Text>
+                    <Ionicons name={cat.icon} size={26} color={cat.color} />
                   </View>
                   <Text style={[s.categoryLabel, { color: c.text }]} numberOfLines={1}>
                     {cat.name}
@@ -371,7 +372,7 @@ export default function Ingresos() {
                     onPress={() => handleEditClick(item.id)}
                     onLongPress={() => handleDeleteClick(item.id)}>
                     <View style={[s.ingresoIconCircle, { backgroundColor: `${categoria?.color || c.income}${isDark ? "25" : "15"}` }]}>
-                      <Text style={{ fontSize: 24 }}>{categoria?.icon || "💰"}</Text>
+                      <Ionicons name={categoria?.icon || "cash"} size={22} color={categoria?.color || c.income} />
                     </View>
                     <View style={s.ingresoInfo}>
                       <Text style={[s.ingresoName, { color: c.text }]}>
@@ -442,7 +443,7 @@ export default function Ingresos() {
                   return (
                     <View style={s.selectedCat}>
                       <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || c.income}${isDark ? "25" : "15"}` }]}>
-                        <Text style={{ fontSize: 30 }}>{cat?.icon || "💰"}</Text>
+                        <Ionicons name={cat?.icon || "cash"} size={28} color={cat?.color || c.income} />
                       </View>
                       <Text style={[s.selectedCatName, { color: c.text }]}>
                         {cat?.name || selectedIngreso}

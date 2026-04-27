@@ -8,7 +8,7 @@ interface UseMultasReturn {
   multas: RespuestaMultas | null;
   cargando: boolean;
   error: string | null;
-  recargar: () => Promise<void>; // ← Función para forzar recarga
+  recargar: () => Promise<void>;
   tieneMultasPendientes: boolean;
   cantidadPendientes: number;
 }
@@ -33,7 +33,6 @@ export function useMultas(
       setError(null);
 
       try {
-        // Si forzarRecarga es true, no usar cache
         const resultado = await simitService.consultarPorPlaca(
           placa,
           !forzarRecarga
@@ -56,23 +55,21 @@ export function useMultas(
     [placa]
   );
 
-  // Auto-cargar al montar o cuando cambie la placa
   useEffect(() => {
     if (autoCargar && placa) {
-      cargarMultas(false); // Usar cache en carga automática
+      cargarMultas(false);
     }
   }, [placa, autoCargar, cargarMultas]);
 
-  // Función pública para forzar recarga sin cache
   const recargar = useCallback(async () => {
-    await cargarMultas(true); // Forzar sin cache
+    await cargarMultas(true);
   }, [cargarMultas]);
 
   return {
     multas,
     cargando,
     error,
-    recargar, // ← Exponer función
+    recargar,
     tieneMultasPendientes: (multas?.multasPendientes || 0) > 0,
     cantidadPendientes: multas?.multasPendientes || 0,
   };
