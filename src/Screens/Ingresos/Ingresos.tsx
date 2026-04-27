@@ -27,18 +27,18 @@ import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 import { Ionicons } from "@expo/vector-icons";
+import ItemIcon, { IconName } from "../../components/ItemIcon";
 
 const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
 
 const INGRESOS_CATEGORIAS = [
-  { id: "flete", name: "Flete", icon: "cube", color: "#00D9A5" },
-  { id: "viaje", name: "Viaje", icon: "bus", color: "#00B894" },
-  { id: "bonificacion", name: "Bono", icon: "gift", color: "#FFB800" },
-  { id: "anticipo", name: "Anticipo", icon: "cash", color: "#74B9FF" },
-  { id: "liquidacion", name: "Liquidac.", icon: "document-text", color: "#A29BFE" },
-  { id: "reembolso", name: "Reembolso", icon: "swap-horizontal", color: "#FD79A8" },
-  { id: "otro", name: "Otro", icon: "ellipsis-horizontal-circle", color: "#6C5CE7" },
+  { id: "flete",       name: "Flete",    iconName: "freight" as IconName, color: "#00D9A5", size: 36 },
+  { id: "viaje",       name: "Viaje",    iconName: "trip"    as IconName, color: "#00B894", size: 36 },
+  { id: "bonificacion",name: "Bono",     iconName: "bonus"   as IconName, color: "#FFB800", size: 36 },
+  { id: "anticipo",    name: "Anticipo", iconName: "advance" as IconName, color: "#74B9FF", size: 36 },
+  { id: "reembolso",   name: "Reembolso",iconName: "refund"  as IconName, color: "#FD79A8", size: 36 },
+  { id: "otro",        name: "Otro",     iconName: "otros"   as IconName, color: "#6C5CE7", size: 36 },
 ];
 
 export default function Ingresos() {
@@ -89,7 +89,7 @@ export default function Ingresos() {
       if (!autorizado) {
         Alert.alert(
           "Sin autorizacion",
-          "No tienes autorizacion para registrar datos en este vehiculo. El propietario o administrador debe autorizarte primero."
+          "No tienes autorizacion para registrar datos en este vehiculo. El propietario o administrador debe autorizarte primero.",
         );
         return;
       }
@@ -243,7 +243,9 @@ export default function Ingresos() {
   };
 
   // Card border for dark mode glassmorphism effect
-  const cardBorder = isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {};
+  const cardBorder = isDark
+    ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
+    : {};
   const shadow = getShadow(isDark, "md");
 
   if (!placaActual) {
@@ -251,10 +253,20 @@ export default function Ingresos() {
       <View style={[s.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.emptyState}>
-            <View style={[s.emptyIconContainer, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
+            <View
+              style={[
+                s.emptyIconContainer,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(0,217,165,0.15)"
+                    : c.incomeLight,
+                },
+              ]}>
               <Text style={{ fontSize: 48 }}>🚛</Text>
             </View>
-            <Text style={[s.emptyTitle, { color: c.text }]}>Sin vehículo seleccionado</Text>
+            <Text style={[s.emptyTitle, { color: c.text }]}>
+              Sin vehículo seleccionado
+            </Text>
             <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
               Selecciona una placa para registrar ingresos
             </Text>
@@ -274,14 +286,24 @@ export default function Ingresos() {
             <TouchableOpacity
               onPress={() => setCalendarVisible(true)}
               activeOpacity={0.7}
-              style={[s.dateButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.cardBg, borderColor: isDark ? "rgba(255,255,255,0.12)" : c.border }]}>
+              style={[
+                s.dateButton,
+                {
+                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.cardBg,
+                  borderColor: isDark ? "rgba(255,255,255,0.12)" : c.border,
+                },
+              ]}>
               <Text style={s.dateButtonIcon}>📅</Text>
-              <Text style={[s.headerDate, { color: c.text }]}>{formatDateFriendly(selectedDate)}</Text>
+              <Text style={[s.headerDate, { color: c.text }]}>
+                {formatDateFriendly(selectedDate)}
+              </Text>
               <Text style={[s.dateArrow, { color: c.textMuted }]}>▾</Text>
             </TouchableOpacity>
           </View>
           <View style={[s.placaBadge, { backgroundColor: c.accent }, shadow]}>
-            <Text style={[s.placaText, { color: c.accentText }]}>{placaActual}</Text>
+            <Text style={[s.placaText, { color: c.accentText }]}>
+              {placaActual}
+            </Text>
           </View>
         </View>
 
@@ -291,46 +313,84 @@ export default function Ingresos() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <Animated.View style={{ opacity: fadeAnim }}>
-
             {/* RESUMEN CARD */}
-            <View style={[
-              s.summaryCard,
-              { backgroundColor: isDark ? "rgba(0,217,165,0.08)" : c.cardBg },
-              isDark ? { borderWidth: 1, borderColor: "rgba(0,217,165,0.2)" } : {},
-              shadow,
-            ]}>
+            <View
+              style={[
+                s.summaryCard,
+                { backgroundColor: isDark ? "rgba(0,217,165,0.08)" : c.cardBg },
+                isDark
+                  ? { borderWidth: 1, borderColor: "rgba(0,217,165,0.2)" }
+                  : {},
+                shadow,
+              ]}>
               <View style={s.summaryTop}>
                 <View>
-                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>Total del día</Text>
-                  <Text style={[s.summaryTotal, { color: c.text }]}>{formatCurrency(totalIngresos)}</Text>
+                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>
+                    Total del día
+                  </Text>
+                  <Text style={[s.summaryTotal, { color: c.text }]}>
+                    {formatCurrency(totalIngresos)}
+                  </Text>
                 </View>
-                <View style={[s.countBadge, { backgroundColor: isDark ? "rgba(0,217,165,0.15)" : c.incomeLight }]}>
-                  <Text style={[s.countText, { color: c.income }]}>{ingresosFiltrados.length}</Text>
+                <View
+                  style={[
+                    s.countBadge,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(0,217,165,0.15)"
+                        : c.incomeLight,
+                    },
+                  ]}>
+                  <Text style={[s.countText, { color: c.income }]}>
+                    {ingresosFiltrados.length}
+                  </Text>
                 </View>
               </View>
               <View style={s.summaryBar}>
-                <View style={[s.summaryBarFill, { backgroundColor: c.income, width: ingresosFiltrados.length > 0 ? "100%" : "0%" }]} />
+                <View
+                  style={[
+                    s.summaryBarFill,
+                    {
+                      backgroundColor: c.income,
+                      width: ingresosFiltrados.length > 0 ? "100%" : "0%",
+                    },
+                  ]}
+                />
               </View>
             </View>
 
             {/* CATEGORÍAS */}
-            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Categorías</Text>
+            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>
+              Categorías
+            </Text>
             <View style={s.categoriesGrid}>
               {INGRESOS_CATEGORIAS.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   style={[
                     s.categoryCard,
-                    { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.06)"
+                        : c.cardBg,
+                    },
                     cardBorder,
                     shadow,
                   ]}
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
-                  <View style={[s.categoryCircle, { backgroundColor: `${cat.color}${isDark ? "25" : "15"}` }]}>
-                    <Ionicons name={cat.icon} size={26} color={cat.color} />
+                  <View
+                    style={[
+                      s.categoryCircle,
+                      {
+                        backgroundColor: `${cat.color}${isDark ? "25" : "15"}`,
+                      },
+                    ]}>
+                    <ItemIcon name={cat.iconName} size={cat.size} />
                   </View>
-                  <Text style={[s.categoryLabel, { color: c.text }]} numberOfLines={1}>
+                  <Text
+                    style={[s.categoryLabel, { color: c.text }]}
+                    numberOfLines={1}>
                     {cat.name}
                   </Text>
                 </TouchableOpacity>
@@ -340,16 +400,40 @@ export default function Ingresos() {
             {/* LISTA DE INGRESOS */}
             <View style={s.listHeader}>
               <Text style={[s.listTitle, { color: c.text }]}>Registrados</Text>
-              <View style={[s.listCountBadge, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}>
-                <Text style={[s.listCountText, { color: c.textSecondary }]}>{ingresosFiltrados.length}</Text>
+              <View
+                style={[
+                  s.listCountBadge,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.08)"
+                      : c.surface,
+                  },
+                ]}>
+                <Text style={[s.listCountText, { color: c.textSecondary }]}>
+                  {ingresosFiltrados.length}
+                </Text>
               </View>
             </View>
 
             {ingresosFiltrados.length === 0 ? (
-              <View style={[s.emptyList, { backgroundColor: isDark ? "rgba(255,255,255,0.04)" : c.cardBg }, cardBorder, shadow]}>
+              <View
+                style={[
+                  s.emptyList,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.04)"
+                      : c.cardBg,
+                  },
+                  cardBorder,
+                  shadow,
+                ]}>
                 <Text style={{ fontSize: 36, marginBottom: 12 }}>💸</Text>
-                <Text style={[s.emptyListTitle, { color: c.text }]}>Sin ingresos</Text>
-                <Text style={[s.emptyListText, { color: c.textSecondary }]}>No hay ingresos registrados este día</Text>
+                <Text style={[s.emptyListTitle, { color: c.text }]}>
+                  Sin ingresos
+                </Text>
+                <Text style={[s.emptyListText, { color: c.textSecondary }]}>
+                  No hay ingresos registrados este día
+                </Text>
               </View>
             ) : (
               ingresosFiltrados.map((item, index) => {
@@ -364,27 +448,65 @@ export default function Ingresos() {
                     key={`${item.id}-${index}`}
                     style={[
                       s.ingresoCard,
-                      { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                      {
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : c.cardBg,
+                      },
                       cardBorder,
                       shadow,
                     ]}
                     activeOpacity={0.8}
                     onPress={() => handleEditClick(item.id)}
                     onLongPress={() => handleDeleteClick(item.id)}>
-                    <View style={[s.ingresoIconCircle, { backgroundColor: `${categoria?.color || c.income}${isDark ? "25" : "15"}` }]}>
-                      <Ionicons name={categoria?.icon || "cash"} size={22} color={categoria?.color || c.income} />
+                    <View
+                      style={[
+                        s.ingresoIconCircle,
+                        {
+                          backgroundColor: `${categoria?.color || c.income}${isDark ? "25" : "15"}`,
+                        },
+                      ]}>
+                      {categoria?.iconName
+                        ? <ItemIcon name={categoria.iconName} size={categoria.size ?? 26} />
+                        : <Ionicons name="cash" size={22} color={c.income} />
+                      }
                     </View>
                     <View style={s.ingresoInfo}>
                       <Text style={[s.ingresoName, { color: c.text }]}>
                         {item.tipo_ingreso || item.descripcion}
                       </Text>
                       <View style={s.ingresoMeta}>
-                        <View style={[s.ingresoDatePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface }]}>
-                          <Text style={[s.ingresoDateText, { color: c.textMuted }]}>{formatDate(item.fecha)}</Text>
+                        <View
+                          style={[
+                            s.ingresoDatePill,
+                            {
+                              backgroundColor: isDark
+                                ? "rgba(255,255,255,0.06)"
+                                : c.surface,
+                            },
+                          ]}>
+                          <Text
+                            style={[s.ingresoDateText, { color: c.textMuted }]}>
+                            {formatDate(item.fecha)}
+                          </Text>
                         </View>
-                        <View style={[s.statusBadge, { backgroundColor: statusColor + (isDark ? "25" : "15") }]}>
-                          <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-                          <Text style={[s.statusText, { color: statusColor }]}>{statusLabel}</Text>
+                        <View
+                          style={[
+                            s.statusBadge,
+                            {
+                              backgroundColor:
+                                statusColor + (isDark ? "25" : "15"),
+                            },
+                          ]}>
+                          <View
+                            style={[
+                              s.statusDot,
+                              { backgroundColor: statusColor },
+                            ]}
+                          />
+                          <Text style={[s.statusText, { color: statusColor }]}>
+                            {statusLabel}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -400,11 +522,34 @@ export default function Ingresos() {
       </SafeAreaView>
 
       {/* MODAL CALENDARIO */}
-      <Modal visible={calendarVisible} transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
-        <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={() => setCalendarVisible(false)}>
-          <View style={[s.bottomModal, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
-            <View style={[s.modalHandle, { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border }]} />
-            <Text style={[s.modalTitle, { color: c.text }]}>Seleccionar fecha</Text>
+      <Modal
+        visible={calendarVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCalendarVisible(false)}>
+        <TouchableOpacity
+          style={[s.modalOverlay, { backgroundColor: c.overlay }]}
+          activeOpacity={1}
+          onPress={() => setCalendarVisible(false)}>
+          <View
+            style={[
+              s.bottomModal,
+              { backgroundColor: c.modalBg },
+              isDark
+                ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
+                : {},
+            ]}>
+            <View
+              style={[
+                s.modalHandle,
+                {
+                  backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border,
+                },
+              ]}
+            />
+            <Text style={[s.modalTitle, { color: c.text }]}>
+              Seleccionar fecha
+            </Text>
             <Calendar
               current={selectedDate}
               onDayPress={(day: any) => {
@@ -415,11 +560,16 @@ export default function Ingresos() {
                 [selectedDate]: { selected: true, selectedColor: c.income },
               }}
               theme={{
-                backgroundColor: c.modalBg, calendarBackground: c.modalBg,
-                textSectionTitleColor: c.textSecondary, selectedDayBackgroundColor: c.income,
-                selectedDayTextColor: "#FFF", todayTextColor: c.income,
-                dayTextColor: c.text, textDisabledColor: c.textMuted,
-                monthTextColor: c.text, arrowColor: c.income,
+                backgroundColor: c.modalBg,
+                calendarBackground: c.modalBg,
+                textSectionTitleColor: c.textSecondary,
+                selectedDayBackgroundColor: c.income,
+                selectedDayTextColor: "#FFF",
+                todayTextColor: c.income,
+                dayTextColor: c.text,
+                textDisabledColor: c.textMuted,
+                monthTextColor: c.text,
+                arrowColor: c.income,
               }}
               style={{ borderRadius: 14 }}
             />
@@ -428,33 +578,83 @@ export default function Ingresos() {
       </Modal>
 
       {/* MODAL AGREGAR/EDITAR */}
-      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={closeModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-          <TouchableOpacity style={[s.modalOverlay, { backgroundColor: c.overlay }]} activeOpacity={1} onPress={closeModal}>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeModal}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={[s.modalOverlay, { backgroundColor: c.overlay }]}
+            activeOpacity={1}
+            onPress={closeModal}>
             <TouchableWithoutFeedback>
-              <View style={[s.bottomModal, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
-                <View style={[s.modalHandle, { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : c.border }]} />
+              <View
+                style={[
+                  s.bottomModal,
+                  { backgroundColor: c.modalBg },
+                  isDark
+                    ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
+                    : {},
+                ]}>
+                <View
+                  style={[
+                    s.modalHandle,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.2)"
+                        : c.border,
+                    },
+                  ]}
+                />
                 <Text style={[s.modalTitle, { color: c.text }]}>
                   {isEditing ? "Editar ingreso" : "Nuevo ingreso"}
                 </Text>
 
-                {selectedIngreso && (() => {
-                  const cat = INGRESOS_CATEGORIAS.find((cat) => cat.id === selectedIngreso);
-                  return (
-                    <View style={s.selectedCat}>
-                      <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || c.income}${isDark ? "25" : "15"}` }]}>
-                        <Ionicons name={cat?.icon || "cash"} size={28} color={cat?.color || c.income} />
+                {selectedIngreso &&
+                  (() => {
+                    const cat = INGRESOS_CATEGORIAS.find(
+                      (cat) => cat.id === selectedIngreso,
+                    );
+                    return (
+                      <View style={s.selectedCat}>
+                        <View
+                          style={[
+                            s.selectedCatCircle,
+                            {
+                              backgroundColor: `${cat?.color || c.income}${isDark ? "25" : "15"}`,
+                            },
+                          ]}>
+                          {cat?.iconName
+                            ? <ItemIcon name={cat.iconName} size={cat.size ?? 32} />
+                            : <Ionicons name="cash" size={28} color={c.income} />
+                          }
+                        </View>
+                        <Text style={[s.selectedCatName, { color: c.text }]}>
+                          {cat?.name || selectedIngreso}
+                        </Text>
                       </View>
-                      <Text style={[s.selectedCatName, { color: c.text }]}>
-                        {cat?.name || selectedIngreso}
-                      </Text>
-                    </View>
-                  );
-                })()}
+                    );
+                  })()}
 
                 <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
-                  <View style={[s.inputWrapper, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>
+                    Monto
+                  </Text>
+                  <View
+                    style={[
+                      s.inputWrapper,
+                      {
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : c.surface,
+                        borderColor: isDark
+                          ? "rgba(255,255,255,0.1)"
+                          : c.border,
+                      },
+                    ]}>
                     <Text style={[s.inputPrefix, { color: c.text }]}>$</Text>
                     <TextInput
                       style={[s.input, { color: c.text }]}
@@ -469,24 +669,56 @@ export default function Ingresos() {
                 </View>
 
                 <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>
+                    Fecha
+                  </Text>
                   <TouchableOpacity
-                    style={[s.dateInput, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}
+                    style={[
+                      s.dateInput,
+                      {
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : c.surface,
+                        borderColor: isDark
+                          ? "rgba(255,255,255,0.1)"
+                          : c.border,
+                      },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
                       setTimeout(() => setCalendarVisible(true), 300);
                     }}>
-                    <Text style={[s.dateInputText, { color: c.text }]}>{formatDate(editDate)}</Text>
+                    <Text style={[s.dateInputText, { color: c.text }]}>
+                      {formatDate(editDate)}
+                    </Text>
                     <Text style={{ color: c.textMuted, fontSize: 16 }}>📅</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={s.modalBtns}>
-                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} onPress={closeModal}>
-                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
+                  <TouchableOpacity
+                    style={[
+                      s.cancelBtn,
+                      {
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : c.surface,
+                        borderColor: isDark
+                          ? "rgba(255,255,255,0.1)"
+                          : c.border,
+                      },
+                    ]}
+                    onPress={closeModal}>
+                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>
+                      Cancelar
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[s.saveBtn, { backgroundColor: c.income }, (!editValue || loading) && s.saveBtnDisabled]}
+                    style={[
+                      s.saveBtn,
+                      { backgroundColor: c.income },
+                      (!editValue || loading) && s.saveBtnDisabled,
+                    ]}
                     onPress={() => {
                       isEditing
                         ? handleSaveEdit()
@@ -538,7 +770,11 @@ const s = StyleSheet.create({
     alignSelf: "flex-start" as const,
   },
   dateButtonIcon: { fontSize: 14 },
-  headerDate: { fontSize: 13, fontWeight: "600", textTransform: "capitalize" as const },
+  headerDate: {
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "capitalize" as const,
+  },
   dateArrow: { fontSize: 11 },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
@@ -668,8 +904,20 @@ const s = StyleSheet.create({
   statusText: { fontSize: 10, fontWeight: "700" },
 
   // EMPTY STATES
-  emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
-  emptyIconContainer: { width: 88, height: 88, borderRadius: 28, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyIconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 14, textAlign: "center" },
   emptyList: { padding: 40, borderRadius: 22, alignItems: "center" },
@@ -678,21 +926,74 @@ const s = StyleSheet.create({
 
   // MODALS
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  bottomModal: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, paddingBottom: 30, paddingHorizontal: 20 },
-  modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
-  modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 16 },
-  selectedCat: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 24 },
-  selectedCatCircle: { width: 56, height: 56, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+  bottomModal: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  selectedCat: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 24,
+  },
+  selectedCatCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   selectedCatName: { fontSize: 17, fontWeight: "700" },
   inputGroup: { marginBottom: 16 },
-  inputLabel: { fontSize: 12, fontWeight: "600", marginBottom: 6, textTransform: "uppercase" as const, letterSpacing: 0.5 },
-  inputWrapper: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1 },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+  },
   inputPrefix: { fontSize: 20, fontWeight: "700", paddingLeft: 14 },
   input: { flex: 1, fontSize: 22, fontWeight: "700", padding: 14 },
-  dateInput: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 14, padding: 14, borderWidth: 1 },
+  dateInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+  },
   dateInputText: { fontSize: 15, fontWeight: "500" },
   modalBtns: { flexDirection: "row", gap: 10, marginTop: 8 },
-  cancelBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center", borderWidth: 1 },
+  cancelBtn: {
+    flex: 1,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
+  },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
   saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
   saveBtnDisabled: { opacity: 0.4 },

@@ -12,6 +12,12 @@ const ICONS = {
   comparendo: require("../assets/icons/comparendo.webp"),
   licencia:   require("../assets/icons/licencia.webp"),
   check:      require("../assets/icons/check.webp"),
+  // Ingresos
+  freight:    require("../assets/icons/freight.webp"),
+  trip:       require("../assets/icons/trip.webp"),
+  bonus:      require("../assets/icons/bonus.webp"),
+  advance:    require("../assets/icons/advance.webp"),
+  refund:     require("../assets/icons/refund.webp"),
   // Gastos
   fuel:       require("../assets/icons/fuel.webp"),
   toll:       require("../assets/icons/toll.webp"),
