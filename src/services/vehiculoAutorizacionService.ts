@@ -104,10 +104,7 @@ export async function registrarVehiculoPropietario(
     .eq("vehiculo_placa", placa)
     .eq("conductor_id", userId)
     .maybeSingle();
-
-  if (existente) {
-    return { success: false, error: "Ya tienes este vehiculo registrado" };
-  }
+  if (existente) return { success: false, error: "Ya tienes este vehiculo registrado" };
 
   // 2. Verificar si ya tiene propietario
   const { data: propietarioExistente } = await supabase
@@ -116,13 +113,7 @@ export async function registrarVehiculoPropietario(
     .eq("vehiculo_placa", placa)
     .eq("rol", "propietario")
     .maybeSingle();
-
-  if (propietarioExistente) {
-    return {
-      success: false,
-      error: "Este vehiculo ya tiene un propietario registrado",
-    };
-  }
+  if (propietarioExistente) return { success: false, error: "Este vehiculo ya tiene un propietario registrado" };
 
   // 3. Insertar vehiculo si no existe
   const { data: vehiculoExiste } = await supabase
@@ -134,26 +125,15 @@ export async function registrarVehiculoPropietario(
   if (!vehiculoExiste) {
     const { error: insertError } = await supabase
       .from("vehiculos")
-      .insert([{ placa, tipo_camion: tipoCamion, conductor_id: userId }]);
-
-    if (insertError) {
-      return { success: false, error: "Error al registrar vehiculo" };
-    }
+      .insert([{ placa, tipo_camion: tipoCamion }]);
+    if (insertError) return { success: false, error: "Error al registrar vehiculo" };
   }
 
   // 4. Crear relacion como propietario autorizado
   const { error } = await supabase.from("vehiculo_conductores").insert([
-    {
-      vehiculo_placa: placa,
-      conductor_id: userId,
-      rol: "propietario",
-      estado: "autorizado",
-    },
+    { vehiculo_placa: placa, conductor_id: userId, rol: "propietario", estado: "autorizado" },
   ]);
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
+  if (error) return { success: false, error: error.message };
 
   return { success: true };
 }

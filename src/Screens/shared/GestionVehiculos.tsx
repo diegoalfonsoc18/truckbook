@@ -131,7 +131,7 @@ export default function GestionVehiculos() {
 
     const { error: vError } = await supabase
       .from("vehiculos")
-      .insert([{ placa: placaLimpia, tipo_camion: nuevoTipo, conductor_id: user.id }]);
+      .insert([{ placa: placaLimpia, tipo_camion: nuevoTipo }]);
 
     if (vError) {
       Alert.alert("Error", "No se pudo registrar el vehículo");

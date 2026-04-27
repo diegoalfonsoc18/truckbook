@@ -18,12 +18,12 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useRoleStore } from "../../store/RoleStore";
 import supabase from "../../config/SupaBaseConfig";
-import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
   VolquetaIcon,
   EstacasIcon,
@@ -34,11 +34,27 @@ import {
   cargarVehiculosConEstado,
   registrarVehiculoPropietario,
   solicitarAccesoVehiculo,
-  type VehiculoConEstado,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 
 const { width } = Dimensions.get("window");
+
+const COLORS = {
+  bg: "#111111",
+  card: "#1E1E1E",
+  cardActive: "#252525",
+  input: "#252525",
+  accent: "#FFE500",
+  accentText: "#000000",
+  text: "#FFFFFF",
+  textSecondary: "#8E8E93",
+  textMuted: "#3A3A3C",
+  border: "#2C2C2C",
+  overlay: "rgba(0,0,0,0.75)",
+  danger: "#E94560",
+  warning: "#FFB800",
+  success: "#00D9A5",
+};
 
 interface IconProps {
   width?: number;
@@ -73,34 +89,10 @@ const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
 };
 
 const TIPOS_CAMION = [
-  {
-    id: "estacas" as TipoCamion,
-    label: "Estacas",
-    icon: EstacasIcon,
-    color: "#00D9A5",
-    emoji: "🚚",
-  },
-  {
-    id: "volqueta" as TipoCamion,
-    label: "Volqueta",
-    icon: VolquetaIcon,
-    color: "#FFB800",
-    emoji: "🚛",
-  },
-  {
-    id: "furgon" as TipoCamion,
-    label: "Furgón",
-    icon: FurgonIcon,
-    color: "#6C5CE7",
-    emoji: "📦",
-  },
-  {
-    id: "grua" as TipoCamion,
-    label: "Grúa",
-    icon: GruaIcon,
-    color: "#E94560",
-    emoji: "🏗️",
-  },
+  { id: "estacas" as TipoCamion, label: "Estacas", icon: EstacasIcon, color: "#00D9A5" },
+  { id: "volqueta" as TipoCamion, label: "Volqueta", icon: VolquetaIcon, color: "#FFB800" },
+  { id: "furgon" as TipoCamion, label: "Furgón", icon: FurgonIcon, color: "#6C5CE7" },
+  { id: "grua" as TipoCamion, label: "Grúa", icon: GruaIcon, color: "#E94560" },
 ];
 
 export default function HomeBaseAdapted({
@@ -109,15 +101,8 @@ export default function HomeBaseAdapted({
   renderBadge,
   onItemPress,
 }: HomeBaseAdaptedProps) {
-  const { colors, isDark } = useTheme();
-  const c = colors;
   const navigation = useNavigation<any>();
-  const {
-    placa: placaActual,
-    tipoCamion,
-    setPlaca,
-    setTipoCamion,
-  } = useVehiculoStore();
+  const { placa: placaActual, tipoCamion, setPlaca, setTipoCamion } = useVehiculoStore();
   const { user } = useAuth();
   const role = useRoleStore((state) => state.role);
 
@@ -130,22 +115,10 @@ export default function HomeBaseAdapted({
   const [conductorActual, setConductorActual] = useState<string | undefined>();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     if (user?.id) cargarVehiculos();
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, [user?.id]);
 
   const cargarVehiculos = async () => {
@@ -157,7 +130,6 @@ export default function HomeBaseAdapted({
 
       const vehiculosConConductor = await Promise.all(
         (data || []).map(async (v) => {
-          // Buscar conductor activo asignado a este vehiculo
           let conductorNombre: string | undefined;
           const { data: relaciones } = await supabase
             .from("vehiculo_conductores")
@@ -167,7 +139,7 @@ export default function HomeBaseAdapted({
             .eq("estado", "autorizado")
             .limit(1);
 
-          if (relaciones && relaciones.length > 0) {
+          if (relaciones?.length > 0) {
             const { data: usuario } = await supabase
               .from("usuarios")
               .select("nombre")
@@ -188,12 +160,8 @@ export default function HomeBaseAdapted({
       );
 
       setVehiculos(vehiculosConConductor);
-
-      // Actualizar conductor del vehiculo seleccionado
       if (placaActual) {
-        const actual = vehiculosConConductor.find(
-          (v) => v.placa === placaActual,
-        );
+        const actual = vehiculosConConductor.find((v) => v.placa === placaActual);
         if (actual) setConductorActual(actual.conductorNombre);
       }
     } catch (err) {
@@ -208,17 +176,11 @@ export default function HomeBaseAdapted({
 
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
     if (vehiculo.estado === "pendiente") {
-      Alert.alert(
-        "Esperando autorización",
-        "El propietario aún no ha autorizado tu acceso a este vehículo.",
-      );
+      Alert.alert("Esperando autorización", "El propietario aún no ha autorizado tu acceso.");
       return;
     }
     if (vehiculo.estado === "rechazado") {
-      Alert.alert(
-        "Acceso denegado",
-        "El propietario rechazó tu solicitud. Contacta al propietario.",
-      );
+      Alert.alert("Acceso denegado", "El propietario rechazó tu solicitud.");
       return;
     }
     setPlaca(vehiculo.placa);
@@ -245,38 +207,21 @@ export default function HomeBaseAdapted({
     }
     try {
       setCargando(true);
-
       if (role === "propietario") {
-        // Propietario: registra vehiculo y queda autorizado
-        const resultado = await registrarVehiculoPropietario(
-          user.id,
-          placaLimpia,
-          tipoCamion,
-        );
-        if (!resultado.success) {
-          Alert.alert("Error", resultado.error || "No se pudo registrar");
-          return;
-        }
-        Alert.alert("✅ Éxito", `Vehículo ${placaLimpia} registrado`);
+        const resultado = await registrarVehiculoPropietario(user.id, placaLimpia, tipoCamion);
+        if (!resultado.success) { Alert.alert("Error", resultado.error || "No se pudo registrar"); return; }
+        Alert.alert("Éxito", `Vehículo ${placaLimpia} registrado`);
         await cargarVehiculos();
         setPlaca(placaLimpia);
       } else {
-        // Conductor/Admin: solicita acceso (queda pendiente)
         const resultado = await solicitarAccesoVehiculo(user.id, placaLimpia);
-        if (!resultado.success) {
-          Alert.alert("Error", resultado.error || "No se pudo solicitar");
-          return;
-        }
-        Alert.alert(
-          "Solicitud enviada",
-          `Se envió la solicitud de acceso al vehículo ${placaLimpia}. El propietario debe autorizarla.`,
-        );
+        if (!resultado.success) { Alert.alert("Error", resultado.error || "No se pudo solicitar"); return; }
+        Alert.alert("Solicitud enviada", `Se envió la solicitud al vehículo ${placaLimpia}.`);
         await cargarVehiculos();
       }
-
       setModalPlacaVisible(false);
       setPlacaTemporal("");
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "No se pudo procesar la solicitud");
     } finally {
       setCargando(false);
@@ -285,159 +230,99 @@ export default function HomeBaseAdapted({
 
   const tipoCamionData = getTipoCamionData(tipoCamion);
   const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : VolquetaIcon;
-
-  const userEmail = user?.email || "";
-  const avatarUrl =
-    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
-  const userInitials = userEmail.split("@")[0].slice(0, 2).toUpperCase() || "?";
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userName = user?.user_metadata?.nombre || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
+  const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.primary }}>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {/* USER AVATAR + EMAIL + SETTINGS */}
-          <View style={styles.userHeader}>
+
+          {/* HEADER */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={styles.greeting}>
+                <Text style={styles.greetingSmall}>Bienvenido de vuelta</Text>
+                <Text style={styles.greetingName} numberOfLines={1}>{userName}</Text>
+              </View>
+            </View>
             <TouchableOpacity
-              style={styles.userHeaderLeft}
+              style={styles.avatarButton}
               onPress={() => navigation.navigate("Cuenta")}
-              activeOpacity={0.7}>
+              activeOpacity={0.8}>
               {avatarUrl ? (
                 <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
               ) : (
-                <View
-                  style={[
-                    styles.avatarCircle,
-                    {
-                      backgroundColor: isDark
-                        ? "rgba(0,217,165,0.15)"
-                        : c.incomeLight,
-                    },
-                  ]}>
-                  <Text style={[styles.avatarText, { color: c.income }]}>
-                    {userInitials}
-                  </Text>
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarText}>{userInitials}</Text>
                 </View>
               )}
-              <View style={styles.userInfo}>
-                <Text
-                  style={[styles.userEmail, { color: c.text }]}
-                  numberOfLines={1}>
-                  {userEmail}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.settingsButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}
-              onPress={() => navigation.navigate("Cuenta")}
-              activeOpacity={0.7}>
-              <Text style={{ fontSize: 20 }}>⚙️</Text>
             </TouchableOpacity>
           </View>
 
-          {/* HEADER CON VEHÍCULO */}
+          {/* VEHICLE CARD */}
           {showCamionHeader && (
             <TouchableOpacity
-              style={[
-                styles.vehicleHeader,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "md"),
-              ]}
+              style={styles.vehicleCard}
               onPress={() => setModalVehiculosVisible(true)}
-              activeOpacity={0.8}>
-              <View style={styles.vehicleHeaderLeft}>
-                <View
-                  style={[
-                    styles.vehicleIconContainer,
-                    {
-                      backgroundColor:
-                        (tipoCamionData?.color || c.accent) + "20",
-                    },
-                  ]}>
+              activeOpacity={0.85}>
+              <View style={styles.vehicleCardLeft}>
+                <View style={[styles.vehicleIconBg, { backgroundColor: (tipoCamionData?.color || COLORS.accent) + "20" }]}>
                   <CamionIconDinamico
-                    width={32}
-                    height={32}
-                    color={tipoCamionData?.color || c.accent}
+                    width={30}
+                    height={30}
+                    color={tipoCamionData?.color || COLORS.accent}
                   />
                 </View>
-                <View style={styles.vehicleInfo}>
-                  <Text style={[styles.vehicleType, { color: c.text }]}>
+                <View style={styles.vehicleCardInfo}>
+                  <Text style={styles.vehicleCardType}>
                     {tipoCamionData?.label || "Seleccionar vehículo"}
                   </Text>
                   {placaActual ? (
-                    <>
-                      <View
-                        style={[
-                          styles.placaBadge,
-                          { backgroundColor: c.plateYellow },
-                        ]}>
-                        <Text
-                          style={[styles.placaText, { color: c.plateText }]}>
-                          {placaActual}
-                        </Text>
-                      </View>
-                    </>
+                    <View style={styles.placaBadge}>
+                      <Text style={styles.placaText}>{placaActual}</Text>
+                    </View>
                   ) : (
-                    <Text
-                      style={[
-                        styles.vehicleSubtitle,
-                        { color: c.textSecondary },
-                      ]}>
-                      Toca para seleccionar
-                    </Text>
+                    <Text style={styles.vehicleCardHint}>Toca para seleccionar</Text>
                   )}
                 </View>
               </View>
-              <View style={styles.vehicleHeaderRight}>
-                <Text style={[styles.changeText, { color: c.accent }]}>
-                  Cambiar
-                </Text>
-                <Text style={[styles.chevron, { color: c.accent }]}>›</Text>
+              <View style={styles.changeChip}>
+                <Text style={styles.changeChipText}>Cambiar</Text>
               </View>
             </TouchableOpacity>
           )}
 
-          {/* GRID DE ITEMS */}
+          {/* ITEMS GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.itemsContainer}>
-            <View style={styles.itemsGrid}>
-              {items.map((item, index) => (
-                <Animated.View
+            contentContainerStyle={styles.gridContainer}>
+            <View style={styles.grid}>
+              {items.map((item) => (
+                <TouchableOpacity
                   key={item.id}
-                  style={[
-                    styles.itemCard,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
-                    getShadow(isDark, "sm"),
-                    { transform: [{ translateY: slideAnim }] },
-                  ]}>
-                  <TouchableOpacity
-                    style={styles.itemTouchable}
-                    onPress={() => onItemPress?.(item)}
-                    activeOpacity={0.7}>
-                    <View
-                      style={[
-                        styles.itemIconContainer,
-                        {
-                          backgroundColor: (item.color || c.accent) + "20",
-                        },
-                      ]}>
-                      <Text style={styles.itemIcon}>{item.icon}</Text>
-                    </View>
-                    <Text style={[styles.itemName, { color: c.text }]}>
-                      {item.name}
+                  style={styles.gridCard}
+                  onPress={() => onItemPress?.(item)}
+                  activeOpacity={0.75}>
+                  <View style={[styles.gridIconBg, { backgroundColor: (item.color || COLORS.accent) + "22" }]}>
+                    <Ionicons
+                      name={(item.icon || "ellipse") as any}
+                      size={26}
+                      color={item.color || COLORS.accent}
+                    />
+                  </View>
+                  <Text style={styles.gridCardName}>{item.name}</Text>
+                  {item.description && (
+                    <Text style={styles.gridCardDesc} numberOfLines={2}>
+                      {item.description}
                     </Text>
-                    {item.description && (
-                      <Text
-                        style={[
-                          styles.itemDescription,
-                          { color: c.textSecondary },
-                        ]}>
-                        {item.description}
-                      </Text>
-                    )}
-                    {renderBadge?.(item)}
-                  </TouchableOpacity>
-                </Animated.View>
+                  )}
+                  {renderBadge?.(item)}
+                  <View style={styles.gridArrow}>
+                    <Ionicons name="arrow-forward" size={14} color={COLORS.accent} />
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
           </ScrollView>
@@ -450,29 +335,20 @@ export default function HomeBaseAdapted({
         transparent
         animationType="slide"
         onRequestClose={() => setModalVehiculosVisible(false)}>
-        <TouchableWithoutFeedback
-          onPress={() => setModalVehiculosVisible(false)}>
-          <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+        <TouchableWithoutFeedback onPress={() => setModalVehiculosVisible(false)}>
+          <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <View
-                style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
-                <View
-                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-                />
-                <Text style={[styles.modalTitle, { color: c.text }]}>
-                  Mis Vehículos
-                </Text>
-                <Text
-                  style={[styles.modalSubtitle, { color: c.textSecondary }]}>
-                  Selecciona o agrega un vehículo
-                </Text>
+              <View style={styles.modalSheet}>
+                <View style={styles.modalHandle} />
+                <Text style={styles.modalTitle}>Mis Vehículos</Text>
+                <Text style={styles.modalSubtitle}>Selecciona o agrega un vehículo</Text>
 
                 {cargando ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={c.accent} />
+                  <View style={styles.loadingBox}>
+                    <ActivityIndicator size="large" color={COLORS.accent} />
                   </View>
                 ) : vehiculos.length > 0 ? (
-                  <ScrollView style={styles.vehiclesList}>
+                  <ScrollView style={styles.vehicleList}>
                     {vehiculos.map((v) => {
                       const tipo = getTipoCamionData(v.tipo_camion);
                       const isActive = placaActual === v.placa;
@@ -480,80 +356,29 @@ export default function HomeBaseAdapted({
                       return (
                         <TouchableOpacity
                           key={v.id}
-                          style={[
-                            styles.vehicleOption,
-                            {
-                              backgroundColor: c.cardBg,
-                              borderColor: c.border,
-                            },
-                            isActive && {
-                              borderColor: c.accent,
-                              backgroundColor: c.accentLight,
-                            },
-                          ]}
+                          style={[styles.vehicleOption, isActive && styles.vehicleOptionActive]}
                           onPress={() => handleSeleccionarVehiculo(v)}>
-                          <View
-                            style={[
-                              styles.vehicleOptionIcon,
-                              {
-                                backgroundColor:
-                                  (tipo?.color || c.accent) + "20",
-                              },
-                            ]}>
-                            <IconComponent
-                              width={24}
-                              height={24}
-                              color={tipo?.color || c.accent}
-                            />
+                          <View style={[styles.vehicleOptionIcon, { backgroundColor: (tipo?.color || COLORS.accent) + "20" }]}>
+                            <IconComponent width={24} height={24} color={tipo?.color || COLORS.accent} />
                           </View>
                           <View style={styles.vehicleOptionInfo}>
-                            <Text
-                              style={[
-                                styles.vehicleOptionType,
-                                { color: c.text },
-                              ]}>
-                              {tipo?.label || "Vehículo"}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.vehicleOptionPlaca,
-                                { color: c.textSecondary },
-                              ]}>
-                              {v.placa}
-                            </Text>
+                            <Text style={styles.vehicleOptionType}>{tipo?.label || "Vehículo"}</Text>
+                            <Text style={styles.vehicleOptionPlaca}>{v.placa}</Text>
                             {v.conductorNombre && (
-                              <Text
-                                style={[
-                                  styles.vehicleOptionConductor,
-                                  { color: c.textMuted },
-                                ]}>
-                                👤 {v.conductorNombre}
-                              </Text>
+                              <Text style={styles.vehicleOptionConductor}>👤 {v.conductorNombre}</Text>
                             )}
                           </View>
                           {v.estado === "pendiente" ? (
-                            <View
-                              style={[
-                                styles.checkBadge,
-                                { backgroundColor: "#FFB800" },
-                              ]}>
-                              <Text style={styles.checkText}>⏳</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: COLORS.warning }]}>
+                              <Text style={styles.statusText}>⏳</Text>
                             </View>
                           ) : v.estado === "rechazado" ? (
-                            <View
-                              style={[
-                                styles.checkBadge,
-                                { backgroundColor: "#E94560" },
-                              ]}>
-                              <Text style={styles.checkText}>✕</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: COLORS.danger }]}>
+                              <Text style={styles.statusText}>✕</Text>
                             </View>
                           ) : isActive ? (
-                            <View
-                              style={[
-                                styles.checkBadge,
-                                { backgroundColor: c.accent },
-                              ]}>
-                              <Text style={styles.checkText}>✓</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: COLORS.accent }]}>
+                              <Text style={[styles.statusText, { color: COLORS.accentText }]}>✓</Text>
                             </View>
                           ) : null}
                         </TouchableOpacity>
@@ -561,46 +386,25 @@ export default function HomeBaseAdapted({
                     })}
                   </ScrollView>
                 ) : (
-                  <View style={styles.emptyVehicles}>
+                  <View style={styles.emptyBox}>
                     <Text style={styles.emptyIcon}>🚛</Text>
-                    <Text
-                      style={[styles.emptyText, { color: c.textSecondary }]}>
-                      No tienes vehículos registrados
-                    </Text>
+                    <Text style={styles.emptyText}>No tienes vehículos registrados</Text>
                   </View>
                 )}
 
                 <TouchableOpacity
-                  style={[styles.addButton, { backgroundColor: c.accent }]}
+                  style={styles.addButton}
                   onPress={() => {
                     setModalVehiculosVisible(false);
-                    if (role === "conductor") {
-                      // Conductor solo ingresa placa para solicitar acceso
-                      setModalPlacaVisible(true);
-                    } else {
-                      // Propietario/Admin selecciona tipo primero
-                      setModalTipoVisible(true);
-                    }
+                    role === "conductor" ? setModalPlacaVisible(true) : setModalTipoVisible(true);
                   }}>
-                  <Text style={[styles.addButtonIcon, { color: c.accentText }]}>
-                    +
-                  </Text>
-                  <Text style={[styles.addButtonText, { color: c.accentText }]}>
-                    {role === "conductor"
-                      ? "Solicitar acceso a vehículo"
-                      : "Agregar nuevo vehículo"}
+                  <Text style={styles.addButtonText}>
+                    + {role === "conductor" ? "Solicitar acceso a vehículo" : "Agregar nuevo vehículo"}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setModalVehiculosVisible(false)}>
-                  <Text
-                    style={[
-                      styles.cancelButtonText,
-                      { color: c.textSecondary },
-                    ]}>
-                    Cancelar
-                  </Text>
+
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVehiculosVisible(false)}>
+                  <Text style={styles.cancelBtnText}>Cancelar</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -615,60 +419,30 @@ export default function HomeBaseAdapted({
         animationType="slide"
         onRequestClose={() => setModalTipoVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setModalTipoVisible(false)}>
-          <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+          <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <View
-                style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
-                <View
-                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-                />
-                <Text style={[styles.modalTitle, { color: c.text }]}>
-                  Tipo de Vehículo
-                </Text>
-                <Text
-                  style={[styles.modalSubtitle, { color: c.textSecondary }]}>
-                  ¿Qué tipo de camión vas a registrar?
-                </Text>
-
+              <View style={styles.modalSheet}>
+                <View style={styles.modalHandle} />
+                <Text style={styles.modalTitle}>Tipo de Vehículo</Text>
+                <Text style={styles.modalSubtitle}>¿Qué tipo de camión vas a registrar?</Text>
                 <View style={styles.tiposGrid}>
                   {TIPOS_CAMION.map((tipo) => {
                     const IconComponent = tipo.icon;
                     return (
                       <TouchableOpacity
                         key={tipo.id}
-                        style={[
-                          styles.tipoCard,
-                          { backgroundColor: c.cardBg, borderColor: c.border },
-                        ]}
+                        style={styles.tipoCard}
                         onPress={() => handleSeleccionarTipo(tipo.id)}>
-                        <View
-                          style={[
-                            styles.tipoIconContainer,
-                            { backgroundColor: tipo.color + "20" },
-                          ]}>
-                          <IconComponent
-                            width={36}
-                            height={36}
-                            color={tipo.color}
-                          />
+                        <View style={[styles.tipoIconBg, { backgroundColor: tipo.color + "20" }]}>
+                          <IconComponent width={36} height={36} color={tipo.color} />
                         </View>
-                        <Text style={[styles.tipoLabel, { color: c.text }]}>
-                          {tipo.label}
-                        </Text>
+                        <Text style={styles.tipoLabel}>{tipo.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setModalTipoVisible(false)}>
-                  <Text
-                    style={[
-                      styles.cancelButtonText,
-                      { color: c.textSecondary },
-                    ]}>
-                    Cancelar
-                  </Text>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalTipoVisible(false)}>
+                  <Text style={styles.cancelBtnText}>Cancelar</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -682,89 +456,52 @@ export default function HomeBaseAdapted({
         transparent
         animationType="slide"
         onRequestClose={() => setModalPlacaVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={[styles.modalOverlay, { backgroundColor: c.overlay }]}>
+            <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
-                <View
-                  style={[styles.modalContent, { backgroundColor: c.modalBg }]}>
-                  <View
-                    style={[
-                      styles.modalHandle,
-                      { backgroundColor: c.textMuted },
-                    ]}
-                  />
-                  <Text style={[styles.modalTitle, { color: c.text }]}>
-                    {role === "conductor"
-                      ? "Solicitar acceso"
-                      : "Placa del Vehículo"}
+                <View style={styles.modalSheet}>
+                  <View style={styles.modalHandle} />
+                  <Text style={styles.modalTitle}>
+                    {role === "conductor" ? "Solicitar acceso" : "Placa del Vehículo"}
                   </Text>
-                  <Text
-                    style={[styles.modalSubtitle, { color: c.textSecondary }]}>
+                  <Text style={styles.modalSubtitle}>
                     {role === "conductor"
                       ? "Ingresa la placa del vehículo al que deseas acceder"
                       : `Ingresa la placa de tu ${tipoCamionData?.label}`}
                   </Text>
 
-                  <View style={styles.placaInputContainer}>
-                    <TextInput
-                      style={[
-                        styles.placaInput,
-                        { backgroundColor: c.surface },
-                        { color: c.text, borderColor: c.border },
-                      ]}
-                      placeholder="ABC123"
-                      placeholderTextColor={c.textMuted}
-                      value={placaTemporal}
-                      onChangeText={(t) => setPlacaTemporal(t.toUpperCase())}
-                      autoCapitalize="characters"
-                      maxLength={7}
-                      autoFocus
-                    />
-                  </View>
+                  <TextInput
+                    style={styles.placaInput}
+                    placeholder="ABC123"
+                    placeholderTextColor={COLORS.textMuted}
+                    value={placaTemporal}
+                    onChangeText={(t) => setPlacaTemporal(t.toUpperCase())}
+                    autoCapitalize="characters"
+                    maxLength={7}
+                    autoFocus
+                  />
 
-                  <View style={styles.modalButtons}>
+                  <View style={styles.modalBtns}>
                     <TouchableOpacity
-                      style={[
-                        styles.backButton,
-                        { backgroundColor: c.cardBg, borderColor: c.border },
-                      ]}
+                      style={styles.modalBtnSecondary}
                       onPress={() => {
                         setModalPlacaVisible(false);
-                        if (role !== "conductor") {
-                          setModalTipoVisible(true);
-                        }
+                        if (role !== "conductor") setModalTipoVisible(true);
                       }}>
-                      <Text
-                        style={[
-                          styles.backButtonText,
-                          { color: c.textSecondary },
-                        ]}>
+                      <Text style={styles.modalBtnSecondaryText}>
                         {role === "conductor" ? "Cancelar" : "Atrás"}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[
-                        styles.saveButton,
-                        { backgroundColor: c.accent },
-                        (!placaTemporal.trim() || cargando) &&
-                          styles.saveButtonDisabled,
-                      ]}
+                      style={[styles.modalBtnPrimary, (!placaTemporal.trim() || cargando) && { opacity: 0.5 }]}
                       onPress={handleGuardarPlaca}
                       disabled={!placaTemporal.trim() || cargando}>
                       {cargando ? (
-                        <ActivityIndicator color={c.accentText} />
+                        <ActivityIndicator color={COLORS.accentText} />
                       ) : (
-                        <Text
-                          style={[
-                            styles.saveButtonText,
-                            { color: c.accentText },
-                          ]}>
-                          {role === "conductor"
-                            ? "Enviar solicitud"
-                            : "Guardar"}
+                        <Text style={styles.modalBtnPrimaryText}>
+                          {role === "conductor" ? "Enviar solicitud" : "Guardar"}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -780,243 +517,283 @@ export default function HomeBaseAdapted({
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg },
   safeArea: { flex: 1 },
   content: { flex: 1, paddingHorizontal: 20 },
 
-  // User Header
-  userHeader: {
+  // HEADER
+  header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  userHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    marginRight: 12,
-  },
-  avatarImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  avatarCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  avatarText: { fontSize: 15, fontWeight: "800" },
-  userInfo: { flex: 1 },
-  userEmail: { fontSize: 14, fontWeight: "600" },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  // Vehicle Header
-  vehicleHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 20,
     marginTop: 16,
     marginBottom: 20,
-    borderWidth: 1,
   },
-  vehicleHeaderLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  vehicleIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
+  headerLeft: { flex: 1, marginRight: 12 },
+  greeting: {},
+  greetingSmall: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  greetingName: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  avatarButton: {},
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: COLORS.accent,
+  },
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.accent,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.accentText,
+  },
+
+  // VEHICLE CARD
+  vehicleCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  vehicleCardLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
+  vehicleIconBg: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 14,
   },
-  vehicleInfo: { flex: 1 },
-  vehicleType: { fontSize: 17, fontWeight: "700", marginBottom: 4 },
-  vehicleSubtitle: { fontSize: 13 },
+  vehicleCardInfo: { flex: 1 },
+  vehicleCardType: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 5,
+  },
+  vehicleCardHint: { fontSize: 13, color: COLORS.textSecondary },
   placaBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: COLORS.accent,
     borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     alignSelf: "flex-start",
   },
   placaText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 1,
+    color: COLORS.accentText,
+    letterSpacing: 1.5,
   },
-  conductorLabel: { fontSize: 12, marginTop: 4 },
-  vehicleHeaderRight: { flexDirection: "row", alignItems: "center" },
-  changeText: { fontSize: 14, fontWeight: "600", marginRight: 4 },
-  chevron: { fontSize: 22, fontWeight: "600" },
+  changeChip: {
+    backgroundColor: COLORS.accent + "20",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  changeChipText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.accent,
+  },
 
-  // Items Grid
-  itemsContainer: { paddingBottom: 100 },
-  itemsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  itemCard: {
+  // GRID
+  gridContainer: { paddingBottom: 100 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  gridCard: {
     width: (width - 52) / 2,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 18,
   },
-  itemTouchable: { padding: 16, alignItems: "center" },
-  itemIconContainer: {
-    width: 56,
-    height: 56,
+  gridIconBg: {
+    width: 52,
+    height: 52,
     borderRadius: 16,
-    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    justifyContent: "center",
+    marginBottom: 14,
   },
-  itemIcon: { fontSize: 28 },
-  itemName: {
+  gridCardName: {
     fontSize: 15,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: "700",
+    color: COLORS.text,
     marginBottom: 4,
   },
-  itemDescription: { fontSize: 12, textAlign: "center" },
+  gridCardDesc: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    lineHeight: 16,
+  },
+  gridArrow: {
+    marginTop: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: COLORS.accent + "20",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-  // Modal
-  modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  modalContent: {
+  // MODALS
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: COLORS.overlay,
+  },
+  modalSheet: {
+    backgroundColor: COLORS.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 44,
     paddingHorizontal: 24,
-    maxHeight: "80%",
+    maxHeight: "82%",
   },
   modalHandle: {
     width: 40,
     height: 4,
     borderRadius: 2,
+    backgroundColor: COLORS.textMuted,
     alignSelf: "center",
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
+    color: COLORS.text,
     textAlign: "center",
     marginBottom: 4,
   },
-  modalSubtitle: { fontSize: 14, textAlign: "center", marginBottom: 24 },
-  loadingContainer: { padding: 40, alignItems: "center" },
+  modalSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  loadingBox: { padding: 40, alignItems: "center" },
 
-  // Vehicles List
-  vehiclesList: { marginBottom: 16 },
+  // Vehicle List
+  vehicleList: { marginBottom: 16 },
   vehicleOption: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
+    backgroundColor: COLORS.input,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
-    borderWidth: 1,
+  },
+  vehicleOptionActive: {
+    borderWidth: 1.5,
+    borderColor: COLORS.accent,
   },
   vehicleOptionIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   vehicleOptionInfo: { flex: 1 },
-  vehicleOptionType: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
-  vehicleOptionPlaca: { fontSize: 13 },
-  vehicleOptionConductor: { fontSize: 11, marginTop: 2 },
-  checkBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
+  vehicleOptionType: { fontSize: 15, fontWeight: "600", color: COLORS.text, marginBottom: 2 },
+  vehicleOptionPlaca: { fontSize: 13, color: COLORS.textSecondary },
+  vehicleOptionConductor: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
+  statusBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
+    justifyContent: "center",
   },
-  checkText: { fontSize: 14, fontWeight: "700", color: "#FFF" },
+  statusText: { fontSize: 14, fontWeight: "700", color: "#FFF" },
 
   // Empty
-  emptyVehicles: { alignItems: "center", padding: 32 },
+  emptyBox: { alignItems: "center", padding: 32 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 14 },
+  emptyText: { fontSize: 14, color: COLORS.textSecondary },
 
   // Tipos Grid
-  tiposGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 20,
-  },
+  tiposGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
   tipoCard: {
     width: (width - 72) / 2,
-    borderRadius: 16,
+    backgroundColor: COLORS.input,
+    borderRadius: 18,
     padding: 20,
     alignItems: "center",
-    borderWidth: 1,
   },
-  tipoIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    justifyContent: "center",
+  tipoIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 12,
   },
-  tipoLabel: { fontSize: 15, fontWeight: "600" },
+  tipoLabel: { fontSize: 15, fontWeight: "600", color: COLORS.text },
 
   // Placa Input
-  placaInputContainer: { marginBottom: 24 },
   placaInput: {
-    borderRadius: 14,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: "700",
+    backgroundColor: COLORS.input,
+    borderRadius: 16,
+    padding: 18,
+    fontSize: 26,
+    fontWeight: "800",
+    color: COLORS.text,
     textAlign: "center",
-    letterSpacing: 4,
-    borderWidth: 1,
+    letterSpacing: 5,
+    marginBottom: 24,
   },
 
   // Buttons
-  modalButtons: { flexDirection: "row", gap: 12 },
   addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 14,
+    backgroundColor: COLORS.accent,
+    borderRadius: 16,
     padding: 16,
-    gap: 8,
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 10,
   },
-  addButtonIcon: { fontSize: 20, fontWeight: "700" },
-  addButtonText: { fontSize: 16, fontWeight: "600" },
-  cancelButton: { alignItems: "center", padding: 16 },
-  cancelButtonText: { fontSize: 16, fontWeight: "600" },
-  backButton: {
+  addButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.accentText,
+  },
+  cancelBtn: { alignItems: "center", padding: 14 },
+  cancelBtnText: { fontSize: 16, fontWeight: "600", color: COLORS.textSecondary },
+  modalBtns: { flexDirection: "row", gap: 12 },
+  modalBtnSecondary: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: COLORS.input,
     borderRadius: 14,
     padding: 16,
-    borderWidth: 1,
+    alignItems: "center",
   },
-  backButtonText: { fontSize: 16, fontWeight: "600" },
-  saveButton: {
+  modalBtnSecondaryText: { fontSize: 15, fontWeight: "600", color: COLORS.textSecondary },
+  modalBtnPrimary: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: COLORS.accent,
     borderRadius: 14,
     padding: 16,
+    alignItems: "center",
   },
-  saveButtonDisabled: { opacity: 0.5 },
-  saveButtonText: { fontSize: 16, fontWeight: "600" },
+  modalBtnPrimaryText: { fontSize: 15, fontWeight: "700", color: COLORS.accentText },
 });

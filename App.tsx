@@ -45,28 +45,17 @@ function AppContent() {
   useEffect(() => {
     const asegurarUsuarioEnDB = async (user: any) => {
       if (!user?.id) return;
-      // Verificar si existe en tabla usuarios
-      const { data } = await supabase
-        .from("usuarios")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!data) {
-        // No existe, crearlo con datos de auth
-        const { error: insertErr } = await supabase.from("usuarios").insert([
-          {
-            user_id: user.id,
-            nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
-            email: user.email,
-            cedula: user.user_metadata?.cedula || "",
-          },
-        ]);
-        if (insertErr) {
-          console.error("❌ Error creando usuario en DB:", JSON.stringify(insertErr));
-        } else {
-          console.log("✅ Usuario creado en tabla usuarios desde login");
-        }
+      const { error: upsertErr } = await supabase.from("usuarios").upsert(
+        [{
+          user_id: user.id,
+          nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
+          email: user.email,
+          cedula: user.user_metadata?.cedula || "",
+        }],
+        { onConflict: "user_id", ignoreDuplicates: true }
+      );
+      if (upsertErr) {
+        console.error("❌ Error en usuario DB:", JSON.stringify(upsertErr));
       }
     };
 
