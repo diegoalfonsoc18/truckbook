@@ -7,7 +7,7 @@ import { items as baseItems, Item } from "../Home/Items";
 import { useMultas } from "../../hooks/useMultas";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
-import { styles as homeStyles } from "../Home/HomeStyles";
+import { useTheme } from "../../constants/Themecontext";
 import { cargarInvitacionesPendientes } from "../../services/vehiculoAutorizacionService";
 import { ConductorStackParamList } from "../../navigation/ConductorNavigation";
 
@@ -18,6 +18,7 @@ type ConductorNavProp = NativeStackNavigationProp<
 
 export default function ConductorHome() {
   const navigation = useNavigation<ConductorNavProp>();
+  const { colors: c } = useTheme();
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
   const [refrescando, setRefrescando] = useState(false);
@@ -40,13 +41,13 @@ export default function ConductorHome() {
   const conductorItems: Item[] = [
     {
       id: "invitaciones",
-      icon: "📩",
+      icon: "mail-open",
       name: "Invitaciones",
       subtitle:
         invitacionesCount > 0
           ? `${invitacionesCount} pendiente${invitacionesCount > 1 ? "s" : ""}`
           : "Sin pendientes",
-      backgroundColor: "#FFF8E1",
+      color: "#FFB800",
     },
     ...baseItems,
   ];
@@ -84,22 +85,26 @@ export default function ConductorHome() {
   };
 
   const renderBadgeConductor = (item: Item) => {
-    if (item.id !== "multas" || !item.mostrarBadge) {
-      return null;
-    }
+    if (item.id !== "multas" || !item.mostrarBadge) return null;
+
+    const badge: any = {
+      position: "absolute", top: 8, right: 8,
+      paddingHorizontal: 8, paddingVertical: 4,
+      borderRadius: 10, zIndex: 10,
+    };
 
     if (cargando || refrescando) {
       return (
-        <View style={homeStyles.badge}>
-          <Text style={homeStyles.badgeText}>...</Text>
+        <View style={[badge, { backgroundColor: c.surface }]}>
+          <Text style={{ color: c.textSecondary, fontSize: 10, fontWeight: "700" }}>...</Text>
         </View>
       );
     }
 
     if (tieneMultasPendientes) {
       return (
-        <View style={[homeStyles.badge, homeStyles.badgePendiente]}>
-          <Text style={homeStyles.badgeText}>
+        <View style={[badge, { backgroundColor: c.danger }]}>
+          <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>
             {cantidadPendientes} Pendiente{cantidadPendientes > 1 ? "s" : ""}
           </Text>
         </View>
@@ -107,10 +112,8 @@ export default function ConductorHome() {
     }
 
     return (
-      <View style={[homeStyles.badge, homeStyles.badgeOk]}>
-        <Text style={[homeStyles.badgeText, homeStyles.badgeTextOk]}>
-          ✓ Al día
-        </Text>
+      <View style={[badge, { backgroundColor: c.success }]}>
+        <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>Al día</Text>
       </View>
     );
   };

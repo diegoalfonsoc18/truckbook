@@ -5,6 +5,7 @@ export interface Item {
   id: string;
   name: string;
   icon?: string;
+  imageSource?: any;
   color?: string;
   description?: string;
   route?: string;
@@ -16,38 +17,38 @@ export interface Item {
 export const items: Item[] = [
   {
     id: "multas",
-    icon: "🚨",
+    icon: "alert-circle",
     name: "Multas",
     subtitle: "Consultar multas",
-    backgroundColor: "#f5f5f5",
+    color: "#E94560",
     mostrarBadge: true,
   },
   {
     id: "soat",
-    icon: "🛡️",
+    icon: "shield-checkmark",
     name: "SOAT",
     subtitle: "Verificar SOAT",
-    backgroundColor: "#f5f5f5",
+    color: "#00D9A5",
   },
   {
     id: "tecnicomecanica",
-    icon: "🔍",
+    icon: "search",
     name: "Tecnicomecánica",
     subtitle: "Estado",
-    backgroundColor: "#f5f5f5",
+    color: "#6C5CE7",
   },
   {
     id: "mantenimiento",
-    icon: "🔧",
+    icon: "construct",
     name: "Mantenimiento",
     subtitle: "Próximo",
-    backgroundColor: "#f5f5f5",
+    color: "#74B9FF",
   },
   {
     id: "licencia",
-    icon: "🪪",
+    icon: "card",
     name: "Licencia",
     subtitle: "Vigente",
-    backgroundColor: "#f5f5f5",
+    color: "#FFB800",
   },
 ];
