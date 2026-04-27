@@ -8,6 +8,8 @@ const ICONS = {
   factura: require("../assets/icons/factura.webp"),
   report: require("../assets/icons/report.webp"),
   shield: require("../assets/icons/shield.webp"),
+  tool: require("../assets/icons/tool.webp"),
+  comparendo: require("../assets/icons/comparendo.webp"),
 } as const;
 
 export type IconName = keyof typeof ICONS;

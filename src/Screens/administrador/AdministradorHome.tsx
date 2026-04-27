@@ -60,7 +60,7 @@ export default function AdministradorHome() {
       id: "tecnomecanica",
       name: "Tecnomecánica",
       subtitle: "Revisión técnica",
-      iconName: "construct",
+      iconName: "tool",
       iconSize: 66,
       color: "#FDCB6E",
     },
@@ -68,7 +68,8 @@ export default function AdministradorHome() {
       id: "comparendos",
       name: "Comparendos",
       subtitle: "Multas de tránsito",
-      icon: "document-text",
+      iconName: "comparendo",
+      iconSize: 66,
       color: "#FD79A8",
     },
   ];
