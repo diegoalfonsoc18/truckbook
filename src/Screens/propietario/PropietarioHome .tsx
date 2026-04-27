@@ -18,14 +18,14 @@ export default function PropietarioHome() {
       id: "conductores",
       name: "Conductores",
       subtitle: "Gestionar equipo",
-      imageSource: require("../../assets/icons/conductor.webp"),
+      iconName: "conductor",
       color: "#74B9FF",
     },
     {
       id: "flota",
       name: "Vehiculos",
       subtitle: "Gestionar flota",
-      icon: "bus",
+      iconName: "truck",
       color: "#FFB800",
     },
     {

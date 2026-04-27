@@ -38,6 +38,7 @@ import {
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme } from "../../constants/Themecontext";
+import ItemIcon from "../../components/ItemIcon";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
@@ -385,15 +386,10 @@ export default function HomeBaseAdapted({
                       s.gridIconBg,
                       { backgroundColor: (item.color || c.accent) + "18" },
                     ]}>
-                    {item.imageSource ? (
-                      <Image source={item.imageSource} style={{ width: 32, height: 32 }} resizeMode="contain" />
-                    ) : (
-                      <Ionicons
-                        name={(item.icon || "ellipse") as any}
-                        size={26}
-                        color={item.color || c.accent}
-                      />
-                    )}
+                    {item.iconName
+                      ? <ItemIcon name={item.iconName} size={item.iconSize ?? 30} />
+                      : <Ionicons name={(item.icon || "ellipse") as any} size={item.iconSize ?? 26} color={item.color || c.accent} />
+                    }
                   </View>
                   <Text style={[s.gridCardName, { color: c.text }]}>
                     {item.name}

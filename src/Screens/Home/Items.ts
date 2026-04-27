@@ -1,11 +1,14 @@
 // src/screens/Home/Items.ts
 
 // Definir el tipo Item
+import { IconName } from "../../components/ItemIcon";
+
 export interface Item {
   id: string;
   name: string;
   icon?: string;
-  imageSource?: any;
+  iconName?: IconName;
+  iconSize?: number;
   color?: string;
   description?: string;
   route?: string;

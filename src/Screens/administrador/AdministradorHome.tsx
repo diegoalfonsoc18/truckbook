@@ -6,7 +6,10 @@ import HomeBaseAdapted from "../Home/Home";
 import { Item } from "../Home/Items";
 import { AdministradorStackParamList } from "../../navigation/AdministradorNavigation";
 
-type AdminNavProp = NativeStackNavigationProp<AdministradorStackParamList, "AdminHome">;
+type AdminNavProp = NativeStackNavigationProp<
+  AdministradorStackParamList,
+  "AdminHome"
+>;
 
 export default function AdministradorHome() {
   const navigation = useNavigation<AdminNavProp>();
@@ -16,21 +19,24 @@ export default function AdministradorHome() {
       id: "conductores",
       name: "Conductores",
       subtitle: "Gestionar lista",
-      imageSource: require("../../assets/icons/conductor.webp"),
+      iconName: "conductor",
+      iconSize: 56,
       color: "#74B9FF",
     },
     {
       id: "vehiculos",
       name: "Vehiculos",
       subtitle: "Gestionar flota",
-      icon: "bus",
+      iconName: "truck",
+      iconSize: 66,
       color: "#FFB800",
     },
     {
       id: "gastos",
       name: "Aprobar Gastos",
       subtitle: "Revisar solicitudes",
-      icon: "wallet",
+      iconName: "factura",
+      iconSize: 56,
       color: "#E94560",
     },
     {
