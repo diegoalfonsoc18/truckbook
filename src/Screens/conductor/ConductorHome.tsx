@@ -41,7 +41,8 @@ export default function ConductorHome() {
   const conductorItems: Item[] = [
     {
       id: "invitaciones",
-      icon: "mail-open",
+      iconName: "check",
+      iconSize: 36,
       name: "Invitaciones",
       subtitle:
         invitacionesCount > 0

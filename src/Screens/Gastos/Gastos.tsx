@@ -33,20 +33,86 @@ const { width } = Dimensions.get("window");
 const H_PAD = 20;
 
 const MANTENIMIENTO_SUBCATEGORIAS = [
-  { id: "reparacion", name: "Reparación", iconName: "repair" as IconName, color: "#74B9FF", size: 36 },
-  { id: "llantas",   name: "Llantas",    iconName: "tire"   as IconName, color: "#A29BFE", size: 36 },
-  { id: "lavado",    name: "Lavado",     iconName: "wash"   as IconName, color: "#00CEC9", size: 36 },
-  { id: "aceite",    name: "Aceite",     iconName: "oil"    as IconName, color: "#FDCB6E", size: 36 },
+  {
+    id: "reparacion",
+    name: "Reparación",
+    iconName: "repair" as IconName,
+    color: "#74B9FF",
+    size: 72,
+  },
+  {
+    id: "llantas",
+    name: "Llantas",
+    iconName: "tire" as IconName,
+    color: "#A29BFE",
+    size: 72,
+  },
+  {
+    id: "lavado",
+    name: "Lavado",
+    iconName: "wash" as IconName,
+    color: "#00CEC9",
+    size: 72,
+  },
+  {
+    id: "aceite",
+    name: "Aceite",
+    iconName: "oil" as IconName,
+    color: "#FDCB6E",
+    size: 72,
+  },
 ];
 
 const GASTOS_CATEGORIAS = [
-  { id: "combustible",  name: "Combustible", iconName: "fuel"    as IconName, color: "#FFB800", size: 32 },
-  { id: "peajes",       name: "Peajes",      iconName: "toll"    as IconName, color: "#00D9A5", size: 32 },
-  { id: "comida",       name: "Comida",      iconName: "food"    as IconName, color: "#FF6B6B", size: 32 },
-  { id: "hospedaje",    name: "Hospedaje",   iconName: "hotel"   as IconName, color: "#6C5CE7", size: 32 },
-  { id: "mantenimiento",name: "Manteni.",    iconName: "tool"    as IconName, color: "#74B9FF", size: 32 },
-  { id: "parqueadero",  name: "Parqueo",     iconName: "parking" as IconName, color: "#FD79A8", size: 32 },
-  { id: "otros",        name: "Otros",       iconName: "otros"   as IconName, color: "#636E72", size: 32 },
+  {
+    id: "combustible",
+    name: "Combustible",
+    iconName: "fuel" as IconName,
+    color: "#FFB800",
+    size: 72,
+  },
+  {
+    id: "peajes",
+    name: "Peajes",
+    iconName: "toll" as IconName,
+    color: "#00D9A5",
+    size: 72,
+  },
+  {
+    id: "comida",
+    name: "Comida",
+    iconName: "food" as IconName,
+    color: "#FF6B6B",
+    size: 72,
+  },
+  {
+    id: "hospedaje",
+    name: "Hospedaje",
+    iconName: "hotel" as IconName,
+    color: "#6C5CE7",
+    size: 72,
+  },
+  {
+    id: "mantenimiento",
+    name: "Manteni.",
+    iconName: "tool" as IconName,
+    color: "#74B9FF",
+    size: 72,
+  },
+  {
+    id: "parqueadero",
+    name: "Parqueo",
+    iconName: "parking" as IconName,
+    color: "#FD79A8",
+    size: 72,
+  },
+  {
+    id: "otros",
+    name: "Otros",
+    iconName: "otros" as IconName,
+    color: "#636E72",
+    size: 72,
+  },
 ];
 
 const ALL_CATEGORIAS = [...GASTOS_CATEGORIAS, ...MANTENIMIENTO_SUBCATEGORIAS];
@@ -91,7 +157,9 @@ export default function Gastos() {
       if (!placaActual || !user?.id) {
         Alert.alert(
           "Error",
-          !placaActual ? "Selecciona una placa primero" : "Usuario no identificado",
+          !placaActual
+            ? "Selecciona una placa primero"
+            : "Usuario no identificado",
         );
         return;
       }
@@ -115,7 +183,8 @@ export default function Gastos() {
         return;
       }
 
-      const descripcion = id === "otros" ? customDescription.trim() : gasto.name;
+      const descripcion =
+        id === "otros" ? customDescription.trim() : gasto.name;
 
       setLoading(true);
       try {
@@ -223,7 +292,10 @@ export default function Gastos() {
     .filter((g) => g.placa === placaActual && g.fecha === selectedDate)
     .filter((g, i, self) => i === self.findIndex((t) => t.id === g.id));
 
-  const totalGastos = gastosFiltrados.reduce((sum, g) => sum + (g.monto || 0), 0);
+  const totalGastos = gastosFiltrados.reduce(
+    (sum, g) => sum + (g.monto || 0),
+    0,
+  );
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -257,13 +329,15 @@ export default function Gastos() {
   const card = {
     backgroundColor: c.cardBg,
     borderRadius: 16,
-    ...(isDark ? { borderWidth: 1, borderColor: c.border } : {
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.07,
-      shadowRadius: 8,
-      elevation: 3,
-    }),
+    ...(isDark
+      ? { borderWidth: 1, borderColor: c.border }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.07,
+          shadowRadius: 8,
+          elevation: 3,
+        }),
   };
 
   if (!placaActual) {
@@ -271,10 +345,13 @@ export default function Gastos() {
       <View style={[s.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.emptyState}>
-            <View style={[s.emptyIconWrap, { backgroundColor: c.expenseLight }]}>
+            <View
+              style={[s.emptyIconWrap, { backgroundColor: c.expenseLight }]}>
               <Ionicons name="wallet-outline" size={40} color={c.expense} />
             </View>
-            <Text style={[s.emptyTitle, { color: c.text }]}>Sin vehículo seleccionado</Text>
+            <Text style={[s.emptyTitle, { color: c.text }]}>
+              Sin vehículo seleccionado
+            </Text>
             <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
               Selecciona una placa para registrar gastos
             </Text>
@@ -287,7 +364,6 @@ export default function Gastos() {
   return (
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
-
         {/* HEADER */}
         <View style={s.header}>
           <View style={{ flex: 1 }}>
@@ -295,8 +371,15 @@ export default function Gastos() {
             <TouchableOpacity
               onPress={() => setCalendarVisible(true)}
               activeOpacity={0.7}
-              style={[s.dateBtn, { backgroundColor: c.cardBg, borderColor: c.border }]}>
-              <Ionicons name="calendar-outline" size={14} color={c.textSecondary} />
+              style={[
+                s.dateBtn,
+                { backgroundColor: c.cardBg, borderColor: c.border },
+              ]}>
+              <Ionicons
+                name="calendar-outline"
+                size={14}
+                color={c.textSecondary}
+              />
               <Text style={[s.dateBtnText, { color: c.textSecondary }]}>
                 {formatDateFriendly(selectedDate)}
               </Text>
@@ -304,7 +387,9 @@ export default function Gastos() {
             </TouchableOpacity>
           </View>
           <View style={[s.placaBadge, { backgroundColor: c.accent }]}>
-            <Text style={[s.placaText, { color: c.accentText }]}>{placaActual}</Text>
+            <Text style={[s.placaText, { color: c.accentText }]}>
+              {placaActual}
+            </Text>
           </View>
         </View>
 
@@ -314,16 +399,22 @@ export default function Gastos() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <Animated.View style={{ opacity: fadeAnim }}>
-
             {/* RESUMEN */}
             <View style={[s.summaryCard, card]}>
               <View style={s.summaryRow}>
                 <View>
-                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>Total del día</Text>
-                  <Text style={[s.summaryTotal, { color: c.text }]}>{formatCurrency(totalGastos)}</Text>
+                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>
+                    Total del día
+                  </Text>
+                  <Text style={[s.summaryTotal, { color: c.text }]}>
+                    {formatCurrency(totalGastos)}
+                  </Text>
                 </View>
-                <View style={[s.countCircle, { backgroundColor: c.expenseLight }]}>
-                  <Text style={[s.countNum, { color: c.expense }]}>{gastosFiltrados.length}</Text>
+                <View
+                  style={[s.countCircle, { backgroundColor: c.expenseLight }]}>
+                  <Text style={[s.countNum, { color: c.expense }]}>
+                    {gastosFiltrados.length}
+                  </Text>
                 </View>
               </View>
               <View style={[s.divider, { backgroundColor: c.border }]} />
@@ -338,7 +429,9 @@ export default function Gastos() {
             </View>
 
             {/* CATEGORÍAS */}
-            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Categorías</Text>
+            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>
+              Categorías
+            </Text>
             <View style={s.catGrid}>
               {GASTOS_CATEGORIAS.map((cat) => (
                 <TouchableOpacity
@@ -346,10 +439,16 @@ export default function Gastos() {
                   style={[s.catCard, card]}
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
-                  <View style={[s.catCircle, { backgroundColor: cat.color + "18" }]}>
+                  <View
+                    style={[
+                      s.catCircle,
+                      { backgroundColor: cat.color + "18" },
+                    ]}>
                     <ItemIcon name={cat.iconName} size={cat.size} />
                   </View>
-                  <Text style={[s.catLabel, { color: c.text }]} numberOfLines={1}>
+                  <Text
+                    style={[s.catLabel, { color: c.text }]}
+                    numberOfLines={1}>
                     {cat.name}
                   </Text>
                 </TouchableOpacity>
@@ -369,9 +468,15 @@ export default function Gastos() {
             {gastosFiltrados.length === 0 ? (
               <View style={[s.emptyList, card]}>
                 <View style={[s.emptyListIcon, { backgroundColor: c.surface }]}>
-                  <Ionicons name="receipt-outline" size={28} color={c.textMuted} />
+                  <Ionicons
+                    name="receipt-outline"
+                    size={28}
+                    color={c.textMuted}
+                  />
                 </View>
-                <Text style={[s.emptyListTitle, { color: c.text }]}>Sin gastos</Text>
+                <Text style={[s.emptyListTitle, { color: c.text }]}>
+                  Sin gastos
+                </Text>
                 <Text style={[s.emptyListText, { color: c.textSecondary }]}>
                   No hay gastos registrados este día
                 </Text>
@@ -379,7 +484,8 @@ export default function Gastos() {
             ) : (
               gastosFiltrados.map((item, index) => {
                 const categoria = ALL_CATEGORIAS.find(
-                  (cat) => cat.name.toLowerCase() === item.tipo_gasto?.toLowerCase(),
+                  (cat) =>
+                    cat.name.toLowerCase() === item.tipo_gasto?.toLowerCase(),
                 );
                 const statusColor = getStatusColor(item.estado);
                 return (
@@ -389,21 +495,39 @@ export default function Gastos() {
                     activeOpacity={0.75}
                     onPress={() => handleEditClick(item.id)}
                     onLongPress={() => handleDeleteClick(item.id)}>
-                    <View style={[s.gastoIconWrap, { backgroundColor: (categoria?.color || c.expense) + "18" }]}>
-                      {categoria?.iconName
-                        ? <ItemIcon name={categoria.iconName} size={categoria.size ?? 26} />
-                        : <Ionicons name="cube" size={20} color={c.expense} />
-                      }
+                    <View
+                      style={[
+                        s.gastoIconWrap,
+                        {
+                          backgroundColor:
+                            (categoria?.color || c.expense) + "18",
+                        },
+                      ]}>
+                      {categoria?.iconName ? (
+                        <ItemIcon
+                          name={categoria.iconName}
+                          size={categoria.size ?? 26}
+                        />
+                      ) : (
+                        <Ionicons name="cube" size={20} color={c.expense} />
+                      )}
                     </View>
                     <View style={s.gastoInfo}>
-                      <Text style={[s.gastoName, { color: c.text }]} numberOfLines={1}>
+                      <Text
+                        style={[s.gastoName, { color: c.text }]}
+                        numberOfLines={1}>
                         {item.descripcion || item.tipo_gasto}
                       </Text>
                       <View style={s.gastoMeta}>
                         <Text style={[s.gastoDate, { color: c.textMuted }]}>
                           {formatDate(item.fecha)}
                         </Text>
-                        <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+                        <View
+                          style={[
+                            s.statusDot,
+                            { backgroundColor: statusColor },
+                          ]}
+                        />
                         <Text style={[s.statusLabel, { color: statusColor }]}>
                           {getStatusLabel(item.estado)}
                         </Text>
@@ -423,21 +547,34 @@ export default function Gastos() {
       </SafeAreaView>
 
       {/* MODAL CALENDARIO */}
-      <Modal visible={calendarVisible} transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
+      <Modal
+        visible={calendarVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCalendarVisible(false)}>
         <TouchableOpacity
           style={[s.overlay, { backgroundColor: c.overlay }]}
           activeOpacity={1}
           onPress={() => setCalendarVisible(false)}>
-          <View style={[s.sheet, { backgroundColor: c.modalBg }, isDark ? { borderColor: c.border, borderWidth: 1 } : {}]}>
+          <View
+            style={[
+              s.sheet,
+              { backgroundColor: c.modalBg },
+              isDark ? { borderColor: c.border, borderWidth: 1 } : {},
+            ]}>
             <View style={[s.handle, { backgroundColor: c.border }]} />
-            <Text style={[s.sheetTitle, { color: c.text }]}>Seleccionar fecha</Text>
+            <Text style={[s.sheetTitle, { color: c.text }]}>
+              Seleccionar fecha
+            </Text>
             <Calendar
               current={selectedDate}
               onDayPress={(day: any) => {
                 setSelectedDate(day.dateString);
                 setCalendarVisible(false);
               }}
-              markedDates={{ [selectedDate]: { selected: true, selectedColor: c.expense } }}
+              markedDates={{
+                [selectedDate]: { selected: true, selectedColor: c.expense },
+              }}
               theme={{
                 backgroundColor: c.modalBg,
                 calendarBackground: c.modalBg,
@@ -467,9 +604,16 @@ export default function Gastos() {
           activeOpacity={1}
           onPress={() => setMantenimientoVisible(false)}>
           <TouchableWithoutFeedback>
-            <View style={[s.sheet, { backgroundColor: c.modalBg }, isDark ? { borderColor: c.border, borderWidth: 1 } : {}]}>
+            <View
+              style={[
+                s.sheet,
+                { backgroundColor: c.modalBg },
+                isDark ? { borderColor: c.border, borderWidth: 1 } : {},
+              ]}>
               <View style={[s.handle, { backgroundColor: c.border }]} />
-              <Text style={[s.sheetTitle, { color: c.text }]}>Mantenimiento</Text>
+              <Text style={[s.sheetTitle, { color: c.text }]}>
+                Mantenimiento
+              </Text>
               <View style={s.subGrid}>
                 {MANTENIMIENTO_SUBCATEGORIAS.map((sub) => (
                   <TouchableOpacity
@@ -480,10 +624,16 @@ export default function Gastos() {
                     }}
                     activeOpacity={0.7}
                     style={s.subItem}>
-                    <View style={[s.subCircle, { backgroundColor: sub.color + "18" }]}>
+                    <View
+                      style={[
+                        s.subCircle,
+                        { backgroundColor: sub.color + "18" },
+                      ]}>
                       <ItemIcon name={sub.iconName} size={sub.size} />
                     </View>
-                    <Text style={[s.subName, { color: c.text }]}>{sub.name}</Text>
+                    <Text style={[s.subName, { color: c.text }]}>
+                      {sub.name}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -498,39 +648,69 @@ export default function Gastos() {
         transparent
         animationType="slide"
         onRequestClose={closeModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}>
           <TouchableOpacity
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
             onPress={closeModal}>
             <TouchableWithoutFeedback>
-              <View style={[s.sheet, { backgroundColor: c.modalBg }, isDark ? { borderColor: c.border, borderWidth: 1 } : {}]}>
+              <View
+                style={[
+                  s.sheet,
+                  { backgroundColor: c.modalBg },
+                  isDark ? { borderColor: c.border, borderWidth: 1 } : {},
+                ]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>
                   {isEditing ? "Editar gasto" : "Nuevo gasto"}
                 </Text>
 
-                {selectedGasto && (() => {
-                  const cat = ALL_CATEGORIAS.find((x) => x.id === selectedGasto);
-                  return (
-                    <View style={s.selectedCat}>
-                      <View style={[s.selectedCatCircle, { backgroundColor: (cat?.color || c.expense) + "18" }]}>
-                        {cat?.iconName
-                          ? <ItemIcon name={cat.iconName} size={cat?.size ?? 32} />
-                          : <Ionicons name="cube" size={26} color={cat?.color || c.expense} />
-                        }
+                {selectedGasto &&
+                  (() => {
+                    const cat = ALL_CATEGORIAS.find(
+                      (x) => x.id === selectedGasto,
+                    );
+                    return (
+                      <View style={s.selectedCat}>
+                        <View
+                          style={[
+                            s.selectedCatCircle,
+                            {
+                              backgroundColor: (cat?.color || c.expense) + "18",
+                            },
+                          ]}>
+                          {cat?.iconName ? (
+                            <ItemIcon
+                              name={cat.iconName}
+                              size={cat?.size ?? 32}
+                            />
+                          ) : (
+                            <Ionicons
+                              name="cube"
+                              size={26}
+                              color={cat?.color || c.expense}
+                            />
+                          )}
+                        </View>
+                        <Text style={[s.selectedCatName, { color: c.text }]}>
+                          {cat?.name || selectedGasto}
+                        </Text>
                       </View>
-                      <Text style={[s.selectedCatName, { color: c.text }]}>
-                        {cat?.name || selectedGasto}
-                      </Text>
-                    </View>
-                  );
-                })()}
+                    );
+                  })()}
 
                 {selectedGasto === "otros" && !isEditing && (
                   <View style={s.inputGroup}>
-                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
-                    <View style={[s.inputRow, { backgroundColor: c.surface, borderColor: c.border }]}>
+                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>
+                      Descripción
+                    </Text>
+                    <View
+                      style={[
+                        s.inputRow,
+                        { backgroundColor: c.surface, borderColor: c.border },
+                      ]}>
                       <TextInput
                         style={[s.textInput, { color: c.text }]}
                         placeholder="Ej: Multa, Seguro..."
@@ -544,9 +724,17 @@ export default function Gastos() {
                 )}
 
                 <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
-                  <View style={[s.inputRow, { backgroundColor: c.surface, borderColor: c.border }]}>
-                    <Text style={[s.inputPrefix, { color: c.textMuted }]}>$</Text>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>
+                    Monto
+                  </Text>
+                  <View
+                    style={[
+                      s.inputRow,
+                      { backgroundColor: c.surface, borderColor: c.border },
+                    ]}>
+                    <Text style={[s.inputPrefix, { color: c.textMuted }]}>
+                      $
+                    </Text>
                     <TextInput
                       style={[s.textInput, s.textInputLg, { color: c.text }]}
                       placeholder="0"
@@ -560,38 +748,72 @@ export default function Gastos() {
                 </View>
 
                 <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
+                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>
+                    Fecha
+                  </Text>
                   <TouchableOpacity
-                    style={[s.inputRow, { backgroundColor: c.surface, borderColor: c.border }]}
+                    style={[
+                      s.inputRow,
+                      { backgroundColor: c.surface, borderColor: c.border },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
                       setTimeout(() => setCalendarVisible(true), 300);
                     }}>
-                    <Ionicons name="calendar-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
-                    <Text style={[s.textInput, { color: c.text, paddingLeft: 0 }]}>{formatDate(editDate)}</Text>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color={c.textMuted}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={[s.textInput, { color: c.text, paddingLeft: 0 }]}>
+                      {formatDate(editDate)}
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={s.modalBtns}>
                   <TouchableOpacity
-                    style={[s.cancelBtn, { backgroundColor: c.surface, borderColor: c.border }]}
+                    style={[
+                      s.cancelBtn,
+                      { backgroundColor: c.surface, borderColor: c.border },
+                    ]}
                     onPress={closeModal}>
-                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
+                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>
+                      Cancelar
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       s.saveBtn,
                       { backgroundColor: c.text },
-                      (!editValue || loading || (selectedGasto === "otros" && !isEditing && !customDescription.trim())) && { opacity: 0.35 },
+                      (!editValue ||
+                        loading ||
+                        (selectedGasto === "otros" &&
+                          !isEditing &&
+                          !customDescription.trim())) && { opacity: 0.35 },
                     ]}
                     onPress={() => {
-                      isEditing ? handleSaveEdit() : selectedGasto && handleAddGasto(selectedGasto, editValue);
+                      isEditing
+                        ? handleSaveEdit()
+                        : selectedGasto &&
+                          handleAddGasto(selectedGasto, editValue);
                     }}
-                    disabled={!editValue || loading || (selectedGasto === "otros" && !isEditing && !customDescription.trim())}>
-                    {loading
-                      ? <ActivityIndicator color={c.primary} size="small" />
-                      : <Text style={[s.saveBtnText, { color: c.primary }]}>{isEditing ? "Actualizar" : "Guardar"}</Text>
-                    }
+                    disabled={
+                      !editValue ||
+                      loading ||
+                      (selectedGasto === "otros" &&
+                        !isEditing &&
+                        !customDescription.trim())
+                    }>
+                    {loading ? (
+                      <ActivityIndicator color={c.primary} size="small" />
+                    ) : (
+                      <Text style={[s.saveBtnText, { color: c.primary }]}>
+                        {isEditing ? "Actualizar" : "Guardar"}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -617,7 +839,12 @@ const s = StyleSheet.create({
     paddingBottom: 16,
     gap: 12,
   },
-  headerTitle: { fontSize: 26, fontWeight: "800", letterSpacing: -0.5, marginBottom: 8 },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
   dateBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -638,12 +865,19 @@ const s = StyleSheet.create({
 
   // SUMMARY
   summaryCard: { padding: 20, marginBottom: 24 },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
   summaryLabel: { fontSize: 13, fontWeight: "500", marginBottom: 4 },
   summaryTotal: { fontSize: 32, fontWeight: "800", letterSpacing: -1 },
   countCircle: {
-    width: 44, height: 44, borderRadius: 22,
-    justifyContent: "center", alignItems: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
   },
   countNum: { fontSize: 18, fontWeight: "800" },
   divider: { height: 1, marginVertical: 16 },
@@ -720,17 +954,30 @@ const s = StyleSheet.create({
   gastoAmount: { fontSize: 15, fontWeight: "800" },
 
   // EMPTY STATES
-  emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
   emptyIconWrap: {
-    width: 80, height: 80, borderRadius: 24,
-    justifyContent: "center", alignItems: "center", marginBottom: 16,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 14, textAlign: "center", lineHeight: 20 },
   emptyList: { padding: 32, alignItems: "center" },
   emptyListIcon: {
-    width: 60, height: 60, borderRadius: 18,
-    justifyContent: "center", alignItems: "center", marginBottom: 12,
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
   },
   emptyListTitle: { fontSize: 15, fontWeight: "700", marginBottom: 4 },
   emptyListText: { fontSize: 13, textAlign: "center" },
@@ -744,15 +991,35 @@ const s = StyleSheet.create({
     paddingBottom: 34,
     paddingHorizontal: 20,
   },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 20 },
-  sheetTitle: { fontSize: 18, fontWeight: "700", textAlign: "center", marginBottom: 20 },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+  },
 
   // MANTENIMIENTO SUB
-  subGrid: { flexDirection: "row", justifyContent: "center", gap: 20, paddingBottom: 8 },
+  subGrid: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 20,
+    paddingBottom: 8,
+  },
   subItem: { alignItems: "center" as const },
   subCircle: {
-    width: 68, height: 68, borderRadius: 20,
-    justifyContent: "center", alignItems: "center", marginBottom: 8,
+    width: 68,
+    height: 68,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
   },
   subName: { fontSize: 13, fontWeight: "600" },
 
@@ -765,14 +1032,23 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   selectedCatCircle: {
-    width: 50, height: 50, borderRadius: 14,
-    justifyContent: "center", alignItems: "center",
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
   selectedCatName: { fontSize: 17, fontWeight: "700" },
 
   // INPUTS
   inputGroup: { marginBottom: 14 },
-  inputLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" as const, marginBottom: 8 },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase" as const,
+    marginBottom: 8,
+  },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -788,8 +1064,11 @@ const s = StyleSheet.create({
   // MODAL BUTTONS
   modalBtns: { flexDirection: "row", gap: 10, marginTop: 6 },
   cancelBtn: {
-    flex: 1, borderRadius: 14, padding: 16,
-    alignItems: "center", borderWidth: 1,
+    flex: 1,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
   },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
   saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
