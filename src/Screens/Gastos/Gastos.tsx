@@ -27,25 +27,26 @@ import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 import { Ionicons } from "@expo/vector-icons";
+import ItemIcon, { IconName } from "../../components/ItemIcon";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
 
 const MANTENIMIENTO_SUBCATEGORIAS = [
-  { id: "reparacion", name: "Reparación", icon: "build", color: "#74B9FF" },
-  { id: "llantas", name: "Llantas", icon: "ellipse-outline", color: "#A29BFE" },
-  { id: "lavado", name: "Lavado", icon: "water", color: "#00CEC9" },
-  { id: "aceite", name: "Aceite", icon: "color-fill", color: "#FDCB6E" },
+  { id: "reparacion", name: "Reparación", iconName: "repair" as IconName, color: "#74B9FF" },
+  { id: "llantas",   name: "Llantas",    iconName: "tire"   as IconName, color: "#A29BFE" },
+  { id: "lavado",    name: "Lavado",     iconName: "wash"   as IconName, color: "#00CEC9" },
+  { id: "aceite",    name: "Aceite",     iconName: "oil"    as IconName, color: "#FDCB6E" },
 ];
 
 const GASTOS_CATEGORIAS = [
-  { id: "combustible", name: "Combustible", icon: "flame", color: "#FFB800" },
-  { id: "peajes", name: "Peajes", icon: "car", color: "#00D9A5" },
-  { id: "comida", name: "Comida", icon: "restaurant", color: "#FF6B6B" },
-  { id: "hospedaje", name: "Hospedaje", icon: "bed", color: "#6C5CE7" },
-  { id: "mantenimiento", name: "Manteni.", icon: "construct", color: "#74B9FF" },
-  { id: "parqueadero", name: "Parqueo", icon: "location", color: "#FD79A8" },
-  { id: "otros", name: "Otros", icon: "cube", color: "#636E72" },
+  { id: "combustible",  name: "Combustible", iconName: "fuel"    as IconName, color: "#FFB800" },
+  { id: "peajes",       name: "Peajes",      iconName: "toll"    as IconName, color: "#00D9A5" },
+  { id: "comida",       name: "Comida",      iconName: "food"    as IconName, color: "#FF6B6B" },
+  { id: "hospedaje",    name: "Hospedaje",   iconName: "hotel"   as IconName, color: "#6C5CE7" },
+  { id: "mantenimiento",name: "Manteni.",    iconName: "tool"    as IconName, color: "#74B9FF" },
+  { id: "parqueadero",  name: "Parqueo",     iconName: "parking" as IconName, color: "#FD79A8" },
+  { id: "otros",        name: "Otros",       iconName: "otros"   as IconName, color: "#636E72" },
 ];
 
 const ALL_CATEGORIAS = [...GASTOS_CATEGORIAS, ...MANTENIMIENTO_SUBCATEGORIAS];
@@ -346,7 +347,7 @@ export default function Gastos() {
                   onPress={() => openAddModal(cat.id)}
                   activeOpacity={0.7}>
                   <View style={[s.catCircle, { backgroundColor: cat.color + "18" }]}>
-                    <Ionicons name={cat.icon as any} size={24} color={cat.color} />
+                    <ItemIcon name={cat.iconName} size={32} />
                   </View>
                   <Text style={[s.catLabel, { color: c.text }]} numberOfLines={1}>
                     {cat.name}
@@ -389,11 +390,10 @@ export default function Gastos() {
                     onPress={() => handleEditClick(item.id)}
                     onLongPress={() => handleDeleteClick(item.id)}>
                     <View style={[s.gastoIconWrap, { backgroundColor: (categoria?.color || c.expense) + "18" }]}>
-                      <Ionicons
-                        name={(categoria?.icon || "cube") as any}
-                        size={20}
-                        color={categoria?.color || c.expense}
-                      />
+                      {categoria?.iconName
+                        ? <ItemIcon name={categoria.iconName} size={26} />
+                        : <Ionicons name="cube" size={20} color={c.expense} />
+                      }
                     </View>
                     <View style={s.gastoInfo}>
                       <Text style={[s.gastoName, { color: c.text }]} numberOfLines={1}>
@@ -481,7 +481,7 @@ export default function Gastos() {
                     activeOpacity={0.7}
                     style={s.subItem}>
                     <View style={[s.subCircle, { backgroundColor: sub.color + "18" }]}>
-                      <Ionicons name={sub.icon as any} size={28} color={sub.color} />
+                      <ItemIcon name={sub.iconName} size={36} />
                     </View>
                     <Text style={[s.subName, { color: c.text }]}>{sub.name}</Text>
                   </TouchableOpacity>
@@ -515,7 +515,10 @@ export default function Gastos() {
                   return (
                     <View style={s.selectedCat}>
                       <View style={[s.selectedCatCircle, { backgroundColor: (cat?.color || c.expense) + "18" }]}>
-                        <Ionicons name={(cat?.icon || "cube") as any} size={26} color={cat?.color || c.expense} />
+                        {cat?.iconName
+                          ? <ItemIcon name={cat.iconName} size={32} />
+                          : <Ionicons name="cube" size={26} color={cat?.color || c.expense} />
+                        }
                       </View>
                       <Text style={[s.selectedCatName, { color: c.text }]}>
                         {cat?.name || selectedGasto}
