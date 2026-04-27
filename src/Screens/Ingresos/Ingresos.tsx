@@ -33,12 +33,48 @@ const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
 
 const INGRESOS_CATEGORIAS = [
-  { id: "flete",       name: "Flete",    iconName: "freight" as IconName, color: "#00D9A5", size: 36 },
-  { id: "viaje",       name: "Viaje",    iconName: "trip"    as IconName, color: "#00B894", size: 36 },
-  { id: "bonificacion",name: "Bono",     iconName: "bonus"   as IconName, color: "#FFB800", size: 36 },
-  { id: "anticipo",    name: "Anticipo", iconName: "advance" as IconName, color: "#74B9FF", size: 36 },
-  { id: "reembolso",   name: "Reembolso",iconName: "refund"  as IconName, color: "#FD79A8", size: 36 },
-  { id: "otro",        name: "Otro",     iconName: "otros"   as IconName, color: "#6C5CE7", size: 36 },
+  {
+    id: "flete",
+    name: "Flete",
+    iconName: "freight" as IconName,
+    color: "#00D9A5",
+    size: 60,
+  },
+  {
+    id: "viaje",
+    name: "Viaje",
+    iconName: "trip" as IconName,
+    color: "#00B894",
+    size: 60,
+  },
+  {
+    id: "bonificacion",
+    name: "Bono",
+    iconName: "bonus" as IconName,
+    color: "#FFB800",
+    size: 60,
+  },
+  {
+    id: "anticipo",
+    name: "Anticipo",
+    iconName: "advance" as IconName,
+    color: "#74B9FF",
+    size: 60,
+  },
+  {
+    id: "reembolso",
+    name: "Reembolso",
+    iconName: "refund" as IconName,
+    color: "#FD79A8",
+    size: 60,
+  },
+  {
+    id: "otro",
+    name: "Otro",
+    iconName: "otros" as IconName,
+    color: "#6C5CE7",
+    size: 60,
+  },
 ];
 
 export default function Ingresos() {
@@ -466,10 +502,14 @@ export default function Ingresos() {
                           backgroundColor: `${categoria?.color || c.income}${isDark ? "25" : "15"}`,
                         },
                       ]}>
-                      {categoria?.iconName
-                        ? <ItemIcon name={categoria.iconName} size={categoria.size ?? 26} />
-                        : <Ionicons name="cash" size={22} color={c.income} />
-                      }
+                      {categoria?.iconName ? (
+                        <ItemIcon
+                          name={categoria.iconName}
+                          size={categoria.size ?? 26}
+                        />
+                      ) : (
+                        <Ionicons name="cash" size={22} color={c.income} />
+                      )}
                     </View>
                     <View style={s.ingresoInfo}>
                       <Text style={[s.ingresoName, { color: c.text }]}>
@@ -627,10 +667,14 @@ export default function Ingresos() {
                               backgroundColor: `${cat?.color || c.income}${isDark ? "25" : "15"}`,
                             },
                           ]}>
-                          {cat?.iconName
-                            ? <ItemIcon name={cat.iconName} size={cat.size ?? 32} />
-                            : <Ionicons name="cash" size={28} color={c.income} />
-                          }
+                          {cat?.iconName ? (
+                            <ItemIcon
+                              name={cat.iconName}
+                              size={cat.size ?? 32}
+                            />
+                          ) : (
+                            <Ionicons name="cash" size={28} color={c.income} />
+                          )}
                         </View>
                         <Text style={[s.selectedCatName, { color: c.text }]}>
                           {cat?.name || selectedIngreso}
