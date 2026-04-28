@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 
-let isSubscribed = false; // ✅ Control global para evitar múltiples suscripciones
-
 export const useGastosConductor = (placa?: string | null) => {
   const {
     gastos,
@@ -15,7 +13,6 @@ export const useGastosConductor = (placa?: string | null) => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ CARGAR DATOS UNA SOLA VEZ
   useEffect(() => {
     if (!placa) {
       setCargando(false);
@@ -23,40 +20,6 @@ export const useGastosConductor = (placa?: string | null) => {
     }
 
     cargarGastos();
-  }, [placa]);
-
-  // ✅ SUSCRIBIRSE UNA SOLA VEZ
-  useEffect(() => {
-    if (!placa || isSubscribed) return;
-
-    isSubscribed = true;
-
-    const subscription = supabase
-      .channel(`gastos-${placa}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "conductor_gastos",
-          filter: `placa=eq.${placa}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            agregarGasto(payload.new as Gasto);
-          } else if (payload.eventType === "UPDATE") {
-            editarGasto(payload.new.id, payload.new);
-          } else if (payload.eventType === "DELETE") {
-            eliminarGasto(payload.old.id);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-      isSubscribed = false;
-    };
   }, [placa]);
 
   const cargarGastos = async () => {
