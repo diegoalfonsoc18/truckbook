@@ -42,6 +42,7 @@ export type { Item } from "./Items";
 interface HomeBaseAdaptedProps {
   items: Item[];
   showCamionHeader?: boolean;
+  vehicleCardTitle?: string;
   renderBadge?: (item: Item) => React.ReactNode;
   onItemPress?: (item: Item) => void;
 }
@@ -92,6 +93,7 @@ const TIPOS_CAMION = [
 export default function HomeBaseAdapted({
   items,
   showCamionHeader = true,
+  vehicleCardTitle,
   renderBadge,
   onItemPress,
 }: HomeBaseAdaptedProps) {
@@ -257,7 +259,7 @@ export default function HomeBaseAdapted({
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const userName =
-    user?.user_metadata?.nombre ||
+    (user?.user_metadata as any)?.nombre ||
     user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
     "Usuario";
@@ -334,7 +336,7 @@ export default function HomeBaseAdapted({
               </View>
               <View style={s.vehicleInfo}>
                 <Text style={[s.vehicleType, { color: c.text }]}>
-                  {tipoCamionData?.label || "Seleccionar vehículo"}
+                  {vehicleCardTitle || tipoCamionData?.label || "Seleccionar vehículo"}
                 </Text>
                 {placaActual ? (
                   <View style={[s.placaBadge, { backgroundColor: c.accent }]}>
@@ -526,7 +528,7 @@ export default function HomeBaseAdapted({
                     <View
                       style={[s.emptyIconWrap, { backgroundColor: c.surface }]}>
                       <Ionicons
-                        name="truck-outline"
+                        name="car-outline"
                         size={36}
                         color={c.textMuted}
                       />

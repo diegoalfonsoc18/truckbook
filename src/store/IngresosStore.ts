@@ -15,7 +15,6 @@ export interface Ingreso {
 
 interface IngresosState {
   ingresos: Ingreso[];
-  subscription: any;
   setIngresos: (ingresos: Ingreso[]) => void;
   setIngresosPorPlaca: (placa: string, ingresos: Ingreso[]) => void;
   agregarIngreso: (ingreso: Ingreso) => void;
@@ -23,12 +22,10 @@ interface IngresosState {
   eliminarIngreso: (id: string) => void;
   limpiarIngresos: () => void;
   cargarIngresosDelDB: (placaActual?: string | null) => Promise<void>;
-  desuscribir: () => void;
 }
 
-export const useIngresosStore = create<IngresosState>((set, get) => ({
+export const useIngresosStore = create<IngresosState>((set) => ({
   ingresos: [],
-  subscription: null,
 
   setIngresos: (ingresos) => set({ ingresos }),
 
@@ -59,27 +56,8 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
 
   limpiarIngresos: () => set({ ingresos: [] }),
 
-  desuscribir: () => {
-    const currentSubscription = get().subscription;
-    if (currentSubscription) {
-      try {
-        currentSubscription.unsubscribe?.();
-      } catch (e) {
-        // Silent
-      }
-      try {
-        supabase.removeChannel(currentSubscription);
-      } catch (e) {
-        // Silent
-      }
-      set({ subscription: null });
-    }
-  },
-
   cargarIngresosDelDB: async (placaActual?: string | null) => {
     try {
-      get().desuscribir();
-
       let query = supabase
         .from("conductor_ingresos")
         .select("*")
@@ -90,43 +68,8 @@ export const useIngresosStore = create<IngresosState>((set, get) => ({
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
-
       set({ ingresos: data || [] });
-
-      const channel = supabase.channel(`conductor_ingresos:${placaActual}`).on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "conductor_ingresos",
-          filter: placaActual ? `placa=eq.${placaActual}` : undefined,
-        },
-        (payload) => {
-          set((state) => {
-            if (payload.eventType === "INSERT") {
-              return {
-                ingresos: [payload.new as Ingreso, ...state.ingresos],
-              };
-            } else if (payload.eventType === "UPDATE") {
-              return {
-                ingresos: state.ingresos.map((i) =>
-                  i.id === payload.new.id ? (payload.new as Ingreso) : i
-                ),
-              };
-            } else if (payload.eventType === "DELETE") {
-              return {
-                ingresos: state.ingresos.filter((i) => i.id !== payload.old.id),
-              };
-            }
-            return state;
-          });
-        }
-      );
-
-      const subscription = await channel.subscribe();
-      set({ subscription });
     } catch (err) {
       console.error("Error loading ingresos:", err);
     }

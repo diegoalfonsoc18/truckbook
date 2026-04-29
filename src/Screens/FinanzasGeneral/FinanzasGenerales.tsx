@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
 
   // SCROLL
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 40 },
+  scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 110 },
 
   // LOADING & ERROR
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },

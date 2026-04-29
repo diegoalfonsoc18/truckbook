@@ -19,6 +19,7 @@ export default function PropietarioHome() {
       name: "Conductores",
       subtitle: "Gestionar equipo",
       iconName: "conductor",
+      iconSize: 80,
       color: "#74B9FF",
     },
     {
@@ -26,55 +27,63 @@ export default function PropietarioHome() {
       name: "Vehiculos",
       subtitle: "Gestionar flota",
       iconName: "truck",
+      iconSize: 80,
       color: "#FFB800",
     },
     {
       id: "solicitudes",
       name: "Solicitudes",
       subtitle: "Autorizar conductores",
-      icon: "clipboard",
+      iconName: "check",
+      iconSize: 80,
       color: "#00CEC9",
     },
     {
       id: "gastos",
       name: "Aprobar Gastos",
       subtitle: "Revisar solicitudes",
-      icon: "wallet",
+      iconName: "factura",
+      iconSize: 80,
       color: "#E94560",
     },
     {
       id: "reportes",
       name: "Reportes",
       subtitle: "Ver actividad",
-      icon: "bar-chart",
+      iconName: "report",
+      iconSize: 80,
       color: "#6C5CE7",
     },
     {
       id: "rentabilidad",
       name: "Rentabilidad",
       subtitle: "Analisis financiero",
-      icon: "cash",
+      iconName: "freight",
+      iconSize: 80,
       color: "#00D9A5",
     },
     {
       id: "soat",
       name: "SOAT",
       subtitle: "Seguro obligatorio",
-      icon: "shield-checkmark",
+      iconName: "shield",
+      iconSize: 80,
       color: "#A29BFE",
     },
     {
       id: "tecnomecanica",
       name: "Tecnomecánica",
       subtitle: "Revisión técnica",
-      icon: "construct",
+      iconName: "tool",
+      iconSize: 80,
       color: "#FDCB6E",
     },
     {
       id: "comparendos",
       name: "Comparendos",
       subtitle: "Multas de tránsito",
-      icon: "document-text",
+      iconName: "comparendo",
+      iconSize: 80,
       color: "#FD79A8",
     },
   ];
@@ -117,6 +126,7 @@ export default function PropietarioHome() {
     <HomeBaseAdapted
       items={propietarioItems}
       showCamionHeader={true}
+      vehicleCardTitle="Mis vehículos"
       onItemPress={handleItemPress}
     />
   );

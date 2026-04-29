@@ -13,47 +13,48 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // ============================================
 
 export const LIGHT_COLORS = {
-  // Fondos
-  primary: "#F4F3EF",
-  secondary: "#F0EFEB",
-  surface: "#F0EFEB",
+  // Fondos — blanco puro con superficies muy sutilmente cálidas
+  primary: "#F7F7F5",
+  secondary: "#EFEFED",
+  surface: "#EDEDEB",
   cardBg: "#FFFFFF",
   modalBg: "#FFFFFF",
 
-  // Texto
-  text: "#1A1A1A",
-  textSecondary: "#7A7A7A",
-  textMuted: "#ABABAB",
+  // Texto — máximo contraste y jerarquía clara
+  text: "#111111",
+  textSecondary: "#6B6B6B",
+  textMuted: "#AFAFAF",
   textInverse: "#FFFFFF",
 
-  // Bordes
-  border: "#E8E7E3",
-  divider: "#E8E7E3",
+  // Bordes — muy sutiles
+  border: "#E4E4E2",
+  divider: "#EBEBEB",
 
-  // Acentos
-  accent: "#FFE500",
-  accentLight: "#FFF9D6",
-  accentText: "#000000",
+  // Acento — verde premium
+  accent: "#2ECC71",
+  accentLight: "rgba(46, 204, 113, 0.14)",
+  accentText: "#FFFFFF",
+  accentGradient: ["#4ADE80", "#16A34A"] as [string, string],
 
   // Semánticos
-  success: "#34C759",
-  successLight: "#E6FBF5",
-  successDark: "#00B894",
-  danger: "#E94560",
-  dangerLight: "#FDE8EC",
-  dangerDark: "#D63851",
-  warning: "#FFB800",
-  warningLight: "#FFF5D6",
+  success: "#22C55E",
+  successLight: "rgba(34, 197, 94, 0.10)",
+  successDark: "#16A34A",
+  danger: "#EF4444",
+  dangerLight: "rgba(239, 68, 68, 0.10)",
+  dangerDark: "#DC2626",
+  warning: "#F59E0B",
+  warningLight: "rgba(245, 158, 11, 0.10)",
   info: "#6C5CE7",
-  infoLight: "#EEECFB",
+  infoLight: "rgba(108, 92, 231, 0.10)",
 
   // TruckBook
-  income: "#00D9A5",
-  incomeLight: "#E6FBF5",
-  expense: "#E94560",
-  expenseLight: "#FDE8EC",
+  income: "#10B981",
+  incomeLight: "rgba(16, 185, 129, 0.10)",
+  expense: "#EF4444",
+  expenseLight: "rgba(239, 68, 68, 0.10)",
   analytics: "#6C5CE7",
-  analyticsLight: "#EEECFB",
+  analyticsLight: "rgba(108, 92, 231, 0.10)",
 
   // Placa
   plateYellow: "#FFE500",
@@ -61,111 +62,112 @@ export const LIGHT_COLORS = {
   plateBorder: "transparent",
 
   // Categorías
-  catCombustible: "#FFB800",
-  catPeajes: "#00D9A5",
-  catComida: "#FF6B6B",
+  catCombustible: "#F59E0B",
+  catPeajes: "#10B981",
+  catComida: "#F87171",
   catHospedaje: "#6C5CE7",
-  catMantenimiento: "#74B9FF",
-  catLlantas: "#A29BFE",
-  catLavado: "#00CEC9",
-  catParqueadero: "#FD79A8",
-  catOtros: "#636E72",
+  catMantenimiento: "#60A5FA",
+  catLlantas: "#A78BFA",
+  catLavado: "#22D3EE",
+  catParqueadero: "#F472B6",
+  catOtros: "#9CA3AF",
 
   // Vehículos
-  vehicleEstacas: "#00D9A5",
-  vehicleVolqueta: "#FFB800",
+  vehicleEstacas: "#10B981",
+  vehicleVolqueta: "#F59E0B",
   vehicleFurgon: "#6C5CE7",
-  vehicleGrua: "#E94560",
+  vehicleGrua: "#EF4444",
 
   // Estados
-  active: "#00D9A5",
-  inactive: "#ABABAB",
+  active: "#10B981",
+  inactive: "#AFAFAF",
 
   // Sombras
   shadowColor: "#000000",
   shadowOpacity: 0.06,
 
   // Overlays
-  overlay: "rgba(0, 0, 0, 0.4)",
+  overlay: "rgba(0, 0, 0, 0.45)",
   overlayLight: "rgba(0, 0, 0, 0.2)",
 };
 
 export const DARK_COLORS = {
-  // Fondos
-  primary: "#000000",
-  secondary: "#1C1C1E",
-  surface: "#2C2C2E",
-  cardBg: "#1C1C1E",
-  modalBg: "#1C1C1E",
+  // Fondos — negro puro con capas de profundidad
+  primary: "#0A0A0A",
+  secondary: "#141414",
+  surface: "#1E1E1E",
+  cardBg: "#161616",
+  modalBg: "#1A1A1A",
 
   // Texto
-  text: "#FFFFFF",
-  textSecondary: "#8E8E93",
-  textMuted: "#5A5A5C",
+  text: "#F5F5F5",
+  textSecondary: "#8A8A8E",
+  textMuted: "#4A4A4E",
   textInverse: "#000000",
 
-  // Bordes
-  border: "#3A3A3C",
-  divider: "#3A3A3C",
+  // Bordes — sutiles pero presentes
+  border: "#2A2A2A",
+  divider: "#222222",
 
-  // Acentos
-  accent: "#FFE500",
-  accentLight: "rgba(255, 229, 0, 0.15)",
+  // Acento — verde premium
+  accent: "#2ECC71",
+  accentLight: "rgba(46, 204, 113, 0.14)",
   accentText: "#000000",
+  accentGradient: ["#4ADE80", "#16A34A"] as [string, string],
 
   // Semánticos
-  success: "#34C759",
-  successLight: "rgba(52, 199, 89, 0.15)",
-  successDark: "#00B894",
-  danger: "#E94560",
-  dangerLight: "rgba(233, 69, 96, 0.15)",
-  dangerDark: "#D63851",
-  warning: "#FFB800",
-  warningLight: "rgba(255, 184, 0, 0.15)",
-  info: "#6C5CE7",
-  infoLight: "rgba(108, 92, 231, 0.15)",
+  success: "#30D158",
+  successLight: "rgba(48, 209, 88, 0.12)",
+  successDark: "#25A244",
+  danger: "#FF453A",
+  dangerLight: "rgba(255, 69, 58, 0.12)",
+  dangerDark: "#D63030",
+  warning: "#FFD60A",
+  warningLight: "rgba(255, 214, 10, 0.12)",
+  info: "#7C6FF0",
+  infoLight: "rgba(124, 111, 240, 0.12)",
 
   // TruckBook
-  income: "#00D9A5",
-  incomeLight: "rgba(0, 217, 165, 0.15)",
-  expense: "#E94560",
-  expenseLight: "rgba(233, 69, 96, 0.15)",
-  analytics: "#6C5CE7",
-  analyticsLight: "rgba(108, 92, 231, 0.15)",
+  income: "#30D158",
+  incomeLight: "rgba(48, 209, 88, 0.12)",
+  expense: "#FF453A",
+  expenseLight: "rgba(255, 69, 58, 0.12)",
+  analytics: "#7C6FF0",
+  analyticsLight: "rgba(124, 111, 240, 0.12)",
 
   // Placa
-  plateYellow: "#FFE500",
+  plateYellow: "#FFD60A",
   plateText: "#000000",
   plateBorder: "transparent",
 
   // Categorías
-  catCombustible: "#FFB800",
-  catPeajes: "#00D9A5",
+  catCombustible: "#FFD60A",
+  catPeajes: "#30D158",
   catComida: "#FF6B6B",
-  catHospedaje: "#6C5CE7",
-  catMantenimiento: "#74B9FF",
-  catLlantas: "#A29BFE",
-  catLavado: "#00CEC9",
-  catParqueadero: "#FD79A8",
+  catHospedaje: "#7C6FF0",
+  catMantenimiento: "#5AC8FA",
+  catLlantas: "#BF5AF2",
+  catLavado: "#32D2D9",
+  catParqueadero: "#FF375F",
   catOtros: "#636E72",
 
   // Vehículos
-  vehicleEstacas: "#00D9A5",
-  vehicleVolqueta: "#FFB800",
-  vehicleFurgon: "#6C5CE7",
-  vehicleGrua: "#E94560",
+  vehicleEstacas: "#30D158",
+  vehicleVolqueta: "#FFD60A",
+  vehicleFurgon: "#7C6FF0",
+  vehicleGrua: "#FF453A",
 
   // Estados
-  active: "#00D9A5",
-  inactive: "#5A5A5C",
+  active: "#30D158",
+  inactive: "#4A4A4E",
 
   // Sombras
   shadowColor: "#000000",
-  shadowOpacity: 0.4,
+  shadowOpacity: 0.5,
 
   // Overlays
-  overlay: "rgba(0, 0, 0, 0.75)",
-  overlayLight: "rgba(0, 0, 0, 0.5)",
+  overlay: "rgba(0, 0, 0, 0.80)",
+  overlayLight: "rgba(0, 0, 0, 0.55)",
 };
 
 // ============================================
