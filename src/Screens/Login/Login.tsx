@@ -24,6 +24,8 @@ import { CamionT800 } from "../../assets/img/img";
 WebBrowser.maybeCompleteAuthSession();
 
 const { width, height } = Dimensions.get("window");
+// Pantallas pequeñas (<680dp) → modo compacto
+const COMPACT = height < 680;
 
 const COLORS = {
   bg: "#111111",
@@ -63,9 +65,7 @@ export default function LoginScreen({ navigation }: Props) {
         email: email.trim().toLowerCase(),
         password,
       });
-      if (error) {
-        Alert.alert("Error", error.message);
-      }
+      if (error) Alert.alert("Error", error.message);
     } catch {
       Alert.alert("Error", "No se pudo conectar. Verifica tu conexión.");
     } finally {
@@ -82,10 +82,7 @@ export default function LoginScreen({ navigation }: Props) {
         provider,
         options: { redirectTo, skipBrowserRedirect: true },
       });
-      if (error) {
-        Alert.alert("Error", error.message);
-        return;
-      }
+      if (error) { Alert.alert("Error", error.message); return; }
       if (data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
         if (result.type === "success" && result.url) {
@@ -94,10 +91,7 @@ export default function LoginScreen({ navigation }: Props) {
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
           if (accessToken && refreshToken) {
-            await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
           }
         }
       }
@@ -109,310 +103,262 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      {/*
-        edges={["top","bottom"]}:
-          – top  → status bar en iOS
-          – bottom → barra de gestos / botones de navegación en Android
-      */}
-      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <View style={s.root}>
+      {/* edges bottom → respeta barra de gestos/navegación de Android */}
+      <SafeAreaView style={s.safe} edges={["top", "bottom"]}>
+
+        {/*
+          KAV con behavior="padding" en ambas plataformas:
+          empuja el contenido hacia arriba cuando el teclado aparece
+          sin comprimir la altura total del layout.
+        */}
         <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}>
+          style={s.kav}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === "android" ? 24 : 0}>
+
+          {/* ── SCROLLABLE CONTENT ────────────────────────────── */}
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            style={s.scroll}
+            contentContainerStyle={s.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={Keyboard.dismiss}>
 
-            {/* HERO */}
-            <View style={styles.heroContainer}>
+            {/* HERO — imagen + badge + título */}
+            <View style={s.hero}>
               <Image
                 source={CamionT800}
-                style={styles.heroImage}
+                style={s.heroImg}
                 resizeMode="contain"
               />
-              <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>TruckBook</Text>
+              <View style={s.badge}>
+                <Text style={s.badgeText}>TruckBook</Text>
               </View>
-              <Text style={styles.heroTitle}>Gestiona tu{"\n"}flota fácilmente</Text>
-              <Text style={styles.heroSubtitle}>
-                Control total de gastos, ingresos y documentos de tu camión.
-              </Text>
+              <Text style={s.heroTitle}>Gestiona tu{"\n"}flota fácilmente</Text>
+              {!COMPACT && (
+                <Text style={s.heroSub}>
+                  Control total de gastos, ingresos{"\n"}y documentos de tu camión.
+                </Text>
+              )}
             </View>
 
             {/* FORM */}
-            <View style={styles.formContainer}>
+            <View style={s.form}>
 
               {/* EMAIL */}
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>Correo electrónico</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="tu@correo.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  onChangeText={setEmail}
-                  value={email}
-                  editable={!loading}
-                  returnKeyType="next"
-                />
-              </View>
+              <Text style={s.label}>Correo electrónico</Text>
+              <TextInput
+                style={s.input}
+                placeholder="tu@correo.com"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+                onChangeText={setEmail}
+                value={email}
+                editable={!loading}
+                returnKeyType="next"
+              />
 
               {/* PASSWORD */}
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>Contraseña</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor={COLORS.textMuted}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoComplete="password"
-                  onChangeText={setPassword}
-                  value={password}
-                  editable={!loading}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                />
-              </View>
+              <Text style={[s.label, { marginTop: 12 }]}>Contraseña</Text>
+              <TextInput
+                style={s.input}
+                placeholder="••••••••"
+                placeholderTextColor={COLORS.textMuted}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="password"
+                onChangeText={setPassword}
+                value={password}
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
 
               {/* FORGOT */}
               <TouchableOpacity
-                style={styles.forgotRow}
+                style={s.forgot}
                 onPress={() => { Keyboard.dismiss(); navigation.navigate("ForgotPassword"); }}
-                disabled={loading}>
-                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+                disabled={loading}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={s.forgotText}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
 
               {/* CTA */}
               <TouchableOpacity
-                style={[styles.ctaButton, loading && styles.ctaDisabled]}
+                style={[s.cta, loading && s.ctaOff]}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}>
-                {loading ? (
-                  <ActivityIndicator color={COLORS.accentText} size="small" />
-                ) : (
-                  <Text style={styles.ctaText}>Iniciar Sesión</Text>
-                )}
+                {loading
+                  ? <ActivityIndicator color={COLORS.accentText} size="small" />
+                  : <Text style={s.ctaText}>Iniciar Sesión</Text>}
               </TouchableOpacity>
 
               {/* DIVIDER */}
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>o continúa con</Text>
-                <View style={styles.dividerLine} />
+              <View style={s.divRow}>
+                <View style={s.divLine} />
+                <Text style={s.divText}>o continúa con</Text>
+                <View style={s.divLine} />
               </View>
 
               {/* SOCIAL */}
-              <View style={styles.socialRow}>
+              <View style={s.socialRow}>
                 <TouchableOpacity
-                  style={styles.socialButton}
+                  style={s.socialBtn}
                   onPress={() => handleSocialLogin("google")}
                   disabled={loading}
                   activeOpacity={0.8}>
-                  <Image
-                    source={require("../../assets/img/google.png")}
-                    style={styles.socialIcon}
-                  />
-                  <Text style={styles.socialText}>Google</Text>
+                  <Image source={require("../../assets/img/google.png")} style={s.socialIcon} />
+                  <Text style={s.socialText}>Google</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
-                  style={[styles.socialButton, styles.facebookButton]}
+                  style={[s.socialBtn, s.fbBtn]}
                   onPress={() => handleSocialLogin("facebook")}
                   disabled={loading}
                   activeOpacity={0.8}>
-                  <Image
-                    source={require("../../assets/img/facebook.png")}
-                    style={styles.socialIcon}
-                  />
-                  <Text style={[styles.socialText, { color: "#FFF" }]}>Facebook</Text>
+                  <Image source={require("../../assets/img/facebook.png")} style={s.socialIcon} />
+                  <Text style={[s.socialText, { color: "#FFF" }]}>Facebook</Text>
                 </TouchableOpacity>
               </View>
-            </View>
 
-            {/* FOOTER — register link */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>¿No tienes cuenta? </Text>
-              <TouchableOpacity
-                onPress={() => { Keyboard.dismiss(); navigation.navigate("Register"); }}
-                activeOpacity={0.7}
-                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
-                <Text style={styles.footerLink}>Regístrate</Text>
-              </TouchableOpacity>
             </View>
-
           </ScrollView>
+
+          {/* ── FOOTER — SIEMPRE VISIBLE, fuera del ScrollView ─ */}
+          <View style={s.footer}>
+            <Text style={s.footerText}>¿No tienes cuenta? </Text>
+            <TouchableOpacity
+              onPress={() => { Keyboard.dismiss(); navigation.navigate("Register"); }}
+              activeOpacity={0.7}
+              hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}>
+              <Text style={s.footerLink}>Regístrate</Text>
+            </TouchableOpacity>
+          </View>
+
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  safeArea: { flex: 1 },
-  flex: { flex: 1 },
-  // flexGrow:1 lets the footer sit at the bottom when there's room,
-  // but also allows scrolling on small screens / when keyboard is open
-  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+const IMG_H = Math.min(height * 0.16, 120); // máximo 120dp, escalado al 16% del alto
 
-  // HERO
-  heroContainer: {
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bg },
+  safe: { flex: 1 },
+  kav:  { flex: 1 },
+
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 8 },
+
+  // ── HERO ──────────────────────────────────────────────
+  hero: {
     alignItems: "center",
-    paddingTop: 20,
-    paddingBottom: 28,
+    paddingTop: COMPACT ? 12 : 20,
+    paddingBottom: COMPACT ? 12 : 20,
     paddingHorizontal: 24,
   },
-  heroImage: {
-    width: width * 0.75,
-    height: height * 0.2,
-    marginBottom: 16,
+  heroImg: {
+    width: width * 0.6,
+    height: IMG_H,
+    marginBottom: 10,
   },
-  heroBadge: {
+  badge: {
     backgroundColor: COLORS.accent,
     borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    marginBottom: 10,
   },
-  heroBadgeText: {
-    fontSize: 12,
+  badgeText: {
+    fontSize: 11,
     fontWeight: "700",
     color: COLORS.accentText,
     letterSpacing: 1.5,
     textTransform: "uppercase",
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: COMPACT ? 24 : 28,
     fontWeight: "800",
     color: COLORS.text,
     textAlign: "center",
-    lineHeight: 40,
-    marginBottom: 10,
+    lineHeight: COMPACT ? 30 : 36,
     letterSpacing: -0.5,
   },
-  heroSubtitle: {
-    fontSize: 14,
+  heroSub: {
+    fontSize: 13,
     color: COLORS.textSecondary,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 19,
+    marginTop: 8,
   },
 
-  // FORM
-  formContainer: {
+  // ── FORM ──────────────────────────────────────────────
+  form: {
     paddingHorizontal: 24,
+    paddingBottom: 4,
   },
-  inputWrapper: {
-    marginBottom: 14,
-  },
-  inputLabel: {
+  label: {
     fontSize: 12,
     fontWeight: "600",
     color: COLORS.textSecondary,
-    marginBottom: 8,
+    marginBottom: 7,
     letterSpacing: 0.3,
   },
   input: {
     backgroundColor: COLORS.input,
     borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: COMPACT ? 13 : 15,
+    fontSize: 15,
     color: COLORS.text,
   },
-
-  // FORGOT
-  forgotRow: {
+  forgot: {
     alignSelf: "flex-end",
-    marginBottom: 24,
-    marginTop: 4,
-    padding: 4, // easier to tap on Android
+    marginTop: 8,
+    marginBottom: COMPACT ? 16 : 20,
   },
-  forgotText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: COLORS.accent,
-  },
+  forgotText: { fontSize: 13, fontWeight: "500", color: COLORS.accent },
 
-  // CTA
-  ctaButton: {
+  cta: {
     backgroundColor: COLORS.accent,
-    borderRadius: 16,
-    paddingVertical: 18,
+    borderRadius: 14,
+    paddingVertical: COMPACT ? 14 : 17,
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: COMPACT ? 18 : 24,
   },
-  ctaDisabled: { opacity: 0.6 },
-  ctaText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: COLORS.accentText,
-    letterSpacing: 0.3,
-  },
+  ctaOff: { opacity: 0.6 },
+  ctaText: { fontSize: 15, fontWeight: "800", color: COLORS.accentText, letterSpacing: 0.3 },
 
-  // DIVIDER
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    fontSize: 12,
-    color: COLORS.textMuted,
-  },
+  divRow: { flexDirection: "row", alignItems: "center", marginBottom: COMPACT ? 14 : 18 },
+  divLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  divText: { marginHorizontal: 10, fontSize: 12, color: COLORS.textMuted },
 
-  // SOCIAL
-  socialRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  socialButton: {
+  socialRow: { flexDirection: "row", gap: 10 },
+  socialBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.card,
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: 13,
+    paddingVertical: COMPACT ? 11 : 13,
     gap: 8,
   },
-  facebookButton: {
-    backgroundColor: "#1877F2",
-  },
-  socialIcon: { width: 20, height: 20 },
-  socialText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
+  fbBtn: { backgroundColor: "#1877F2" },
+  socialIcon: { width: 19, height: 19 },
+  socialText: { fontSize: 14, fontWeight: "600", color: COLORS.text },
 
-  // FOOTER — "Regístrate" como TouchableOpacity propio (no Text onPress)
+  // ── FOOTER — fuera del ScrollView, siempre visible ───
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 28,
-    paddingBottom: 8,
+    paddingVertical: 14,
   },
-  footerText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  footerLink: {
-    fontSize: 14,
-    color: COLORS.accent,
-    fontWeight: "700",
-  },
+  footerText: { fontSize: 14, color: COLORS.textSecondary },
+  footerLink: { fontSize: 14, color: COLORS.accent, fontWeight: "700" },
 });
