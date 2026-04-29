@@ -20,8 +20,8 @@ export interface Item {
 export const items: Item[] = [
   {
     id: "multas",
-    iconName: "comparendo",
-    iconSize: 36,
+    iconName: "factura",
+    iconSize: 80,
     name: "Multas",
     subtitle: "Consultar multas",
     color: "#E94560",
@@ -30,7 +30,7 @@ export const items: Item[] = [
   {
     id: "soat",
     iconName: "shield",
-    iconSize: 36,
+    iconSize: 80,
     name: "SOAT",
     subtitle: "Verificar SOAT",
     color: "#00D9A5",
@@ -38,15 +38,15 @@ export const items: Item[] = [
   {
     id: "tecnicomecanica",
     iconName: "tool",
-    iconSize: 36,
+    iconSize: 80,
     name: "Tecnicomecánica",
     subtitle: "Estado",
     color: "#6C5CE7",
   },
   {
     id: "mantenimiento",
-    iconName: "repair",
-    iconSize: 36,
+    iconName: "mechanic",
+    iconSize: 80,
     name: "Mantenimiento",
     subtitle: "Próximo",
     color: "#74B9FF",
@@ -54,7 +54,7 @@ export const items: Item[] = [
   {
     id: "licencia",
     iconName: "licencia",
-    iconSize: 36,
+    iconSize: 80,
     name: "Licencia",
     subtitle: "Vigente",
     color: "#FFB800",

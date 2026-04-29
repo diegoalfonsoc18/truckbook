@@ -1,4 +1,4 @@
-import React, { useState, ComponentType, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -25,29 +25,16 @@ import { useAuth } from "../../hooks/useAuth";
 import { useRoleStore } from "../../store/RoleStore";
 import supabase from "../../config/SupaBaseConfig";
 import {
-  VolquetaIcon,
-  EstacasIcon,
-  FurgonIcon,
-  GruaIcon,
-  ConductorIcon,
-} from "../../assets/icons/icons";
-import {
   cargarVehiculosConEstado,
   registrarVehiculoPropietario,
   solicitarAccesoVehiculo,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme } from "../../constants/Themecontext";
-import ItemIcon from "../../components/ItemIcon";
+import ItemIcon, { IconName } from "../../components/ItemIcon";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
-
-interface IconProps {
-  width?: number;
-  height?: number;
-  color?: string;
-}
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -68,33 +55,38 @@ interface Vehiculo {
   conductorNombre?: string;
 }
 
-const ICON_MAP: Record<TipoCamion, ComponentType<IconProps>> = {
-  estacas: EstacasIcon,
-  volqueta: VolquetaIcon,
-  furgon: FurgonIcon,
-  grua: GruaIcon,
+const ICON_MAP: Record<TipoCamion, IconName> = {
+  estacas: "truck",
+  volqueta: "volqueta2",
+  furgon: "furgon",
+  grua: "grua",
 };
 
 const TIPOS_CAMION = [
   {
     id: "estacas" as TipoCamion,
     label: "Estacas",
-    icon: EstacasIcon,
+    iconName: "truck" as IconName,
     color: "#00D9A5",
   },
   {
     id: "volqueta" as TipoCamion,
     label: "Volqueta",
-    icon: VolquetaIcon,
-    color: "#0d141a",
+    iconName: "volqueta2" as IconName,
+    color: "#FFB800",
   },
   {
     id: "furgon" as TipoCamion,
     label: "Furgón",
-    icon: FurgonIcon,
+    iconName: "furgon" as IconName,
     color: "#6C5CE7",
   },
-  { id: "grua" as TipoCamion, label: "Grúa", icon: GruaIcon, color: "#E94560" },
+  {
+    id: "grua" as TipoCamion,
+    label: "Grúa",
+    iconName: "grua" as IconName,
+    color: "#E94560",
+  },
 ];
 
 export default function HomeBaseAdapted({
@@ -151,7 +143,7 @@ export default function HomeBaseAdapted({
             .eq("estado", "autorizado")
             .limit(1);
 
-          if (relaciones?.length > 0) {
+          if (relaciones && relaciones.length > 0) {
             const { data: usuario } = await supabase
               .from("usuarios")
               .select("nombre")
@@ -259,7 +251,9 @@ export default function HomeBaseAdapted({
   };
 
   const tipoCamionData = getTipoCamionData(tipoCamion);
-  const CamionIconDinamico = tipoCamion ? ICON_MAP[tipoCamion] : ConductorIcon;
+  const camionIconName: IconName = tipoCamion
+    ? ICON_MAP[tipoCamion]
+    : "conductor";
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const userName =
@@ -336,11 +330,7 @@ export default function HomeBaseAdapted({
                     backgroundColor: (tipoCamionData?.color || c.accent) + "18",
                   },
                 ]}>
-                <CamionIconDinamico
-                  width={68}
-                  height={68}
-                  color={tipoCamionData?.color || c.accent}
-                />
+                <ItemIcon name={camionIconName} size={68} />
               </View>
               <View style={s.vehicleInfo}>
                 <Text style={[s.vehicleType, { color: c.text }]}>
@@ -386,10 +376,18 @@ export default function HomeBaseAdapted({
                       s.gridIconBg,
                       { backgroundColor: (item.color || c.accent) + "18" },
                     ]}>
-                    {item.iconName
-                      ? <ItemIcon name={item.iconName} size={item.iconSize ?? 30} />
-                      : <Ionicons name={(item.icon || "ellipse") as any} size={item.iconSize ?? 26} color={item.color || c.accent} />
-                    }
+                    {item.iconName ? (
+                      <ItemIcon
+                        name={item.iconName}
+                        size={item.iconSize ?? 30}
+                      />
+                    ) : (
+                      <Ionicons
+                        name={(item.icon || "ellipse") as any}
+                        size={item.iconSize ?? 26}
+                        color={item.color || c.accent}
+                      />
+                    )}
                   </View>
                   <Text style={[s.gridCardName, { color: c.text }]}>
                     {item.name}
@@ -402,10 +400,6 @@ export default function HomeBaseAdapted({
                     </Text>
                   )}
                   {renderBadge?.(item)}
-                  <View
-                    style={[s.gridArrow, { backgroundColor: c.accentLight }]}>
-                    <Ionicons name="arrow-forward" size={13} color={c.accent} />
-                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -443,7 +437,9 @@ export default function HomeBaseAdapted({
                     {vehiculos.map((v) => {
                       const tipo = getTipoCamionData(v.tipo_camion);
                       const isActive = placaActual === v.placa;
-                      const IconComponent = tipo?.icon || VolquetaIcon;
+                      const vIconName: IconName = tipo
+                        ? ICON_MAP[tipo.id]
+                        : "truck";
                       return (
                         <TouchableOpacity
                           key={v.id}
@@ -464,11 +460,7 @@ export default function HomeBaseAdapted({
                                   (tipo?.color || c.accent) + "18",
                               },
                             ]}>
-                            <IconComponent
-                              width={24}
-                              height={24}
-                              color={tipo?.color || c.accent}
-                            />
+                            <ItemIcon name={vIconName} size={36} />
                           </View>
                           <View style={s.vehicleOptionInfo}>
                             <Text
@@ -591,30 +583,23 @@ export default function HomeBaseAdapted({
                   ¿Qué tipo de camión vas a registrar?
                 </Text>
                 <View style={s.tiposGrid}>
-                  {TIPOS_CAMION.map((tipo) => {
-                    const IconComponent = tipo.icon;
-                    return (
-                      <TouchableOpacity
-                        key={tipo.id}
-                        style={[s.tipoCard, { backgroundColor: c.surface }]}
-                        onPress={() => handleSeleccionarTipo(tipo.id)}>
-                        <View
-                          style={[
-                            s.tipoIconBg,
-                            { backgroundColor: tipo.color + "18" },
-                          ]}>
-                          <IconComponent
-                            width={34}
-                            height={34}
-                            color={tipo.color}
-                          />
-                        </View>
-                        <Text style={[s.tipoLabel, { color: c.text }]}>
-                          {tipo.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {TIPOS_CAMION.map((tipo) => (
+                    <TouchableOpacity
+                      key={tipo.id}
+                      style={[s.tipoCard, { backgroundColor: c.surface }]}
+                      onPress={() => handleSeleccionarTipo(tipo.id)}>
+                      <View
+                        style={[
+                          s.tipoIconBg,
+                          { backgroundColor: tipo.color + "18" },
+                        ]}>
+                        <ItemIcon name={tipo.iconName} size={44} />
+                      </View>
+                      <Text style={[s.tipoLabel, { color: c.text }]}>
+                        {tipo.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
                 <TouchableOpacity
                   style={s.cancelTouchable}
@@ -780,6 +765,7 @@ const s = StyleSheet.create({
   gridCard: {
     width: (width - H_PAD * 2 - 12) / 2,
     padding: 18,
+    alignItems: "center",
   },
   gridIconBg: {
     width: 50,
@@ -789,8 +775,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 14,
   },
-  gridCardName: { fontSize: 15, fontWeight: "700", marginBottom: 3 },
-  gridCardSub: { fontSize: 12, marginBottom: 2 },
+  gridCardName: { fontSize: 15, fontWeight: "700", marginBottom: 3, textAlign: "center" },
+  gridCardSub: { fontSize: 12, marginBottom: 2, textAlign: "center" },
   gridArrow: {
     marginTop: 12,
     width: 28,
