@@ -5,7 +5,6 @@ import {
   Alert,
   Image,
   Keyboard,
-  TouchableWithoutFeedback,
   Text,
   TouchableOpacity,
   ActivityIndicator,
@@ -111,137 +110,144 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      {/*
+        edges={["top","bottom"]}:
+          – top  → status bar en iOS
+          – bottom → barra de gestos / botones de navegación en Android
+      */}
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.flex}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled">
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={Keyboard.dismiss}>
 
-              {/* HERO */}
-              <View style={styles.heroContainer}>
-                <Image
-                  source={CamionT800}
-                  style={styles.heroImage}
-                  resizeMode="contain"
+            {/* HERO */}
+            <View style={styles.heroContainer}>
+              <Image
+                source={CamionT800}
+                style={styles.heroImage}
+                resizeMode="contain"
+              />
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>TruckBook</Text>
+              </View>
+              <Text style={styles.heroTitle}>Gestiona tu{"\n"}flota fácilmente</Text>
+              <Text style={styles.heroSubtitle}>
+                Control total de gastos, ingresos y documentos de tu camión.
+              </Text>
+            </View>
+
+            {/* FORM */}
+            <View style={styles.formContainer}>
+
+              {/* EMAIL */}
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Correo electrónico</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="tu@correo.com"
+                  placeholderTextColor={COLORS.textMuted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  onChangeText={setEmail}
+                  value={email}
+                  editable={!loading}
+                  returnKeyType="next"
                 />
-                <View style={styles.heroBadge}>
-                  <Text style={styles.heroBadgeText}>TruckBook</Text>
-                </View>
-                <Text style={styles.heroTitle}>Gestiona tu{"\n"}flota fácilmente</Text>
-                <Text style={styles.heroSubtitle}>
-                  Control total de gastos, ingresos y documentos de tu camión.
-                </Text>
               </View>
 
-              {/* FORM */}
-              <View style={styles.formContainer}>
+              {/* PASSWORD */}
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Contraseña</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.textMuted}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  onChangeText={setPassword}
+                  value={password}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                />
+              </View>
 
-                {/* EMAIL */}
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>Correo electrónico</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="tu@correo.com"
-                    placeholderTextColor={COLORS.textMuted}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    autoComplete="email"
-                    onChangeText={setEmail}
-                    value={email}
-                    editable={!loading}
-                  />
-                </View>
+              {/* FORGOT */}
+              <TouchableOpacity
+                style={styles.forgotRow}
+                onPress={() => { Keyboard.dismiss(); navigation.navigate("ForgotPassword"); }}
+                disabled={loading}>
+                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+              </TouchableOpacity>
 
-                {/* PASSWORD */}
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>Contraseña</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor={COLORS.textMuted}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoComplete="password"
-                    onChangeText={setPassword}
-                    value={password}
-                    editable={!loading}
-                  />
-                </View>
+              {/* CTA */}
+              <TouchableOpacity
+                style={[styles.ctaButton, loading && styles.ctaDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}>
+                {loading ? (
+                  <ActivityIndicator color={COLORS.accentText} size="small" />
+                ) : (
+                  <Text style={styles.ctaText}>Iniciar Sesión</Text>
+                )}
+              </TouchableOpacity>
 
-                {/* FORGOT */}
+              {/* DIVIDER */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>o continúa con</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* SOCIAL */}
+              <View style={styles.socialRow}>
                 <TouchableOpacity
-                  style={styles.forgotRow}
-                  onPress={() => { Keyboard.dismiss(); navigation.navigate("ForgotPassword"); }}
-                  disabled={loading}>
-                  <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-                </TouchableOpacity>
-
-                {/* CTA */}
-                <TouchableOpacity
-                  style={[styles.ctaButton, loading && styles.ctaDisabled]}
-                  onPress={handleLogin}
+                  style={styles.socialButton}
+                  onPress={() => handleSocialLogin("google")}
                   disabled={loading}
-                  activeOpacity={0.85}>
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.accentText} size="small" />
-                  ) : (
-                    <Text style={styles.ctaText}>Iniciar Sesión</Text>
-                  )}
+                  activeOpacity={0.8}>
+                  <Image
+                    source={require("../../assets/img/google.png")}
+                    style={styles.socialIcon}
+                  />
+                  <Text style={styles.socialText}>Google</Text>
                 </TouchableOpacity>
 
-                {/* DIVIDER */}
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>o continúa con</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                {/* SOCIAL */}
-                <View style={styles.socialRow}>
-                  <TouchableOpacity
-                    style={styles.socialButton}
-                    onPress={() => handleSocialLogin("google")}
-                    disabled={loading}
-                    activeOpacity={0.8}>
-                    <Image
-                      source={require("../../assets/img/google.png")}
-                      style={styles.socialIcon}
-                    />
-                    <Text style={styles.socialText}>Google</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.socialButton, styles.facebookButton]}
-                    onPress={() => handleSocialLogin("facebook")}
-                    disabled={loading}
-                    activeOpacity={0.8}>
-                    <Image
-                      source={require("../../assets/img/facebook.png")}
-                      style={styles.socialIcon}
-                    />
-                    <Text style={[styles.socialText, { color: "#FFF" }]}>Facebook</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.facebookButton]}
+                  onPress={() => handleSocialLogin("facebook")}
+                  disabled={loading}
+                  activeOpacity={0.8}>
+                  <Image
+                    source={require("../../assets/img/facebook.png")}
+                    style={styles.socialIcon}
+                  />
+                  <Text style={[styles.socialText, { color: "#FFF" }]}>Facebook</Text>
+                </TouchableOpacity>
               </View>
+            </View>
 
-              {/* FOOTER */}
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>
-                  ¿No tienes cuenta?{" "}
-                  <Text
-                    style={styles.footerLink}
-                    onPress={() => { Keyboard.dismiss(); navigation.navigate("Register"); }}>
-                    Regístrate
-                  </Text>
-                </Text>
-              </View>
+            {/* FOOTER — register link */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+              <TouchableOpacity
+                onPress={() => { Keyboard.dismiss(); navigation.navigate("Register"); }}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+                <Text style={styles.footerLink}>Regístrate</Text>
+              </TouchableOpacity>
+            </View>
 
-            </ScrollView>
-          </TouchableWithoutFeedback>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -252,13 +258,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 40 },
+  // flexGrow:1 lets the footer sit at the bottom when there's room,
+  // but also allows scrolling on small screens / when keyboard is open
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
 
   // HERO
   heroContainer: {
     alignItems: "center",
     paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 28,
     paddingHorizontal: 24,
   },
   heroImage: {
@@ -324,6 +332,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     marginBottom: 24,
     marginTop: 4,
+    padding: 4, // easier to tap on Android
   },
   forgotText: {
     fontSize: 13,
@@ -389,16 +398,20 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
 
-  // FOOTER
+  // FOOTER — "Regístrate" como TouchableOpacity propio (no Text onPress)
   footer: {
-    paddingTop: 32,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    paddingTop: 28,
+    paddingBottom: 8,
   },
   footerText: {
     fontSize: 14,
     color: COLORS.textSecondary,
   },
   footerLink: {
+    fontSize: 14,
     color: COLORS.accent,
     fontWeight: "700",
   },
