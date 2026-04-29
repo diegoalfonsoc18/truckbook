@@ -22,6 +22,7 @@ import AuthStack from "./src/navigation/AuthStack";
 import supabase from "./src/config/SupaBaseConfig";
 import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useRoleStore } from "./src/store/RoleStore";
+import { useVehiculoStore } from "./src/store/VehiculoStore";
 
 // Componente interno que usa el tema
 function AppContent() {
@@ -64,6 +65,8 @@ function AppContent() {
       if (session?.user) {
         await asegurarUsuarioEnDB(session.user);
         await useRoleStore.getState().cargarRolDesdeDB(session.user.id);
+        // Verifica que la placa guardada pertenezca a este usuario
+        await useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id);
       }
       setLoading(false);
     });
@@ -74,8 +77,13 @@ function AppContent() {
         if (session?.user) {
           await asegurarUsuarioEnDB(session.user);
           await useRoleStore.getState().cargarRolDesdeDB(session.user.id);
+          // Nuevo login: verifica que la placa guardada sea de este usuario.
+          // Si es un usuario nuevo (o diferente al anterior) limpia el vehículo.
+          await useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id);
         } else {
+          // Logout: limpiar rol y vehículo
           useRoleStore.getState().clearRole();
+          useVehiculoStore.getState().clearVehiculo();
         }
       },
     );

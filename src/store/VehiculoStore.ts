@@ -13,11 +13,14 @@ interface VehiculoStore {
   setPlaca: (placa: string) => Promise<void>;
   setTipoCamion: (tipo: TipoCamion) => void;
   clearVehiculo: () => void;
+  /** Verifica que la placa guardada pertenezca al usuario actual.
+   *  Si no existe ninguna asignación activa la limpia automáticamente. */
+  validarPlacaParaUsuario: (userId: string) => Promise<void>;
 }
 
 export const useVehiculoStore = create<VehiculoStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       placa: null,
       tipoCamion: null,
 
@@ -65,6 +68,25 @@ export const useVehiculoStore = create<VehiculoStore>()(
 
       setTipoCamion: (tipoCamion: TipoCamion) => set({ tipoCamion }),
       clearVehiculo: () => set({ placa: null, tipoCamion: null }),
+
+      validarPlacaParaUsuario: async (userId: string) => {
+        const placa = get().placa;
+        if (!placa) return; // nada que validar
+
+        // Comprueba si el usuario tiene una asignación activa en ese vehículo
+        const { data } = await supabase
+          .from("vehiculo_conductores")
+          .select("vehiculo_placa")
+          .eq("conductor_id", userId)
+          .eq("vehiculo_placa", placa)
+          .eq("estado", "autorizado")
+          .maybeSingle();
+
+        if (!data) {
+          // La placa guardada no pertenece a este usuario → limpiar
+          set({ placa: null, tipoCamion: null });
+        }
+      },
     }),
     {
       name: "vehiculo-storage",
