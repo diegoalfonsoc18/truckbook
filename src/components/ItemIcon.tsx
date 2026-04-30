@@ -4,6 +4,9 @@ import { Image, ImageStyle } from "react-native";
 const ICONS = {
   conductor: require("../assets/icons/conductor.webp"),
   truck: require("../assets/icons/truck.webp"),
+  estacas: require("../assets/icons/estacas.webp"),
+  cisterna: require("../assets/icons/cisterna.webp"),
+  planchon: require("../assets/icons/planchon.webp"),
   volqueta: require("../assets/icons/volqueta.webp"),
   factura: require("../assets/icons/factura.webp"),
   report: require("../assets/icons/report.webp"),

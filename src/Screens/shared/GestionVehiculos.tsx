@@ -48,10 +48,12 @@ const TIPOS_CAMION: {
   iconName: IconName;
   color: string;
 }[] = [
-  { id: "estacas",  label: "Estacas",  iconName: "truck",    color: "#00D9A5" },
+  { id: "estacas",  label: "Estacas",  iconName: "estacas",  color: "#00D9A5" },
   { id: "volqueta", label: "Volqueta", iconName: "volqueta2", color: "#FFB800" },
   { id: "furgon",   label: "Furgón",   iconName: "furgon",   color: "#6C5CE7" },
   { id: "grua",     label: "Grúa",     iconName: "grua",     color: "#E94560" },
+  { id: "cisterna", label: "Cisterna", iconName: "cisterna", color: "#74B9FF" },
+  { id: "planchon", label: "Planchón", iconName: "planchon", color: "#FDCB6E" },
 ];
 
 function getTipoInfo(tipo: string) {

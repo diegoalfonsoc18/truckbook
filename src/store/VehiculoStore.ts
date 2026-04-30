@@ -5,7 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
 
-export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua";
+export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua" | "cisterna" | "planchon";
 
 interface VehiculoStore {
   placa: string | null;

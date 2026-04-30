@@ -57,37 +57,21 @@ interface Vehiculo {
 }
 
 const ICON_MAP: Record<TipoCamion, IconName> = {
-  estacas: "truck",
+  estacas:  "estacas",
   volqueta: "volqueta2",
-  furgon: "furgon",
-  grua: "grua",
+  furgon:   "furgon",
+  grua:     "grua",
+  cisterna: "cisterna",
+  planchon: "planchon",
 };
 
 const TIPOS_CAMION = [
-  {
-    id: "estacas" as TipoCamion,
-    label: "Estacas",
-    iconName: "truck" as IconName,
-    color: "#00D9A5",
-  },
-  {
-    id: "volqueta" as TipoCamion,
-    label: "Volqueta",
-    iconName: "volqueta2" as IconName,
-    color: "#FFB800",
-  },
-  {
-    id: "furgon" as TipoCamion,
-    label: "Furgón",
-    iconName: "furgon" as IconName,
-    color: "#6C5CE7",
-  },
-  {
-    id: "grua" as TipoCamion,
-    label: "Grúa",
-    iconName: "grua" as IconName,
-    color: "#E94560",
-  },
+  { id: "estacas"  as TipoCamion, label: "Estacas",  iconName: "estacas"  as IconName, color: "#00D9A5" },
+  { id: "volqueta" as TipoCamion, label: "Volqueta", iconName: "volqueta2" as IconName, color: "#FFB800" },
+  { id: "furgon"   as TipoCamion, label: "Furgón",   iconName: "furgon"   as IconName, color: "#6C5CE7" },
+  { id: "grua"     as TipoCamion, label: "Grúa",     iconName: "grua"     as IconName, color: "#E94560" },
+  { id: "cisterna" as TipoCamion, label: "Cisterna", iconName: "cisterna" as IconName, color: "#74B9FF" },
+  { id: "planchon" as TipoCamion, label: "Planchón", iconName: "planchon" as IconName, color: "#FDCB6E" },
 ];
 
 export default function HomeBaseAdapted({
