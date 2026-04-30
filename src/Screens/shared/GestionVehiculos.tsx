@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   FlatList,
+  ScrollView,
   Animated,
   Dimensions,
 } from "react-native";
@@ -90,6 +91,7 @@ export default function GestionVehiculos() {
   const role = useRoleStore((s) => s.role);
 
   const [vehiculos, setVehiculos] = useState<VehiculoInfo[]>([]);
+  const [recientes, setRecientes] = useState<VehiculoInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -115,17 +117,40 @@ export default function GestionVehiculos() {
         ? await cargarTodosVehiculosConConductores()
         : await cargarVehiculosPropietarioConConductores(user.id);
 
-    setVehiculos(
-      data.map((v) => ({
-        placa: v.placa,
-        tipo_camion: v.tipo_camion,
-        conductoresCount: v.conductores.length,
-        conductores: v.conductores.map((cc) => ({
-          nombre: cc.nombre,
-          estado: cc.estado,
-        })),
+    const mapped: VehiculoInfo[] = data.map((v) => ({
+      placa: v.placa,
+      tipo_camion: v.tipo_camion,
+      conductoresCount: v.conductores.length,
+      conductores: v.conductores.map((cc) => ({
+        nombre: cc.nombre,
+        estado: cc.estado,
       })),
-    );
+    }));
+
+    setVehiculos(mapped);
+
+    // Recientes: últimos 3 vehículos agregados por el usuario
+    try {
+      const { data: recentRows } = await supabase
+        .from("vehiculo_conductores")
+        .select("vehiculo_placa, created_at")
+        .eq("conductor_id", user.id)
+        .eq("rol", "propietario")
+        .eq("estado", "autorizado")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (recentRows && recentRows.length > 0) {
+        const recentPlacas = recentRows.map((r: any) => r.vehiculo_placa);
+        setRecientes(
+          recentPlacas
+            .map((placa: string) => mapped.find((v) => v.placa === placa))
+            .filter(Boolean) as VehiculoInfo[],
+        );
+      }
+    } catch {
+      // no-op
+    }
   }, [user?.id, role]);
 
   useEffect(() => {
@@ -426,6 +451,40 @@ export default function GestionVehiculos() {
             }
             contentContainerStyle={s.listContent}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              recientes.length > 0 ? (
+                <View style={s.recentSection}>
+                  <Text style={[s.recentTitle, { color: c.textSecondary }]}>RECIENTES</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={s.recentScroll}>
+                    {recientes.map((v) => {
+                      const tipo = getTipoInfo(v.tipo_camion);
+                      return (
+                        <View
+                          key={v.placa}
+                          style={[
+                            s.recentCard,
+                            {
+                              backgroundColor: isDark ? "rgba(255,255,255,0.07)" : c.cardBg,
+                              borderColor: isDark ? "rgba(255,255,255,0.08)" : c.border,
+                            },
+                          ]}>
+                          <View style={[s.recentIconWrap, { backgroundColor: `${tipo.color}${isDark ? "25" : "15"}` }]}>
+                            <ItemIcon name={tipo.iconName} size={28} />
+                          </View>
+                          <View style={[s.recentPlate]}>
+                            <Text style={s.recentPlateText}>{v.placa}</Text>
+                          </View>
+                          <Text style={[s.recentTipoText, { color: tipo.color }]}>{tipo.label}</Text>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <View style={s.emptyWrap}>
                 <View style={[s.emptyIconWrap, { backgroundColor: c.accentLight }]}>
@@ -600,6 +659,33 @@ const s = StyleSheet.create({
 
   // LIST
   listContent: { paddingHorizontal: 16, paddingBottom: 110 },
+
+  // RECIENTES
+  recentSection: { marginBottom: 20 },
+  recentTitle: {
+    fontSize: 11, fontWeight: "700", letterSpacing: 1.2,
+    textTransform: "uppercase" as const, marginBottom: 10, paddingHorizontal: 16,
+  },
+  recentScroll: { paddingHorizontal: 16, gap: 10 },
+  recentCard: {
+    width: 110,
+    borderRadius: 16,
+    padding: 12,
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+  },
+  recentIconWrap: {
+    width: 50, height: 50, borderRadius: 14,
+    justifyContent: "center", alignItems: "center",
+  },
+  recentPlate: {
+    backgroundColor: "#FFE415",
+    paddingHorizontal: 6, paddingVertical: 3,
+    borderRadius: 6, borderWidth: 1.5, borderColor: "#000",
+  },
+  recentPlateText: { fontSize: 10, fontWeight: "800", color: "#000", letterSpacing: 1 },
+  recentTipoText: { fontSize: 10, fontWeight: "700" },
 
   // SWIPEABLE
   swipeableContainer: { marginBottom: 14 },
