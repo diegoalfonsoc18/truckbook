@@ -1,4 +1,5 @@
 import supabase from "../config/SupaBaseConfig";
+import { enviarPushNotificacion, getPushTokenDeUsuario } from "./NotificationService";
 
 export type EstadoAutorizacion = "pendiente" | "autorizado" | "rechazado";
 
@@ -197,6 +198,50 @@ export async function solicitarAccesoVehiculo(
 
   if (error) {
     return { success: false, error: error.message };
+  }
+
+  // 4. Notificar al propietario y admins vía push
+  try {
+    // Nombre del conductor que solicita
+    const { data: conductorData } = await supabase
+      .from("usuarios")
+      .select("nombre")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const conductorNombre = conductorData?.nombre || "Un conductor";
+
+    // Propietario del vehículo
+    const { data: propietarios } = await supabase
+      .from("vehiculo_conductores")
+      .select("conductor_id")
+      .eq("vehiculo_placa", placa)
+      .eq("rol", "propietario");
+
+    // Admins
+    const { data: admins } = await supabase
+      .from("usuarios")
+      .select("user_id")
+      .eq("rol", "administrador");
+
+    const destinatarios = [
+      ...(propietarios || []).map((p) => p.conductor_id),
+      ...(admins || []).map((a) => a.user_id),
+    ];
+
+    for (const destinatarioId of [...new Set(destinatarios)]) {
+      const token = await getPushTokenDeUsuario(destinatarioId);
+      if (token) {
+        await enviarPushNotificacion(
+          token,
+          "Nueva solicitud de acceso",
+          `${conductorNombre} solicita acceso al vehículo ${placa}`,
+          { placa, tipo: "solicitud" }
+        );
+      }
+    }
+  } catch (e) {
+    // No falla el flujo principal si la notificación falla
+    console.warn("Error enviando push:", e);
   }
 
   return { success: true };

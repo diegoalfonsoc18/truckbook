@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import HomeBaseAdapted from "../Home/Home";
 import { Item } from "../Home/Items";
 import { AdministradorStackParamList } from "../../navigation/AdministradorNavigation";
+import { useAuth } from "../../hooks/useAuth";
+import { cargarTodasSolicitudesPendientes } from "../../services/vehiculoAutorizacionService";
+import { registrarPushToken } from "../../services/NotificationService";
 
 type AdminNavProp = NativeStackNavigationProp<
   AdministradorStackParamList,
@@ -13,6 +16,22 @@ type AdminNavProp = NativeStackNavigationProp<
 
 export default function AdministradorHome() {
   const navigation = useNavigation<AdminNavProp>();
+  const { user } = useAuth();
+  const [solicitudesCount, setSolicitudesCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.id) registrarPushToken(user.id);
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const cargar = async () => {
+        const { data } = await cargarTodasSolicitudesPendientes();
+        setSolicitudesCount(data.length);
+      };
+      cargar();
+    }, [])
+  );
 
   const adminItems: Item[] = [
     {
@@ -34,10 +53,13 @@ export default function AdministradorHome() {
     {
       id: "solicitudes",
       name: "Solicitudes",
-      subtitle: "Accesos pendientes",
+      subtitle: solicitudesCount > 0
+        ? `${solicitudesCount} pendiente${solicitudesCount > 1 ? "s" : ""}`
+        : "Accesos pendientes",
       iconName: "check",
       iconSize: 66,
       color: "#00CEC9",
+      badgeCount: solicitudesCount,
     },
     {
       id: "gastos",

@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoleStore, UserRole } from "../store/RoleStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "../Screens/Ingresos/Ingresos";
@@ -17,19 +18,22 @@ const Tab = createBottomTabNavigator();
 export default function AppStack() {
   const { colors, isDark } = useTheme();
   const role = useRoleStore((state) => state.role) as UserRole | null;
+  const insets = useSafeAreaInsets();
 
   const getInitialRouteName = (): "Home" | "Cuenta" => {
     if (!role) return "Cuenta";
     return "Home";
   };
 
-  // Estilos dinámicos para el tab bar
+  // Estilos dinámicos para el tab bar — respeta el nav bar de Android
   const tabBarStyle = {
     ...styles.tabBar,
     backgroundColor: colors.cardBg,
     borderTopColor: colors.border,
-    shadowColor: isDark ? "#000" : "#000",
+    shadowColor: "#000",
     shadowOpacity: isDark ? 0.4 : 0.12,
+    height: 60 + insets.bottom,
+    paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
   };
 
   return (
@@ -105,9 +109,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 88,
     paddingTop: 8,
-    paddingBottom: 28,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,

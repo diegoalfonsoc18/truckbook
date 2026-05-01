@@ -1,17 +1,36 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import HomeBaseAdapted from "../Home/Home";
 import { Item } from "../Home/Items";
+import { useAuth } from "../../hooks/useAuth";
+import { cargarSolicitudesPendientes } from "../../services/vehiculoAutorizacionService";
+import { registrarPushToken } from "../../services/NotificationService";
 
-type PropietarioNavigationProp = NativeStackNavigationProp<
-  any,
-  "PropietarioHome"
->;
+type PropietarioNavigationProp = NativeStackNavigationProp<any, "PropietarioHome">;
 
 export default function PropietarioHome() {
   const navigation = useNavigation<PropietarioNavigationProp>();
+  const { user } = useAuth();
+  const [solicitudesCount, setSolicitudesCount] = useState(0);
+
+  // Registrar push token al entrar
+  useEffect(() => {
+    if (user?.id) registrarPushToken(user.id);
+  }, [user?.id]);
+
+  // Recargar conteo cada vez que la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      const cargar = async () => {
+        if (!user?.id) return;
+        const { data } = await cargarSolicitudesPendientes(user.id);
+        setSolicitudesCount(data.length);
+      };
+      cargar();
+    }, [user?.id])
+  );
 
   const propietarioItems: Item[] = [
     {
@@ -33,10 +52,13 @@ export default function PropietarioHome() {
     {
       id: "solicitudes",
       name: "Solicitudes",
-      subtitle: "Autorizar conductores",
+      subtitle: solicitudesCount > 0
+        ? `${solicitudesCount} pendiente${solicitudesCount > 1 ? "s" : ""}`
+        : "Autorizar conductores",
       iconName: "check",
       iconSize: 80,
       color: "#00CEC9",
+      badgeCount: solicitudesCount,
     },
     {
       id: "gastos",

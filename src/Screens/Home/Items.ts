@@ -15,6 +15,7 @@ export interface Item {
   subtitle?: string;
   backgroundColor?: string;
   mostrarBadge?: boolean;
+  badgeCount?: number;
 }
 
 export const items: Item[] = [

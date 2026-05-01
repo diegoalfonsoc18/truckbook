@@ -359,22 +359,31 @@ export default function HomeBaseAdapted({
                   style={[s.gridCard, card]}
                   onPress={() => onItemPress?.(item)}
                   activeOpacity={0.75}>
-                  <View
-                    style={[
-                      s.gridIconBg,
-                      { backgroundColor: (item.color || c.accent) + "18" },
-                    ]}>
-                    {item.iconName ? (
-                      <ItemIcon
-                        name={item.iconName}
-                        size={item.iconSize ?? 30}
-                      />
-                    ) : (
-                      <Ionicons
-                        name={(item.icon || "ellipse") as any}
-                        size={item.iconSize ?? 26}
-                        color={item.color || c.accent}
-                      />
+                  <View style={{ position: "relative" }}>
+                    <View
+                      style={[
+                        s.gridIconBg,
+                        { backgroundColor: (item.color || c.accent) + "18" },
+                      ]}>
+                      {item.iconName ? (
+                        <ItemIcon
+                          name={item.iconName}
+                          size={item.iconSize ?? 30}
+                        />
+                      ) : (
+                        <Ionicons
+                          name={(item.icon || "ellipse") as any}
+                          size={item.iconSize ?? 26}
+                          color={item.color || c.accent}
+                        />
+                      )}
+                    </View>
+                    {!!item.badgeCount && item.badgeCount > 0 && (
+                      <View style={s.badgeCount}>
+                        <Text style={s.badgeCountText}>
+                          {item.badgeCount > 99 ? "99+" : item.badgeCount}
+                        </Text>
+                      </View>
                     )}
                   </View>
                   <Text style={[s.gridCardName, { color: c.text }]}>
@@ -765,6 +774,22 @@ const s = StyleSheet.create({
   },
   gridCardName: { fontSize: Platform.OS === "android" ? 13 : 15, fontWeight: "700", marginBottom: 3, textAlign: "center" },
   gridCardSub: { fontSize: Platform.OS === "android" ? 11 : 12, marginBottom: 2, textAlign: "center" },
+  badgeCount: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#E94560",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  badgeCountText: { color: "#fff", fontSize: 10, fontWeight: "800" },
+
   gridArrow: {
     marginTop: 12,
     width: 28,
