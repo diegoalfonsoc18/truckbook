@@ -234,10 +234,14 @@ export async function cargarSolicitudesPendientes(
 
   // 3. Batch: info de conductores
   const conductorIds = [...new Set(relaciones.map((r) => r.conductor_id))];
-  const { data: usuarios } = await supabase
+  const { data: usuarios, error: uError } = await supabase
     .from("usuarios")
     .select("user_id, nombre, cedula")
     .in("user_id", conductorIds);
+
+  console.log("📋 conductorIds:", conductorIds);
+  console.log("📋 usuarios resultado:", JSON.stringify(usuarios));
+  console.log("📋 usuarios error:", JSON.stringify(uError));
 
   const uMap: Record<string, { nombre: string; cedula: string }> = {};
   for (const u of usuarios || []) uMap[u.user_id] = { nombre: u.nombre, cedula: u.cedula };
