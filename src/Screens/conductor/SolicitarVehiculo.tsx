@@ -20,6 +20,7 @@ import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeabl
 import Reanimated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { solicitarAccesoVehiculo } from "../../services/vehiculoAutorizacionService";
 import supabase from "../../config/SupaBaseConfig";
 
@@ -49,6 +50,7 @@ export default function SolicitarVehiculo() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
+  const { placa: placaActual, setPlaca: setPlacaStore, setTipoCamion } = useVehiculoStore();
 
   const [placa, setPlaca] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -117,6 +119,16 @@ export default function SolicitarVehiculo() {
     setRefreshing(true);
     await cargarSolicitudes();
     setRefreshing(false);
+  };
+
+  const handleActivar = async (item: MiSolicitud) => {
+    await setPlacaStore(item.vehiculo_placa);
+    setTipoCamion(item.tipo_camion as TipoCamion);
+    Alert.alert(
+      "Vehículo activado ✓",
+      `${item.vehiculo_placa} es ahora tu vehículo activo.`,
+      [{ text: "OK", onPress: () => navigation.goBack() }]
+    );
   };
 
   const handleEliminar = (item: MiSolicitud) => {
@@ -192,6 +204,9 @@ export default function SolicitarVehiculo() {
 
   const renderSolicitud = ({ item }: { item: MiSolicitud }) => {
     const cfg = estadoConfig(item.estado);
+    const esActivo = placaActual === item.vehiculo_placa;
+    const esAutorizado = item.estado === "autorizado";
+
     return (
       <ReanimatedSwipeable
         friction={2}
@@ -199,7 +214,14 @@ export default function SolicitarVehiculo() {
         renderRightActions={(prog) => <DeleteAction prog={prog} />}
         onSwipeableOpen={() => handleEliminar(item)}
       >
-        <View style={[styles.card, ds.cardBg, getShadow(isDark, "sm")]}>
+        <View
+          style={[
+            styles.card,
+            ds.cardBg,
+            getShadow(isDark, "sm"),
+            esActivo && { borderColor: "#00D9A5", borderWidth: 2 },
+          ]}
+        >
           <View style={styles.cardLeft}>
             <View style={styles.placaBadge}>
               <Text style={styles.placaText}>{item.vehiculo_placa}</Text>
@@ -211,9 +233,27 @@ export default function SolicitarVehiculo() {
               <Text style={[styles.fecha, ds.textMuted]}>{formatFecha(item.created_at)}</Text>
             </View>
           </View>
-          <View style={[styles.estadoBadge, { backgroundColor: cfg.bg }]}>
-            <Ionicons name={cfg.icon} size={14} color={cfg.color} />
-            <Text style={[styles.estadoText, { color: cfg.color }]}>{cfg.label}</Text>
+
+          <View style={styles.cardRight}>
+            {esAutorizado && !esActivo && (
+              <TouchableOpacity
+                style={styles.activarBtn}
+                onPress={() => handleActivar(item)}>
+                <Text style={styles.activarText}>Usar</Text>
+              </TouchableOpacity>
+            )}
+            {esActivo && (
+              <View style={styles.activoIndicator}>
+                <Ionicons name="radio-button-on" size={14} color="#00D9A5" />
+                <Text style={styles.activoText}>Activo</Text>
+              </View>
+            )}
+            {!esAutorizado && (
+              <View style={[styles.estadoBadge, { backgroundColor: cfg.bg }]}>
+                <Ionicons name={cfg.icon} size={14} color={cfg.color} />
+                <Text style={[styles.estadoText, { color: cfg.color }]}>{cfg.label}</Text>
+              </View>
+            )}
           </View>
         </View>
       </ReanimatedSwipeable>
@@ -424,6 +464,10 @@ const styles = StyleSheet.create({
   tipoCamion: { fontSize: 12, marginBottom: 2 },
   fecha: { fontSize: 11 },
 
+  cardRight: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
   estadoBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -433,6 +477,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   estadoText: { fontSize: 12, fontWeight: "700" },
+
+  activarBtn: {
+    backgroundColor: "#FFD600",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  activarText: { fontSize: 13, fontWeight: "700", color: "#000" },
+
+  activoIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#00D9A515",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  activoText: { fontSize: 12, fontWeight: "700", color: "#00D9A5" },
 
   // DELETE ACTION
   deleteAction: {
