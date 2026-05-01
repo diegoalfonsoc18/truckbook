@@ -9,6 +9,7 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../constants/Themecontext";
 import { cargarInvitacionesPendientes } from "../../services/vehiculoAutorizacionService";
+import { registrarPushToken } from "../../services/NotificationService";
 import { ConductorStackParamList } from "../../navigation/ConductorNavigation";
 
 type ConductorNavProp = NativeStackNavigationProp<
@@ -27,10 +28,11 @@ export default function ConductorHome() {
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
     useMultas(placaActual, !!placaActual);
 
-  // Cargar cantidad de invitaciones pendientes
+  // Registrar push token y cargar invitaciones pendientes
   useEffect(() => {
+    if (!user?.id) return;
+    registrarPushToken(user.id);
     const cargar = async () => {
-      if (!user?.id) return;
       const { data } = await cargarInvitacionesPendientes(user.id);
       setInvitacionesCount(data.length);
     };

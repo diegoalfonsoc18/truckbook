@@ -317,16 +317,36 @@ export async function aprobarSolicitud(
   solicitudId: string,
   propietarioId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
+  const { data: rel, error } = await supabase
     .from("vehiculo_conductores")
     .update({
       estado: "autorizado",
       autorizado_por: propietarioId,
       autorizado_at: new Date().toISOString(),
     })
-    .eq("id", solicitudId);
+    .eq("id", solicitudId)
+    .select("conductor_id, vehiculo_placa")
+    .maybeSingle();
 
   if (error) return { success: false, error: error.message };
+
+  // Notificar al conductor
+  try {
+    if (rel?.conductor_id) {
+      const token = await getPushTokenDeUsuario(rel.conductor_id);
+      if (token) {
+        await enviarPushNotificacion(
+          token,
+          "Acceso aprobado ✓",
+          `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue aprobada. Ya puedes usarlo.`,
+          { placa: rel.vehiculo_placa, tipo: "aprobado" }
+        );
+      }
+    }
+  } catch (e) {
+    console.warn("Error enviando push aprobación:", e);
+  }
+
   return { success: true };
 }
 
@@ -337,16 +357,36 @@ export async function rechazarSolicitud(
   solicitudId: string,
   propietarioId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
+  const { data: rel, error } = await supabase
     .from("vehiculo_conductores")
     .update({
       estado: "rechazado",
       autorizado_por: propietarioId,
       autorizado_at: new Date().toISOString(),
     })
-    .eq("id", solicitudId);
+    .eq("id", solicitudId)
+    .select("conductor_id, vehiculo_placa")
+    .maybeSingle();
 
   if (error) return { success: false, error: error.message };
+
+  // Notificar al conductor
+  try {
+    if (rel?.conductor_id) {
+      const token = await getPushTokenDeUsuario(rel.conductor_id);
+      if (token) {
+        await enviarPushNotificacion(
+          token,
+          "Solicitud rechazada",
+          `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue rechazada.`,
+          { placa: rel.vehiculo_placa, tipo: "rechazado" }
+        );
+      }
+    }
+  } catch (e) {
+    console.warn("Error enviando push rechazo:", e);
+  }
+
   return { success: true };
 }
 
