@@ -16,10 +16,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import Reanimated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { solicitarAccesoVehiculo } from "../../services/vehiculoAutorizacionService";
 import supabase from "../../config/SupaBaseConfig";
+
+const DELETE_WIDTH = 80;
+
+function DeleteAction({ prog }: { prog: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: DELETE_WIDTH * (1 - prog.value) }],
+  }));
+  return (
+    <Reanimated.View style={[styles.deleteAction, style]}>
+      <Ionicons name="trash-outline" size={22} color="#FFF" />
+      <Text style={styles.deleteText}>Borrar</Text>
+    </Reanimated.View>
+  );
+}
 
 interface MiSolicitud {
   id: string;
@@ -103,6 +119,31 @@ export default function SolicitarVehiculo() {
     setRefreshing(false);
   };
 
+  const handleEliminar = (item: MiSolicitud) => {
+    Alert.alert(
+      "Eliminar solicitud",
+      `¿Eliminar la solicitud para ${item.vehiculo_placa}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase
+              .from("vehiculo_conductores")
+              .delete()
+              .eq("id", item.id);
+            if (!error) {
+              setSolicitudes((prev) => prev.filter((s) => s.id !== item.id));
+            } else {
+              Alert.alert("Error", "No se pudo eliminar la solicitud");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSolicitar = async () => {
     const placaLimpia = placa.trim().toUpperCase().replace(/\s/g, "");
     if (!placaLimpia) {
@@ -152,23 +193,30 @@ export default function SolicitarVehiculo() {
   const renderSolicitud = ({ item }: { item: MiSolicitud }) => {
     const cfg = estadoConfig(item.estado);
     return (
-      <View style={[styles.card, ds.cardBg, getShadow(isDark, "sm")]}>
-        <View style={styles.cardLeft}>
-          <View style={styles.placaBadge}>
-            <Text style={styles.placaText}>{item.vehiculo_placa}</Text>
+      <ReanimatedSwipeable
+        friction={2}
+        rightThreshold={40}
+        renderRightActions={(prog) => <DeleteAction prog={prog} />}
+        onSwipeableOpen={() => handleEliminar(item)}
+      >
+        <View style={[styles.card, ds.cardBg, getShadow(isDark, "sm")]}>
+          <View style={styles.cardLeft}>
+            <View style={styles.placaBadge}>
+              <Text style={styles.placaText}>{item.vehiculo_placa}</Text>
+            </View>
+            <View style={{ marginTop: 6 }}>
+              <Text style={[styles.tipoCamion, ds.textMuted]}>
+                {item.tipo_camion.charAt(0).toUpperCase() + item.tipo_camion.slice(1)}
+              </Text>
+              <Text style={[styles.fecha, ds.textMuted]}>{formatFecha(item.created_at)}</Text>
+            </View>
           </View>
-          <View style={{ marginTop: 6 }}>
-            <Text style={[styles.tipoCamion, ds.textMuted]}>
-              {item.tipo_camion.charAt(0).toUpperCase() + item.tipo_camion.slice(1)}
-            </Text>
-            <Text style={[styles.fecha, ds.textMuted]}>{formatFecha(item.created_at)}</Text>
+          <View style={[styles.estadoBadge, { backgroundColor: cfg.bg }]}>
+            <Ionicons name={cfg.icon} size={14} color={cfg.color} />
+            <Text style={[styles.estadoText, { color: cfg.color }]}>{cfg.label}</Text>
           </View>
         </View>
-        <View style={[styles.estadoBadge, { backgroundColor: cfg.bg }]}>
-          <Ionicons name={cfg.icon} size={14} color={cfg.color} />
-          <Text style={[styles.estadoText, { color: cfg.color }]}>{cfg.label}</Text>
-        </View>
-      </View>
+      </ReanimatedSwipeable>
     );
   };
 
@@ -385,6 +433,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   estadoText: { fontSize: 12, fontWeight: "700" },
+
+  // DELETE ACTION
+  deleteAction: {
+    width: DELETE_WIDTH,
+    backgroundColor: "#E94560",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
+    marginBottom: 10,
+    gap: 4,
+  },
+  deleteText: { color: "#FFF", fontSize: 11, fontWeight: "700" },
 
   // EMPTY
   emptyWrap: { alignItems: "center", paddingVertical: 30, gap: 10 },
