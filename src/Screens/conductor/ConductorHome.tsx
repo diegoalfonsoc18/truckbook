@@ -40,6 +40,14 @@ export default function ConductorHome() {
   // Items del conductor con invitaciones
   const conductorItems: Item[] = [
     {
+      id: "solicitar_vehiculo",
+      iconName: "truck",
+      iconSize: 36,
+      name: "Mis vehículos",
+      subtitle: "Solicitar acceso a un vehículo",
+      color: "#6C5CE7",
+    },
+    {
       id: "invitaciones",
       iconName: "check",
       iconSize: 36,
@@ -54,6 +62,11 @@ export default function ConductorHome() {
   ];
 
   const handleItemPress = (item: Item) => {
+    if (item.id === "solicitar_vehiculo") {
+      navigation.navigate("SolicitarVehiculo");
+      return;
+    }
+
     if (item.id === "invitaciones") {
       navigation.navigate("Invitaciones");
       return;
