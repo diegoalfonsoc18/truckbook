@@ -749,22 +749,22 @@ const s = StyleSheet.create({
 
   // GRID
   gridContainer: { paddingBottom: 100 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: Platform.OS === "android" ? 8 : 12 },
   gridCard: {
-    width: (width - H_PAD * 2 - 12) / 2,
-    padding: 18,
+    width: (width - H_PAD * 2 - (Platform.OS === "android" ? 8 : 12)) / 2,
+    padding: Platform.OS === "android" ? 12 : 18,
     alignItems: "center",
   },
   gridIconBg: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: Platform.OS === "android" ? 42 : 50,
+    height: Platform.OS === "android" ? 42 : 50,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: Platform.OS === "android" ? 8 : 14,
   },
-  gridCardName: { fontSize: 15, fontWeight: "700", marginBottom: 3, textAlign: "center" },
-  gridCardSub: { fontSize: 12, marginBottom: 2, textAlign: "center" },
+  gridCardName: { fontSize: Platform.OS === "android" ? 13 : 15, fontWeight: "700", marginBottom: 3, textAlign: "center" },
+  gridCardSub: { fontSize: Platform.OS === "android" ? 11 : 12, marginBottom: 2, textAlign: "center" },
   gridArrow: {
     marginTop: 12,
     width: 28,
