@@ -207,8 +207,8 @@ export async function solicitarAccesoVehiculo(
  */
 export async function cargarSolicitudesPendientes(
   userId: string
-): Promise<{ data: SolicitudPendiente[] | null; error: any }> {
-  // 1. Obtener placas donde soy propietario
+): Promise<{ data: SolicitudConNombre[]; error: any }> {
+  // 1. Placas donde soy propietario
   const { data: misVehiculos, error: vehiculosError } = await supabase
     .from("vehiculo_conductores")
     .select("vehiculo_placa")
@@ -221,8 +221,8 @@ export async function cargarSolicitudesPendientes(
 
   const placas = misVehiculos.map((v) => v.vehiculo_placa);
 
-  // 2. Buscar solicitudes pendientes en esas placas
-  const { data, error } = await supabase
+  // 2. Solicitudes pendientes en esas placas
+  const { data: relaciones, error } = await supabase
     .from("vehiculo_conductores")
     .select("id, vehiculo_placa, conductor_id, created_at")
     .in("vehiculo_placa", placas)
@@ -230,7 +230,39 @@ export async function cargarSolicitudesPendientes(
     .eq("rol", "conductor")
     .order("created_at", { ascending: false });
 
-  return { data: data || [], error };
+  if (error || !relaciones?.length) return { data: [], error };
+
+  // 3. Batch: info de conductores
+  const conductorIds = [...new Set(relaciones.map((r) => r.conductor_id))];
+  const { data: usuarios } = await supabase
+    .from("usuarios")
+    .select("user_id, nombre, cedula")
+    .in("user_id", conductorIds);
+
+  const uMap: Record<string, { nombre: string; cedula: string }> = {};
+  for (const u of usuarios || []) uMap[u.user_id] = { nombre: u.nombre, cedula: u.cedula };
+
+  // 4. Batch: tipo_camion de los vehículos
+  const { data: vehiculos } = await supabase
+    .from("vehiculos")
+    .select("placa, tipo_camion")
+    .in("placa", placas);
+
+  const vMap: Record<string, string> = {};
+  for (const v of vehiculos || []) vMap[v.placa] = v.tipo_camion || "estacas";
+
+  return {
+    data: relaciones.map((r) => ({
+      id: r.id,
+      vehiculo_placa: r.vehiculo_placa,
+      conductor_id: r.conductor_id,
+      created_at: r.created_at,
+      conductor_nombre: uMap[r.conductor_id]?.nombre || "Sin nombre",
+      conductor_cedula: uMap[r.conductor_id]?.cedula || "",
+      tipo_camion: vMap[r.vehiculo_placa] || "estacas",
+    })),
+    error: null,
+  };
 }
 
 /**
@@ -695,6 +727,63 @@ export async function cargarInvitacionesPendientes(
   }
 
   return { data: invitaciones, error: null };
+}
+
+/**
+ * Cargar TODAS las solicitudes pendientes (para admin — sin filtro de propietario)
+ */
+export interface SolicitudConNombre extends SolicitudPendiente {
+  conductor_nombre: string;
+  conductor_cedula: string;
+  tipo_camion: string;
+}
+
+export async function cargarTodasSolicitudesPendientes(): Promise<{
+  data: SolicitudConNombre[];
+  error: any;
+}> {
+  const { data: relaciones, error } = await supabase
+    .from("vehiculo_conductores")
+    .select("id, vehiculo_placa, conductor_id, created_at")
+    .eq("rol", "conductor")
+    .eq("estado", "pendiente")
+    .order("created_at", { ascending: false });
+
+  if (error) return { data: [], error };
+  if (!relaciones?.length) return { data: [], error: null };
+
+  // Batch: info de vehículos
+  const placas = [...new Set(relaciones.map((r) => r.vehiculo_placa))];
+  const { data: vehiculos } = await supabase
+    .from("vehiculos")
+    .select("placa, tipo_camion")
+    .in("placa", placas);
+
+  const vehiculosMap: Record<string, string> = {};
+  for (const v of vehiculos || []) vehiculosMap[v.placa] = v.tipo_camion || "estacas";
+
+  // Batch: info de conductores
+  const conductorIds = [...new Set(relaciones.map((r) => r.conductor_id))];
+  const { data: usuarios } = await supabase
+    .from("usuarios")
+    .select("user_id, nombre, cedula")
+    .in("user_id", conductorIds);
+
+  const usuariosMap: Record<string, { nombre: string; cedula: string }> = {};
+  for (const u of usuarios || []) usuariosMap[u.user_id] = { nombre: u.nombre, cedula: u.cedula };
+
+  return {
+    data: relaciones.map((r) => ({
+      id: r.id,
+      vehiculo_placa: r.vehiculo_placa,
+      conductor_id: r.conductor_id,
+      created_at: r.created_at,
+      conductor_nombre: usuariosMap[r.conductor_id]?.nombre || "Sin nombre",
+      conductor_cedula: usuariosMap[r.conductor_id]?.cedula || "",
+      tipo_camion: vehiculosMap[r.vehiculo_placa] || "estacas",
+    })),
+    error: null,
+  };
 }
 
 /**

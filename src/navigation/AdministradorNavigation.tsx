@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AdministradorHome from "../Screens/administrador/AdministradorHome";
 import AdministradorReportes from "../Screens/administrador/AdministradorReportes";
 import AdminGestionConductores from "../Screens/administrador/AdminGestionConductores";
+import AdminSolicitudes from "../Screens/administrador/AdminSolicitudes";
 import GestionVehiculos from "../Screens/shared/GestionVehiculos";
 import RendimientoVehiculos from "../Screens/shared/RendimientoVehiculos";
 import SoatVehiculos from "../Screens/shared/SoatVehiculos";
@@ -15,6 +16,7 @@ export type AdministradorStackParamList = {
   AdminReportes: undefined;
   AdminConductores: undefined;
   AdminVehiculos: undefined;
+  AdminSolicitudes: undefined;
   AdminRendimiento: undefined;
   AdminSoat: undefined;
   AdminTecnomecanica: undefined;
@@ -30,6 +32,7 @@ export default function AdministradorNavigation() {
       <Stack.Screen name="AdminHome" component={AdministradorHome} />
       <Stack.Screen name="AdminReportes" component={AdministradorReportes} />
       <Stack.Screen name="AdminConductores" component={AdminGestionConductores} />
+      <Stack.Screen name="AdminSolicitudes" component={AdminSolicitudes} />
       <Stack.Screen name="AdminVehiculos" component={GestionVehiculos} />
       <Stack.Screen name="AdminRendimiento" component={RendimientoVehiculos} />
       <Stack.Screen name="AdminSoat" component={SoatVehiculos} />

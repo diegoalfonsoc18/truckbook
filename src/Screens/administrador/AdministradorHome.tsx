@@ -32,6 +32,14 @@ export default function AdministradorHome() {
       color: "#FFB800",
     },
     {
+      id: "solicitudes",
+      name: "Solicitudes",
+      subtitle: "Accesos pendientes",
+      iconName: "check",
+      iconSize: 66,
+      color: "#00CEC9",
+    },
+    {
       id: "gastos",
       name: "Aprobar Gastos",
       subtitle: "Revisar solicitudes",
@@ -78,6 +86,9 @@ export default function AdministradorHome() {
     switch (item.id) {
       case "reportes":
         navigation.navigate("AdminReportes");
+        break;
+      case "solicitudes":
+        navigation.navigate("AdminSolicitudes");
         break;
       case "conductores":
         navigation.navigate("AdminConductores");

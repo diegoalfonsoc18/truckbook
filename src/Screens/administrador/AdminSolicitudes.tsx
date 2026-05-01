@@ -15,13 +15,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
-  cargarSolicitudesPendientes,
+  cargarTodasSolicitudesPendientes,
   aprobarSolicitud,
   rechazarSolicitud,
   type SolicitudConNombre,
 } from "../../services/vehiculoAutorizacionService";
 
-export default function SolicitudesVehiculo() {
+export default function AdminSolicitudes() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
@@ -40,10 +40,9 @@ export default function SolicitudesVehiculo() {
   };
 
   const cargar = useCallback(async () => {
-    if (!user?.id) return;
-    const { data } = await cargarSolicitudesPendientes(user.id);
+    const { data } = await cargarTodasSolicitudesPendientes();
     setSolicitudes(data);
-  }, [user?.id]);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -72,7 +71,7 @@ export default function SolicitudesVehiculo() {
             setProcesando(sol.id);
             const res = await aprobarSolicitud(sol.id, user!.id);
             if (res.success) {
-              Alert.alert("Aprobado ✓", `${sol.conductor_nombre} ya puede acceder al vehículo`);
+              Alert.alert("Aprobado", `${sol.conductor_nombre} ya puede acceder al vehículo`);
               await cargar();
             } else {
               Alert.alert("Error", res.error || "No se pudo aprobar");
@@ -87,7 +86,7 @@ export default function SolicitudesVehiculo() {
   const handleRechazar = (sol: SolicitudConNombre) => {
     Alert.alert(
       "Rechazar acceso",
-      `¿Rechazar la solicitud de ${sol.conductor_nombre}?`,
+      `¿Rechazar la solicitud de ${sol.conductor_nombre} para ${sol.vehiculo_placa}?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -121,7 +120,6 @@ export default function SolicitudesVehiculo() {
     const isProc = procesando === sol.id;
     return (
       <View style={[styles.card, ds.cardBg, getShadow(isDark, "sm")]}>
-        {/* Placa + tipo + fecha */}
         <View style={styles.cardTop}>
           <View style={styles.placaBadge}>
             <Text style={styles.placaText}>{sol.vehiculo_placa}</Text>
@@ -132,7 +130,6 @@ export default function SolicitudesVehiculo() {
           <Text style={[styles.fecha, ds.textMuted]}>{formatDate(sol.created_at)}</Text>
         </View>
 
-        {/* Conductor */}
         <View style={styles.conductorRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarLetter}>
@@ -149,7 +146,6 @@ export default function SolicitudesVehiculo() {
           </View>
         </View>
 
-        {/* Botones */}
         {isProc ? (
           <ActivityIndicator color={colors.accent} style={{ paddingVertical: 14 }} />
         ) : (
@@ -196,7 +192,7 @@ export default function SolicitudesVehiculo() {
             <Text style={[styles.headerSubtitle, ds.textSecondary]}>
               {solicitudes.length > 0
                 ? `${solicitudes.length} solicitud${solicitudes.length > 1 ? "es" : ""} pendiente${solicitudes.length > 1 ? "s" : ""}`
-                : "Conductores que quieren acceder a tus vehículos"}
+                : "Accesos de conductor pendientes"}
             </Text>
           </View>
         </View>
@@ -218,7 +214,7 @@ export default function SolicitudesVehiculo() {
               <Text style={styles.emptyIcon}>📋</Text>
               <Text style={[styles.emptyTitle, ds.text]}>Sin solicitudes</Text>
               <Text style={[styles.emptySubtitle, ds.textSecondary]}>
-                Cuando un conductor solicite acceso a uno de tus vehículos, aparecerá aquí
+                No hay solicitudes de acceso pendientes
               </Text>
             </View>
           }
