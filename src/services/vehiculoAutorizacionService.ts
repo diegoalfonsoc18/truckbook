@@ -489,41 +489,89 @@ export interface VehiculoConConductores {
 }
 
 /**
- * Cargar todos los vehiculos con sus conductores asignados
+ * Cargar todos los vehiculos con sus conductores asignados (batch, sin N+1)
  */
 export async function cargarTodosVehiculosConConductores(): Promise<{
   data: VehiculoConConductores[];
   error: any;
 }> {
-  // Cargar todos los vehiculos
+  // 1. Todos los vehículos
   const { data: vehiculos, error: vError } = await supabase
     .from("vehiculos")
     .select("placa, tipo_camion")
     .order("placa", { ascending: true });
 
-  if (vError) return { data: [], error: vError };
+  if (vError) {
+    console.error("❌ Error cargando vehiculos:", vError);
+    return { data: [], error: vError };
+  }
 
-  const resultado: VehiculoConConductores[] = [];
+  if (!vehiculos?.length) return { data: [], error: null };
 
-  for (const v of vehiculos || []) {
-    const { data: conductores } = await cargarConductoresDeVehiculo(v.placa);
-    resultado.push({
+  const placas = vehiculos.map((v) => v.placa);
+
+  // 2. Todas las relaciones conductor (rol=conductor) de esos vehículos en una sola query
+  const { data: relaciones, error: rError } = await supabase
+    .from("vehiculo_conductores")
+    .select("id, vehiculo_placa, conductor_id, estado")
+    .in("vehiculo_placa", placas)
+    .eq("rol", "conductor")
+    .order("created_at", { ascending: false });
+
+  if (rError) {
+    console.error("❌ Error cargando relaciones:", rError);
+  }
+
+  const rels = relaciones || [];
+
+  // 3. Info de usuarios en una sola query
+  const conductorIds = [...new Set(rels.map((r) => r.conductor_id))];
+  let usuariosMap: Record<string, { nombre: string; cedula: string }> = {};
+
+  if (conductorIds.length > 0) {
+    const { data: usuarios, error: uError } = await supabase
+      .from("usuarios")
+      .select("user_id, nombre, cedula")
+      .in("user_id", conductorIds);
+
+    if (uError) {
+      console.error("❌ Error cargando usuarios:", uError);
+    }
+
+    for (const u of usuarios || []) {
+      usuariosMap[u.user_id] = { nombre: u.nombre, cedula: u.cedula };
+    }
+  }
+
+  // 4. Armar resultado en memoria
+  const resultado: VehiculoConConductores[] = vehiculos.map((v) => {
+    const conductores: ConductorAsignado[] = rels
+      .filter((r) => r.vehiculo_placa === v.placa)
+      .map((r) => ({
+        relacion_id: r.id,
+        conductor_id: r.conductor_id,
+        nombre: usuariosMap[r.conductor_id]?.nombre || "Sin nombre",
+        cedula: usuariosMap[r.conductor_id]?.cedula || "Sin cédula",
+        estado: r.estado,
+      }));
+
+    return {
       placa: v.placa,
       tipo_camion: v.tipo_camion || "estacas",
-      conductores: conductores || [],
-    });
-  }
+      conductores,
+    };
+  });
 
   return { data: resultado, error: null };
 }
 
 /**
- * Cargar vehiculos de un propietario con sus conductores
+ * Cargar vehiculos de un propietario con sus conductores (batch)
  */
 export async function cargarVehiculosPropietarioConConductores(
   userId: string
 ): Promise<{ data: VehiculoConConductores[]; error: any }> {
-  // Obtener placas donde soy propietario
+  // 1. Placas donde soy propietario
   const { data: misVehiculos, error: vError } = await supabase
     .from("vehiculo_conductores")
     .select("vehiculo_placa")
@@ -532,23 +580,64 @@ export async function cargarVehiculosPropietarioConConductores(
     .eq("estado", "autorizado");
 
   if (vError) return { data: [], error: vError };
+  if (!misVehiculos?.length) return { data: [], error: null };
 
-  const resultado: VehiculoConConductores[] = [];
+  const placas = misVehiculos.map((v) => v.vehiculo_placa);
 
-  for (const v of misVehiculos || []) {
-    const { data: vehiculo } = await supabase
-      .from("vehiculos")
-      .select("tipo_camion")
-      .eq("placa", v.vehiculo_placa)
-      .maybeSingle();
+  // 2. Info de los vehículos
+  const { data: vehiculosInfo } = await supabase
+    .from("vehiculos")
+    .select("placa, tipo_camion")
+    .in("placa", placas);
 
-    const { data: conductores } = await cargarConductoresDeVehiculo(v.vehiculo_placa);
-    resultado.push({
-      placa: v.vehiculo_placa,
-      tipo_camion: vehiculo?.tipo_camion || "estacas",
-      conductores: conductores || [],
-    });
+  const vehiculosMap: Record<string, string> = {};
+  for (const v of vehiculosInfo || []) {
+    vehiculosMap[v.placa] = v.tipo_camion || "estacas";
   }
+
+  // 3. Relaciones conductor en batch
+  const { data: relaciones } = await supabase
+    .from("vehiculo_conductores")
+    .select("id, vehiculo_placa, conductor_id, estado")
+    .in("vehiculo_placa", placas)
+    .eq("rol", "conductor")
+    .order("created_at", { ascending: false });
+
+  const rels = relaciones || [];
+
+  // 4. Usuarios en batch
+  const conductorIds = [...new Set(rels.map((r) => r.conductor_id))];
+  let usuariosMap: Record<string, { nombre: string; cedula: string }> = {};
+
+  if (conductorIds.length > 0) {
+    const { data: usuarios } = await supabase
+      .from("usuarios")
+      .select("user_id, nombre, cedula")
+      .in("user_id", conductorIds);
+
+    for (const u of usuarios || []) {
+      usuariosMap[u.user_id] = { nombre: u.nombre, cedula: u.cedula };
+    }
+  }
+
+  // 5. Armar resultado
+  const resultado: VehiculoConConductores[] = placas.map((placa) => {
+    const conductores: ConductorAsignado[] = rels
+      .filter((r) => r.vehiculo_placa === placa)
+      .map((r) => ({
+        relacion_id: r.id,
+        conductor_id: r.conductor_id,
+        nombre: usuariosMap[r.conductor_id]?.nombre || "Sin nombre",
+        cedula: usuariosMap[r.conductor_id]?.cedula || "Sin cédula",
+        estado: r.estado,
+      }));
+
+    return {
+      placa,
+      tipo_camion: vehiculosMap[placa] || "estacas",
+      conductores,
+    };
+  });
 
   return { data: resultado, error: null };
 }
