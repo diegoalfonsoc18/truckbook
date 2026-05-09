@@ -15,12 +15,23 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  Pressable,
 } from "react-native";
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
+
+const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
@@ -71,6 +82,106 @@ export interface TransactionScreenProps {
   getStatusLabel: (estado?: string) => string;
 }
 
+// ─── Animated category card ───────────────────────────────────────────────────
+function CatCard({
+  cat, index, isDark, accentColor, cardStyle, textColor, onPress,
+}: {
+  cat: Categoria; index: number; isDark: boolean; accentColor: string;
+  cardStyle: object; textColor: string; onPress: (id: string) => void;
+}) {
+  const scale   = useSharedValue(1);
+  const opacity = useSharedValue(0);
+  const transY  = useSharedValue(8);
+  const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+
+  useEffect(() => {
+    const d = Math.min(index * 45, 300);
+    opacity.value = withDelay(d, withTiming(1, { duration: 250, easing: easeOut }));
+    transY.value  = withDelay(d, withTiming(0, { duration: 290, easing: easeOut }));
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: transY.value }, { scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      style={[cardStyle, animStyle]}
+      onPressIn={() => { scale.value = withTiming(0.91, { duration: 100 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+      onPress={() => onPress(cat.id)}
+    >
+      <View style={[s.catCircle, { backgroundColor: `${cat.color}${isDark ? "28" : "18"}` }]}>
+        <ItemIcon name={cat.iconName} size={cat.size} />
+      </View>
+      <Text style={[s.catLabel, { color: textColor }]} numberOfLines={1}>{cat.name}</Text>
+    </AnimatedPressable>
+  );
+}
+
+// ─── Animated transaction row ─────────────────────────────────────────────────
+function TransactionRow({
+  item, index, cat, accentColor, isDark, cardStyle, textColor, textSecondary, textMuted,
+  getStatusColor, getStatusLabel, formatCurrency, formatDate, onPress, onLongPress,
+}: {
+  item: Transaction; index: number; cat?: Categoria; accentColor: string;
+  isDark: boolean; cardStyle: object; textColor: string; textSecondary: string; textMuted: string;
+  getStatusColor: (e?: string) => string; getStatusLabel: (e?: string) => string;
+  formatCurrency: (v: number) => string; formatDate: (d: string) => string;
+  onPress: (id: string) => void; onLongPress: (id: string) => void;
+}) {
+  const scale   = useSharedValue(1);
+  const opacity = useSharedValue(0);
+  const transY  = useSharedValue(6);
+  const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+
+  useEffect(() => {
+    const d = Math.min(index * 50, 400);
+    opacity.value = withDelay(d, withTiming(1, { duration: 260, easing: easeOut }));
+    transY.value  = withDelay(d, withTiming(0, { duration: 300, easing: easeOut }));
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: transY.value }, { scale: scale.value }],
+  }));
+
+  const statusColor = getStatusColor(item.estado);
+
+  return (
+    <AnimatedPressable
+      style={[s.row, cardStyle, { marginBottom: 10 }, animStyle]}
+      onPressIn={() => { scale.value = withTiming(0.97, { duration: 110 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+      onPress={() => onPress(item.id)}
+      onLongPress={() => onLongPress(item.id)}
+    >
+      <View style={[s.rowIconWrap, { backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}` }]}>
+        {cat?.iconName
+          ? <ItemIcon name={cat.iconName} size={cat.size ?? 26} />
+          : <Ionicons name="cash" size={22} color={accentColor} />}
+      </View>
+      <View style={s.rowInfo}>
+        <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
+          {item.descripcion || item.tipo}
+        </Text>
+        <View style={s.rowMeta}>
+          <View style={[s.datePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}>
+            <Text style={[s.datePillText, { color: textMuted }]}>{formatDate(item.fecha)}</Text>
+          </View>
+          <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "28" : "15"}` }]}>
+            <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[s.statusText, { color: statusColor }]}>{getStatusLabel(item.estado)}</Text>
+          </View>
+        </View>
+      </View>
+      <Text style={[s.rowAmount, { color: textColor }]}>{formatCurrency(item.monto)}</Text>
+    </AnimatedPressable>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TransactionScreen({
@@ -105,15 +216,26 @@ export default function TransactionScreen({
   const [customDescription, setCustomDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const headerY   = useRef(new Animated.Value(-10)).current;
   const isEditing = editId !== null;
 
+  // Summary card entrance
+  const summaryScale   = useSharedValue(0.97);
+  const summaryOpacity = useSharedValue(0);
+  const summaryStyle   = useAnimatedStyle(() => ({
+    opacity: summaryOpacity.value,
+    transform: [{ scale: summaryScale.value }],
+  }));
+
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 450,
-      useNativeDriver: true,
-    }).start();
+    const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 380, useNativeDriver: true }),
+      Animated.timing(headerY,  { toValue: 0, duration: 420, easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+    ]).start();
+    summaryOpacity.value = withDelay(80,  withTiming(1,    { duration: 320, easing: easeOut }));
+    summaryScale.value   = withDelay(80,  withTiming(1,    { duration: 360, easing: easeOut }));
   }, []);
 
   const allCategorias = subcategorias
@@ -260,7 +382,7 @@ export default function TransactionScreen({
       <SafeAreaView style={s.safeArea} edges={["top"]}>
 
         {/* HEADER */}
-        <View style={s.header}>
+        <Animated.View style={[s.header, { transform: [{ translateY: headerY }] }]}>
           <View style={{ flex: 1 }}>
             <Text style={[s.headerTitle, { color: c.text }]}>{title}</Text>
             <TouchableOpacity
@@ -277,7 +399,7 @@ export default function TransactionScreen({
           <View style={[s.placaBadge, { backgroundColor: accentColor }]}>
             <Text style={[s.placaText, { color: "#fff" }]}>{placaActual}</Text>
           </View>
-        </View>
+        </Animated.View>
 
         <ScrollView
           style={s.scroll}
@@ -287,17 +409,14 @@ export default function TransactionScreen({
           <Animated.View style={{ opacity: fadeAnim }}>
 
             {/* SUMMARY CARD */}
-            <View
+            <Reanimated.View
               style={[
                 s.summaryCard,
                 {
-                  backgroundColor: isDark
-                    ? `${accentColor}14`
-                    : c.cardBg,
+                  backgroundColor: isDark ? `${accentColor}14` : c.cardBg,
                 },
-                isDark
-                  ? { borderWidth: 1, borderColor: `${accentColor}33` }
-                  : shadow,
+                isDark ? { borderWidth: 1, borderColor: `${accentColor}33` } : shadow,
+                summaryStyle,
               ]}>
               <View style={s.summaryTop}>
                 <View>
@@ -325,30 +444,24 @@ export default function TransactionScreen({
                   ]}
                 />
               </View>
-            </View>
+            </Reanimated.View>
 
             {/* CATEGORIES */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>
               Categorías
             </Text>
             <View style={s.catGrid}>
-              {categorias.map((cat) => (
-                <TouchableOpacity
+              {categorias.map((cat, index) => (
+                <CatCard
                   key={cat.id}
-                  style={[s.catCard, card]}
-                  onPress={() => openAdd(cat.id)}
-                  activeOpacity={0.75}>
-                  <View
-                    style={[
-                      s.catCircle,
-                      { backgroundColor: `${cat.color}${isDark ? "25" : "15"}` },
-                    ]}>
-                    <ItemIcon name={cat.iconName} size={cat.size} />
-                  </View>
-                  <Text style={[s.catLabel, { color: c.text }]} numberOfLines={1}>
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
+                  cat={cat}
+                  index={index}
+                  isDark={isDark}
+                  accentColor={accentColor}
+                  cardStyle={[s.catCard, card]}
+                  textColor={c.text}
+                  onPress={openAdd}
+                />
               ))}
             </View>
 
@@ -377,47 +490,25 @@ export default function TransactionScreen({
                 const cat = allCategorias.find(
                   (x) => x.name.toLowerCase() === item.tipo?.toLowerCase(),
                 );
-                const statusColor = getStatusColor(item.estado);
                 return (
-                  <TouchableOpacity
+                  <TransactionRow
                     key={`${item.id}-${index}`}
-                    style={[s.row, card, { marginBottom: 10 }]}
-                    activeOpacity={0.8}
-                    onPress={() => openEdit(item.id)}
-                    onLongPress={() => handleDelete(item.id)}>
-                    <View
-                      style={[
-                        s.rowIconWrap,
-                        { backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}` },
-                      ]}>
-                      {cat?.iconName ? (
-                        <ItemIcon name={cat.iconName} size={cat.size ?? 26} />
-                      ) : (
-                        <Ionicons name="cash" size={22} color={accentColor} />
-                      )}
-                    </View>
-                    <View style={s.rowInfo}>
-                      <Text style={[s.rowName, { color: c.text }]} numberOfLines={1}>
-                        {item.descripcion || item.tipo}
-                      </Text>
-                      <View style={s.rowMeta}>
-                        <View style={[s.datePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface }]}>
-                          <Text style={[s.datePillText, { color: c.textMuted }]}>
-                            {formatDate(item.fecha)}
-                          </Text>
-                        </View>
-                        <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "25" : "15"}` }]}>
-                          <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-                          <Text style={[s.statusText, { color: statusColor }]}>
-                            {getStatusLabel(item.estado)}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                    <Text style={[s.rowAmount, { color: c.text }]}>
-                      {formatCurrency(item.monto)}
-                    </Text>
-                  </TouchableOpacity>
+                    item={item}
+                    index={index}
+                    cat={cat}
+                    accentColor={accentColor}
+                    isDark={isDark}
+                    cardStyle={card}
+                    textColor={c.text}
+                    textSecondary={c.textSecondary}
+                    textMuted={c.textMuted}
+                    getStatusColor={getStatusColor}
+                    getStatusLabel={getStatusLabel}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    onPress={openEdit}
+                    onLongPress={handleDelete}
+                  />
                 );
               })
             )}

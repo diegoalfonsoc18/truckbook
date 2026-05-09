@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Reanimated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
@@ -50,7 +50,7 @@ export default function SolicitarVehiculo() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { placa: placaActual, setPlaca: setPlacaStore, setTipoCamion } = useVehiculoStore();
+  const { placa: placaActual, setPlaca: setPlacaStore, setTipoCamion, clearVehiculo } = useVehiculoStore();
 
   const [placa, setPlaca] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -67,7 +67,13 @@ export default function SolicitarVehiculo() {
     inputBg: { backgroundColor: isDark ? "#252540" : "#F0F0F5" },
   };
 
-  const cargarSolicitudes = useCallback(async () => {
+  // Ref para detectar cambios: estado + placa de cada relación conocida
+  const estadosPrevios = useRef<Record<string, { estado: string; placa: string }>>({});
+  // Ref para que el polling no use placa stale en closure
+  const placaActualRef = useRef(placaActual);
+  useEffect(() => { placaActualRef.current = placaActual; }, [placaActual]);
+
+  const cargarSolicitudes = useCallback(async (silencioso = false) => {
     if (!user?.id) return;
 
     // Cargar mis relaciones como conductor (excluyendo propietario)
@@ -79,6 +85,23 @@ export default function SolicitarVehiculo() {
       .order("created_at", { ascending: false });
 
     if (error || !relaciones?.length) {
+      // Si es polling silencioso, verificar si el activo fue eliminado
+      if (silencioso) {
+        const placaActiva = placaActualRef.current;
+        if (placaActiva) {
+          const prevActivo = Object.values(estadosPrevios.current)
+            .find((p) => p.placa === placaActiva && p.estado === "autorizado");
+          if (prevActivo) {
+            clearVehiculo();
+            Alert.alert(
+              "Acceso eliminado",
+              `Tu acceso a ${placaActiva} fue eliminado por el administrador.`,
+              [{ text: "OK" }]
+            );
+          }
+        }
+      }
+      estadosPrevios.current = {};
       setSolicitudes([]);
       return;
     }
@@ -95,25 +118,86 @@ export default function SolicitarVehiculo() {
       vehiculosMap[v.placa] = v.tipo_camion || "estacas";
     }
 
-    setSolicitudes(
-      relaciones.map((r) => ({
-        id: r.id,
-        vehiculo_placa: r.vehiculo_placa,
-        tipo_camion: vehiculosMap[r.vehiculo_placa] || "estacas",
-        estado: r.estado,
-        created_at: r.created_at,
-      }))
-    );
-  }, [user?.id]);
+    const nuevasSolicitudes: MiSolicitud[] = relaciones.map((r) => ({
+      id: r.id,
+      vehiculo_placa: r.vehiculo_placa,
+      tipo_camion: vehiculosMap[r.vehiculo_placa] || "estacas",
+      estado: r.estado,
+      created_at: r.created_at,
+    }));
 
+    setSolicitudes(nuevasSolicitudes);
+
+    if (silencioso) {
+      const placaActiva = placaActualRef.current;
+      const nuevosIds = new Set(nuevasSolicitudes.map((s) => s.id));
+
+      // 1) Detectar relaciones eliminadas (id desapareció)
+      for (const [id, prev] of Object.entries(estadosPrevios.current)) {
+        if (!nuevosIds.has(id) && prev.estado === "autorizado" && placaActiva === prev.placa) {
+          clearVehiculo();
+          Alert.alert(
+            "Acceso eliminado",
+            `Tu acceso a ${prev.placa} fue eliminado por el administrador.`,
+            [{ text: "OK" }]
+          );
+        }
+      }
+
+      // 2) Detectar cambios de estado
+      for (const sol of nuevasSolicitudes) {
+        const prev = estadosPrevios.current[sol.id];
+        if (!prev) continue;
+
+        if (prev.estado === "pendiente" && sol.estado === "autorizado") {
+          // Auto-activar el vehículo
+          await setPlacaStore(sol.vehiculo_placa);
+          setTipoCamion(sol.tipo_camion as TipoCamion);
+          Alert.alert(
+            "¡Acceso aprobado! ✓",
+            `${sol.vehiculo_placa} fue autorizado y está listo para usar.`,
+            [{ text: "OK" }]
+          );
+        } else if (prev.estado === "autorizado" && sol.estado === "rechazado" && placaActiva === sol.vehiculo_placa) {
+          // El vehículo activo fue revocado
+          clearVehiculo();
+          Alert.alert(
+            "Acceso revocado",
+            `Tu acceso a ${sol.vehiculo_placa} fue revocado por el administrador.`,
+            [{ text: "OK" }]
+          );
+        }
+      }
+    }
+
+    // Actualizar estados previos
+    const nuevosEstados: Record<string, { estado: string; placa: string }> = {};
+    for (const sol of nuevasSolicitudes) {
+      nuevosEstados[sol.id] = { estado: sol.estado, placa: sol.vehiculo_placa };
+    }
+    estadosPrevios.current = nuevosEstados;
+  }, [user?.id, setPlacaStore, setTipoCamion, clearVehiculo]);
+
+  // Carga inicial
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await cargarSolicitudes();
+      await cargarSolicitudes(false);
       setLoading(false);
     };
     init();
   }, [cargarSolicitudes]);
+
+  // Polling automático cada 8 segundos mientras la pantalla está en foco
+  useFocusEffect(
+    useCallback(() => {
+      const intervalo = setInterval(() => {
+        cargarSolicitudes(true);
+      }, 8000);
+
+      return () => clearInterval(intervalo);
+    }, [cargarSolicitudes])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

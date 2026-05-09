@@ -9,7 +9,18 @@ import {
   StyleSheet,
   Animated,
   Modal,
+  Pressable,
 } from "react-native";
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
+
+const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LineChart } from "react-native-chart-kit";
 import { useVehiculoStore } from "../../store/VehiculoStore";
@@ -125,7 +136,20 @@ export default function FinanzasGenerales() {
     return { inicio: first, fin: last };
   });
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim   = useRef(new Animated.Value(0)).current;
+  const headerY    = useRef(new Animated.Value(-10)).current;
+  const easeOut    = Easing.bezier(0.23, 1, 0.32, 1);
+
+  // Summary cards staggered entrance
+  const card1Opacity = useSharedValue(0); const card1Scale = useSharedValue(0.95);
+  const card2Opacity = useSharedValue(0); const card2Scale = useSharedValue(0.95);
+  const balOpacity   = useSharedValue(0); const balScale   = useSharedValue(0.96);
+  const chartOpacity = useSharedValue(0); const chartTransY = useSharedValue(12);
+
+  const card1Style  = useAnimatedStyle(() => ({ opacity: card1Opacity.value, transform: [{ scale: card1Scale.value }] }));
+  const card2Style  = useAnimatedStyle(() => ({ opacity: card2Opacity.value, transform: [{ scale: card2Scale.value }] }));
+  const balStyle    = useAnimatedStyle(() => ({ opacity: balOpacity.value,   transform: [{ scale: balScale.value }] }));
+  const chartStyle  = useAnimatedStyle(() => ({ opacity: chartOpacity.value, transform: [{ translateY: chartTransY.value }] }));
 
   // Cargar placas disponibles para admin/propietario
   useEffect(() => {
@@ -188,11 +212,19 @@ export default function FinanzasGenerales() {
         setError("Error al cargar datos");
       } finally {
         setLoading(false);
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }).start();
+        Animated.parallel([
+          Animated.timing(fadeAnim, { toValue: 1, duration: 380, useNativeDriver: true }),
+          Animated.timing(headerY,  { toValue: 0, duration: 420, easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+        ]).start();
+        // Stagger cards
+        card1Opacity.value = withDelay(60,  withTiming(1, { duration: 300, easing: easeOut }));
+        card1Scale.value   = withDelay(60,  withTiming(1, { duration: 340, easing: easeOut }));
+        card2Opacity.value = withDelay(130, withTiming(1, { duration: 300, easing: easeOut }));
+        card2Scale.value   = withDelay(130, withTiming(1, { duration: 340, easing: easeOut }));
+        balOpacity.value   = withDelay(200, withTiming(1, { duration: 320, easing: easeOut }));
+        balScale.value     = withDelay(200, withTiming(1, { duration: 360, easing: easeOut }));
+        chartOpacity.value = withDelay(280, withTiming(1, { duration: 320, easing: easeOut }));
+        chartTransY.value  = withDelay(280, withTiming(0, { duration: 360, easing: easeOut }));
       }
     };
     if (esMultiVehiculo || placaActual) cargarDatos();
@@ -326,7 +358,7 @@ export default function FinanzasGenerales() {
     <View style={[styles.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* HEADER FIJO */}
-        <View style={styles.headerFixed}>
+        <Animated.View style={[styles.headerFixed, { opacity: fadeAnim, transform: [{ translateY: headerY }] }]}>
           <View style={styles.header}>
             <View>
               <Text style={[styles.headerTitle, { color: c.text }]}>Finanzas</Text>
@@ -383,14 +415,14 @@ export default function FinanzasGenerales() {
               ))}
             </ScrollView>
           )}
-        </View>
+        </Animated.View>
 
         {/* CONTENIDO SCROLLEABLE */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
-          <Animated.View style={{ opacity: fadeAnim }}>
+          <View>
             {/* SELECTOR DE RANGO */}
             <View
               style={[
@@ -427,47 +459,37 @@ export default function FinanzasGenerales() {
 
             {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
             <View style={styles.summaryGrid}>
-              <View
+              <Reanimated.View
                 style={[
                   styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.border },
-                  { borderColor: c.income + "40" },
+                  { backgroundColor: c.cardBg, borderColor: c.income + "40" },
                   getShadow(isDark, "sm"),
+                  card1Style,
                 ]}>
-                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Ingresos
-                </Text>
-                <Text
-                  style={[styles.summaryCardValue, { color: c.income }]}>
-                  {formatCurrency(totalIngresos)}
-                </Text>
+                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>Ingresos</Text>
+                <Text style={[styles.summaryCardValue, { color: c.income }]}>{formatCurrency(totalIngresos)}</Text>
                 <Text style={styles.cardIcon}>📈</Text>
-              </View>
-              <View
+              </Reanimated.View>
+              <Reanimated.View
                 style={[
                   styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.border },
-                  { borderColor: c.expense + "40" },
+                  { backgroundColor: c.cardBg, borderColor: c.expense + "40" },
                   getShadow(isDark, "sm"),
+                  card2Style,
                 ]}>
-                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Gastos
-                </Text>
-                <Text
-                  style={[styles.summaryCardValue, { color: c.expense }]}>
-                  {formatCurrency(totalGastos)}
-                </Text>
+                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>Gastos</Text>
+                <Text style={[styles.summaryCardValue, { color: c.expense }]}>{formatCurrency(totalGastos)}</Text>
                 <Text style={styles.cardIcon}>📉</Text>
-              </View>
+              </Reanimated.View>
             </View>
 
             {/* BALANCE CARD */}
-            <View
+            <Reanimated.View
               style={[
                 styles.balanceCard,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                { borderColor: balance >= 0 ? c.income : c.expense },
+                { backgroundColor: c.cardBg, borderColor: balance >= 0 ? c.income : c.expense },
                 getShadow(isDark, "md"),
+                balStyle,
               ]}>
               <View style={styles.balanceHeader}>
                 <Text style={[styles.balanceLabel, { color: c.textSecondary }]}>
@@ -510,7 +532,7 @@ export default function FinanzasGenerales() {
                   ? "Ganancia en el período"
                   : "Pérdida en el período"}
               </Text>
-            </View>
+            </Reanimated.View>
 
             {/* TABS DE VISTA */}
             <View style={[styles.viewTabs, { backgroundColor: c.cardBg, borderColor: c.border }]}>
@@ -536,11 +558,12 @@ export default function FinanzasGenerales() {
             </View>
 
             {/* GRÁFICO */}
-            <View
+            <Reanimated.View
               style={[
                 styles.chartContainer,
                 { backgroundColor: c.cardBg, borderColor: c.border },
                 getShadow(isDark, "sm"),
+                chartStyle,
               ]}>
               <View style={styles.chartHeader}>
                 <Text style={[styles.chartTitle, { color: c.text }]}>Comparativa</Text>
@@ -618,7 +641,7 @@ export default function FinanzasGenerales() {
                 bezier
                 style={styles.chart}
               />
-            </View>
+            </Reanimated.View>
 
             {/* DETALLES */}
             <View
@@ -674,7 +697,7 @@ export default function FinanzasGenerales() {
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
         </ScrollView>
       </SafeAreaView>
 

@@ -20,7 +20,7 @@ type ConductorNavProp = NativeStackNavigationProp<
 export default function ConductorHome() {
   const navigation = useNavigation<ConductorNavProp>();
   const { colors: c } = useTheme();
-  const { placa: placaActual } = useVehiculoStore();
+  const { placa: placaActual, validarPlacaParaUsuario } = useVehiculoStore();
   const { user } = useAuth();
   const [refrescando, setRefrescando] = useState(false);
   const [invitacionesCount, setInvitacionesCount] = useState(0);
@@ -28,10 +28,12 @@ export default function ConductorHome() {
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
     useMultas(placaActual, !!placaActual);
 
-  // Registrar push token y cargar invitaciones pendientes
+  // Registrar push token, validar acceso al vehículo y cargar invitaciones pendientes
   useEffect(() => {
     if (!user?.id) return;
     registrarPushToken(user.id);
+    // Si el admin eliminó al conductor mientras la app estaba cerrada, limpiar el vehículo activo
+    validarPlacaParaUsuario(user.id);
     const cargar = async () => {
       const { data } = await cargarInvitacionesPendientes(user.id);
       setInvitacionesCount(data.length);
@@ -44,7 +46,7 @@ export default function ConductorHome() {
     {
       id: "solicitar_vehiculo",
       iconName: "truck",
-      iconSize: 36,
+      iconSize: 52,
       name: "Mis vehículos",
       subtitle: "Solicitar acceso a un vehículo",
       color: "#6C5CE7",
@@ -52,7 +54,7 @@ export default function ConductorHome() {
     {
       id: "invitaciones",
       iconName: "check",
-      iconSize: 36,
+      iconSize: 52,
       name: "Invitaciones",
       subtitle:
         invitacionesCount > 0

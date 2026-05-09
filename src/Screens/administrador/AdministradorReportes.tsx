@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Text,
   View,
@@ -8,7 +8,17 @@ import {
   SectionList,
   RefreshControl,
   ScrollView,
+  Animated,
+  Pressable,
 } from "react-native";
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
@@ -19,6 +29,68 @@ import {
   cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
+
+const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
+
+// ─── Animated registro card ───────────────────────────────────────────────────
+function RegistroCard({ item, isDark, cardStyle, c, formatCurrency }: {
+  item: any; isDark: boolean; cardStyle: object;
+  c: any; formatCurrency: (v: number) => string;
+}) {
+  const opacity = useSharedValue(0);
+  const transY  = useSharedValue(8);
+  const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 300, easing: easeOut });
+    transY.value  = withTiming(0, { duration: 340, easing: easeOut });
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: transY.value }],
+  }));
+
+  const isIngreso   = item.tipo === "ingreso";
+  const tipoColor   = isIngreso ? c.income : c.expense;
+  const estadoColor = item.estado === "aprobado" || item.estado === "confirmado"
+    ? c.income : item.estado === "rechazado" ? c.expense : c.textMuted;
+
+  return (
+    <Reanimated.View style={[cardStyle, { marginBottom: 8 }, animStyle]}>
+      <View style={s.registroHeader}>
+        <View style={s.registroHeaderLeft}>
+          <View style={[s.tipoBadge, { backgroundColor: tipoColor + (isDark ? "25" : "15") }]}>
+            <View style={[s.tipoDot, { backgroundColor: tipoColor }]} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: tipoColor }}>
+              {isIngreso ? "INGRESO" : "GASTO"}
+            </Text>
+          </View>
+          <View style={[s.miniPlaca, { backgroundColor: c.plateYellow }]}>
+            <Text style={[s.miniPlacaText, { color: c.plateText }]}>{item.placa}</Text>
+          </View>
+        </View>
+        <Text style={[s.registroMonto, { color: tipoColor }]}>
+          {isIngreso ? "+" : "-"}{formatCurrency(item.monto)}
+        </Text>
+      </View>
+      <Text style={[s.registroTipo, { color: c.text }]}>{item.tipo_movimiento}</Text>
+      {item.descripcion ? (
+        <Text style={[s.registroDesc, { color: c.textSecondary }]}>{item.descripcion}</Text>
+      ) : null}
+      <View style={s.registroFooter}>
+        <Text style={[s.registroConductor, { color: c.textMuted }]}>{item.conductor_nombre}</Text>
+        <View style={[s.estadoBadge, { backgroundColor: estadoColor + (isDark ? "25" : "15") }]}>
+          <View style={[s.estadoDot, { backgroundColor: estadoColor }]} />
+          <Text style={{ fontSize: 10, fontWeight: "700", color: estadoColor }}>
+            {item.estado?.toUpperCase()}
+          </Text>
+        </View>
+      </View>
+    </Reanimated.View>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface RegistroActividad {
   id: string;
@@ -235,6 +307,26 @@ export default function AdministradorReportes() {
   const cardBorder = isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {};
   const shadow = getShadow(isDark, "md");
 
+  // Entrance animations
+  const headerY        = useRef(new Animated.Value(-10)).current;
+  const headerFade     = useRef(new Animated.Value(0)).current;
+  const resumenScale   = useSharedValue(0.96);
+  const resumenOpacity = useSharedValue(0);
+  const resumenStyle   = useAnimatedStyle(() => ({
+    opacity: resumenOpacity.value,
+    transform: [{ scale: resumenScale.value }],
+  }));
+  const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerFade, { toValue: 1, duration: 350, useNativeDriver: true }),
+      Animated.timing(headerY,    { toValue: 0, duration: 400, easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+    ]).start();
+    resumenOpacity.value = withDelay(120, withTiming(1,    { duration: 320, easing: easeOut }));
+    resumenScale.value   = withDelay(120, withTiming(1,    { duration: 360, easing: easeOut }));
+  }, []);
+
   if (loading && placasDisponibles.length === 0) {
     return (
       <View style={[s.container, { backgroundColor: c.primary }]}>
@@ -256,7 +348,7 @@ export default function AdministradorReportes() {
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
         {/* HEADER */}
-        <View style={s.headerFixed}>
+        <Animated.View style={[s.headerFixed, { opacity: headerFade, transform: [{ translateY: headerY }] }]}>
           <View style={s.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
@@ -327,11 +419,12 @@ export default function AdministradorReportes() {
 
           {/* RESUMEN GENERAL */}
           {(totalIngresos > 0 || totalGastos > 0) && (
-            <View style={[
+            <Reanimated.View style={[
               s.resumenGeneral,
               { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
               cardBorder,
               shadow,
+              resumenStyle,
             ]}>
               <View style={s.resumenItem}>
                 <Text style={[s.resumenLabel, { color: c.textMuted }]}>Ingresos</Text>
@@ -357,9 +450,9 @@ export default function AdministradorReportes() {
                   {formatCurrency(balance)}
                 </Text>
               </View>
-            </View>
+            </Reanimated.View>
           )}
-        </View>
+        </Animated.View>
 
         {/* LISTA POR FECHA */}
         {loading ? (
@@ -438,73 +531,20 @@ export default function AdministradorReportes() {
                 </View>
               </View>
             )}
-            renderItem={({ item }) => {
-              const isIngreso = item.tipo === "ingreso";
-              const tipoColor = isIngreso ? c.income : c.expense;
-              const estadoColor =
-                item.estado === "aprobado" || item.estado === "confirmado"
-                  ? c.income
-                  : item.estado === "rechazado"
-                  ? c.expense
-                  : c.textMuted;
-
-              return (
-                <View
-                  style={[
-                    s.registroCard,
-                    { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
-                    cardBorder,
-                    getShadow(isDark, "sm"),
-                  ]}>
-                  <View style={s.registroHeader}>
-                    <View style={s.registroHeaderLeft}>
-                      <View
-                        style={[
-                          s.tipoBadge,
-                          { backgroundColor: tipoColor + (isDark ? "25" : "15") },
-                        ]}>
-                        <View style={[s.tipoDot, { backgroundColor: tipoColor }]} />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: tipoColor }}>
-                          {isIngreso ? "INGRESO" : "GASTO"}
-                        </Text>
-                      </View>
-                      <View style={[s.miniPlaca, { backgroundColor: c.plateYellow }]}>
-                        <Text style={[s.miniPlacaText, { color: c.plateText }]}>{item.placa}</Text>
-                      </View>
-                    </View>
-                    <Text style={[s.registroMonto, { color: tipoColor }]}>
-                      {isIngreso ? "+" : "-"}
-                      {formatCurrency(item.monto)}
-                    </Text>
-                  </View>
-
-                  <Text style={[s.registroTipo, { color: c.text }]}>
-                    {item.tipo_movimiento}
-                  </Text>
-                  {item.descripcion ? (
-                    <Text style={[s.registroDesc, { color: c.textSecondary }]}>
-                      {item.descripcion}
-                    </Text>
-                  ) : null}
-
-                  <View style={s.registroFooter}>
-                    <Text style={[s.registroConductor, { color: c.textMuted }]}>
-                      {item.conductor_nombre}
-                    </Text>
-                    <View
-                      style={[
-                        s.estadoBadge,
-                        { backgroundColor: estadoColor + (isDark ? "25" : "15") },
-                      ]}>
-                      <View style={[s.estadoDot, { backgroundColor: estadoColor }]} />
-                      <Text style={{ fontSize: 10, fontWeight: "700", color: estadoColor }}>
-                        {item.estado?.toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            }}
+            renderItem={({ item }) => (
+              <RegistroCard
+                item={item}
+                isDark={isDark}
+                cardStyle={[
+                  s.registroCard,
+                  { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg },
+                  cardBorder,
+                  getShadow(isDark, "sm"),
+                ]}
+                c={c}
+                formatCurrency={formatCurrency}
+              />
+            )}
           />
         )}
       </SafeAreaView>
