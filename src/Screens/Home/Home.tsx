@@ -69,29 +69,64 @@ interface Vehiculo {
 }
 
 const ICON_MAP: Record<TipoCamion, IconName> = {
-  estacas:         "estacas",
-  volqueta:        "volqueta2",
-  furgon:          "furgon",
-  grua:            "grua",
-  cisterna:        "cisterna",
-  planchon:        "planchon",
+  estacas: "estacas",
+  volqueta: "volqueta2",
+  furgon: "furgon",
+  grua: "grua",
+  cisterna: "cisterna",
+  planchon: "planchon",
   portacontenedor: "portaContenedor",
 };
 
 const TIPOS_CAMION = [
-  { id: "estacas"  as TipoCamion, label: "Estacas",  iconName: "estacas"  as IconName, color: "#00D9A5" },
-  { id: "volqueta" as TipoCamion, label: "Volqueta", iconName: "volqueta2" as IconName, color: "#FFB800" },
-  { id: "furgon"   as TipoCamion, label: "Furgón",   iconName: "furgon"   as IconName, color: "#6C5CE7" },
-  { id: "grua"     as TipoCamion, label: "Grúa",     iconName: "grua"     as IconName, color: "#E94560" },
-  { id: "cisterna"        as TipoCamion, label: "Cisterna",    iconName: "cisterna"        as IconName, color: "#74B9FF" },
-  { id: "planchon"        as TipoCamion, label: "Planchón",    iconName: "planchon"        as IconName, color: "#FDCB6E" },
-  { id: "portacontenedor" as TipoCamion, label: "Porta cont.", iconName: "portaContenedor" as IconName, color: "#00CEC9" },
+  {
+    id: "estacas" as TipoCamion,
+    label: "Estacas",
+    iconName: "estacas" as IconName,
+    color: "#00D9A5",
+  },
+  {
+    id: "volqueta" as TipoCamion,
+    label: "Volqueta",
+    iconName: "volqueta2" as IconName,
+    color: "#FFB800",
+  },
+  {
+    id: "furgon" as TipoCamion,
+    label: "Furgón",
+    iconName: "furgon" as IconName,
+    color: "#6C5CE7",
+  },
+  {
+    id: "grua" as TipoCamion,
+    label: "Grúa",
+    iconName: "grua" as IconName,
+    color: "#E94560",
+  },
+  {
+    id: "cisterna" as TipoCamion,
+    label: "Cisterna",
+    iconName: "cisterna" as IconName,
+    color: "#74B9FF",
+  },
+  {
+    id: "planchon" as TipoCamion,
+    label: "Planchón",
+    iconName: "planchon" as IconName,
+    color: "#FDCB6E",
+  },
+  {
+    id: "portacontenedor" as TipoCamion,
+    label: "Porta cont.",
+    iconName: "portaContenedor" as IconName,
+    color: "#00CEC9",
+  },
 ];
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
-const ICON_BG   = Platform.OS === "android" ? 62 : 70;
+const ICON_BG = Platform.OS === "android" ? 62 : 70;
 const ICON_CORE = Platform.OS === "android" ? 46 : 52;
-const ICON_MAX  = Platform.OS === "android" ? 46 : 52;
+const ICON_MAX = Platform.OS === "android" ? 46 : 52;
 
 // ─── Time-aware greeting ──────────────────────────────────────────────────────
 function getGreeting() {
@@ -116,15 +151,21 @@ function HeroCard({
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
   const reduceMotion = useReducedMotion();
-  const scale   = useSharedValue(1);
+  const scale = useSharedValue(1);
   const opacity = useSharedValue(reduceMotion ? 1 : 0);
-  const transY  = useSharedValue(reduceMotion ? 0 : 10);
+  const transY = useSharedValue(reduceMotion ? 0 : 10);
 
   useEffect(() => {
     if (reduceMotion) return;
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
-    opacity.value = withDelay(40,  withTiming(1, { duration: 300, easing: easeOut }));
-    transY.value  = withDelay(40,  withTiming(0, { duration: 340, easing: easeOut }));
+    opacity.value = withDelay(
+      40,
+      withTiming(1, { duration: 300, easing: easeOut }),
+    );
+    transY.value = withDelay(
+      40,
+      withTiming(0, { duration: 340, easing: easeOut }),
+    );
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -138,32 +179,47 @@ function HeroCard({
   return (
     <AnimatedPressable
       style={[s.heroCard, card, animStyle]}
-      onPressIn={() => { scale.value = withTiming(0.97, { duration: 100 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
+      onPressIn={() => {
+        scale.value = withTiming(0.97, { duration: 100 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 14, stiffness: 280 });
+      }}
       onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
-      accessibilityHint={item.subtitle || undefined}
-    >
+      accessibilityHint={item.subtitle || undefined}>
       {/* Subtle tint overlay */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: accent + "08", borderRadius: 18 }]} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: accent + "08", borderRadius: 18 },
+        ]}
+      />
 
-      {/* Icon — double ring */}
-      <View style={[s.heroIconBg, { backgroundColor: accent + "1A" }]}>
-        <View style={[s.heroIconCore, { backgroundColor: accent + "2E" }]}>
-          {item.iconName ? (
-            <ItemIcon name={item.iconName} size={Math.min(item.iconSize ?? 46, 46)} />
-          ) : (
-            <Ionicons name={(item.icon || "grid-outline") as any} size={26} color={accent} />
-          )}
-        </View>
+      {/* Icono grande — sin anillos, estilo Rappi */}
+      <View style={s.heroIconWrap}>
+        {item.iconName ? (
+          <ItemIcon
+            name={item.iconName}
+            size={Math.min(item.iconSize ?? 54, 54)}
+          />
+        ) : (
+          <Ionicons
+            name={(item.icon || "grid-outline") as any}
+            size={32}
+            color={accent}
+          />
+        )}
       </View>
 
       {/* Text */}
       <View style={s.heroInfo}>
         <Text style={[s.heroName, { color: c.text }]}>{item.name}</Text>
         {item.subtitle && (
-          <Text style={[s.heroSub, { color: c.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[s.heroSub, { color: c.textSecondary }]}
+            numberOfLines={1}>
             {item.subtitle}
           </Text>
         )}
@@ -203,16 +259,22 @@ function GridCard({
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
   const reduceMotion = useReducedMotion();
-  const scale   = useSharedValue(1);
+  const scale = useSharedValue(1);
   const opacity = useSharedValue(reduceMotion ? 1 : 0);
-  const transY  = useSharedValue(reduceMotion ? 0 : 12);
+  const transY = useSharedValue(reduceMotion ? 0 : 12);
 
   useEffect(() => {
     if (reduceMotion) return;
     const delay = Math.min(index * 55, 350);
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
-    opacity.value = withDelay(delay, withTiming(1, { duration: 280, easing: easeOut }));
-    transY.value  = withDelay(delay, withTiming(0, { duration: 320, easing: easeOut }));
+    opacity.value = withDelay(
+      delay,
+      withTiming(1, { duration: 280, easing: easeOut }),
+    );
+    transY.value = withDelay(
+      delay,
+      withTiming(0, { duration: 320, easing: easeOut }),
+    );
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -225,35 +287,36 @@ function GridCard({
   return (
     <AnimatedPressable
       style={[cardStyle, animStyle]}
-      onPressIn={() => { scale.value = withTiming(0.95, { duration: 100 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
+      onPressIn={() => {
+        scale.value = withTiming(0.95, { duration: 100 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 14, stiffness: 280 });
+      }}
       onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
-      accessibilityHint={item.subtitle || undefined}
-    >
-      <View style={{ position: "relative" }}>
-        {/* Outer colored circle — always 70px */}
-        <View style={[s.gridIconBg, { backgroundColor: accent + "1A" }]}>
-          {item.iconName ? (
-            // 3D webp icon — capped, centered in circle
-            <ItemIcon
-              name={item.iconName}
-              size={Math.min(item.iconSize ?? ICON_MAX, ICON_MAX)}
-            />
-          ) : (
-            // Ionicons — double-ring: inner tinted core + icon
-            <View style={[s.gridIconCore, { backgroundColor: accent + "2E" }]}>
-              <Ionicons
-                name={(item.icon || "grid-outline") as any}
-                size={22}
-                color={accent}
-              />
-            </View>
-          )}
-        </View>
+      accessibilityHint={item.subtitle || undefined}>
+      {/* Icono grande — estilo Rappi: sin anillos, protagonista de la tarjeta */}
+      <View style={s.gridIconWrap}>
+        {item.iconName ? (
+          <ItemIcon
+            name={item.iconName}
+            size={Math.min((item.iconSize ?? ICON_MAX) + 8, ICON_MAX + 8)}
+          />
+        ) : (
+          <Ionicons
+            name={(item.icon || "grid-outline") as any}
+            size={36}
+            color={accent}
+          />
+        )}
         {!!item.badgeCount && item.badgeCount > 0 && (
-          <View style={[s.badgeCount, { backgroundColor: c.expense, borderColor: c.primary }]}>
+          <View
+            style={[
+              s.badgeCount,
+              { backgroundColor: c.expense, borderColor: accent + "22" },
+            ]}>
             <Text style={[s.badgeCountText, { color: c.textInverse }]}>
               {item.badgeCount > 99 ? "99+" : item.badgeCount}
             </Text>
@@ -261,11 +324,6 @@ function GridCard({
         )}
       </View>
       <Text style={[s.gridCardName, { color: c.text }]}>{item.name}</Text>
-      {item.subtitle && (
-        <Text style={[s.gridCardSub, { color: c.textSecondary }]} numberOfLines={1}>
-          {item.subtitle}
-        </Text>
-      )}
       {renderBadge?.(item)}
     </AnimatedPressable>
   );
@@ -298,11 +356,11 @@ export default function HomeBaseAdapted({
   const [cargando, setCargando] = useState(false);
   const [conductorActual, setConductorActual] = useState<string | undefined>();
 
-  const fadeAnim   = useRef(new Animated.Value(0)).current;
-  const headerY    = useRef(new Animated.Value(-8)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const headerY = useRef(new Animated.Value(-8)).current;
 
   // Vehicle card press animation
-  const vcScale    = useSharedValue(1);
+  const vcScale = useSharedValue(1);
   const vcAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: vcScale.value }],
   }));
@@ -310,8 +368,17 @@ export default function HomeBaseAdapted({
   useEffect(() => {
     if (user?.id) cargarVehiculos();
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 380, useNativeDriver: true }),
-      Animated.timing(headerY,  { toValue: 0, duration: 420, easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerY, {
+        toValue: 0,
+        duration: 420,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        useNativeDriver: true,
+      }),
     ]).start();
   }, [user?.id]);
 
@@ -478,12 +545,18 @@ export default function HomeBaseAdapted({
       <SafeAreaView style={s.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
           {/* HEADER */}
-          <Animated.View style={[s.header, { transform: [{ translateY: headerY }] }]}>
+          <Animated.View
+            style={[s.header, { transform: [{ translateY: headerY }] }]}>
             <View style={{ flex: 1 }}>
               <View style={s.rolePill}>
                 <View style={[s.roleDot, { backgroundColor: c.accent }]} />
                 <Text style={[s.roleText, { color: c.textMuted }]}>
-                  {getGreeting()} · {role === "conductor" ? "Conductor" : role === "propietario" ? "Propietario" : "Administrador"}
+                  {getGreeting()} ·{" "}
+                  {role === "conductor"
+                    ? "Conductor"
+                    : role === "propietario"
+                      ? "Propietario"
+                      : "Administrador"}
                 </Text>
               </View>
               <Text
@@ -498,18 +571,22 @@ export default function HomeBaseAdapted({
               accessibilityRole="button"
               accessibilityLabel="Mi cuenta"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <View style={[
-                s.avatarRing,
-                {
-                  borderColor: isDark ? c.accent + "70" : "rgba(255,255,255,0.95)",
-                  shadowColor: c.accent,
-                  shadowOpacity: isDark ? 0.35 : 0.2,
-                }
-              ]}>
+              <View
+                style={[
+                  s.avatarRing,
+                  {
+                    borderColor: isDark
+                      ? c.accent + "70"
+                      : "rgba(255,255,255,0.95)",
+                    shadowColor: c.accent,
+                    shadowOpacity: isDark ? 0.35 : 0.2,
+                  },
+                ]}>
                 {avatarUrl ? (
                   <Image source={{ uri: avatarUrl }} style={s.avatar} />
                 ) : (
-                  <View style={[s.avatarFallback, { backgroundColor: c.accent }]}>
+                  <View
+                    style={[s.avatarFallback, { backgroundColor: c.accent }]}>
                     <Text style={[s.avatarText, { color: c.accentText }]}>
                       {userInitials}
                     </Text>
@@ -522,56 +599,132 @@ export default function HomeBaseAdapted({
           {/* VEHICLE CARD */}
           {showCamionHeader && (
             <AnimatedPressable
-              style={[s.vehicleCardOuter, { backgroundColor: isDark ? c.border : (tipoCamionData?.color || c.accent) + "1A" }, vcAnimStyle]}
-              onPressIn={() => { vcScale.value = withTiming(0.98, { duration: 100 }); }}
-              onPressOut={() => { vcScale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+              style={[
+                s.vehicleCardOuter,
+                {
+                  backgroundColor: isDark
+                    ? c.border
+                    : (tipoCamionData?.color || c.accent) + "1A",
+                },
+                vcAnimStyle,
+              ]}
+              onPressIn={() => {
+                vcScale.value = withTiming(0.98, { duration: 100 });
+              }}
+              onPressOut={() => {
+                vcScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+              }}
               onPress={() => setModalVehiculosVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel={placaActual ? `Vehículo activo: ${placaActual}, ${tipoCamionData?.label || ""}` : "Seleccionar vehículo"}
+              accessibilityLabel={
+                placaActual
+                  ? `Vehículo activo: ${placaActual}, ${tipoCamionData?.label || ""}`
+                  : "Seleccionar vehículo"
+              }
               accessibilityHint="Toca para cambiar de vehículo">
               {/* Inner core — double-bezel */}
               <View style={[s.vehicleCardInner, { backgroundColor: c.cardBg }]}>
                 <View style={s.vehicleCardContent}>
                   {/* Circular icon bg — consistent with grid cards */}
-                  <View style={[s.vehicleIconBg, { backgroundColor: (tipoCamionData?.color || c.accent) + "1A" }]}>
-                    <View style={[s.vehicleIconCore, { backgroundColor: (tipoCamionData?.color || c.accent) + "2E" }]}>
+                  <View
+                    style={[
+                      s.vehicleIconBg,
+                      {
+                        backgroundColor:
+                          (tipoCamionData?.color || c.accent) + "1A",
+                      },
+                    ]}>
+                    <View
+                      style={[
+                        s.vehicleIconCore,
+                        {
+                          backgroundColor:
+                            (tipoCamionData?.color || c.accent) + "2E",
+                        },
+                      ]}>
                       <ItemIcon name={camionIconName} size={44} />
                     </View>
                   </View>
                   <View style={s.vehicleInfo}>
                     <View style={s.vehicleStatusRow}>
                       <Text style={[s.vehicleType, { color: c.text }]}>
-                        {vehicleCardTitle || tipoCamionData?.label || "Sin vehículo"}
+                        {vehicleCardTitle ||
+                          tipoCamionData?.label ||
+                          "Sin vehículo"}
                       </Text>
                       {placaActual && (
-                        <View style={[s.activoBadge, { backgroundColor: c.accent + "20" }]}>
-                          <View style={[s.activoDot, { backgroundColor: c.accent }]} />
-                          <Text style={[s.activoText, { color: c.accent }]}>Activo</Text>
+                        <View
+                          style={[
+                            s.activoBadge,
+                            { backgroundColor: c.accent + "20" },
+                          ]}>
+                          <View
+                            style={[s.activoDot, { backgroundColor: c.accent }]}
+                          />
+                          <Text style={[s.activoText, { color: c.accent }]}>
+                            Activo
+                          </Text>
                         </View>
                       )}
                     </View>
                     {placaActual ? (
-                      <View style={[s.placaBadge, { backgroundColor: (tipoCamionData?.color || c.accent) + "22", borderColor: (tipoCamionData?.color || c.accent) + "55", borderWidth: 1 }]}>
-                        <Text style={[s.placaText, { color: tipoCamionData?.color || c.accent }]}>
+                      <View
+                        style={[
+                          s.placaBadge,
+                          {
+                            backgroundColor:
+                              (tipoCamionData?.color || c.accent) + "22",
+                            borderColor:
+                              (tipoCamionData?.color || c.accent) + "55",
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            s.placaText,
+                            { color: tipoCamionData?.color || c.accent },
+                          ]}>
                           {placaActual}
                         </Text>
                       </View>
                     ) : (
-                      <View style={[s.vehicleCtaWrap, { backgroundColor: c.accent + "18", borderColor: c.accent + "40", borderWidth: 1 }]}>
-                        <Ionicons name="add-circle-outline" size={13} color={c.accent} />
+                      <View
+                        style={[
+                          s.vehicleCtaWrap,
+                          {
+                            backgroundColor: c.accent + "18",
+                            borderColor: c.accent + "40",
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        <Ionicons
+                          name="add-circle-outline"
+                          size={13}
+                          color={c.accent}
+                        />
                         <Text style={[s.vehicleCtaText, { color: c.accent }]}>
                           Seleccionar vehículo
                         </Text>
                       </View>
                     )}
                     {conductorActual && (
-                      <Text style={[s.vehicleConductor, { color: c.textMuted }]} numberOfLines={1}>
+                      <Text
+                        style={[s.vehicleConductor, { color: c.textMuted }]}
+                        numberOfLines={1}>
                         {conductorActual}
                       </Text>
                     )}
                   </View>
-                  <View style={[s.chevronWrap, { backgroundColor: c.border + "80" }]}>
-                    <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+                  <View
+                    style={[
+                      s.chevronWrap,
+                      { backgroundColor: c.border + "80" },
+                    ]}>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={c.textMuted}
+                    />
                   </View>
                 </View>
               </View>
@@ -582,7 +735,6 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
-
             {/* HERO — primer item, ancho completo */}
             {items.length > 0 && (
               <HeroCard
@@ -597,7 +749,11 @@ export default function HomeBaseAdapted({
             {/* 2-COL GRID — resto de items */}
             {items.length > 1 && (
               <>
-                <Text style={[s.sectionLabel, { color: c.textMuted }]}>MÁS ACCESOS</Text>
+                <View style={s.sectionHeader}>
+                  <Text style={[s.sectionLabel, { color: c.textMuted }]}>
+                    MÁS ACCESOS
+                  </Text>
+                </View>
                 <View style={s.grid}>
                   {items.slice(1).map((item, index) => (
                     <GridCard
@@ -750,7 +906,11 @@ export default function HomeBaseAdapted({
                 <TouchableOpacity
                   style={[s.addButton, { backgroundColor: c.accent }]}
                   accessibilityRole="button"
-                  accessibilityLabel={role === "conductor" ? "Solicitar acceso a vehículo" : "Agregar nuevo vehículo"}
+                  accessibilityLabel={
+                    role === "conductor"
+                      ? "Solicitar acceso a vehículo"
+                      : "Agregar nuevo vehículo"
+                  }
                   onPress={() => {
                     setModalVehiculosVisible(false);
                     role === "conductor"
@@ -892,12 +1052,15 @@ export default function HomeBaseAdapted({
                       ]}
                       onPress={handleGuardarPlaca}
                       accessibilityRole="button"
-                      accessibilityLabel={role === "conductor" ? "Enviar solicitud" : "Guardar"}
+                      accessibilityLabel={
+                        role === "conductor" ? "Enviar solicitud" : "Guardar"
+                      }
                       disabled={!placaTemporal.trim() || cargando}>
                       {cargando ? (
                         <ActivityIndicator color={c.accentText} />
                       ) : (
-                        <Text style={[s.btnPrimaryText, { color: c.accentText }]}>
+                        <Text
+                          style={[s.btnPrimaryText, { color: c.accentText }]}>
                           {role === "conductor"
                             ? "Enviar solicitud"
                             : "Guardar"}
@@ -970,28 +1133,27 @@ const s = StyleSheet.create({
   heroCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    gap: 14,
+    padding: 18,
+    gap: 16,
     marginBottom: 12,
+    minHeight: 90,
     overflow: "hidden",
   },
-  heroIconBg: {
-    width: 72,
-    height: 72,
-    borderRadius: 99,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroIconCore: {
-    width: 56,
-    height: 56,
-    borderRadius: 99,
+  // Rappi-style: icono directo, sin anillos
+  heroIconWrap: {
+    width: 64,
+    height: 64,
     alignItems: "center",
     justifyContent: "center",
   },
   heroInfo: { flex: 1 },
-  heroName: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3, marginBottom: 3 },
-  heroSub: { fontSize: 13, lineHeight: 18 },
+  heroName: {
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  heroSub: { fontSize: 12, lineHeight: 17 },
   heroChevron: {
     width: 44,
     height: 44,
@@ -1010,7 +1172,12 @@ const s = StyleSheet.create({
   heroBadgeText: { fontSize: 12, fontWeight: "800" },
 
   // VEHICLE STATUS
-  vehicleStatusRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  vehicleStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
   activoBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -1088,47 +1255,57 @@ const s = StyleSheet.create({
   },
 
   // GRID
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    marginTop: 6,
+  },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: "700",
     letterSpacing: 1.4,
-    marginBottom: 12,
-    marginTop: 4,
   },
   gridContainer: { paddingBottom: 100 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: Platform.OS === "android" ? 8 : 12 },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Platform.OS === "android" ? 10 : 12,
+    //backgroundColor: "#0ecc00",
+  },
   gridCard: {
-    width: (width - H_PAD * 2 - (Platform.OS === "android" ? 8 : 12)) / 2,
-    padding: Platform.OS === "android" ? 14 : 20,
+    width: (width - H_PAD * 2 - (Platform.OS === "android" ? 6 : 12)) / 2,
+    paddingTop: Platform.OS === "android" ? 12 : 14,
+    paddingBottom: Platform.OS === "android" ? 10 : 12,
+    paddingHorizontal: 10,
     alignItems: "center",
+    minHeight: Platform.OS === "android" ? 110 : 120,
+    justifyContent: "flex-end",
+    overflow: "hidden",
   },
 
-  // Icon bg circle (outer) — fixed size, always shows
-  gridIconBg: {
-    width: ICON_BG,
-    height: ICON_BG,
-    borderRadius: 99,
+  // Rappi-style: icono directo, sin anillos
+  gridIconWrap: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Platform.OS === "android" ? 10 : 16,
-  },
-  // Inner tinted ring — only for Ionicon items
-  gridIconCore: {
-    width: ICON_CORE,
-    height: ICON_CORE,
-    borderRadius: 99,
-    alignItems: "center",
-    justifyContent: "center",
+    width: "100%",
+    marginBottom: Platform.OS === "android" ? 6 : 8,
   },
 
   gridCardName: {
-    fontSize: Platform.OS === "android" ? 13 : 14,
-    fontWeight: "700",
-    marginBottom: 3,
+    fontSize: Platform.OS === "android" ? 12 : 13,
+    fontWeight: "600",
     textAlign: "center",
     letterSpacing: -0.2,
   },
-  gridCardSub: { fontSize: Platform.OS === "android" ? 11 : 12, marginBottom: 2, textAlign: "center" },
+  gridCardSub: {
+    fontSize: Platform.OS === "android" ? 10 : 11,
+    textAlign: "center",
+    lineHeight: Platform.OS === "android" ? 14 : 16,
+    marginTop: 2,
+  },
   badgeCount: {
     position: "absolute",
     top: -4,
@@ -1202,7 +1379,12 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   vehicleOptionInfo: { flex: 1 },
-  vehicleOptionType: { fontSize: 15, fontWeight: "600", marginBottom: 2, letterSpacing: -0.2 },
+  vehicleOptionType: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 2,
+    letterSpacing: -0.2,
+  },
   vehicleOptionPlaca: {
     fontSize: 13,
     fontFamily: Platform.select({ ios: "Courier New", android: "monospace" }),

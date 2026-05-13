@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TruckBook · Home Design Variants</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0e0e0e;
+    min-height: 100vh;
+    font-family: -apple-system, 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+  }
+  .page-header {
+    text-align: center;
+    margin-bottom: 56px;
+    width: 100%;
+  }
+  .page-header h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    font-family: 'EB Garamond', serif;
+    font-size: 28px;
+    color: #e0e0e0;
+    font-style: italic;
+  }
+  .variants-row {
+    display: flex;
+    gap: 52px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .variant-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .variant-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #444;
+  }
+  .variant-name {
+    font-family: 'EB Garamond', serif;
+    font-size: 18px;
+    color: #aaa;
+    text-align: center;
+    line-height: 1.3;
+    margin-top: -8px;
+  }
+  .variant-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #383838;
+    text-align: center;
+    max-width: 220px;
+    line-height: 1.6;
+  }
+  /* IosFrame styles */
+  .ios-wrapper {
+    display: inline-block;
+    padding: 12px;
+    background: #111;
+    border-radius: 60px;
+    box-shadow: 0 0 0 1.5px #2a2a2a, 0 24px 80px rgba(0,0,0,0.7);
+    position: relative;
+  }
+  .ios-screen {
+    position: relative;
+    border-radius: 48px;
+    overflow: hidden;
+    width: 340px;
+    height: 736px;
+  }
+  .ios-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 107px;
+    height: 31px;
+    background: #000;
+    border-radius: 999px;
+    z-index: 30;
+  }
+  .ios-statusbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: -apple-system, 'SF Pro Text', sans-serif;
+    z-index: 20;
+    pointer-events: none;
+    letter-spacing: -0.01em;
+  }
+  .ios-statusbar .status-icons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .ios-home-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    border-radius: 999px;
+    z-index: 10;
+  }
+  .ios-content {
+    position: absolute;
+    top: 46px;
+    left: 0; right: 0; bottom: 30px;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>TruckBook · Exploración de diseño</h1>
+  <p>3 direcciones para la pantalla Home</p>
+</div>
+
+<div class="variants-row" id="root"></div>
+
+<script type="text/babel">
+
+/* ─────────────────────────── SVG ICONS ─────────────────────────── */
+
+const SvgTruck = ({ size = 24, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="8" width="14" height="12" rx="2"/>
+    <path d="M15 12h4l3 4v4h-7V8"/>
+    <circle cx="5.5" cy="21" r="1.5" fill={color} stroke="none"/>
+    <circle cx="18.5" cy="21" r="1.5" fill={color} stroke="none"/>
+  </svg>
+);
+
+const SvgReceipt = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 2v20l3-2 3 2 3-2 3 2 3-2V2l-3 2-3-2-3 2-3-2-3 2z"/>
+    <line x1="8" y1="9" x2="16" y2="9"/>
+    <line x1="8" y1="13" x2="13" y2="13"/>
+  </svg>
+);
+
+const SvgCash = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2"/>
+    <circle cx="12" cy="12" r="3"/>
+    <line x1="6" y1="12" x2="6" y2="12" strokeWidth="2.5"/>
+    <line x1="18" y1="12" x2="18" y2="12" strokeWidth="2.5"/>
+  </svg>
+);
+
+const SvgChart = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10"/>
+    <line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/>
+    <line x1="2" y1="20" x2="22" y2="20"/>
+  </svg>
+);
+
+const SvgChevronRight = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+);
+
+const SvgBell = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+
+const SvgPlus = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+);
+
+const SvgUser = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const SvgGps = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+  </svg>
+);
+
+const SvgFuel = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 22V6l6-4h6l2 4h2a1 1 0 0 1 1 1v4"/>
+    <path d="M3 22h12"/>
+    <path d="M15 22V10"/>
+    <path d="M19 10v5a2 2 0 0 0 2 2v0"/>
+  </svg>
+);
+
+const SvgCheckCircle = ({ size = 14, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+
+const SvgTrendUp = ({ size = 14, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+    <polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
+/* ─────────────────────────── STATUS BAR ─────────────────────────── */
+
+function StatusBar({ textColor }) {
+  return (
+    <div className="ios-statusbar" style={{ color: textColor }}>
+      <span>9:41</span>
+      <div className="status-icons">
+        <svg width="17" height="12" viewBox="0 0 17 12" fill={textColor}>
+          <rect x="0" y="8" width="3" height="4" rx="0.5" opacity="0.3"/>
+          <rect x="4.5" y="5" width="3" height="7" rx="0.5" opacity="0.6"/>
+          <rect x="9" y="2" width="3" height="10" rx="0.5" opacity="0.8"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="0.5"/>
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <path d="M8 10.5a1 1 0 100-2 1 1 0 000 2z" fill={textColor}/>
+          <path d="M3.5 6.5a6.3 6.3 0 019 0" stroke={textColor} strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+          <path d="M0.5 3.5a11 11 0 0115 0" stroke={textColor} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.5"/>
+        </svg>
+        <svg width="26" height="13" viewBox="0 0 26 13" fill="none">
+          <rect x="0.75" y="0.75" width="22.5" height="11.5" rx="2.5" stroke={textColor} strokeWidth="1.5" opacity="0.4"/>
+          <rect x="2.5" y="2.5" width="18" height="8" rx="1.5" fill={textColor} opacity="0.9"/>
+          <rect x="24" y="4" width="2" height="5" rx="1" fill={textColor} opacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function HomeIndicator({ color }) {
+  return <div className="ios-home-indicator" style={{ background: color }} />;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANTE A — MINIMALISTA · Kenya Hara / Muji
+   Fondo casi blanco, tipografía como protagonista, sin tarjetas pesadas
+═══════════════════════════════════════════════════════════════════ */
+function VarianteA() {
+  const bg = '#F7F6F2';
+  const ink = '#1A1A1A';
+  const sub = '#888';
+  const line = '#E2E0DA';
+  const accent = '#1A1A1A';
+
+  const items = [
+    { label: 'Gastos', value: '$340k', icon: <SvgReceipt size={18} color={ink} /> },
+    { label: 'Ingresos', value: '$1.2M', icon: <SvgCash size={18} color={ink} /> },
+    { label: 'Reportes', icon: <SvgChart size={18} color={ink} /> },
+    { label: 'Combustible', icon: <SvgFuel size={18} color={ink} /> },
+  ];
+
+  return (
+    <div style={{ width: 340, height: 736, background: bg, fontFamily: "'Inter', sans-serif", position: 'relative', overflowY: 'auto' }}>
+      {/* Header */}
+      <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: sub, marginBottom: 2 }}>TruckBook</p>
+          <h1 style={{ fontSize: 22, fontWeight: 300, color: ink, letterSpacing: '-0.02em', fontFamily: "'EB Garamond', serif", fontStyle: 'italic' }}>Buenos días,<br/><span style={{ fontStyle: 'normal', fontWeight: 500 }}>Carlos</span></h1>
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <SvgUser size={16} color={sub} />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: line, margin: '18px 24px' }} />
+
+      {/* Vehicle */}
+      <div style={{ margin: '0 24px 20px', padding: '16px', border: `1px solid ${line}`, borderRadius: 8, background: '#fff' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <p style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: sub }}>Vehículo activo</p>
+          <SvgChevronRight size={13} color={sub} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <SvgTruck size={28} color={ink} />
+          <div>
+            <p style={{ fontSize: 18, fontWeight: 600, color: ink, letterSpacing: '0.06em' }}>ABC-123</p>
+            <p style={{ fontSize: 11, color: sub }}>Furgón · autorizado</p>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <SvgCheckCircle size={12} color="#2ECC71" />
+            <span style={{ fontSize: 10, color: '#2ECC71', fontWeight: 500 }}>Activo</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Section label */}
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: sub, padding: '0 24px', marginBottom: 12 }}>Acciones</p>
+
+      {/* Grid 2×2 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, margin: '0 24px', border: `1px solid ${line}`, borderRadius: 8, overflow: 'hidden', background: line }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ background: bg, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {item.icon}
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 500, color: ink }}>{item.label}</p>
+              {item.value && <p style={{ fontSize: 11, color: sub, marginTop: 1 }}>{item.value}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: line, margin: '20px 24px' }} />
+
+      {/* Recent */}
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: sub, padding: '0 24px', marginBottom: 10 }}>Reciente</p>
+      {[
+        { label: 'Gasto — Peaje Bosa', amount: '−$8.500', date: 'Hoy' },
+        { label: 'Ingreso — Flete Cali', amount: '+$340.000', date: 'Ayer' },
+      ].map((row, i) => (
+        <div key={i} style={{ padding: '11px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: i < 1 ? `1px solid ${line}` : 'none' }}>
+          <div>
+            <p style={{ fontSize: 13, color: ink }}>{row.label}</p>
+            <p style={{ fontSize: 10, color: sub, marginTop: 1 }}>{row.date}</p>
+          </div>
+          <p style={{ fontSize: 13, fontWeight: 600, color: row.amount.startsWith('+') ? '#2ECC71' : '#E74C3C', fontFamily: "'JetBrains Mono', monospace" }}>{row.amount}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANTE B — MODERN HIERARCHY · Pentagram / information design
+   Dark cards, strong typographic hierarchy, bento layout, data-forward
+═══════════════════════════════════════════════════════════════════ */
+function VarianteB() {
+  const bg = '#111113';
+  const card1 = '#1C1C1E';
+  const card2 = '#222226';
+  const ink = '#FFFFFF';
+  const sub = '#8E8E93';
+  const accent = '#F5C842';
+  const accentDim = 'rgba(245,200,66,0.12)';
+  const green = '#30D158';
+  const red = '#FF453A';
+
+  return (
+    <div style={{ width: 340, height: 736, background: bg, fontFamily: "'Inter', sans-serif", position: 'relative', overflowY: 'auto' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <p style={{ fontSize: 11, color: sub, fontWeight: 400, letterSpacing: '0.04em' }}>Martes, 13 mayo</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: ink, letterSpacing: '-0.03em', marginTop: 1 }}>TruckBook</h1>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ width: 38, height: 38, borderRadius: '50%', background: card1, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <SvgBell size={16} color={sub} />
+          </div>
+          <div style={{ width: 38, height: 38, borderRadius: '50%', background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>C</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Vehicle hero card */}
+      <div style={{ margin: '16px 20px 0', background: card1, borderRadius: 16, padding: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ fontSize: 10, color: sub, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, marginBottom: 4 }}>Vehículo activo</p>
+            <p style={{ fontSize: 24, fontWeight: 700, color: ink, letterSpacing: '-0.02em' }}>ABC-123</p>
+            <p style={{ fontSize: 12, color: sub, marginTop: 2 }}>Furgón · Propietario</p>
+          </div>
+          <div style={{ background: accentDim, borderRadius: 10, padding: '8px', border: `1px solid ${accent}30` }}>
+            <SvgTruck size={28} color={accent} />
+          </div>
+        </div>
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '14px 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          {[
+            { label: 'SOAT', value: 'Vigente', ok: true },
+            { label: 'RTM', value: 'Vigente', ok: true },
+            { label: 'Multas', value: '0', ok: true },
+          ].map((s, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 10, color: sub, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: s.ok ? green : red, marginTop: 2 }}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'flex', gap: 10, margin: '10px 20px 0' }}>
+        {[
+          { label: 'Ingresos', value: '$1.2M', delta: '+12%', color: green },
+          { label: 'Gastos', value: '$340k', delta: '+3%', color: red },
+        ].map((s, i) => (
+          <div key={i} style={{ flex: 1, background: card1, borderRadius: 14, padding: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <p style={{ fontSize: 10, color: sub, textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500 }}>{s.label}</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: ink, marginTop: 4, letterSpacing: '-0.02em' }}>{s.value}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <SvgTrendUp size={11} color={s.color} />
+              <p style={{ fontSize: 10, color: s.color, fontWeight: 600 }}>{s.delta}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions grid */}
+      <p style={{ fontSize: 10, fontWeight: 600, color: sub, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '14px 20px 8px' }}>Módulos</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 20px' }}>
+        {[
+          { label: 'Gastos', sub: 'Registrar', icon: <SvgReceipt size={20} color={accent} />, accent: true },
+          { label: 'Ingresos', sub: 'Ver todo', icon: <SvgCash size={20} color={green} />, greenAccent: true },
+          { label: 'Reportes', sub: 'Análisis', icon: <SvgChart size={20} color={sub} /> },
+          { label: 'Combustible', sub: 'Control', icon: <SvgFuel size={20} color={sub} /> },
+        ].map((item, i) => (
+          <div key={i} style={{
+            background: item.accent ? accentDim : item.greenAccent ? 'rgba(48,209,88,0.08)' : card1,
+            borderRadius: 14,
+            padding: '14px',
+            border: item.accent ? `1px solid ${accent}30` : item.greenAccent ? `1px solid ${green}30` : '1px solid rgba(255,255,255,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 18,
+          }}>
+            {item.icon}
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: ink }}>{item.label}</p>
+              <p style={{ fontSize: 10, color: sub, marginTop: 1 }}>{item.sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Add button */}
+      <div style={{ margin: '16px 20px 0', background: accent, borderRadius: 14, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <SvgPlus size={16} color="#111" />
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#111', letterSpacing: '-0.01em' }}>Registrar movimiento</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANTE C — PREMIUM DARK · Aviation cockpit / Linear
+   Full dark, layered depth, accent amarillo, tipografía técnica precisa
+═══════════════════════════════════════════════════════════════════ */
+function VarianteC() {
+  const bg = '#0A0A0C';
+  const surface = '#131316';
+  const elevated = '#1A1A1F';
+  const border = 'rgba(255,255,255,0.05)';
+  const ink = '#F0F0F0';
+  const sub = '#6B6B72';
+  const muted = '#3C3C44';
+  const accent = '#F5C842';
+  const green = '#2ECC71';
+
+  const navItems = [
+    { icon: <SvgReceipt size={20} color={sub} />, label: 'Gastos' },
+    { icon: <SvgCash size={20} color={sub} />, label: 'Ingresos' },
+    { icon: <SvgChart size={20} color={accent} />, label: 'Reportes', active: true },
+    { icon: <SvgUser size={20} color={sub} />, label: 'Cuenta' },
+  ];
+
+  return (
+    <div style={{ width: 340, height: 736, background: bg, fontFamily: "'Inter', sans-serif", position: 'relative', overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Top bar */}
+      <div style={{ padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: accent }} />
+          <p style={{ fontSize: 12, fontWeight: 600, color: ink, letterSpacing: '0.08em', textTransform: 'uppercase' }}>TruckBook</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid ${border}`, background: elevated, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <SvgGps size={11} color={sub} />
+            <p style={{ fontSize: 10, color: sub, fontWeight: 500 }}>En ruta</p>
+          </div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: elevated, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <SvgBell size={14} color={sub} />
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 8px' }}>
+
+        {/* Vehicle card — full width hero */}
+        <div style={{ margin: '12px 16px 0', background: surface, borderRadius: 14, border: `1px solid ${border}`, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 16px', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${accent}18`, border: `1px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SvgTruck size={18} color={accent} />
+              </div>
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: ink, letterSpacing: '0.05em' }}>ABC-123</p>
+                <p style={{ fontSize: 10, color: sub }}>Furgón</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px', borderRadius: 5, background: `${green}14`, border: `1px solid ${green}30` }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: green }} />
+              <p style={{ fontSize: 10, fontWeight: 600, color: green, letterSpacing: '0.04em' }}>Autorizado</p>
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between' }}>
+            {[
+              { label: 'SOAT', value: '247d', ok: true },
+              { label: 'RTM', value: '89d', ok: true },
+              { label: 'Multas', value: 'Limpio', ok: true },
+            ].map((s, i) => (
+              <div key={i}>
+                <p style={{ fontSize: 9, color: sub, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</p>
+                <p style={{ fontSize: 12, fontWeight: 600, color: s.ok ? green : '#FF453A', marginTop: 2 }}>{s.value}</p>
+              </div>
+            ))}
+            <div>
+              <p style={{ fontSize: 9, color: sub, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cambiar</p>
+              <div style={{ marginTop: 4 }}>
+                <SvgChevronRight size={12} color={sub} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '8px 16px 0' }}>
+          {[
+            { label: 'Ingresos mes', value: '$1.2M', delta: '+12%', color: green },
+            { label: 'Gastos mes', value: '$340k', delta: '+3%', color: '#FF6B6B' },
+          ].map((k, i) => (
+            <div key={i} style={{ background: surface, border: `1px solid ${border}`, borderRadius: 12, padding: '12px' }}>
+              <p style={{ fontSize: 9, color: sub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{k.label}</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: ink, marginTop: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em' }}>{k.value}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
+                <SvgTrendUp size={10} color={k.color} />
+                <p style={{ fontSize: 9, color: k.color, fontWeight: 700 }}>{k.delta}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick actions */}
+        <div style={{ margin: '14px 16px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Acciones rápidas</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[
+              { label: 'Gastos', hint: 'Registrar nuevo', icon: <SvgReceipt size={18} color={sub} />, accent: false },
+              { label: 'Ingresos', hint: 'Registrar nuevo', icon: <SvgCash size={18} color={sub} />, accent: false },
+              { label: 'Reportes', hint: 'Ver análisis', icon: <SvgChart size={18} color={accent} />, accent: true },
+              { label: 'Combustible', hint: 'Control', icon: <SvgFuel size={18} color={sub} />, accent: false },
+            ].map((a, i) => (
+              <div key={i} style={{
+                background: a.accent ? `${accent}0D` : surface,
+                border: a.accent ? `1px solid ${accent}25` : `1px solid ${border}`,
+                borderRadius: 12,
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  {a.icon}
+                  <SvgChevronRight size={11} color={muted} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: ink }}>{a.label}</p>
+                  <p style={{ fontSize: 9, color: sub, marginTop: 1 }}>{a.hint}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div style={{ margin: '12px 16px 0', background: accent, borderRadius: 12, padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SvgPlus size={15} color="#111" />
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0A0A0C', letterSpacing: '-0.01em' }}>Nuevo movimiento</p>
+          </div>
+          <SvgChevronRight size={14} color="#111" />
+        </div>
+
+        {/* Recent */}
+        <div style={{ margin: '14px 16px 0' }}>
+          <p style={{ fontSize: 9, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>Último registro</p>
+          <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 12, overflow: 'hidden' }}>
+            {[
+              { label: 'Gasto · Peaje Bosa', value: '−$8.500', time: 'Hace 2h', minus: true },
+              { label: 'Ingreso · Flete Cali', value: '+$340k', time: 'Ayer', minus: false },
+            ].map((r, i) => (
+              <div key={i} style={{ padding: '11px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: i < 1 ? `1px solid ${border}` : 'none' }}>
+                <div>
+                  <p style={{ fontSize: 12, color: ink, fontWeight: 500 }}>{r.label}</p>
+                  <p style={{ fontSize: 9, color: sub, marginTop: 1 }}>{r.time}</p>
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: r.minus ? '#FF6B6B' : green, fontFamily: "'JetBrains Mono', monospace" }}>{r.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Tab bar */}
+      <div style={{ borderTop: `1px solid ${border}`, background: surface, display: 'flex', justifyContent: 'space-around', padding: '8px 0 12px' }}>
+        {navItems.map((n, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            {n.icon}
+            <p style={{ fontSize: 9, color: n.active ? accent : sub, fontWeight: n.active ? 600 : 400 }}>{n.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── RENDER ─────────────────────────── */
+
+const variants = [
+  {
+    id: 'A',
+    name: 'Minimalista',
+    sub: 'Tipografía como protagonista',
+    note: 'Kenya Hara · Muji — fondo neutro cálido, sin tarjetas pesadas, cada elemento gana su lugar.',
+    Component: VarianteA,
+    statusTextColor: '#1A1A1A',
+    homeIndicatorColor: 'rgba(0,0,0,0.18)',
+    screenBg: '#F7F6F2',
+  },
+  {
+    id: 'B',
+    name: 'Jerarquía fuerte',
+    sub: 'Dark · datos al frente',
+    note: 'Arquitectura de información — bento grid, métricas prominentes, accento amarillo focalizado.',
+    Component: VarianteB,
+    statusTextColor: '#EEEEEE',
+    homeIndicatorColor: 'rgba(255,255,255,0.22)',
+    screenBg: '#111113',
+  },
+  {
+    id: 'C',
+    name: 'Premium oscura',
+    sub: 'Cockpit / Linear',
+    note: 'Capas de profundidad, tipografía técnica, paleta reducida — aspecto de herramienta profesional seria.',
+    Component: VarianteC,
+    statusTextColor: '#EEEEEE',
+    homeIndicatorColor: 'rgba(255,255,255,0.18)',
+    screenBg: '#0A0A0C',
+  },
+];
+
+function App() {
+  return (
+    <div className="variants-row">
+      {variants.map(v => {
+        const { Component } = v;
+        return (
+          <div key={v.id} className="variant-col">
+            <div className="variant-label">Variante {v.id}</div>
+            <div className="variant-name">{v.name}<br/><span style={{fontSize:13, color:'#666'}}>{v.sub}</span></div>
+
+            <div className="ios-wrapper">
+              <div className="ios-screen" style={{ background: v.screenBg }}>
+                <StatusBar textColor={v.statusTextColor} />
+                <div className="ios-island" />
+                <div className="ios-content">
+                  <Component />
+                </div>
+                <HomeIndicator color={v.homeIndicatorColor} />
+              </div>
+            </div>
+
+            <div className="variant-note">{v.note}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

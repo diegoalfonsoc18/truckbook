@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TruckBook · Home (Rappi-Style Grid)</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0D0D0D;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px 80px;font-family:'Inter',sans-serif;gap:24px;}
+  .label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#444;text-align:center;}
+  .ios-wrap{display:inline-block;padding:11px;background:#111;border-radius:58px;box-shadow:0 0 0 1.5px #222,0 28px 80px rgba(0,0,0,.8);}
+  .ios-screen{position:relative;border-radius:47px;overflow:hidden;width:340px;height:736px;}
+  .ios-island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:106px;height:30px;background:#000;border-radius:999px;z-index:30;}
+  .ios-statusbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;z-index:20;pointer-events:none;}
+  .ios-homeind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:118px;height:4px;border-radius:999px;z-index:10;}
+  .ios-content{position:absolute;top:44px;left:0;right:0;bottom:28px;overflow:hidden;}
+</style>
+</head>
+<body>
+<div class="label">TruckBook · Home — Rappi grid style</div>
+<div id="root"></div>
+<script type="text/babel">
+
+/* ── ICONS ── */
+const IPin  = ({s=14,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const IGrid = ({s=17,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>;
+const ISearch = ({s=15,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+const IBell = ({s=18,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const IChev = ({s=13,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const ICheck= ({s=11,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+
+/* ── SVG ICONS POR ITEM (igual que Ionicons en la app real) ── */
+/* Multas → Factura/Receipt */
+const IReceipt= ({s=54,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2V2l-3 2-3-2-3 2-3-2-3 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>;
+/* SOAT → Shield */
+const IShield = ({s=54,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>;
+/* Tecnicomecánica → Tool */
+const ITool = ({s=54,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
+/* Mantenimiento → Wrench */
+const IWrench = ({s=54,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/><path d="M3 3l1 1"/></svg>;
+/* Licencia → ID card */
+const ILicencia = ({s=54,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 9h4"/><path d="M14 12h4"/><path d="M14 15h2"/></svg>;
+
+/* ── TRUCK FOR VEHICLE CARD ── */
+const ITruck = ({s=72,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="7" width="14" height="12" rx="2"/><path d="M15 11h4.5l2.5 4v5h-7V7"/><circle cx="5.5" cy="20" r="1.5" fill={c} stroke="none"/><circle cx="18.5" cy="20" r="1.5" fill={c} stroke="none"/></svg>;
+const ITruckSm= ({s=22,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="7" width="14" height="12" rx="2"/><path d="M15 11h4.5l2.5 4v5h-7V7"/><circle cx="5.5" cy="20" r="1.5" fill={c} stroke="none"/><circle cx="18.5" cy="20" r="1.5" fill={c} stroke="none"/></svg>;
+const IUser = ({s=19,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const IChart = ({s=19,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6"  y1="20" x2="6"  y2="14"/><line x1="2"  y1="20" x2="22" y2="20"/></svg>;
+const ICash = ({s=19,c='currentColor'}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>;
+
+/* ── TOKENS ── */
+const BG='#0A0A0C', SURF='#141417', CARD='#1C1C21', B='rgba(255,255,255,0.06)';
+const Y='#F5C842', G='#2ECC71', R='#FF5252', SUB='#7A7A82', MUT='#333338', INK='#F2F2F2';
+
+/* ── ITEMS (espeja Items.ts de la app real) ── */
+const items = [
+  { id:'multas',    name:'Multas',         color:'#E94560', Icon: IReceipt,  badge: 2  },
+  { id:'soat',      name:'SOAT',           color:'#00D9A5', Icon: IShield            },
+  { id:'tecno',     name:'Tecnicomecánica',color:'#6C5CE7', Icon: ITool              },
+  { id:'mant',      name:'Mantenimiento',  color:'#74B9FF', Icon: IWrench            },
+  { id:'licencia',  name:'Licencia',       color:'#FFB800', Icon: ILicencia          },
+];
+
+/* ── STATUS BAR ── */
+function SB() {
+  const c='#eee';
+  return (
+    <div className="ios-statusbar" style={{color:c}}>
+      <span>9:41</span>
+      <div style={{display:'flex',gap:5,alignItems:'center'}}>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill={c}><rect x="0" y="8" width="3" height="4" rx=".5" opacity=".3"/><rect x="4.5" y="5" width="3" height="7" rx=".5" opacity=".6"/><rect x="9" y="2" width="3" height="10" rx=".5" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx=".5"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 10.5a1 1 0 100-2 1 1 0 000 2z" fill={c}/><path d="M3.5 6.5a6.3 6.3 0 019 0" stroke={c} strokeWidth="1.3" fill="none" strokeLinecap="round"/><path d="M0.5 3.5a11 11 0 0115 0" stroke={c} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity=".5"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x=".75" y=".75" width="22.5" height="11.5" rx="2.5" stroke={c} strokeWidth="1.5" opacity=".4"/><rect x="2.5" y="2.5" width="18" height="8" rx="1.5" fill={c} opacity=".9"/><rect x="24" y="4" width="2" height="5" rx="1" fill={c} opacity=".4"/></svg>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HERO CARD — primer item, ancho completo
+   Estilo Rappi: background coloreado, icono grande, label en acento
+───────────────────────────────────────────────────────────── */
+function HeroCard({ item }) {
+  const a = item.color;
+  return (
+    <div style={{
+      background: `${a}1E`,
+      border: `1px solid ${a}35`,
+      borderRadius: 18,
+      padding: '18px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+      minHeight: 90,
+      marginBottom: 12,
+      overflow: 'hidden',
+      position: 'relative',
+    }}>
+      {/* subtle radial glow */}
+      <div style={{position:'absolute',right:-20,top:-20,width:100,height:100,borderRadius:'50%',background:`${a}12`}}/>
+      {/* Icono directo, sin anillos */}
+      <div style={{width:64,height:64,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <item.Icon s={52} c={a}/>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:17,fontWeight:800,color:a,letterSpacing:'-.03em',marginBottom:3}}>{item.name}</div>
+        {item.badge && (
+          <div style={{display:'inline-flex',alignItems:'center',gap:4,background:`${R}18`,border:`1px solid ${R}30`,borderRadius:6,padding:'2px 8px'}}>
+            <div style={{width:5,height:5,borderRadius:'50%',background:R}}/>
+            <span style={{fontSize:10,color:R,fontWeight:700}}>{item.badge} pendiente{item.badge>1?'s':''}</span>
+          </div>
+        )}
+        {!item.badge && <div style={{fontSize:12,color:`${a}AA`,letterSpacing:'.02em'}}>Consultar estado</div>}
+      </div>
+      {/* Chevron pill */}
+      <div style={{width:32,height:32,borderRadius:10,background:`${a}20`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <IChev s={13} c={a}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GRID CARD — 2 columnas
+   Estilo Rappi: tarjeta cuadrada, icono grande centrado (SIN anillos),
+   nombre en color del acento abajo — exactamente como Restaurantes/Turbo
+───────────────────────────────────────────────────────────── */
+function GridCard({ item }) {
+  const a = item.color;
+  return (
+    <div style={{
+      background: `${a}1E`,
+      border: `1px solid ${a}35`,
+      borderRadius: 18,
+      paddingTop: 24,
+      paddingBottom: 18,
+      paddingLeft: 12,
+      paddingRight: 12,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      minHeight: 160,
+      justifyContent: 'flex-end',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Icono ocupa el espacio superior — grande, protagonista */}
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',width:'100%',marginBottom:12,position:'relative'}}>
+        <item.Icon s={54} c={a}/>
+        {item.badge && (
+          <div style={{position:'absolute',top:-4,right:16,width:20,height:20,borderRadius:10,background:R,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${BG}`}}>
+            <span style={{fontSize:10,fontWeight:800,color:'#fff'}}>{item.badge}</span>
+          </div>
+        )}
+      </div>
+      {/* Nombre en acento — como "Restaurantes" en rojo o "Turbo" en verde en Rappi */}
+      <div style={{fontSize:14,fontWeight:800,color:a,textAlign:'center',letterSpacing:'-.01em',lineHeight:1.2}}>{item.name}</div>
+    </div>
+  );
+}
+
+/* ── MAIN HOME ── */
+function Home() {
+  const [slide, setSlide] = React.useState(0);
+
+  const heroSlides = [
+    { tag:'Vehículo activo', title:'ABC-123', sub:'Furgón · Propietario', cta:'SOAT 247d · RTM 89d · Sin multas', ok:true  },
+    { tag:'Alerta SOAT',     title:'Vence pronto', sub:'30 días restantes', cta:'Renovar antes del 12 jun',       ok:false },
+  ];
+  const h = heroSlides[slide];
+
+  return (
+    <div style={{width:340,height:736,background:BG,fontFamily:"'Inter',sans-serif",display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div style={{flex:1,overflowY:'auto',overflowX:'hidden',scrollbarWidth:'none'}}>
+
+        {/* ── HEADER — placa activa (Rappi: "Casa") ── */}
+        <div style={{padding:'14px 18px 0',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+          <div>
+            <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
+              <IPin s={12} c={Y}/>
+              <span style={{fontSize:10,color:SUB,fontWeight:500}}>Placa activa</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:5}}>
+              <span style={{fontSize:17,fontWeight:700,color:INK,letterSpacing:'-.02em'}}>ABC-123</span>
+              <IChev s={12} c={SUB}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,marginTop:2}}>
+            <div style={{position:'relative'}}>
+              <div style={{width:36,height:36,borderRadius:10,background:CARD,border:`1px solid ${B}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <IBell s={16} c={SUB}/>
+              </div>
+              <div style={{position:'absolute',top:8,right:8,width:6,height:6,borderRadius:'50%',background:R,border:`1.5px solid ${BG}`}}/>
+            </div>
+            <div style={{width:36,height:36,borderRadius:10,background:CARD,border:`1px solid ${B}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <IGrid s={16} c={SUB}/>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SEARCH (Rappi style pill) ── */}
+        <div style={{margin:'12px 18px 0'}}>
+          <div style={{background:SURF,border:`1px solid ${B}`,borderRadius:14,padding:'11px 14px',display:'flex',alignItems:'center',gap:9}}>
+            <ISearch s={14} c={MUT}/>
+            <span style={{fontSize:13,color:MUT}}>Buscar placa, gasto o proveedor…</span>
+          </div>
+        </div>
+
+        {/* ── VEHICLE BANNER (Rappi: créditos con timer) ── */}
+        <div style={{margin:'14px 18px 0'}}>
+          <div style={{background:`${Y}12`,border:`1px solid ${Y}28`,borderRadius:20,padding:'16px 18px',position:'relative',overflow:'hidden'}}>
+            <div style={{position:'absolute',right:-20,top:-20,width:120,height:120,borderRadius:'50%',background:`${Y}10`}}/>
+            <div style={{position:'absolute',right:14,bottom:8,opacity:.18}}><ITruck s={76} c={Y}/></div>
+            <div style={{position:'relative',zIndex:2}}>
+              <div style={{display:'inline-flex',alignItems:'center',gap:5,background:`${Y}20`,border:`1px solid ${Y}38`,borderRadius:6,padding:'3px 8px',marginBottom:8}}>
+                <div style={{width:5,height:5,borderRadius:'50%',background:Y}}/>
+                <span style={{fontSize:9,fontWeight:700,color:Y,letterSpacing:'.08em',textTransform:'uppercase'}}>{h.tag}</span>
+              </div>
+              <div style={{fontSize:24,fontWeight:800,color:INK,letterSpacing:'-.03em',lineHeight:1}}>{h.title}</div>
+              <div style={{fontSize:12,color:SUB,marginTop:2,marginBottom:10}}>{h.sub}</div>
+              <div style={{display:'flex',alignItems:'center',gap:5,background:'rgba(0,0,0,.25)',borderRadius:8,padding:'6px 10px',width:'fit-content'}}>
+                {h.ok && <ICheck s={11} c={G}/>}
+                <span style={{fontSize:11,color:h.ok?G:Y,fontWeight:600}}>{h.cta}</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',justifyContent:'center',gap:5,marginTop:8}}>
+            {heroSlides.map((_,i)=>(
+              <div key={i} onClick={()=>setSlide(i)} style={{width:i===slide?18:6,height:6,borderRadius:999,background:i===slide?Y:MUT,cursor:'pointer',transition:'all .2s'}}/>
+            ))}
+          </div>
+        </div>
+
+        {/* ── GRID — estructura actual de la app con estilo Rappi ── */}
+        <div style={{padding:'18px 18px 0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <span style={{fontSize:10,fontWeight:700,color:SUB,letterSpacing:'.12em',textTransform:'uppercase'}}>MÁS ACCESOS</span>
+          </div>
+
+          {/* HeroCard — primer item ancho completo */}
+          <HeroCard item={items[0]}/>
+
+          {/* 2-col grid — resto */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            {items.slice(1).map(item => <GridCard key={item.id} item={item}/>)}
+          </div>
+        </div>
+
+        <div style={{height:24}}/>
+      </div>
+
+      {/* ── TAB BAR ── */}
+      <div style={{borderTop:`1px solid ${B}`,background:SURF,display:'flex',justifyContent:'space-around',padding:'8px 0 10px',flexShrink:0}}>
+        {[
+          {icon:<ICash s={19} c={SUB}/>,     label:'Gastos',   active:false},
+          {icon:<IChart s={19} c={SUB}/>,     label:'Ingresos', active:false},
+          {icon:<ITruckSm s={22} c={Y}/>,     label:'Inicio',   active:true},
+          {icon:<IChart s={19} c={SUB}/>,     label:'Reportes', active:false},
+          {icon:<IUser s={19} c={SUB}/>,      label:'Cuenta',   active:false},
+        ].map((t,i)=>(
+          <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+            {t.icon}
+            <span style={{fontSize:9,fontWeight:t.active?700:400,color:t.active?Y:SUB}}>{t.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:20}}>
+      <div className="ios-wrap">
+        <div className="ios-screen" style={{background:BG}}>
+          <SB/><div className="ios-island"/>
+          <div className="ios-content"><Home/></div>
+          <div className="ios-homeind" style={{background:'rgba(255,255,255,0.2)'}}/>
+        </div>
+      </div>
+      <div style={{padding:'16px 24px',background:'#111',borderRadius:12,border:'1px solid #1e1e1e',maxWidth:400}}>
+        <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'5px 16px'}}>
+          {[
+            ['Rappi: "Restaurantes"','→ Multas (rojo #E94560) — HeroCard ancho completo'],
+            ['Rappi: "Turbo"','→ SOAT (verde #00D9A5) — 2-col GridCard'],
+            ['Rappi: "Mercado"','→ Tecnicomecánica (violeta #6C5CE7)'],
+            ['Sin anillos dobles','→ Icono grande directo (54px), sin rings'],
+            ['Label coloreado','→ nombre en color del item, fontWeight 800'],
+            ['Background tintado','→ accent + 1E por card, borde accent + 35'],
+          ].map(([a,b],i)=>(
+            <React.Fragment key={i}>
+              <span style={{fontSize:10,color:'#555',fontWeight:600}}>{a}</span>
+              <span style={{fontSize:10,color:'#666'}}>{b}</span>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
