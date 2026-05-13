@@ -313,7 +313,7 @@ export default function FinanzasGenerales() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={c.accent} />
             <Text style={[styles.loadingText, { color: c.textSecondary }]}>
-              Cargando...
+              Cargando…
             </Text>
           </View>
         </SafeAreaView>

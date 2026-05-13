@@ -285,7 +285,7 @@ export default function Account() {
 
               <Text style={[styles.userName, { color: c.text }]}>{userName}</Text>
               <Text style={[styles.userEmail, { color: c.textSecondary }]}>
-                {user?.email || "Cargando..."}
+                {user?.email || "Cargando…"}
               </Text>
 
               <TouchableOpacity

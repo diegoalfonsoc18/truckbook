@@ -107,7 +107,7 @@ export default function Licencia({ route }: Props) {
 
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
-          <Text style={styles.loaderText}>Cargando licencia...</Text>
+          <Text style={styles.loaderText}>Cargando licencia…</Text>
         </View>
       </SafeAreaView>
     );
@@ -140,7 +140,7 @@ export default function Licencia({ route }: Props) {
             onRefresh={handleRefresh}
             tintColor="#2196F3"
             colors={["#2196F3"]}
-            title="Actualizando licencia..."
+            title="Actualizando licencia…"
           />
         }>
         {respuestaLicencia?.licencia && (

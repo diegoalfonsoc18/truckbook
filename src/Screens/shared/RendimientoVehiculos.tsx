@@ -189,7 +189,7 @@ export default function RendimientoVehiculos() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accent} />
             <Text style={[styles.loadingText, ds.textSecondary]}>
-              Analizando rendimiento...
+              Analizando rendimiento…
             </Text>
           </View>
         </SafeAreaView>

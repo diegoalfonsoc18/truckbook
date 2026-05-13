@@ -108,7 +108,7 @@ export default function SOAT({ route }: Props) {
 
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
-          <Text style={styles.loaderText}>Cargando SOAT...</Text>
+          <Text style={styles.loaderText}>Cargando SOAT…</Text>
         </View>
       </SafeAreaView>
     );
@@ -141,7 +141,7 @@ export default function SOAT({ route }: Props) {
             onRefresh={handleRefresh}
             tintColor="#2196F3"
             colors={["#2196F3"]}
-            title="Actualizando SOAT..."
+            title="Actualizando SOAT…"
           />
         }>
         {vehiculo && (

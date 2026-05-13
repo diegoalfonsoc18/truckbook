@@ -114,7 +114,7 @@ export default function ConductorHome() {
     if (cargando || refrescando) {
       return (
         <View style={[badge, { backgroundColor: c.surface }]}>
-          <Text style={{ color: c.textSecondary, fontSize: 10, fontWeight: "700" }}>...</Text>
+          <Text style={{ color: c.textSecondary, fontSize: 10, fontWeight: "700" }}>…</Text>
         </View>
       );
     }

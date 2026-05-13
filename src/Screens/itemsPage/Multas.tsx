@@ -148,7 +148,7 @@ export default function Multas({ route }: any) {
           </View>
           <View style={s.loadingContainer}>
             <ActivityIndicator size="large" color={c.income} />
-            <Text style={[s.loadingText, { color: c.textSecondary }]}>Consultando SIMIT...</Text>
+            <Text style={[s.loadingText, { color: c.textSecondary }]}>Consultando SIMIT…</Text>
           </View>
         </SafeAreaView>
       </View>

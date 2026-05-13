@@ -62,6 +62,73 @@ function getTipoInfo(tipo: string) {
   return TIPOS_CAMION.find((t) => t.id === tipo) ?? TIPOS_CAMION[0];
 }
 
+// ─── SwipeDeleteAction ────────────────────────────────────────────────────────
+
+function SwipeDeleteAction({
+  drag,
+  onDelete,
+}: {
+  drag: SharedValue<number>;
+  onDelete: () => void;
+}) {
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: drag.value + 80 }],
+  }));
+  return (
+    <Reanimated.View style={[s.swipeDelete, animStyle]}>
+      <TouchableOpacity style={s.swipeDeleteInner} onPress={onDelete}>
+        <Ionicons name="trash-outline" size={22} color="#FFF" />
+        <Text style={s.swipeDeleteText}>Eliminar</Text>
+      </TouchableOpacity>
+    </Reanimated.View>
+  );
+}
+
+// ─── TipoSelector ─────────────────────────────────────────────────────────────
+
+function TipoSelector({
+  selected,
+  onChange,
+}: {
+  selected: TipoCamion;
+  onChange: (t: TipoCamion) => void;
+}) {
+  const { colors: c, isDark } = useTheme();
+  return (
+    <View style={s.tiposGrid}>
+      {TIPOS_CAMION.map((t) => {
+        const active = selected === t.id;
+        return (
+          <TouchableOpacity
+            key={t.id}
+            style={[
+              s.tipoOption,
+              {
+                backgroundColor: active
+                  ? `${t.color}${isDark ? "30" : "15"}`
+                  : isDark ? "rgba(255,255,255,0.05)" : c.surface,
+                borderColor: active ? t.color : c.border,
+              },
+            ]}
+            onPress={() => onChange(t.id)}
+            activeOpacity={0.75}>
+            <View style={[s.tipoIconWrap, { backgroundColor: `${t.color}${isDark ? "20" : "12"}` }]}>
+              <ItemIcon name={t.iconName} size={32} />
+            </View>
+            <Text
+              style={[
+                s.tipoLabel,
+                { color: active ? t.color : c.text, fontWeight: active ? "700" : "500" },
+              ]}>
+              {t.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 function EstadoBadge({ estado }: { estado: string }) {
   const color =
     estado === "autorizado" ? "#00D9A5" :
@@ -267,24 +334,12 @@ export default function GestionVehiculos() {
   // ─── Swipe delete action ───────────────────────────────────────────────────
 
   const renderRightActions = (
-    prog: SharedValue<number>,
+    _prog: SharedValue<number>,
     drag: SharedValue<number>,
     v: VehiculoInfo,
-  ) => {
-    const animStyle = useAnimatedStyle(() => ({
-      transform: [{ translateX: drag.value + 80 }],
-    }));
-    return (
-      <Reanimated.View style={[s.swipeDelete, animStyle]}>
-        <TouchableOpacity
-          style={s.swipeDeleteInner}
-          onPress={() => handleEliminar(v)}>
-          <Ionicons name="trash-outline" size={22} color="#FFF" />
-          <Text style={s.swipeDeleteText}>Eliminar</Text>
-        </TouchableOpacity>
-      </Reanimated.View>
-    );
-  };
+  ) => (
+    <SwipeDeleteAction drag={drag} onDelete={() => handleEliminar(v)} />
+  );
 
   // ─── Vehicle card ──────────────────────────────────────────────────────────
 
@@ -363,44 +418,6 @@ export default function GestionVehiculos() {
       </ReanimatedSwipeable>
     );
   };
-
-  // ─── Type selector (shared by add + edit modals) ───────────────────────────
-
-  const TipoSelector = ({
-    selected,
-    onChange,
-  }: {
-    selected: TipoCamion;
-    onChange: (t: TipoCamion) => void;
-  }) => (
-    <View style={s.tiposGrid}>
-      {TIPOS_CAMION.map((t) => {
-        const active = selected === t.id;
-        return (
-          <TouchableOpacity
-            key={t.id}
-            style={[
-              s.tipoOption,
-              {
-                backgroundColor: active
-                  ? `${t.color}${isDark ? "30" : "15"}`
-                  : isDark ? "rgba(255,255,255,0.05)" : c.surface,
-                borderColor: active ? t.color : c.border,
-              },
-            ]}
-            onPress={() => onChange(t.id)}
-            activeOpacity={0.75}>
-            <View style={[s.tipoIconWrap, { backgroundColor: `${t.color}${isDark ? "20" : "12"}` }]}>
-              <ItemIcon name={t.iconName} size={32} />
-            </View>
-            <Text style={[s.tipoLabel, { color: active ? t.color : c.text, fontWeight: active ? "700" : "500" }]}>
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
 
   // ─── Render ────────────────────────────────────────────────────────────────
 

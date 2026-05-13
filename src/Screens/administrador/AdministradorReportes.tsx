@@ -334,7 +334,7 @@ export default function AdministradorReportes() {
           <View style={s.loadingContainer}>
             <ActivityIndicator size="large" color={c.income} />
             <Text style={[s.loadingText, { color: c.textSecondary }]}>
-              Cargando reportes...
+              Cargando reportes…
             </Text>
           </View>
         </SafeAreaView>

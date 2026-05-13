@@ -145,28 +145,41 @@ export default function SolicitarVehiculo() {
       }
 
       // 2) Detectar cambios de estado
-      for (const sol of nuevasSolicitudes) {
+      const aprobadas = nuevasSolicitudes.filter((sol) => {
         const prev = estadosPrevios.current[sol.id];
-        if (!prev) continue;
+        return prev?.estado === "pendiente" && sol.estado === "autorizado";
+      });
 
-        if (prev.estado === "pendiente" && sol.estado === "autorizado") {
-          // Auto-activar el vehículo
-          await setPlacaStore(sol.vehiculo_placa);
-          setTipoCamion(sol.tipo_camion as TipoCamion);
-          Alert.alert(
-            "¡Acceso aprobado! ✓",
-            `${sol.vehiculo_placa} fue autorizado y está listo para usar.`,
-            [{ text: "OK" }]
-          );
-        } else if (prev.estado === "autorizado" && sol.estado === "rechazado" && placaActiva === sol.vehiculo_placa) {
-          // El vehículo activo fue revocado
-          clearVehiculo();
-          Alert.alert(
-            "Acceso revocado",
-            `Tu acceso a ${sol.vehiculo_placa} fue revocado por el administrador.`,
-            [{ text: "OK" }]
-          );
-        }
+      const revocada = nuevasSolicitudes.find((sol) => {
+        const prev = estadosPrevios.current[sol.id];
+        return (
+          prev?.estado === "autorizado" &&
+          sol.estado === "rechazado" &&
+          placaActiva === sol.vehiculo_placa
+        );
+      });
+
+      if (aprobadas.length > 0) {
+        await Promise.all(
+          aprobadas.map(async (sol) => {
+            await setPlacaStore(sol.vehiculo_placa);
+            setTipoCamion(sol.tipo_camion as TipoCamion);
+            Alert.alert(
+              "¡Acceso aprobado! ✓",
+              `${sol.vehiculo_placa} fue autorizado y está listo para usar.`,
+              [{ text: "OK" }]
+            );
+          })
+        );
+      }
+
+      if (revocada) {
+        clearVehiculo();
+        Alert.alert(
+          "Acceso revocado",
+          `Tu acceso a ${revocada.vehiculo_placa} fue revocado por el administrador.`,
+          [{ text: "OK" }]
+        );
       }
     }
 

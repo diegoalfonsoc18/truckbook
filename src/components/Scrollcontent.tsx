@@ -44,7 +44,7 @@ export default function Scrollcontent({
               onRefresh={onRefresh}
               tintColor="#2196F3"
               colors={["#2196F3"]}
-              title="Actualizando..."
+              title="Actualizando…"
             />
           )
         }>
