@@ -25,6 +25,7 @@ import Reanimated, {
   withDelay,
   withSpring,
   Easing,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -114,11 +115,13 @@ function HeroCard({
   onPress: (item: Item) => void;
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
+  const reduceMotion = useReducedMotion();
   const scale   = useSharedValue(1);
-  const opacity = useSharedValue(0);
-  const transY  = useSharedValue(10);
+  const opacity = useSharedValue(reduceMotion ? 1 : 0);
+  const transY  = useSharedValue(reduceMotion ? 0 : 10);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
     opacity.value = withDelay(40,  withTiming(1, { duration: 300, easing: easeOut }));
     transY.value  = withDelay(40,  withTiming(0, { duration: 340, easing: easeOut }));
@@ -138,6 +141,9 @@ function HeroCard({
       onPressIn={() => { scale.value = withTiming(0.97, { duration: 100 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
       onPress={() => onPress(item)}
+      accessibilityRole="button"
+      accessibilityLabel={item.name}
+      accessibilityHint={item.subtitle || undefined}
     >
       {/* Subtle tint overlay */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: accent + "08", borderRadius: 18 }]} />
@@ -196,11 +202,13 @@ function GridCard({
   onPress: (item: Item) => void;
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
+  const reduceMotion = useReducedMotion();
   const scale   = useSharedValue(1);
-  const opacity = useSharedValue(0);
-  const transY  = useSharedValue(12);
+  const opacity = useSharedValue(reduceMotion ? 1 : 0);
+  const transY  = useSharedValue(reduceMotion ? 0 : 12);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const delay = Math.min(index * 55, 350);
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
     opacity.value = withDelay(delay, withTiming(1, { duration: 280, easing: easeOut }));
@@ -220,6 +228,9 @@ function GridCard({
       onPressIn={() => { scale.value = withTiming(0.95, { duration: 100 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
       onPress={() => onPress(item)}
+      accessibilityRole="button"
+      accessibilityLabel={item.name}
+      accessibilityHint={item.subtitle || undefined}
     >
       <View style={{ position: "relative" }}>
         {/* Outer colored circle — always 70px */}
@@ -483,7 +494,10 @@ export default function HomeBaseAdapted({
             </View>
             <TouchableOpacity
               onPress={() => navigation.navigate("Cuenta")}
-              activeOpacity={0.8}>
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Mi cuenta"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <View style={[
                 s.avatarRing,
                 {
@@ -511,7 +525,10 @@ export default function HomeBaseAdapted({
               style={[s.vehicleCardOuter, { backgroundColor: isDark ? c.border : (tipoCamionData?.color || c.accent) + "1A" }, vcAnimStyle]}
               onPressIn={() => { vcScale.value = withTiming(0.98, { duration: 100 }); }}
               onPressOut={() => { vcScale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
-              onPress={() => setModalVehiculosVisible(true)}>
+              onPress={() => setModalVehiculosVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel={placaActual ? `Vehículo activo: ${placaActual}, ${tipoCamionData?.label || ""}` : "Seleccionar vehículo"}
+              accessibilityHint="Toca para cambiar de vehículo">
               {/* Inner core — double-bezel */}
               <View style={[s.vehicleCardInner, { backgroundColor: c.cardBg }]}>
                 <View style={s.vehicleCardContent}>
@@ -540,9 +557,12 @@ export default function HomeBaseAdapted({
                         </Text>
                       </View>
                     ) : (
-                      <Text style={[s.vehicleHint, { color: c.textSecondary }]}>
-                        Toca para seleccionar
-                      </Text>
+                      <View style={[s.vehicleCtaWrap, { backgroundColor: c.accent + "18", borderColor: c.accent + "40", borderWidth: 1 }]}>
+                        <Ionicons name="add-circle-outline" size={13} color={c.accent} />
+                        <Text style={[s.vehicleCtaText, { color: c.accent }]}>
+                          Seleccionar vehículo
+                        </Text>
+                      </View>
                     )}
                     {conductorActual && (
                       <Text style={[s.vehicleConductor, { color: c.textMuted }]} numberOfLines={1}>
@@ -728,14 +748,16 @@ export default function HomeBaseAdapted({
                 )}
 
                 <TouchableOpacity
-                  style={[s.addButton, { backgroundColor: c.text }]}
+                  style={[s.addButton, { backgroundColor: c.accent }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={role === "conductor" ? "Solicitar acceso a vehículo" : "Agregar nuevo vehículo"}
                   onPress={() => {
                     setModalVehiculosVisible(false);
                     role === "conductor"
                       ? setModalPlacaVisible(true)
                       : setModalTipoVisible(true);
                   }}>
-                  <Text style={[s.addButtonText, { color: c.primary }]}>
+                  <Text style={[s.addButtonText, { color: c.accentText }]}>
                     {role === "conductor"
                       ? "Solicitar acceso a vehículo"
                       : "Agregar nuevo vehículo"}
@@ -865,15 +887,17 @@ export default function HomeBaseAdapted({
                     <TouchableOpacity
                       style={[
                         s.btnPrimary,
-                        { backgroundColor: c.text },
+                        { backgroundColor: c.accent },
                         (!placaTemporal.trim() || cargando) && { opacity: 0.4 },
                       ]}
                       onPress={handleGuardarPlaca}
+                      accessibilityRole="button"
+                      accessibilityLabel={role === "conductor" ? "Enviar solicitud" : "Guardar"}
                       disabled={!placaTemporal.trim() || cargando}>
                       {cargando ? (
-                        <ActivityIndicator color={c.primary} />
+                        <ActivityIndicator color={c.accentText} />
                       ) : (
-                        <Text style={[s.btnPrimaryText, { color: c.primary }]}>
+                        <Text style={[s.btnPrimaryText, { color: c.accentText }]}>
                           {role === "conductor"
                             ? "Enviar solicitud"
                             : "Guardar"}
@@ -969,8 +993,8 @@ const s = StyleSheet.create({
   heroName: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3, marginBottom: 3 },
   heroSub: { fontSize: 13, lineHeight: 18 },
   heroChevron: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     borderRadius: 99,
     alignItems: "center",
     justifyContent: "center",
@@ -1032,6 +1056,16 @@ const s = StyleSheet.create({
   vehicleInfo: { flex: 1 },
   vehicleType: { fontSize: 15, fontWeight: "800", letterSpacing: -0.3 },
   vehicleHint: { fontSize: 13 },
+  vehicleCtaWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
   vehicleConductor: { fontSize: 11, marginTop: 3 },
   placaBadge: {
     borderRadius: 7,
@@ -1046,8 +1080,8 @@ const s = StyleSheet.create({
     fontFamily: Platform.select({ ios: "Courier New", android: "monospace" }),
   },
   chevronWrap: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     borderRadius: 99,
     alignItems: "center",
     justifyContent: "center",
