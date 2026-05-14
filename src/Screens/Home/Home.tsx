@@ -797,7 +797,7 @@ export default function HomeBaseAdapted({
                       {/* Con vehículo — info apilada */}
                       <View style={s.vehicleInfo}>
                         <Text style={[s.vehicleLabel, { color: HOME_COLORS.vehicleCardTextMuted }]}>
-                          Vehículo activo
+                          vehículo activo
                         </Text>
                         <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
                           {vehicleCardTitle || tipoCamionData?.label || ""}
@@ -1267,10 +1267,9 @@ const s = StyleSheet.create({
     gap: 5,
   },
   vehicleLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    letterSpacing: 0.3,
-    textTransform: "uppercase",
+    fontSize: HOME_COLORS.vehicleLabelSize,
+    fontWeight: HOME_COLORS.vehicleLabelWeight,
+    letterSpacing: HOME_COLORS.vehicleLabelLetterSpacing,
     marginBottom: 2,
   },
   vehicleType: { fontSize: HOME_COLORS.vehicleTypeSize, fontWeight: HOME_COLORS.vehicleTypeWeight, letterSpacing: -0.3 },

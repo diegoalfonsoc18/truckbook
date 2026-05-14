@@ -40,6 +40,9 @@ export const HOME_COLORS = {
   listRowLabelLetterSpacing: -0.2,
 
   // Vehicle Card — tipografía
+  vehicleLabelSize: 11,
+  vehicleLabelWeight: "500" as const,
+  vehicleLabelLetterSpacing: 0.1,
   vehicleTypeSize: 16,
   vehicleTypeWeight: "700" as const,
   vehicleHintSize: 13,
