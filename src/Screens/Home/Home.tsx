@@ -1286,9 +1286,9 @@ const s = StyleSheet.create({
   vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
   vehicleConductor: { fontSize: HOME_COLORS.vehicleConductorSize, marginTop: 3 },
   placaBadge: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: HOME_COLORS.vehicleBadgeBorderRadius,
+    paddingHorizontal: HOME_COLORS.vehicleBadgePaddingH,
+    paddingVertical: HOME_COLORS.vehicleBadgePaddingV,
     alignSelf: "flex-start",
   },
   placaText: {

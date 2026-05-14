@@ -4,9 +4,9 @@
 
 export const HOME_COLORS = {
   // Vehicle Card — fondo
-  vehicleCardBg: "#222831",       // borde exterior (double-bezel)
+  vehicleCardBg: "#222831", // borde exterior (double-bezel)
   vehicleCardBgDark: "#1C1C1E",
-  vehicleCardInnerBg: "#2D3440",  // relleno interior (ligeramente más claro)
+  vehicleCardInnerBg: "#2D3440", // relleno interior (ligeramente más claro)
 
   // Vehicle Card — texto
   vehicleCardText: "#FFFFFF",
@@ -40,16 +40,21 @@ export const HOME_COLORS = {
   listRowLabelLetterSpacing: -0.2,
 
   // Vehicle Card — tipografía
-  vehicleLabelSize: 11,
+  vehicleLabelSize: 12,
   vehicleLabelWeight: "500" as const,
   vehicleLabelLetterSpacing: 0.1,
-  vehicleTypeSize: 16,
+  vehicleTypeSize: 26,
   vehicleTypeWeight: "700" as const,
   vehicleHintSize: 13,
   vehicleConductorSize: 12,
   vehiclePlateSize: 16,
   vehiclePlateWeight: "800" as const,
   vehiclePlateLetterSpacing: 1.5,
+
+  // Vehicle Card — placa badge
+  vehicleBadgeBorderRadius: 8,
+  vehicleBadgePaddingH: 10,
+  vehicleBadgePaddingV: 4,
 
   // Hero Cards — icono (tamaño por defecto y por item)
   heroIconSize: 64, // fallback si el item no tiene tamaño definido
