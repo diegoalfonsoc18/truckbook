@@ -616,17 +616,21 @@ export default function HomeBaseAdapted({
     setGuardando(true);
     const placaNueva = placaEditInput.trim().toUpperCase();
     try {
-      // Actualizar tipo de camión
+      // Actualizar tipo_camion en la relación del usuario (no en vehiculos global)
       await supabase
-        .from("vehiculos")
+        .from("vehiculo_conductores")
         .update({ tipo_camion: tipoCamionEditInput })
-        .eq("placa", vehiculoEditando.placa);
+        .eq("id", vehiculoEditando.id);
 
       // Si cambió la placa, renombrar el registro
       if (placaNueva !== vehiculoEditando.placa) {
-        await supabase.from("vehiculos").insert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }]);
+        // Asegurar que exista el vehiculo con la nueva placa
+        const { data: existeNueva } = await supabase
+          .from("vehiculos").select("placa").eq("placa", placaNueva).maybeSingle();
+        if (!existeNueva) {
+          await supabase.from("vehiculos").insert([{ placa: placaNueva }]);
+        }
         await supabase.from("vehiculo_conductores").update({ vehiculo_placa: placaNueva }).eq("vehiculo_placa", vehiculoEditando.placa);
-        await supabase.from("vehiculos").delete().eq("placa", vehiculoEditando.placa);
         if (placaActual === vehiculoEditando.placa) {
           setPlaca(placaNueva);
           setTipoCamion(tipoCamionEditInput);

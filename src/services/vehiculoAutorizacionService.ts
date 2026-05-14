@@ -60,32 +60,22 @@ export interface SolicitudPendiente {
 export async function cargarVehiculosConEstado(
   userId: string
 ): Promise<{ data: VehiculoConEstado[] | null; error: any }> {
+  // tipo_camion ahora es por usuario en vehiculo_conductores
   const { data, error } = await supabase
     .from("vehiculo_conductores")
-    .select("id, vehiculo_placa, rol, estado")
+    .select("id, vehiculo_placa, rol, estado, tipo_camion")
     .eq("conductor_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) return { data: null, error };
 
-  // Para los autorizados, cargar info del vehiculo
-  const vehiculos: VehiculoConEstado[] = [];
-  for (const rel of data || []) {
-    // Intentar cargar tipo_camion del vehiculo
-    const { data: vehiculo } = await supabase
-      .from("vehiculos")
-      .select("tipo_camion")
-      .eq("placa", rel.vehiculo_placa)
-      .maybeSingle();
-
-    vehiculos.push({
-      placa: rel.vehiculo_placa,
-      tipo_camion: vehiculo?.tipo_camion || "estacas",
-      rol: rel.rol,
-      estado: rel.estado,
-      relacion_id: rel.id,
-    });
-  }
+  const vehiculos: VehiculoConEstado[] = (data || []).map((rel) => ({
+    placa: rel.vehiculo_placa,
+    tipo_camion: rel.tipo_camion || "estacas",
+    rol: rel.rol,
+    estado: rel.estado,
+    relacion_id: rel.id,
+  }));
 
   return { data: vehiculos, error: null };
 }
@@ -116,7 +106,7 @@ export async function registrarVehiculoPropietario(
     .maybeSingle();
   if (propietarioExistente) return { success: false, error: "Este vehiculo ya tiene un propietario registrado" };
 
-  // 3. Insertar vehiculo si no existe
+  // 3. Insertar vehiculo en tabla global si no existe (solo guarda la placa)
   const { data: vehiculoExiste } = await supabase
     .from("vehiculos")
     .select("placa")
@@ -126,13 +116,13 @@ export async function registrarVehiculoPropietario(
   if (!vehiculoExiste) {
     const { error: insertError } = await supabase
       .from("vehiculos")
-      .insert([{ placa, tipo_camion: tipoCamion }]);
+      .insert([{ placa }]);
     if (insertError) return { success: false, error: "Error al registrar vehiculo" };
   }
 
-  // 4. Crear relacion como propietario autorizado
+  // 4. Crear relacion con tipo_camion propio del usuario
   const { error } = await supabase.from("vehiculo_conductores").insert([
-    { vehiculo_placa: placa, conductor_id: userId, rol: "propietario", estado: "autorizado" },
+    { vehiculo_placa: placa, conductor_id: userId, rol: "propietario", estado: "autorizado", tipo_camion: tipoCamion },
   ]);
   if (error) return { success: false, error: error.message };
 
