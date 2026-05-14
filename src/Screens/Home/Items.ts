@@ -26,7 +26,7 @@ export const items: Item[] = [
     iconSize: 80,
     name: "Tecnicomecánica",
     subtitle: "Estado",
-    color: "#6C5CE7",
+    color: "#c70808",
   },
   {
     id: "soat",
