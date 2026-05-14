@@ -83,6 +83,15 @@ const ICON_MAP: Record<TipoCamion, IconName> = {
   portacontenedor: "portaContenedor",
 };
 
+const VALID_TIPOS = new Set<string>(Object.keys(ICON_MAP));
+
+/** Normaliza el valor que llega del DB a un TipoCamion válido */
+function normalizarTipo(raw: string | null | undefined): TipoCamion {
+  if (!raw) return "estacas";
+  const lower = raw.toLowerCase().trim();
+  return VALID_TIPOS.has(lower) ? (lower as TipoCamion) : "estacas";
+}
+
 const TIPOS_CAMION = [
   {
     id: "estacas" as TipoCamion,
@@ -538,7 +547,7 @@ export default function HomeBaseAdapted({
           return {
             id: v.relacion_id,
             placa: v.placa,
-            tipo_camion: v.tipo_camion as TipoCamion,
+            tipo_camion: normalizarTipo(v.tipo_camion),
             estado: v.estado,
             rol: v.rol,
             conductorNombre,
