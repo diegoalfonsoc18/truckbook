@@ -228,44 +228,6 @@ function WidgetResumen({ isDark }: WProps) {
   );
 }
 
-// ─── Widget: Combustible hoy ─────────────────────────────────────────────────
-function WidgetCombustible({ isDark }: WProps) {
-  const gastos = useGastosStore((s) => s.gastos);
-  const hoy = fechaLocalHoy();
-  const filtrados = gastos.filter(
-    (g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy),
-  );
-  const total  = filtrados.reduce((a, g) => a + (g.monto ?? 0), 0);
-  const cargas = filtrados.length;
-
-  return (
-    <View style={[s.wCircle]}>
-      <Text style={s.wCircleEmoji}>⛽</Text>
-      <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{formatCOP(total)}</Text>
-      <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-        {cargas === 0 ? "Sin cargas" : `${cargas} carga${cargas > 1 ? "s" : ""}`}
-      </Text>
-    </View>
-  );
-}
-
-// ─── Widget: Viajes hoy ───────────────────────────────────────────────────────
-function WidgetViajes({ isDark }: WProps) {
-  const ingresos = useIngresosStore((s) => s.ingresos);
-  const hoy = fechaLocalHoy();
-  const count = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy)).length;
-
-  return (
-    <View style={[s.wCircle]}>
-      <Text style={s.wCircleEmoji}>🚛</Text>
-      <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{count}</Text>
-      <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-        {count === 1 ? "viaje" : "viajes"}
-      </Text>
-    </View>
-  );
-}
-
 // ─── Widget: Gasolineras cercanas ────────────────────────────────────────────
 function WidgetGasolineras({ isDark }: WProps) {
   const { cercanas, cargando, error, sinPermiso } = useGasolineras();
@@ -904,8 +866,6 @@ export default function HomeBaseAdapted({
               style={s.widgetScrollWrap}>
               <WidgetClima        isDark={isDark} />
               <WidgetResumen      isDark={isDark} />
-              <WidgetCombustible  isDark={isDark} />
-              <WidgetViajes       isDark={isDark} />
               <WidgetGasolineras  isDark={isDark} />
             </ScrollView>
 
