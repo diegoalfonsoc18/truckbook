@@ -301,6 +301,7 @@ function WidgetGasolineras({ isDark }: WProps) {
                   id: g.id,
                   coordinates: { latitude: g.lat, longitude: g.lon },
                   title: g.nombre,
+                  systemImage: "fuelpump.fill",
                   tintColor: "#F59E0B",
                 }))}
               />
