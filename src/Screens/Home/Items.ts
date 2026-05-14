@@ -22,7 +22,7 @@ export const items: Item[] = [
   // ── Hero cards (índice 0 y 1) ──────────────────────────────────────────────
   {
     id: "tecnicomecanica",
-    iconName: "tool",
+    iconName: "motor",
     iconSize: 80,
     name: "Tecnicomecánica",
     subtitle: "Estado",
