@@ -810,16 +810,16 @@ export default function HomeBaseAdapted({
             </AnimatedPressable>
           )}
 
+          {/* WIDGETS — clima + resumen del día */}
+          <View style={s.widgetRow}>
+            <WidgetClima card={cardBase} isDark={isDark} />
+            <WidgetResumen card={cardBase} isDark={isDark} />
+          </View>
+
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
-            {/* WIDGETS — clima + resumen del día */}
-            <View style={s.widgetRow}>
-              <WidgetClima card={cardBase} isDark={isDark} />
-              <WidgetResumen card={cardBase} isDark={isDark} />
-            </View>
-
             {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
               <View style={s.heroRow}>
