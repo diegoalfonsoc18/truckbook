@@ -509,10 +509,10 @@ export default function HomeBaseAdapted({
                 ]}>
                 <View style={s.vehicleCardContent}>
                   {/* Ícono del camión sin fondo */}
-                  <ItemIcon name={camionIconName} size={52} />
+                  <ItemIcon name={camionIconName} size={HOME_COLORS.vehicleIconSize} />
                   <View style={s.vehicleInfo}>
                     <View style={s.vehicleStatusRow}>
-                      <Text style={[s.vehicleType, { color: c.text }]}>
+                      <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
                         {vehicleCardTitle ||
                           tipoCamionData?.label ||
                           "Sin vehículo"}
@@ -521,12 +521,12 @@ export default function HomeBaseAdapted({
                         <View
                           style={[
                             s.activoBadge,
-                            { backgroundColor: c.accent + "20" },
+                            { backgroundColor: "rgba(255,255,255,0.15)" },
                           ]}>
                           <View
-                            style={[s.activoDot, { backgroundColor: c.accent }]}
+                            style={[s.activoDot, { backgroundColor: HOME_COLORS.vehicleCardText }]}
                           />
-                          <Text style={[s.activoText, { color: c.accent }]}>
+                          <Text style={[s.activoText, { color: HOME_COLORS.vehicleCardText }]}>
                             Activo
                           </Text>
                         </View>
@@ -547,13 +547,13 @@ export default function HomeBaseAdapted({
                         </Text>
                       </View>
                     ) : (
-                      <Text style={[s.vehicleHint, { color: c.textMuted }]}>
+                      <Text style={[s.vehicleHint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
                         Sin vehículo activo
                       </Text>
                     )}
                     {conductorActual && (
                       <Text
-                        style={[s.vehicleConductor, { color: c.textMuted }]}
+                        style={[s.vehicleConductor, { color: HOME_COLORS.vehicleCardTextMuted }]}
                         numberOfLines={1}>
                         {conductorActual}
                       </Text>
@@ -562,12 +562,12 @@ export default function HomeBaseAdapted({
                   <View
                     style={[
                       s.chevronWrap,
-                      { backgroundColor: c.border + "80" },
+                      { backgroundColor: HOME_COLORS.vehicleCardChevronBg },
                     ]}>
                     <Ionicons
                       name="chevron-forward"
                       size={16}
-                      color={c.textMuted}
+                      color={HOME_COLORS.vehicleCardTextMuted}
                     />
                   </View>
                 </View>
