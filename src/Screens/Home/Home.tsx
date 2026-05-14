@@ -78,13 +78,48 @@ const ICON_MAP: Record<TipoCamion, IconName> = {
 };
 
 const TIPOS_CAMION = [
-  { id: "estacas" as TipoCamion,          label: "Estacas",      iconName: "estacas" as IconName,         color: HOME_COLORS.trucks.estacas },
-  { id: "volqueta" as TipoCamion,         label: "Volqueta",     iconName: "volqueta2" as IconName,       color: HOME_COLORS.trucks.volqueta },
-  { id: "furgon" as TipoCamion,           label: "Furgón",       iconName: "furgon" as IconName,          color: HOME_COLORS.trucks.furgon },
-  { id: "grua" as TipoCamion,             label: "Grúa",         iconName: "grua" as IconName,            color: HOME_COLORS.trucks.grua },
-  { id: "cisterna" as TipoCamion,         label: "Cisterna",     iconName: "cisterna" as IconName,        color: HOME_COLORS.trucks.cisterna },
-  { id: "planchon" as TipoCamion,         label: "Planchón",     iconName: "planchon" as IconName,        color: HOME_COLORS.trucks.planchon },
-  { id: "portacontenedor" as TipoCamion,  label: "Porta cont.",  iconName: "portaContenedor" as IconName, color: HOME_COLORS.trucks.portacontenedor },
+  {
+    id: "estacas" as TipoCamion,
+    label: "Estacas",
+    iconName: "estacas" as IconName,
+    color: HOME_COLORS.trucks.estacas,
+  },
+  {
+    id: "volqueta" as TipoCamion,
+    label: "Volqueta",
+    iconName: "volqueta2" as IconName,
+    color: HOME_COLORS.trucks.volqueta,
+  },
+  {
+    id: "furgon" as TipoCamion,
+    label: "Furgón",
+    iconName: "furgon" as IconName,
+    color: HOME_COLORS.trucks.furgon,
+  },
+  {
+    id: "grua" as TipoCamion,
+    label: "Grúa",
+    iconName: "grua" as IconName,
+    color: HOME_COLORS.trucks.grua,
+  },
+  {
+    id: "cisterna" as TipoCamion,
+    label: "Cisterna",
+    iconName: "cisterna" as IconName,
+    color: HOME_COLORS.trucks.cisterna,
+  },
+  {
+    id: "planchon" as TipoCamion,
+    label: "Planchón",
+    iconName: "planchon" as IconName,
+    color: HOME_COLORS.trucks.planchon,
+  },
+  {
+    id: "portacontenedor" as TipoCamion,
+    label: "Porta cont.",
+    iconName: "portaContenedor" as IconName,
+    color: HOME_COLORS.trucks.portacontenedor,
+  },
 ];
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
@@ -155,26 +190,38 @@ function HeroSquareCard({
       {/* Badge absoluto (multas pendientes, etc.) */}
       {renderBadge?.(item)}
 
-      {/* Icono con fondo muy sutil */}
-      <View style={[s.heroSquareIcon, { backgroundColor: accent + "18" }]}>
+      {/* Icono con sombra proyectada */}
+      <View
+        style={[
+          s.heroSquareIcon,
+          {
+            shadowColor: accent,
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 10,
+          },
+        ]}>
         {item.iconName ? (
-          <ItemIcon name={item.iconName} size={64} />
+          <ItemIcon name={item.iconName} size={HOME_COLORS.heroIconSizes[item.id as keyof typeof HOME_COLORS.heroIconSizes] ?? HOME_COLORS.heroIconSize} />
         ) : (
           <Ionicons
             name={(item.icon || "grid-outline") as any}
-            size={56}
+            size={(HOME_COLORS.heroIconSizes[item.id as keyof typeof HOME_COLORS.heroIconSizes] ?? HOME_COLORS.heroIconSize) - 8}
             color={accent}
           />
         )}
       </View>
 
       {/* Texto */}
-      <Text style={[s.heroSquareName, { color: c.text }]} numberOfLines={1}>
+      <Text
+        style={[s.heroSquareName, { color: HOME_COLORS.heroCardText }]}
+        numberOfLines={1}>
         {item.name}
       </Text>
       {item.subtitle && (
         <Text
-          style={[s.heroSquareSub, { color: c.textSecondary }]}
+          style={[s.heroSquareSub, { color: HOME_COLORS.heroCardTextSub }]}
           numberOfLines={1}>
           {item.subtitle}
         </Text>
@@ -239,17 +286,29 @@ function ListRow({
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* Icono con fondo muy sutil */}
-      <View style={[s.listRowIcon, { backgroundColor: accent + "18" }]}>
-        {item.iconName ? (
-          <ItemIcon name={item.iconName} size={36} />
-        ) : (
-          <Ionicons
-            name={(item.icon || "grid-outline") as any}
-            size={32}
-            color={accent}
-          />
-        )}
+      {/* Icono — capa exterior con sombra, interior con fondo semitransparente */}
+      <View
+        style={[
+          s.listRowIconShadow,
+          {
+            shadowColor: accent,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.28,
+            shadowRadius: 6,
+            elevation: 6,
+          },
+        ]}>
+        <View style={s.listRowIcon}>
+          {item.iconName ? (
+            <ItemIcon name={item.iconName} size={36} />
+          ) : (
+            <Ionicons
+              name={(item.icon || "grid-outline") as any}
+              size={32}
+              color={accent}
+            />
+          )}
+        </View>
       </View>
 
       {/* Label */}
@@ -409,8 +468,8 @@ export default function HomeBaseAdapted({
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   // Shared card style — Apple: blanco puro / dark elevated
-  const card = {
-    backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+  // Estilo base compartido (sombra/borde)
+  const cardBase = {
     borderRadius: 20,
     ...(isDark
       ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" }
@@ -421,6 +480,12 @@ export default function HomeBaseAdapted({
           shadowRadius: 14,
           elevation: 4,
         }),
+  };
+
+  // Card para list rows — personalizable desde HomeConstants
+  const card = {
+    ...cardBase,
+    backgroundColor: isDark ? "#1C1C1E" : HOME_COLORS.listRowBg,
   };
 
   const sheet = {
@@ -484,7 +549,11 @@ export default function HomeBaseAdapted({
             <AnimatedPressable
               style={[
                 s.vehicleCardOuter,
-                { backgroundColor: isDark ? HOME_COLORS.vehicleCardBgDark : HOME_COLORS.vehicleCardBg },
+                {
+                  backgroundColor: isDark
+                    ? HOME_COLORS.vehicleCardBgDark
+                    : HOME_COLORS.vehicleCardBg,
+                },
                 vcAnimStyle,
               ]}
               onPressIn={() => {
@@ -509,10 +578,17 @@ export default function HomeBaseAdapted({
                 ]}>
                 <View style={s.vehicleCardContent}>
                   {/* Ícono del camión sin fondo */}
-                  <ItemIcon name={camionIconName} size={HOME_COLORS.vehicleIconSize} />
+                  <ItemIcon
+                    name={camionIconName}
+                    size={HOME_COLORS.vehicleIconSize}
+                  />
                   <View style={s.vehicleInfo}>
                     <View style={s.vehicleStatusRow}>
-                      <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
+                      <Text
+                        style={[
+                          s.vehicleType,
+                          { color: HOME_COLORS.vehicleCardText },
+                        ]}>
                         {vehicleCardTitle ||
                           tipoCamionData?.label ||
                           "Sin vehículo"}
@@ -524,9 +600,16 @@ export default function HomeBaseAdapted({
                             { backgroundColor: "rgba(255,255,255,0.15)" },
                           ]}>
                           <View
-                            style={[s.activoDot, { backgroundColor: HOME_COLORS.vehicleCardText }]}
+                            style={[
+                              s.activoDot,
+                              { backgroundColor: HOME_COLORS.vehicleCardText },
+                            ]}
                           />
-                          <Text style={[s.activoText, { color: HOME_COLORS.vehicleCardText }]}>
+                          <Text
+                            style={[
+                              s.activoText,
+                              { color: HOME_COLORS.vehicleCardText },
+                            ]}>
                             Activo
                           </Text>
                         </View>
@@ -547,13 +630,20 @@ export default function HomeBaseAdapted({
                         </Text>
                       </View>
                     ) : (
-                      <Text style={[s.vehicleHint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+                      <Text
+                        style={[
+                          s.vehicleHint,
+                          { color: HOME_COLORS.vehicleCardTextMuted },
+                        ]}>
                         Sin vehículo activo
                       </Text>
                     )}
                     {conductorActual && (
                       <Text
-                        style={[s.vehicleConductor, { color: HOME_COLORS.vehicleCardTextMuted }]}
+                        style={[
+                          s.vehicleConductor,
+                          { color: HOME_COLORS.vehicleCardTextMuted },
+                        ]}
                         numberOfLines={1}>
                         {conductorActual}
                       </Text>
@@ -584,7 +674,12 @@ export default function HomeBaseAdapted({
               <View style={s.heroRow}>
                 <HeroSquareCard
                   item={items[0]}
-                  card={card}
+                  card={{
+                    ...card,
+                    backgroundColor: isDark
+                      ? "#1C1C1E"
+                      : HOME_COLORS.heroCard1Bg,
+                  }}
                   colors={c}
                   onPress={onItemPress ?? (() => {})}
                   renderBadge={renderBadge}
@@ -592,7 +687,12 @@ export default function HomeBaseAdapted({
                 {items.length > 1 && (
                   <HeroSquareCard
                     item={items[1]}
-                    card={card}
+                    card={{
+                      ...card,
+                      backgroundColor: isDark
+                        ? "#1C1C1E"
+                        : HOME_COLORS.heroCard2Bg,
+                    }}
                     colors={c}
                     onPress={onItemPress ?? (() => {})}
                     renderBadge={renderBadge}
@@ -836,7 +936,6 @@ const s = StyleSheet.create({
     minHeight: 148,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
     gap: 10,
   },
   heroSquareIcon: {
@@ -967,6 +1066,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 14,
     borderRadius: 16,
+  },
+  listRowIconShadow: {
+    borderRadius: 11,
+    backgroundColor: "transparent",
   },
   listRowIcon: {
     width: 44,

@@ -19,6 +19,24 @@ export interface Item {
 }
 
 export const items: Item[] = [
+  // ── Hero cards (índice 0 y 1) ──────────────────────────────────────────────
+  {
+    id: "tecnicomecanica",
+    iconName: "tool",
+    iconSize: 80,
+    name: "Tecnicomecánica",
+    subtitle: "Estado",
+    color: "#6C5CE7",
+  },
+  {
+    id: "soat",
+    iconName: "shield",
+    iconSize: 80,
+    name: "SOAT",
+    subtitle: "Verificar SOAT",
+    color: "#0c0c0c",
+  },
+  // ── List rows (índice 2 en adelante) ──────────────────────────────────────
   {
     id: "multas",
     iconName: "factura",
@@ -27,22 +45,6 @@ export const items: Item[] = [
     subtitle: "Consultar multas",
     color: "#E94560",
     mostrarBadge: true,
-  },
-  {
-    id: "soat",
-    iconName: "shield",
-    iconSize: 80,
-    name: "SOAT",
-    subtitle: "Verificar SOAT",
-    color: "#00D9A5",
-  },
-  {
-    id: "tecnicomecanica",
-    iconName: "tool",
-    iconSize: 80,
-    name: "Tecnicomecánica",
-    subtitle: "Estado",
-    color: "#6C5CE7",
   },
   {
     id: "mantenimiento",
