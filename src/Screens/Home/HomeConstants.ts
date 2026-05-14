@@ -53,7 +53,7 @@ export const HOME_COLORS = {
 
   // Vehicle Card — placa badge
   vehicleBadgeBorderRadius: 8,
-  vehicleBadgePaddingH: 10,
+  vehicleBadgePaddingH: 12,
   vehicleBadgePaddingV: 4,
 
   // Hero Cards — icono (tamaño por defecto y por item)
