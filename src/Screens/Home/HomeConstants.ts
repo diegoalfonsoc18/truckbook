@@ -8,12 +8,12 @@ export const HOME_COLORS = {
   vehicleCardBgDark: "#1C1C1E",
 
   // Vehicle Card — texto
-  vehicleCardText: "#FFFFFF",         // nombre del tipo de camión
-  vehicleCardTextMuted: "#94A3B8",    // conductor, hint
+  vehicleCardText: "#FFFFFF", // nombre del tipo de camión
+  vehicleCardTextMuted: "#94A3B8", // conductor, hint
   vehicleCardChevronBg: "rgba(255,255,255,0.12)", // fondo del chevron
 
   // Vehicle Card — icono
-  vehicleIconSize: 52,
+  vehicleIconSize: 100,
 
   // Tipos de camión — color de acento por tipo
   trucks: {
