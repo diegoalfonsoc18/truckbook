@@ -8,7 +8,6 @@ import { useMultas } from "../../hooks/useMultas";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../constants/Themecontext";
-import { cargarInvitacionesPendientes } from "../../services/vehiculoAutorizacionService";
 import { registrarPushToken } from "../../services/NotificationService";
 import { ConductorStackParamList } from "../../navigation/ConductorNavigation";
 
@@ -23,59 +22,24 @@ export default function ConductorHome() {
   const { placa: placaActual, validarPlacaParaUsuario } = useVehiculoStore();
   const { user } = useAuth();
   const [refrescando, setRefrescando] = useState(false);
-  const [invitacionesCount, setInvitacionesCount] = useState(0);
 
   const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
     useMultas(placaActual, !!placaActual);
 
-  // Registrar push token, validar acceso al vehículo y cargar invitaciones pendientes
+  // Registrar push token y validar acceso al vehículo
   useEffect(() => {
     if (!user?.id) return;
     registrarPushToken(user.id);
-    // Si el admin eliminó al conductor mientras la app estaba cerrada, limpiar el vehículo activo
+    // Si el vehículo fue desvinculado mientras la app estaba cerrada, limpiar el vehículo activo
     validarPlacaParaUsuario(user.id);
-    const cargar = async () => {
-      const { data } = await cargarInvitacionesPendientes(user.id);
-      setInvitacionesCount(data.length);
-    };
-    cargar();
   }, [user?.id]);
 
   // Items del conductor con invitaciones
   const conductorItems: Item[] = [
-    {
-      id: "solicitar_vehiculo",
-      iconName: "truck",
-      iconSize: 52,
-      name: "Mis vehículos",
-      subtitle: "Solicitar acceso a un vehículo",
-      color: "#6C5CE7",
-    },
-    {
-      id: "invitaciones",
-      iconName: "check",
-      iconSize: 52,
-      name: "Invitaciones",
-      subtitle:
-        invitacionesCount > 0
-          ? `${invitacionesCount} pendiente${invitacionesCount > 1 ? "s" : ""}`
-          : "Sin pendientes",
-      color: "#FFB800",
-    },
     ...baseItems,
   ];
 
   const handleItemPress = (item: Item) => {
-    if (item.id === "solicitar_vehiculo") {
-      navigation.navigate("SolicitarVehiculo");
-      return;
-    }
-
-    if (item.id === "invitaciones") {
-      navigation.navigate("Invitaciones");
-      return;
-    }
-
     if (!placaActual) {
       Alert.alert("Error", "Por favor selecciona una placa primero");
       return;
