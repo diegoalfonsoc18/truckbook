@@ -44,6 +44,9 @@ import {
 import { useTheme } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
+import { useClima } from "../../hooks/useClima";
+import { useGastosStore } from "../../store/GastosStore";
+import { useIngresosStore } from "../../store/IngresosStore";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -130,12 +133,104 @@ const ICON_BG = Platform.OS === "android" ? 62 : 70;
 const ICON_CORE = Platform.OS === "android" ? 46 : 52;
 const ICON_MAX = Platform.OS === "android" ? 46 : 52;
 
+// ─── Currency formatter (pesos colombianos) ───────────────────────────────────
+function formatCOP(amount: number): string {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)     return `${sign}$${(abs / 1_000).toFixed(0)}k`;
+  return `${sign}$${abs.toFixed(0)}`;
+}
+
 // ─── Time-aware greeting ──────────────────────────────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Buenos días";
   if (h < 19) return "Buenas tardes";
   return "Buenas noches";
+}
+
+// ─── Widget: Clima ────────────────────────────────────────────────────────────
+function WidgetClima({ card, isDark }: { card: object; isDark: boolean }) {
+  const { temperatura, condicion, emoji, ciudad, cargando, error } = useClima();
+  const { colors: c } = useTheme();
+
+  const bgColor = isDark ? "#1C1C1E" : "#FFFFFF";
+
+  return (
+    <View style={[s.widgetBase, card, { backgroundColor: bgColor }]}>
+      {cargando ? (
+        <ActivityIndicator size="small" color={c.accent} />
+      ) : error ? (
+        <>
+          <Text style={s.widgetErrorEmoji}>🌡</Text>
+          <Text style={[s.widgetErrorText, { color: c.textMuted }]}>Sin señal</Text>
+        </>
+      ) : (
+        <>
+          <View style={s.widgetClimaTop}>
+            <Text style={s.widgetClimaEmoji}>{emoji}</Text>
+            <Text style={[s.widgetClimaTemp, { color: isDark ? "#FFFFFF" : "#111827" }]}>
+              {temperatura}°
+            </Text>
+          </View>
+          <Text style={[s.widgetCiudad, { color: isDark ? "#FFFFFF" : "#111827" }]} numberOfLines={1}>
+            {ciudad}
+          </Text>
+          <Text style={[s.widgetCondicion, { color: isDark ? "#94A3B8" : "#6B7280" }]} numberOfLines={1}>
+            {condicion}
+          </Text>
+        </>
+      )}
+    </View>
+  );
+}
+
+// ─── Widget: Resumen del día ───────────────────────────────────────────────────
+function WidgetResumen({ card, isDark }: { card: object; isDark: boolean }) {
+  const { colors: c } = useTheme();
+  const gastos   = useGastosStore((state) => state.gastos);
+  const ingresos = useIngresosStore((state) => state.ingresos);
+
+  const hoy = new Date().toISOString().split("T")[0];
+  const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
+  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
+  const totalG = gastosHoy.reduce((acc, g) => acc + (g.monto ?? 0), 0);
+  const totalI = ingresosHoy.reduce((acc, i) => acc + (i.monto ?? 0), 0);
+  const balance = totalI - totalG;
+  const bgColor = isDark ? "#1C1C1E" : "#FFFFFF";
+
+  const balanceColor = balance >= 0
+    ? (isDark ? "#34D399" : "#059669")
+    : (isDark ? "#F87171" : "#DC2626");
+
+  return (
+    <View style={[s.widgetBase, card, { backgroundColor: bgColor }]}>
+      <Text style={[s.widgetResumenTitle, { color: isDark ? "#94A3B8" : "#6B7280" }]}>
+        Hoy
+      </Text>
+
+      <View style={s.widgetResumenRow}>
+        <Text style={[s.widgetResumenDot, { color: isDark ? "#34D399" : "#059669" }]}>↑</Text>
+        <Text style={[s.widgetResumenVal, { color: isDark ? "#FFFFFF" : "#111827" }]}>
+          {formatCOP(totalI)}
+        </Text>
+      </View>
+
+      <View style={s.widgetResumenRow}>
+        <Text style={[s.widgetResumenDot, { color: isDark ? "#F87171" : "#DC2626" }]}>↓</Text>
+        <Text style={[s.widgetResumenVal, { color: isDark ? "#FFFFFF" : "#111827" }]}>
+          {formatCOP(totalG)}
+        </Text>
+      </View>
+
+      <View style={[s.widgetResumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }]} />
+
+      <Text style={[s.widgetResumenBalance, { color: balanceColor }]}>
+        {formatCOP(balance)}
+      </Text>
+    </View>
+  );
 }
 
 // ─── Hero square card (dos lado a lado en el hero) ───────────────────────────
@@ -553,7 +648,6 @@ export default function HomeBaseAdapted({
       return;
     }
     await cargarVehiculos();
-    setVistaModal("lista");
     setPlacaInput("");
     setTipoCamionInput(null);
   };
@@ -720,6 +814,12 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
+            {/* WIDGETS — clima + resumen del día */}
+            <View style={s.widgetRow}>
+              <WidgetClima card={cardBase} isDark={isDark} />
+              <WidgetResumen card={cardBase} isDark={isDark} />
+            </View>
+
             {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
               <View style={s.heroRow}>
@@ -1442,4 +1542,88 @@ const s = StyleSheet.create({
 
   cancelTouchable: { alignItems: "center", padding: 12 },
   cancelText: { fontSize: 15, fontWeight: "500" },
+
+  // ─── WIDGETS ────────────────────────────────────────────────────────────────
+  widgetRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 10,
+  },
+  widgetBase: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 16,
+    minHeight: 130,
+    justifyContent: "center",
+    gap: 4,
+  },
+
+  // Clima
+  widgetClimaTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  widgetClimaEmoji: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
+  widgetClimaTemp: {
+    fontSize: 36,
+    fontWeight: "700",
+    letterSpacing: -1,
+    lineHeight: 40,
+  },
+  widgetCiudad: {
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+  },
+  widgetCondicion: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  widgetErrorEmoji: {
+    fontSize: 28,
+    textAlign: "center",
+  },
+  widgetErrorText: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 4,
+  },
+
+  // Resumen del día
+  widgetResumenTitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  widgetResumenRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  widgetResumenDot: {
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 20,
+  },
+  widgetResumenVal: {
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: -0.3,
+  },
+  widgetResumenDivider: {
+    height: 1,
+    marginVertical: 8,
+  },
+  widgetResumenBalance: {
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
 });
