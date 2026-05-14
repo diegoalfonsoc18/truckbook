@@ -37,7 +37,13 @@
     "plugins": [
       "expo-localization",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "TruckBook necesita acceso a tus contactos para agregar clientes a la cuenta de cobro."
+        }
+      ]
     ],
     "extra": {
       "eas": {

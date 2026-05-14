@@ -80,6 +80,8 @@ export interface TransactionScreenProps {
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
   getStatusColor: (estado?: string) => string;
   getStatusLabel: (estado?: string) => string;
+  headerAction?: { label: string; icon: string; onPress: () => void };
+  onCategoryAction?: (catId: string) => boolean; // retorna true si manejó el press externamente
 }
 
 // ─── Animated category card ───────────────────────────────────────────────────
@@ -199,6 +201,8 @@ export default function TransactionScreen({
   onDelete,
   getStatusColor,
   getStatusLabel,
+  headerAction,
+  onCategoryAction,
 }: TransactionScreenProps) {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
@@ -280,6 +284,7 @@ export default function TransactionScreen({
   };
 
   const openAdd = (catId: string) => {
+    if (onCategoryAction?.(catId)) return; // manejado externamente
     if (subcategorias && catId === "mantenimiento") {
       setSubModalVisible(true);
       return;
@@ -396,8 +401,19 @@ export default function TransactionScreen({
               <Ionicons name="chevron-down" size={13} color={c.textMuted} />
             </TouchableOpacity>
           </View>
-          <View style={[s.placaBadge, { backgroundColor: accentColor }]}>
-            <Text style={[s.placaText, { color: "#fff" }]}>{placaActual}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {headerAction && (
+              <TouchableOpacity
+                style={[s.headerActionBtn, { backgroundColor: accentColor + "18", borderColor: accentColor + "40" }]}
+                onPress={headerAction.onPress}
+                activeOpacity={0.7}>
+                <Ionicons name={headerAction.icon as any} size={14} color={accentColor} />
+                <Text style={[s.headerActionText, { color: accentColor }]}>{headerAction.label}</Text>
+              </TouchableOpacity>
+            )}
+            <View style={[s.placaBadge, { backgroundColor: accentColor }]}>
+              <Text style={[s.placaText, { color: "#fff" }]}>{placaActual}</Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -740,6 +756,16 @@ const s = StyleSheet.create({
   dateBtnText: { fontSize: 13, fontWeight: "500" },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1.5 },
+  headerActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  headerActionText: { fontSize: 12, fontWeight: "600" },
 
   // SCROLL
   scroll: { flex: 1 },

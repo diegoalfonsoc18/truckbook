@@ -6,7 +6,6 @@ import Multas from "../Screens/itemsPage/Multas";
 import SOAT from "../Screens/itemsPage/Soat";
 import RTM from "../Screens/itemsPage/Rtm";
 import Licencia from "../Screens/itemsPage/Licencia";
-
 export type ConductorStackParamList = {
   ConductorHome: undefined;
   Cuenta: undefined;

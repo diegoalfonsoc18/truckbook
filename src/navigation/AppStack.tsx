@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoleStore } from "../store/RoleStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
-import IngresosNavigation from "../Screens/Ingresos/Ingresos";
+import IngresosNavigation from "./IngresosNavigation";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorNavigation from "./ConductorNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
