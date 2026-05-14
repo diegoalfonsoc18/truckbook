@@ -36,7 +36,6 @@ import { useRoleStore } from "../../store/RoleStore";
 import supabase from "../../config/SupaBaseConfig";
 import {
   cargarVehiculosConEstado,
-  registrarVehiculoPropietario,
   solicitarAccesoVehiculo,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
@@ -189,26 +188,18 @@ function HeroCard({
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* Subtle tint overlay */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: accent + "08", borderRadius: 18 },
-        ]}
-      />
-
-      {/* Icono grande — sin anillos, estilo Rappi */}
-      <View style={s.heroIconWrap}>
+      {/* App-icon — cuadrado redondeado con color sólido del item */}
+      <View style={[s.heroIconApp, { backgroundColor: accent }]}>
         {item.iconName ? (
           <ItemIcon
             name={item.iconName}
-            size={Math.min(item.iconSize ?? 54, 54)}
+            size={Math.min(item.iconSize ?? 42, 42)}
           />
         ) : (
           <Ionicons
             name={(item.icon || "grid-outline") as any}
-            size={32}
-            color={accent}
+            size={30}
+            color="#fff"
           />
         )}
       </View>
@@ -242,18 +233,18 @@ function HeroCard({
   );
 }
 
-// ─── Animated grid card with stagger + press scale ───────────────────────────
-function GridCard({
+// ─── Apple-style list row (full width, icon + label + chevron) ───────────────
+function ListRow({
   item,
   index,
-  cardStyle,
+  card,
   colors: c,
   onPress,
   renderBadge,
 }: {
   item: Item;
   index: number;
-  cardStyle: object;
+  card: object;
   colors: ReturnType<typeof useTheme>["colors"];
   onPress: (item: Item) => void;
   renderBadge?: (item: Item) => React.ReactNode;
@@ -261,19 +252,19 @@ function GridCard({
   const reduceMotion = useReducedMotion();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(reduceMotion ? 1 : 0);
-  const transY = useSharedValue(reduceMotion ? 0 : 12);
+  const transY = useSharedValue(reduceMotion ? 0 : 10);
 
   useEffect(() => {
     if (reduceMotion) return;
-    const delay = Math.min(index * 55, 350);
+    const delay = Math.min(index * 45, 300);
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
     opacity.value = withDelay(
       delay,
-      withTiming(1, { duration: 280, easing: easeOut }),
+      withTiming(1, { duration: 260, easing: easeOut }),
     );
     transY.value = withDelay(
       delay,
-      withTiming(0, { duration: 320, easing: easeOut }),
+      withTiming(0, { duration: 300, easing: easeOut }),
     );
   }, []);
 
@@ -283,48 +274,51 @@ function GridCard({
   }));
 
   const accent = item.color || c.accent;
+  const hasBadge = !!item.badgeCount && item.badgeCount > 0;
 
   return (
     <AnimatedPressable
-      style={[cardStyle, animStyle]}
+      style={[s.listRow, card, animStyle]}
       onPressIn={() => {
-        scale.value = withTiming(0.95, { duration: 100 });
+        scale.value = withTiming(0.98, { duration: 80 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 14, stiffness: 280 });
+        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
       }}
       onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* Icono grande — estilo Rappi: sin anillos, protagonista de la tarjeta */}
-      <View style={s.gridIconWrap}>
+      {/* App-icon */}
+      <View style={[s.listRowIcon, { backgroundColor: accent }]}>
         {item.iconName ? (
-          <ItemIcon
-            name={item.iconName}
-            size={Math.min((item.iconSize ?? ICON_MAX) + 8, ICON_MAX + 8)}
-          />
+          <ItemIcon name={item.iconName} size={26} />
         ) : (
           <Ionicons
             name={(item.icon || "grid-outline") as any}
-            size={36}
-            color={accent}
+            size={22}
+            color="#fff"
           />
         )}
-        {!!item.badgeCount && item.badgeCount > 0 && (
-          <View
-            style={[
-              s.badgeCount,
-              { backgroundColor: c.expense, borderColor: accent + "22" },
-            ]}>
-            <Text style={[s.badgeCountText, { color: c.textInverse }]}>
-              {item.badgeCount > 99 ? "99+" : item.badgeCount}
-            </Text>
-          </View>
-        )}
       </View>
-      <Text style={[s.gridCardName, { color: c.text }]}>{item.name}</Text>
+
+      {/* Label */}
+      <Text style={[s.listRowLabel, { color: c.text }]} numberOfLines={1}>
+        {item.name}
+      </Text>
+
       {renderBadge?.(item)}
+
+      {/* Right side */}
+      {hasBadge ? (
+        <View style={[s.listBadgePill, { backgroundColor: c.expense }]}>
+          <Text style={s.listBadgeText}>
+            {item.badgeCount! > 99 ? "99+" : item.badgeCount}
+          </Text>
+        </View>
+      ) : (
+        <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+      )}
     </AnimatedPressable>
   );
 }
@@ -346,11 +340,9 @@ export default function HomeBaseAdapted({
     setTipoCamion,
   } = useVehiculoStore();
   const { user } = useAuth();
-  const role = useRoleStore((state) => state.role);
 
   const [placaTemporal, setPlacaTemporal] = useState("");
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
-  const [modalTipoVisible, setModalTipoVisible] = useState(false);
   const [modalPlacaVisible, setModalPlacaVisible] = useState(false);
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -455,49 +447,28 @@ export default function HomeBaseAdapted({
     setModalVehiculosVisible(false);
   };
 
-  const handleSeleccionarTipo = (tipo: TipoCamion) => {
-    setTipoCamion(tipo);
-    setModalTipoVisible(false);
-    setModalPlacaVisible(true);
-  };
-
   const handleGuardarPlaca = async () => {
     const placaLimpia = placaTemporal.trim().toUpperCase();
     if (!placaLimpia || placaLimpia.length < 3) {
       Alert.alert("Error", "La placa debe tener al menos 3 caracteres");
       return;
     }
-    if (!user?.id || !tipoCamion) {
+    if (!user?.id) {
       Alert.alert("Error", "Datos incompletos");
       return;
     }
     try {
       setCargando(true);
-      if (role === "propietario") {
-        const resultado = await registrarVehiculoPropietario(
-          user.id,
-          placaLimpia,
-          tipoCamion,
-        );
-        if (!resultado.success) {
-          Alert.alert("Error", resultado.error || "No se pudo registrar");
-          return;
-        }
-        Alert.alert("Éxito", `Vehículo ${placaLimpia} registrado`);
-        await cargarVehiculos();
-        setPlaca(placaLimpia);
-      } else {
-        const resultado = await solicitarAccesoVehiculo(user.id, placaLimpia);
-        if (!resultado.success) {
-          Alert.alert("Error", resultado.error || "No se pudo solicitar");
-          return;
-        }
-        Alert.alert(
-          "Solicitud enviada",
-          `Se envió la solicitud al vehículo ${placaLimpia}.`,
-        );
-        await cargarVehiculos();
+      const resultado = await solicitarAccesoVehiculo(user.id, placaLimpia);
+      if (!resultado.success) {
+        Alert.alert("Error", resultado.error || "No se pudo solicitar");
+        return;
       }
+      Alert.alert(
+        "Solicitud enviada",
+        `Se envió la solicitud al vehículo ${placaLimpia}.`,
+      );
+      await cargarVehiculos();
       setModalPlacaVisible(false);
       setPlacaTemporal("");
     } catch {
@@ -520,18 +491,18 @@ export default function HomeBaseAdapted({
     "Usuario";
   const userInitials = userName.slice(0, 2).toUpperCase();
 
-  // Shared card style
+  // Shared card style — Apple: blanco puro / dark elevated
   const card = {
-    backgroundColor: c.cardBg,
-    borderRadius: 18,
+    backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+    borderRadius: 20,
     ...(isDark
-      ? { borderWidth: 1, borderColor: c.border }
+      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" }
       : {
-          shadowColor: c.text,
+          shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 10,
-          elevation: 3,
+          shadowOpacity: 0.09,
+          shadowRadius: 14,
+          elevation: 4,
         }),
   };
 
@@ -551,12 +522,7 @@ export default function HomeBaseAdapted({
               <View style={s.rolePill}>
                 <View style={[s.roleDot, { backgroundColor: c.accent }]} />
                 <Text style={[s.roleText, { color: c.textMuted }]}>
-                  {getGreeting()} ·{" "}
-                  {role === "conductor"
-                    ? "Conductor"
-                    : role === "propietario"
-                      ? "Propietario"
-                      : "Administrador"}
+                  {getGreeting()} · Conductor
                 </Text>
               </View>
               <Text
@@ -746,21 +712,21 @@ export default function HomeBaseAdapted({
               />
             )}
 
-            {/* 2-COL GRID — resto de items */}
+            {/* LIST ROWS — resto de items, estilo Apple Support */}
             {items.length > 1 && (
               <>
                 <View style={s.sectionHeader}>
-                  <Text style={[s.sectionLabel, { color: c.textMuted }]}>
-                    MÁS ACCESOS
+                  <Text style={[s.sectionLabel, { color: c.text }]}>
+                    Herramientas
                   </Text>
                 </View>
-                <View style={s.grid}>
+                <View style={s.listSection}>
                   {items.slice(1).map((item, index) => (
-                    <GridCard
+                    <ListRow
                       key={item.id}
                       item={item}
                       index={index + 1}
-                      cardStyle={[s.gridCard, card]}
+                      card={card}
                       colors={c}
                       onPress={onItemPress ?? (() => {})}
                       renderBadge={renderBadge}
@@ -906,76 +872,19 @@ export default function HomeBaseAdapted({
                 <TouchableOpacity
                   style={[s.addButton, { backgroundColor: c.accent }]}
                   accessibilityRole="button"
-                  accessibilityLabel={
-                    role === "conductor"
-                      ? "Solicitar acceso a vehículo"
-                      : "Agregar nuevo vehículo"
-                  }
+                  accessibilityLabel="Solicitar acceso a vehículo"
                   onPress={() => {
                     setModalVehiculosVisible(false);
-                    role === "conductor"
-                      ? setModalPlacaVisible(true)
-                      : setModalTipoVisible(true);
+                    setModalPlacaVisible(true);
                   }}>
                   <Text style={[s.addButtonText, { color: c.accentText }]}>
-                    {role === "conductor"
-                      ? "Solicitar acceso a vehículo"
-                      : "Agregar nuevo vehículo"}
+                    Solicitar acceso a vehículo
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={s.cancelTouchable}
                   onPress={() => setModalVehiculosVisible(false)}>
-                  <Text style={[s.cancelText, { color: c.textSecondary }]}>
-                    Cancelar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* MODAL: TIPO DE VEHÍCULO */}
-      <Modal
-        visible={modalTipoVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalTipoVisible(false)}>
-        <TouchableWithoutFeedback onPress={() => setModalTipoVisible(false)}>
-          <View style={[s.overlay, { backgroundColor: c.overlay }]}>
-            <TouchableWithoutFeedback>
-              <View style={[s.sheetBase, sheet]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
-                <Text style={[s.sheetTitle, { color: c.text }]}>
-                  Tipo de Vehículo
-                </Text>
-                <Text style={[s.sheetSubtitle, { color: c.textSecondary }]}>
-                  ¿Qué tipo de camión vas a registrar?
-                </Text>
-                <View style={s.tiposGrid}>
-                  {TIPOS_CAMION.map((tipo) => (
-                    <TouchableOpacity
-                      key={tipo.id}
-                      style={[s.tipoCard, { backgroundColor: c.surface }]}
-                      onPress={() => handleSeleccionarTipo(tipo.id)}>
-                      <View
-                        style={[
-                          s.tipoIconBg,
-                          { backgroundColor: tipo.color + "18" },
-                        ]}>
-                        <ItemIcon name={tipo.iconName} size={44} />
-                      </View>
-                      <Text style={[s.tipoLabel, { color: c.text }]}>
-                        {tipo.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  style={s.cancelTouchable}
-                  onPress={() => setModalTipoVisible(false)}>
                   <Text style={[s.cancelText, { color: c.textSecondary }]}>
                     Cancelar
                   </Text>
@@ -1001,14 +910,10 @@ export default function HomeBaseAdapted({
                 <View style={[s.sheetBase, sheet]}>
                   <View style={[s.handle, { backgroundColor: c.border }]} />
                   <Text style={[s.sheetTitle, { color: c.text }]}>
-                    {role === "conductor"
-                      ? "Solicitar acceso"
-                      : "Placa del Vehículo"}
+                    Solicitar acceso
                   </Text>
                   <Text style={[s.sheetSubtitle, { color: c.textSecondary }]}>
-                    {role === "conductor"
-                      ? "Ingresa la placa del vehículo al que deseas acceder"
-                      : `Ingresa la placa de tu ${tipoCamionData?.label}`}
+                    Ingresa la placa del vehículo al que deseas acceder
                   </Text>
 
                   <TextInput
@@ -1032,16 +937,13 @@ export default function HomeBaseAdapted({
                   <View style={s.modalBtns}>
                     <TouchableOpacity
                       style={[s.btnSecondary, { backgroundColor: c.surface }]}
-                      onPress={() => {
-                        setModalPlacaVisible(false);
-                        if (role !== "conductor") setModalTipoVisible(true);
-                      }}>
+                      onPress={() => setModalPlacaVisible(false)}>
                       <Text
                         style={[
                           s.btnSecondaryText,
                           { color: c.textSecondary },
                         ]}>
-                        {role === "conductor" ? "Cancelar" : "Atrás"}
+                        Cancelar
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1052,18 +954,14 @@ export default function HomeBaseAdapted({
                       ]}
                       onPress={handleGuardarPlaca}
                       accessibilityRole="button"
-                      accessibilityLabel={
-                        role === "conductor" ? "Enviar solicitud" : "Guardar"
-                      }
+                      accessibilityLabel="Enviar solicitud"
                       disabled={!placaTemporal.trim() || cargando}>
                       {cargando ? (
                         <ActivityIndicator color={c.accentText} />
                       ) : (
                         <Text
                           style={[s.btnPrimaryText, { color: c.accentText }]}>
-                          {role === "conductor"
-                            ? "Enviar solicitud"
-                            : "Guardar"}
+                          Enviar solicitud
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -1088,9 +986,9 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 16,
-    marginBottom: 18,
-    gap: 12,
+    marginTop: 10,
+    marginBottom: 10,
+    gap: 10,
   },
   rolePill: {
     flexDirection: "row",
@@ -1104,7 +1002,7 @@ const s = StyleSheet.create({
     borderRadius: 3,
   },
   roleText: { fontSize: 12, fontWeight: "500", letterSpacing: 0.1 },
-  greetingName: { fontSize: 26, fontWeight: "900", letterSpacing: -0.6 },
+  greetingName: { fontSize: 34, fontWeight: "800", letterSpacing: -0.8 },
 
   // Avatar — white-border ring + accent shadow
   avatarRing: {
@@ -1139,10 +1037,11 @@ const s = StyleSheet.create({
     minHeight: 90,
     overflow: "hidden",
   },
-  // Rappi-style: icono directo, sin anillos
-  heroIconWrap: {
+  // Apple-style: app-icon cuadrado redondeado
+  heroIconApp: {
     width: 64,
     height: 64,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1259,52 +1158,53 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
-    marginTop: 6,
+    marginBottom: 14,
+    marginTop: 10,
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 22,
     fontWeight: "700",
-    letterSpacing: 1.4,
+    letterSpacing: -0.4,
   },
   gridContainer: { paddingBottom: 100 },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Platform.OS === "android" ? 10 : 12,
-    //backgroundColor: "#0ecc00",
-  },
-  gridCard: {
-    width: (width - H_PAD * 2 - (Platform.OS === "android" ? 6 : 12)) / 2,
-    paddingTop: Platform.OS === "android" ? 12 : 14,
-    paddingBottom: Platform.OS === "android" ? 10 : 12,
-    paddingHorizontal: 10,
-    alignItems: "center",
-    minHeight: Platform.OS === "android" ? 110 : 120,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
 
-  // Rappi-style: icono directo, sin anillos
-  gridIconWrap: {
-    flex: 1,
+  // Apple Support — lista vertical de filas
+  listSection: {
+    gap: 10,
+  },
+  listRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    gap: 14,
+    borderRadius: 16,
+  },
+  listRowIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
-    width: "100%",
-    marginBottom: Platform.OS === "android" ? 6 : 8,
   },
-
-  gridCardName: {
-    fontSize: Platform.OS === "android" ? 12 : 13,
+  listRowLabel: {
+    flex: 1,
+    fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
     letterSpacing: -0.2,
   },
-  gridCardSub: {
-    fontSize: Platform.OS === "android" ? 10 : 11,
-    textAlign: "center",
-    lineHeight: Platform.OS === "android" ? 14 : 16,
-    marginTop: 2,
+  listBadgePill: {
+    minWidth: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 7,
+  },
+  listBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   badgeCount: {
     position: "absolute",

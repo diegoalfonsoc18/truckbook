@@ -5,16 +5,14 @@ import {
   Alert,
   View,
   ScrollView,
-  Modal,
   Animated,
   Dimensions,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, CommonActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import supabase from "../../config/SupaBaseConfig";
-import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import ThemeSelector from "../../constants/ThemeSelector";
 
@@ -26,37 +24,7 @@ const ITEM_WIDTH =
   (width - HORIZONTAL_PADDING * 2 - GRID_GAP * (COLUMN_COUNT - 1)) /
   COLUMN_COUNT;
 
-type UserRole = "conductor" | "administrador" | "propietario";
-
-const ROLES_DISPONIBLES: {
-  id: UserRole;
-  icon: string;
-  label: string;
-  description: string;
-  color: string;
-}[] = [
-  {
-    id: "conductor",
-    icon: "🚛",
-    label: "Conductor",
-    description: "Registra gastos y viajes",
-    color: "#00D9A5",
-  },
-  {
-    id: "administrador",
-    icon: "📊",
-    label: "Admin",
-    description: "Gestiona flotas",
-    color: "#FFB800",
-  },
-  {
-    id: "propietario",
-    icon: "👑",
-    label: "Propietario",
-    description: "Dashboard completo",
-    color: "#E94560",
-  },
-];
+const CONDUCTOR_COLOR = "#00D9A5";
 
 const MENU_OPTIONS = [
   {
@@ -106,19 +74,13 @@ const MENU_OPTIONS = [
 
 export default function Account() {
   const { colors, isDark } = useTheme();
-  const c = colors; // shorthand
+  const c = colors;
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [modalRolesVisible, setModalRolesVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const modalScaleAnim = useRef(new Animated.Value(0.9)).current;
-  const modalOpacityAnim = useRef(new Animated.Value(0)).current;
-
-  const role = useRoleStore((state) => state.role);
-  const setRole = useRoleStore((state) => state.setRole);
 
   useEffect(() => {
     cargarUsuario();
@@ -128,27 +90,6 @@ export default function Account() {
       useNativeDriver: true,
     }).start();
   }, []);
-
-  useEffect(() => {
-    if (modalRolesVisible) {
-      Animated.parallel([
-        Animated.spring(modalScaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 65,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalOpacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      modalScaleAnim.setValue(0.9);
-      modalOpacityAnim.setValue(0);
-    }
-  }, [modalRolesVisible]);
 
   const cargarUsuario = async () => {
     try {
@@ -160,47 +101,6 @@ export default function Account() {
       setUser(currentUser);
     } catch (error) {
       console.error("Error:", error);
-    }
-  };
-
-  const handleCambiarRol = async (nuevoRol: UserRole) => {
-    try {
-      setLoading(true);
-      if (!user?.id) return Alert.alert("Error", "Usuario no identificado");
-
-      const { error } = await supabase
-        .from("usuarios")
-        .update({ rol: nuevoRol })
-        .eq("user_id", user.id);
-
-      if (error && error.code === "PGRST116") {
-        const { error: insertError } = await supabase.from("usuarios").insert([
-          {
-            user_id: user.id,
-            rol: nuevoRol,
-            nombre: user.user_metadata?.nombre,
-            email: user.email,
-          },
-        ]);
-        if (insertError) throw insertError;
-      } else if (error) {
-        throw error;
-      }
-
-      setRole(nuevoRol);
-      setModalRolesVisible(false);
-
-      // Resetear navegación al Home del nuevo rol
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "Home" }],
-        }),
-      );
-    } catch (error) {
-      Alert.alert("Error", "No se pudo cambiar el rol");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -232,7 +132,6 @@ export default function Account() {
     }
   };
 
-  const currentRole = ROLES_DISPONIBLES.find((r) => r.id === role);
   const userInitial = user?.email?.charAt(0).toUpperCase() || "U";
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Usuario";
@@ -240,12 +139,15 @@ export default function Account() {
   return (
     <View style={[styles.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {/* HEADER FIJO */}
+        {/* HEADER */}
         <View style={styles.headerFixed}>
           <View style={styles.header}>
             {navigation?.canGoBack() && (
               <TouchableOpacity
-                style={[styles.backBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}
+                style={[
+                  styles.backBtn,
+                  { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface },
+                ]}
                 onPress={() => navigation.goBack()}>
                 <Text style={{ fontSize: 18 }}>←</Text>
               </TouchableOpacity>
@@ -254,33 +156,21 @@ export default function Account() {
           </View>
         </View>
 
-        {/* CONTENIDO SCROLLEABLE */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           <Animated.View style={{ opacity: fadeAnim }}>
+
             {/* PERFIL */}
             <View style={styles.profileSection}>
               <View
                 style={[
                   styles.avatarContainer,
-                  { backgroundColor: currentRole?.color || c.accent },
+                  { backgroundColor: CONDUCTOR_COLOR },
                   getShadow(isDark, "lg"),
                 ]}>
                 <Text style={styles.avatarText}>{userInitial}</Text>
-                <View
-                  style={[
-                    styles.avatarBadge,
-                    {
-                      backgroundColor: c.surface,
-                      borderColor: c.primary,
-                    },
-                  ]}>
-                  <Text style={styles.avatarBadgeText}>
-                    {currentRole?.icon || "👤"}
-                  </Text>
-                </View>
               </View>
 
               <Text style={[styles.userName, { color: c.text }]}>{userName}</Text>
@@ -288,24 +178,13 @@ export default function Account() {
                 {user?.email || "Cargando…"}
               </Text>
 
-              <TouchableOpacity
-                style={[
-                  styles.roleBadge,
-                  { backgroundColor: currentRole?.color || c.accent },
-                ]}
-                onPress={() => setModalRolesVisible(true)}
-                activeOpacity={0.8}>
-                <Text style={styles.roleBadgeIcon}>
-                  {currentRole?.icon || "👤"}
-                </Text>
-                <Text style={styles.roleBadgeText}>
-                  {currentRole?.label || "Sin rol"}
-                </Text>
-                <Text style={styles.roleBadgeArrow}>›</Text>
-              </TouchableOpacity>
+              <View style={[styles.roleBadge, { backgroundColor: CONDUCTOR_COLOR }]}>
+                <Text style={styles.roleBadgeIcon}>🚛</Text>
+                <Text style={styles.roleBadgeText}>Conductor</Text>
+              </View>
             </View>
 
-            {/* ESTADÍSTICAS - GRID 3 COLUMNAS */}
+            {/* ESTADÍSTICAS */}
             <View
               style={[
                 styles.statsContainer,
@@ -331,7 +210,7 @@ export default function Account() {
               </View>
             </View>
 
-            {/* MENÚ - GRID 3 COLUMNAS */}
+            {/* MENÚ */}
             <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
               Configuración
             </Text>
@@ -394,126 +273,6 @@ export default function Account() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* MODAL CAMBIAR ROL */}
-      <Modal
-        visible={modalRolesVisible}
-        transparent
-        animationType="none"
-        onRequestClose={() => setModalRolesVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalRolesVisible(false)}>
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: c.overlay },
-            ]}
-          />
-          <Animated.View
-            style={[
-              styles.modalContainer,
-              {
-                opacity: modalOpacityAnim,
-                transform: [{ scale: modalScaleAnim }],
-              },
-            ]}>
-            <TouchableOpacity activeOpacity={1}>
-              <View
-                style={[
-                  styles.modalContent,
-                  {
-                    backgroundColor: c.modalBg,
-                    borderColor: c.border,
-                  },
-                ]}>
-                <View
-                  style={[
-                    styles.modalHandle,
-                    { backgroundColor: c.textMuted },
-                  ]}
-                />
-                <Text style={[styles.modalTitle, { color: c.text }]}>Cambiar Rol</Text>
-                <Text style={[styles.modalSubtitle, { color: c.textSecondary }]}>
-                  ¿Cómo usarás TruckBook?
-                </Text>
-
-                <View style={styles.rolesContainer}>
-                  {ROLES_DISPONIBLES.map((rol) => {
-                    const isActive = role === rol.id;
-                    return (
-                      <TouchableOpacity
-                        key={rol.id}
-                        style={[
-                          styles.roleOption,
-                          {
-                            backgroundColor: isActive
-                              ? rol.color
-                              : c.cardBg,
-                            borderColor: isActive ? rol.color : c.border,
-                          },
-                        ]}
-                        onPress={() => handleCambiarRol(rol.id)}
-                        disabled={loading}
-                        activeOpacity={0.8}>
-                        <View
-                          style={[
-                            styles.roleIconContainer,
-                            {
-                              backgroundColor: isActive
-                                ? "rgba(255,255,255,0.2)"
-                                : `${rol.color}20`,
-                            },
-                          ]}>
-                          <Text style={styles.roleIcon}>{rol.icon}</Text>
-                        </View>
-                        <View style={styles.roleTextContainer}>
-                          <Text
-                            style={[
-                              styles.roleLabel,
-                              { color: isActive ? "#FFF" : c.text },
-                            ]}>
-                            {rol.label}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.roleDescription,
-                              {
-                                color: isActive
-                                  ? "rgba(255,255,255,0.8)"
-                                  : c.textSecondary,
-                              },
-                            ]}>
-                            {rol.description}
-                          </Text>
-                        </View>
-                        {isActive && (
-                          <View style={styles.roleCheck}>
-                            <Text style={styles.roleCheckText}>✓</Text>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.modalCancelButton,
-                    { backgroundColor: c.cardBg },
-                  ]}
-                  onPress={() => setModalRolesVisible(false)}
-                  disabled={loading}>
-                  <Text style={[styles.modalCancelText, { color: c.textSecondary }]}>
-                    Cancelar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
-
       {/* MODAL SELECTOR DE TEMA */}
       <ThemeSelector
         visible={themeModalVisible}
@@ -527,7 +286,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
 
-  // HEADER FIJO
   headerFixed: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 8 },
   header: { paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 12 },
   backBtn: {
@@ -539,11 +297,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
 
-  // SCROLL
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 40 },
 
-  // PROFILE
   profileSection: { alignItems: "center", paddingVertical: 16 },
   avatarContainer: {
     width: 90,
@@ -551,22 +307,9 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    position: "relative",
     marginBottom: 12,
   },
   avatarText: { fontSize: 36, fontWeight: "700", color: "#FFF" },
-  avatarBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-  },
-  avatarBadgeText: { fontSize: 14 },
   userName: { fontSize: 22, fontWeight: "700", marginBottom: 4 },
   userEmail: { fontSize: 13, marginBottom: 12 },
   roleBadge: {
@@ -579,14 +322,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeIcon: { fontSize: 14 },
   roleBadgeText: { fontSize: 13, fontWeight: "600", color: "#FFF" },
-  roleBadgeArrow: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFF",
-    opacity: 0.7,
-  },
 
-  // STATS
   statsContainer: {
     flexDirection: "row",
     borderRadius: 16,
@@ -599,7 +335,6 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 20, fontWeight: "700", marginBottom: 2 },
   statLabel: { fontSize: 11, textTransform: "uppercase" },
 
-  // SECTION TITLE
   sectionTitle: {
     fontSize: 11,
     fontWeight: "600",
@@ -608,7 +343,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // MENU GRID
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -634,7 +368,6 @@ const styles = StyleSheet.create({
   menuTitle: { fontSize: 12, fontWeight: "600", marginBottom: 2 },
   menuSubtitle: { fontSize: 10 },
 
-  // LOGOUT
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -648,56 +381,4 @@ const styles = StyleSheet.create({
   logoutIcon: { fontSize: 16 },
   logoutText: { fontSize: 15, fontWeight: "600" },
   versionText: { fontSize: 11, textAlign: "center" },
-
-  // MODAL
-  modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  modalContainer: { marginHorizontal: 16, marginBottom: 30 },
-  modalContent: { borderRadius: 24, padding: 16, borderWidth: 1 },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  modalSubtitle: { fontSize: 13, textAlign: "center", marginBottom: 16 },
-
-  rolesContainer: { gap: 10, marginBottom: 12 },
-  roleOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  roleIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  roleIcon: { fontSize: 22 },
-  roleTextContainer: { flex: 1 },
-  roleLabel: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
-  roleDescription: { fontSize: 12 },
-  roleCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  roleCheckText: { fontSize: 12, fontWeight: "700", color: "#FFF" },
-
-  modalCancelButton: { alignItems: "center", padding: 14, borderRadius: 12 },
-  modalCancelText: { fontSize: 15, fontWeight: "600" },
 });
