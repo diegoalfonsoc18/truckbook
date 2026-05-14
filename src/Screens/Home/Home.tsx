@@ -28,6 +28,7 @@ import Reanimated, {
   useReducedMotion,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
@@ -36,6 +37,8 @@ import { useRoleStore } from "../../store/RoleStore";
 import supabase from "../../config/SupaBaseConfig";
 import {
   cargarVehiculosConEstado,
+  registrarVehiculoPropietario,
+  removerConductorDeVehiculo,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme } from "../../constants/Themecontext";
@@ -354,6 +357,12 @@ export default function HomeBaseAdapted({
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [cargando, setCargando] = useState(false);
   const [conductorActual, setConductorActual] = useState<string | undefined>();
+  const [placaInput, setPlacaInput] = useState("");
+  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(null);
+  const [placaEditInput, setPlacaEditInput] = useState("");
+  const [tipoCamionEditInput, setTipoCamionEditInput] = useState<TipoCamion | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-8)).current;
@@ -448,10 +457,105 @@ export default function HomeBaseAdapted({
       Alert.alert("Acceso denegado", "El propietario rechazó tu solicitud.");
       return;
     }
+    // Si ya está activo, deseleccionar
+    if (placaActual === vehiculo.placa) {
+      setPlaca("");
+      setTipoCamion(null);
+      setConductorActual(undefined);
+      return;
+    }
     setPlaca(vehiculo.placa);
     setTipoCamion(vehiculo.tipo_camion);
     setConductorActual(vehiculo.conductorNombre);
+  };
+
+  const cerrarModal = () => {
     setModalVehiculosVisible(false);
+    setPlacaInput("");
+    setTipoCamionInput(null);
+    setVehiculoEditando(null);
+    setPlacaEditInput("");
+    setTipoCamionEditInput(null);
+  };
+
+  const abrirEdicion = (v: Vehiculo) => {
+    setVehiculoEditando(v);
+    setPlacaEditInput(v.placa);
+    setTipoCamionEditInput(v.tipo_camion);
+  };
+
+  const handleGuardarEdicion = async () => {
+    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput) return;
+    setGuardando(true);
+    const placaNueva = placaEditInput.trim().toUpperCase();
+    try {
+      // Actualizar tipo de camión
+      await supabase
+        .from("vehiculos")
+        .update({ tipo_camion: tipoCamionEditInput })
+        .eq("placa", vehiculoEditando.placa);
+
+      // Si cambió la placa, renombrar el registro
+      if (placaNueva !== vehiculoEditando.placa) {
+        await supabase.from("vehiculos").insert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }]);
+        await supabase.from("vehiculo_conductores").update({ vehiculo_placa: placaNueva }).eq("vehiculo_placa", vehiculoEditando.placa);
+        await supabase.from("vehiculos").delete().eq("placa", vehiculoEditando.placa);
+        if (placaActual === vehiculoEditando.placa) {
+          setPlaca(placaNueva);
+          setTipoCamion(tipoCamionEditInput);
+        }
+      } else if (tipoCamionEditInput !== vehiculoEditando.tipo_camion && placaActual === vehiculoEditando.placa) {
+        setTipoCamion(tipoCamionEditInput);
+      }
+
+      setVehiculoEditando(null);
+      setPlacaEditInput("");
+      setTipoCamionEditInput(null);
+      await cargarVehiculos();
+    } catch {
+      Alert.alert("Error", "No se pudo actualizar el vehículo");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleEliminarVehiculo = (v: Vehiculo) => {
+    Alert.alert(
+      "Quitar vehículo",
+      `¿Quitar ${v.placa} de tu lista?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Quitar",
+          style: "destructive",
+          onPress: async () => {
+            const result = await removerConductorDeVehiculo(v.id);
+            if (!result.success) {
+              Alert.alert("Error", result.error || "No se pudo quitar el vehículo");
+              return;
+            }
+            if (placaActual === v.placa) setPlaca("");
+            await cargarVehiculos();
+          },
+        },
+      ],
+    );
+  };
+
+  const handleAgregarVehiculo = async () => {
+    if (!user?.id || !placaInput.trim() || !tipoCamionInput) return;
+    setGuardando(true);
+    const placa = placaInput.trim().toUpperCase();
+    const result = await registrarVehiculoPropietario(user.id, placa, tipoCamionInput);
+    setGuardando(false);
+    if (!result.success) {
+      Alert.alert("Error", result.error || "No se pudo registrar el vehículo");
+      return;
+    }
+    await cargarVehiculos();
+    setVistaModal("lista");
+    setPlacaInput("");
+    setTipoCamionInput(null);
   };
 
   const tipoCamionData = getTipoCamionData(tipoCamion);
@@ -548,7 +652,7 @@ export default function HomeBaseAdapted({
           {showCamionHeader && (
             <AnimatedPressable
               style={[
-                s.vehicleCardOuter,
+                s.vehicleCard,
                 {
                   backgroundColor: isDark
                     ? HOME_COLORS.vehicleCardBgDark
@@ -570,98 +674,45 @@ export default function HomeBaseAdapted({
                   : "Seleccionar vehículo"
               }
               accessibilityHint="Toca para cambiar de vehículo">
-              {/* Inner core — double-bezel */}
-              <View
-                style={[
-                  s.vehicleCardInner,
-                  { backgroundColor: c.cardVehicleHome },
-                ]}>
                 <View style={s.vehicleCardContent}>
-                  {/* Ícono del camión sin fondo */}
-                  <ItemIcon
-                    name={camionIconName}
-                    size={HOME_COLORS.vehicleIconSize}
-                  />
-                  <View style={s.vehicleInfo}>
-                    <View style={s.vehicleStatusRow}>
-                      <Text
-                        style={[
-                          s.vehicleType,
-                          { color: HOME_COLORS.vehicleCardText },
-                        ]}>
-                        {vehicleCardTitle ||
-                          tipoCamionData?.label ||
-                          "Sin vehículo"}
-                      </Text>
-                      {placaActual && (
-                        <View
-                          style={[
-                            s.activoBadge,
-                            { backgroundColor: "rgba(255,255,255,0.15)" },
-                          ]}>
-                          <View
-                            style={[
-                              s.activoDot,
-                              { backgroundColor: HOME_COLORS.vehicleCardText },
-                            ]}
-                          />
-                          <Text
-                            style={[
-                              s.activoText,
-                              { color: HOME_COLORS.vehicleCardText },
-                            ]}>
-                            Activo
+                  {placaActual ? (
+                    <>
+                      {/* Con vehículo — info apilada */}
+                      <View style={s.vehicleInfo}>
+                        <Text style={[s.vehicleLabel, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+                          Vehículo activo
+                        </Text>
+                        <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
+                          {vehicleCardTitle || tipoCamionData?.label || ""}
+                        </Text>
+                        <View style={[s.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
+                          <Text style={[s.placaText, { color: c.plateText }]}>
+                            {placaActual}
                           </Text>
                         </View>
-                      )}
-                    </View>
-                    {placaActual ? (
-                      <View
-                        style={[
-                          s.placaBadge,
-                          {
-                            backgroundColor: c.plateYellow,
-                            borderColor: c.plateBorder,
-                            borderWidth: 1,
-                          },
-                        ]}>
-                        <Text style={[s.placaText, { color: c.plateText }]}>
-                          {placaActual}
+                        {conductorActual && (
+                          <Text style={[s.vehicleConductor, { color: HOME_COLORS.vehicleCardTextMuted }]} numberOfLines={1}>
+                            {conductorActual}
+                          </Text>
+                        )}
+                      </View>
+                      <ItemIcon name={camionIconName} size={HOME_COLORS.vehicleIconSize} />
+                    </>
+                  ) : (
+                    <>
+                      {/* Sin vehículo — estado vacío */}
+                      <View style={s.vehicleInfo}>
+                        <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
+                          Sin vehículo
+                        </Text>
+                        <Text style={[s.vehicleHint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+                          Toca para seleccionar un camión
                         </Text>
                       </View>
-                    ) : (
-                      <Text
-                        style={[
-                          s.vehicleHint,
-                          { color: HOME_COLORS.vehicleCardTextMuted },
-                        ]}>
-                        Sin vehículo activo
-                      </Text>
-                    )}
-                    {conductorActual && (
-                      <Text
-                        style={[
-                          s.vehicleConductor,
-                          { color: HOME_COLORS.vehicleCardTextMuted },
-                        ]}
-                        numberOfLines={1}>
-                        {conductorActual}
-                      </Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      s.chevronWrap,
-                      { backgroundColor: HOME_COLORS.vehicleCardChevronBg },
-                    ]}>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color={HOME_COLORS.vehicleCardTextMuted}
-                    />
-                  </View>
+                      <ItemIcon name="conductor" size={HOME_COLORS.vehicleIconSize} />
+                    </>
+                  )}
                 </View>
-              </View>
             </AnimatedPressable>
           )}
 
@@ -733,140 +784,218 @@ export default function HomeBaseAdapted({
         visible={modalVehiculosVisible}
         transparent
         animationType="slide"
-        onRequestClose={() => setModalVehiculosVisible(false)}>
-        <TouchableWithoutFeedback
-          onPress={() => setModalVehiculosVisible(false)}>
-          <View style={[s.overlay, { backgroundColor: c.overlay }]}>
-            <TouchableWithoutFeedback>
-              <View style={[s.sheetBase, sheet]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
-                <Text
-                  style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
-                  Mis Vehículos
-                </Text>
+        onRequestClose={cerrarModal}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <TouchableWithoutFeedback onPress={cerrarModal}>
+            <View style={[s.overlay, { backgroundColor: c.overlay }]}>
+              <TouchableWithoutFeedback>
+                <View style={[s.sheetBase, sheet]}>
+                  <View style={[s.handle, { backgroundColor: c.border }]} />
 
-                {cargando ? (
-                  <View style={s.loadingBox}>
-                    <ActivityIndicator size="large" color={c.accent} />
-                  </View>
-                ) : vehiculos.length > 0 ? (
                   <ScrollView
-                    style={s.vehicleList}
-                    showsVerticalScrollIndicator={false}>
-                    {vehiculos.map((v) => {
-                      const tipo = getTipoCamionData(v.tipo_camion);
-                      const isActive = placaActual === v.placa;
-                      const vIconName: IconName = tipo
-                        ? ICON_MAP[tipo.id]
-                        : "truck";
-                      return (
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ paddingBottom: 8 }}>
+
+                    {/* ── Título ── */}
+                    <Text style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
+                      Mis Vehículos
+                    </Text>
+
+                    {/* ── Lista de vehículos ── */}
+                    {cargando ? (
+                      <View style={s.loadingBox}>
+                        <ActivityIndicator size="large" color={c.accent} />
+                      </View>
+                    ) : vehiculos.length > 0 ? (
+                      <>
+                        {vehiculos.map((v) => {
+                          const tipo = getTipoCamionData(v.tipo_camion);
+                          const isActive = placaActual === v.placa;
+                          const vIconName: IconName = tipo ? ICON_MAP[tipo.id] : "conductor";
+                          return (
+                            <Swipeable
+                              key={v.id}
+                              overshootRight={false}
+                              renderRightActions={() => (
+                                <View style={s.swipeActions}>
+                                  <TouchableOpacity
+                                    style={[s.swipeActionBtn, { backgroundColor: "#3B82F6" }]}
+                                    onPress={() => abrirEdicion(v)}>
+                                    <Ionicons name="pencil-outline" size={20} color="#fff" />
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[s.swipeActionBtn, { backgroundColor: "#EF4444" }]}
+                                    onPress={() => handleEliminarVehiculo(v)}>
+                                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                                  </TouchableOpacity>
+                                </View>
+                              )}>
+                              <TouchableOpacity
+                                style={[
+                                  s.vehicleOption,
+                                  { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
+                                  isActive && { borderWidth: 1.5, borderColor: c.accent },
+                                ]}
+                                onPress={() => handleSeleccionarVehiculo(v)}
+                                activeOpacity={0.7}>
+                                <View style={[s.vehicleOptionIcon, { backgroundColor: tipo?.color || c.accent }]}>
+                                  <ItemIcon name={vIconName} size={28} />
+                                </View>
+                                <View style={s.vehicleOptionInfo}>
+                                  <Text style={[s.vehicleOptionPlaca, { color: c.text }]}>
+                                    {v.placa}
+                                  </Text>
+                                  <Text style={[s.vehicleOptionType, { color: c.textSecondary }]}>
+                                    {tipo?.label || "Vehículo"}
+                                  </Text>
+                                </View>
+                                {isActive && (
+                                  <View style={[s.statusBadge, { backgroundColor: c.accent }]}>
+                                    <Ionicons name="checkmark" size={14} color={c.accentText} />
+                                  </View>
+                                )}
+                              </TouchableOpacity>
+                            </Swipeable>
+                          );
+                        })}
+                      </>
+                    ) : null}
+
+                    {/* ── Formulario edición ── */}
+                    {vehiculoEditando && (
+                      <View style={[s.addSection, { borderTopColor: c.divider }]}>
+                        <View style={s.editSectionHeader}>
+                          <Text style={[s.selectorLabel, { color: c.text, marginBottom: 0 }]}>
+                            Editar — {vehiculoEditando.placa}
+                          </Text>
+                          <TouchableOpacity onPress={() => setVehiculoEditando(null)}>
+                            <Ionicons name="close" size={20} color={c.textMuted} />
+                          </TouchableOpacity>
+                        </View>
+
+                        <TextInput
+                          style={[s.placaInputField, { backgroundColor: c.surface, color: c.text, borderColor: c.accent, marginTop: 12 }]}
+                          placeholder="Placa"
+                          placeholderTextColor={c.textMuted}
+                          value={placaEditInput}
+                          onChangeText={(t) => setPlacaEditInput(t.toUpperCase())}
+                          autoCapitalize="characters"
+                          maxLength={7}
+                          returnKeyType="done"
+                          onSubmitEditing={Keyboard.dismiss}
+                        />
+
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={s.tipoScroll}>
+                          {TIPOS_CAMION.map((tipo) => {
+                            const selected = tipoCamionEditInput === tipo.id;
+                            return (
+                              <TouchableOpacity
+                                key={tipo.id}
+                                style={[
+                                  s.tipoChip,
+                                  { backgroundColor: c.surface, borderColor: c.border },
+                                  selected && { backgroundColor: tipo.color + "22", borderColor: tipo.color },
+                                ]}
+                                onPress={() => setTipoCamionEditInput(tipo.id)}>
+                                <ItemIcon name={tipo.iconName} size={32} />
+                                <Text style={[s.tipoChipLabel, { color: selected ? tipo.color : c.textSecondary }]}>
+                                  {tipo.label}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+
                         <TouchableOpacity
-                          key={v.id}
                           style={[
-                            s.vehicleOption,
-                            { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
-                            isActive && {
-                              borderWidth: 1.5,
-                              borderColor: c.accent,
-                            },
+                            s.confirmBtn,
+                            { backgroundColor: "#3B82F6" },
+                            (!placaEditInput.trim() || !tipoCamionEditInput) && { opacity: 0.4 },
                           ]}
-                          onPress={() => handleSeleccionarVehiculo(v)}
-                          activeOpacity={0.7}>
-                          {/* App-icon */}
-                          <View
-                            style={[
-                              s.vehicleOptionIcon,
-                              { backgroundColor: tipo?.color || c.accent },
-                            ]}>
-                            <ItemIcon name={vIconName} size={28} />
-                          </View>
-
-                          {/* Info */}
-                          <View style={s.vehicleOptionInfo}>
-                            <Text
-                              style={[s.vehicleOptionPlaca, { color: c.text }]}>
-                              {v.placa}
-                            </Text>
-                            <Text
-                              style={[
-                                s.vehicleOptionType,
-                                { color: c.textSecondary },
-                              ]}>
-                              {tipo?.label || "Vehículo"}
-                            </Text>
-                          </View>
-
-                          {/* Estado */}
-                          {v.estado === "pendiente" ? (
-                            <View
-                              style={[
-                                s.statusBadge,
-                                { backgroundColor: "#FFB800" },
-                              ]}>
-                              <Ionicons
-                                name="time-outline"
-                                size={14}
-                                color="#fff"
-                              />
-                            </View>
-                          ) : v.estado === "rechazado" ? (
-                            <View
-                              style={[
-                                s.statusBadge,
-                                { backgroundColor: c.danger },
-                              ]}>
-                              <Ionicons name="close" size={14} color="#fff" />
-                            </View>
-                          ) : isActive ? (
-                            <View
-                              style={[
-                                s.statusBadge,
-                                { backgroundColor: c.accent },
-                              ]}>
-                              <Ionicons
-                                name="checkmark"
-                                size={14}
-                                color={c.accentText}
-                              />
-                            </View>
+                          onPress={handleGuardarEdicion}
+                          disabled={!placaEditInput.trim() || !tipoCamionEditInput || guardando}>
+                          {guardando ? (
+                            <ActivityIndicator size="small" color="#fff" />
                           ) : (
-                            <Ionicons
-                              name="chevron-forward"
-                              size={16}
-                              color={c.textMuted}
-                            />
+                            <Text style={[s.confirmBtnText, { color: "#fff" }]}>Guardar cambios</Text>
                           )}
                         </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                ) : (
-                  <View style={s.emptyBox}>
-                    <View
-                      style={[s.emptyIconWrap, { backgroundColor: c.surface }]}>
-                      <Ionicons
-                        name="car-outline"
-                        size={36}
-                        color={c.textMuted}
-                      />
-                    </View>
-                    <Text style={[s.emptyText, { color: c.textSecondary }]}>
-                      Aún no tienes vehículos
-                    </Text>
-                  </View>
-                )}
+                      </View>
+                    )}
 
-                <TouchableOpacity
-                  style={s.cancelTouchable}
-                  onPress={() => setModalVehiculosVisible(false)}>
-                  <Text style={[s.cancelText, { color: c.textSecondary }]}>
-                    Cerrar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+                    {/* ── Separador + sección agregar ── */}
+                    <View style={[s.addSection, { borderTopColor: c.divider }]}>
+                      <Text style={[s.selectorLabel, { color: c.textSecondary, marginBottom: 12 }]}>
+                        Agregar vehículo
+                      </Text>
+
+                      <TextInput
+                        style={[s.placaInputField, { backgroundColor: c.surface, color: c.text, borderColor: c.border }]}
+                        placeholder="Placa — Ej: EKA854"
+                        placeholderTextColor={c.textMuted}
+                        value={placaInput}
+                        onChangeText={(t) => setPlacaInput(t.toUpperCase())}
+                        autoCapitalize="characters"
+                        maxLength={7}
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
+                      />
+
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        style={s.tipoScroll}>
+                        {TIPOS_CAMION.map((tipo) => {
+                          const selected = tipoCamionInput === tipo.id;
+                          return (
+                            <TouchableOpacity
+                              key={tipo.id}
+                              style={[
+                                s.tipoChip,
+                                { backgroundColor: c.surface, borderColor: c.border },
+                                selected && { backgroundColor: tipo.color + "22", borderColor: tipo.color },
+                              ]}
+                              onPress={() => setTipoCamionInput(tipo.id)}>
+                              <ItemIcon name={tipo.iconName} size={32} />
+                              <Text style={[s.tipoChipLabel, { color: selected ? tipo.color : c.textSecondary }]}>
+                                {tipo.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+
+                      <TouchableOpacity
+                        style={[
+                          s.confirmBtn,
+                          { backgroundColor: c.accent },
+                          (!placaInput.trim() || !tipoCamionInput) && { opacity: 0.4 },
+                        ]}
+                        onPress={handleAgregarVehiculo}
+                        disabled={!placaInput.trim() || !tipoCamionInput || guardando}>
+                        {guardando ? (
+                          <ActivityIndicator size="small" color={c.accentText} />
+                        ) : (
+                          <Text style={[s.confirmBtnText, { color: c.accentText }]}>
+                            Registrar vehículo
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity style={s.cancelTouchable} onPress={cerrarModal}>
+                      <Text style={[s.cancelText, { color: c.textSecondary }]}>Cerrar</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -946,14 +1075,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   heroSquareName: {
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    fontSize: HOME_COLORS.heroCardNameSize,
+    fontWeight: HOME_COLORS.heroCardNameWeight,
+    letterSpacing: HOME_COLORS.heroCardNameLetterSpacing,
     textAlign: "center",
   },
   heroSquareSub: {
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: HOME_COLORS.heroCardSubSize,
+    lineHeight: HOME_COLORS.heroCardSubLineHeight,
     textAlign: "center",
   },
 
@@ -961,8 +1090,9 @@ const s = StyleSheet.create({
   vehicleStatusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
+    gap: 6,
+    marginBottom: 5,
+    flexWrap: "wrap",
   },
   activoBadge: {
     flexDirection: "row",
@@ -976,20 +1106,17 @@ const s = StyleSheet.create({
   activoText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
 
   // VEHICLE CARD — double-bezel
-  vehicleCardOuter: {
-    borderRadius: 24,
-    padding: 4,
-    marginBottom: 20,
-  },
-  vehicleCardInner: {
-    borderRadius: 21,
+  vehicleCard: {
+    borderRadius: 20,
     overflow: "hidden",
+    marginBottom: 20,
   },
   vehicleCardContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    gap: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    gap: 12,
   },
   // Circular icon — double-ring matching grid cards
   vehicleIconBg: {
@@ -1006,9 +1133,19 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  vehicleInfo: { flex: 1 },
-  vehicleType: { fontSize: 15, fontWeight: "800", letterSpacing: -0.3 },
-  vehicleHint: { fontSize: 13 },
+  vehicleInfo: {
+    flex: 1,
+    gap: 5,
+  },
+  vehicleLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  vehicleType: { fontSize: HOME_COLORS.vehicleTypeSize, fontWeight: HOME_COLORS.vehicleTypeWeight, letterSpacing: -0.3 },
+  vehicleHint: { fontSize: HOME_COLORS.vehicleHintSize },
   vehicleCtaWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -1019,25 +1156,25 @@ const s = StyleSheet.create({
     paddingVertical: 5,
   },
   vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
-  vehicleConductor: { fontSize: 11, marginTop: 3 },
+  vehicleConductor: { fontSize: HOME_COLORS.vehicleConductorSize, marginTop: 3 },
   placaBadge: {
-    borderRadius: 7,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     alignSelf: "flex-start",
   },
   placaText: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 2,
-    fontFamily: Platform.select({ ios: "Courier New", android: "monospace" }),
+    fontSize: HOME_COLORS.vehiclePlateSize,
+    fontWeight: HOME_COLORS.vehiclePlateWeight,
+    letterSpacing: HOME_COLORS.vehiclePlateLetterSpacing,
   },
   chevronWrap: {
-    width: 44,
-    height: 44,
+    width: 28,
+    height: 28,
     borderRadius: 99,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "transparent",
   },
 
   // GRID
@@ -1080,9 +1217,9 @@ const s = StyleSheet.create({
   },
   listRowLabel: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: -0.2,
+    fontSize: HOME_COLORS.listRowLabelSize,
+    fontWeight: HOME_COLORS.listRowLabelWeight,
+    letterSpacing: HOME_COLORS.listRowLabelLetterSpacing,
   },
   listBadgePill: {
     minWidth: 26,
@@ -1199,6 +1336,25 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  swipeActions: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+    paddingLeft: 6,
+    marginBottom: 8,
+  },
+  swipeActionBtn: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 56,
+    borderRadius: 14,
+    alignSelf: "stretch",
+  },
+  editSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 
   // Empty
   emptyBox: { alignItems: "center", paddingVertical: 32 },
@@ -1210,7 +1366,45 @@ const s = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  emptyText: { fontSize: 14 },
+  emptyText: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  emptySubText: { fontSize: 12, textAlign: "center" },
+
+  // Sección agregar (integrada en el mismo modal)
+  addSection: {
+    borderTopWidth: 1,
+    marginTop: 20,
+    paddingTop: 20,
+  },
+  placaInputField: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: 4,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  selectorLabel: { fontSize: 13, fontWeight: "600", marginBottom: 10 },
+  tipoScroll: { marginBottom: 24 },
+  tipoChip: {
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 12,
+    marginRight: 10,
+    minWidth: 72,
+  },
+  tipoChipLabel: { fontSize: 11, fontWeight: "600", textAlign: "center" },
+  confirmBtn: {
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  confirmBtnText: { fontSize: 16, fontWeight: "700" },
 
   // Placa Input
   placaIconWrap: {
