@@ -222,7 +222,7 @@ function HeroSquareCard({
         numberOfLines={1}>
         {item.name}
       </Text>
-      {item.subtitle && (
+      {false && item.subtitle && (
         <Text
           style={[s.heroSquareSub, { color: HOME_COLORS.heroCardTextSub }]}
           numberOfLines={1}>
