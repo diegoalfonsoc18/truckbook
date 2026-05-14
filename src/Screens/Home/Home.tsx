@@ -159,39 +159,45 @@ function getGreeting() {
   return "Buenas noches";
 }
 
-// ─── Widget base props ────────────────────────────────────────────────────────
-interface WProps { card: object; isDark: boolean }
+// ─── Widget helpers ───────────────────────────────────────────────────────────
+interface WProps { isDark: boolean }
 
-const WBG = (isDark: boolean) => isDark ? "#1C1C1E" : "#FFFFFF";
-const MUTED = (isDark: boolean) => isDark ? "#94A3B8" : "#6B7280";
-const INK   = (isDark: boolean) => isDark ? "#FFFFFF"  : "#111827";
+const WBG   = (d: boolean) => d ? "#1C1C1E" : "#FFFFFF";
+const MUTED = (d: boolean) => d ? "#94A3B8"  : "#6B7280";
+const INK   = (d: boolean) => d ? "#FFFFFF"  : "#111827";
+
+const wShadow = (isDark: boolean) =>
+  isDark
+    ? ({ borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" } as const)
+    : ({
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.10,
+        shadowRadius: 10,
+        elevation: 4,
+      } as const);
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
-function WidgetClima({ card, isDark }: WProps) {
+function WidgetClima({ isDark }: WProps) {
   const { temperatura, condicion, emoji, ciudad, cargando, error, sinPermiso } = useClima();
   const { colors: c } = useTheme();
 
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
-      ) : sinPermiso ? (
+      ) : sinPermiso || error ? (
         <>
-          <Text style={s.wEmoji}>📍</Text>
-          <Text style={[s.wTitle, { color: INK(isDark) }]}>Clima</Text>
-          <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Sin permiso de ubicación</Text>
-        </>
-      ) : error ? (
-        <>
-          <Text style={s.wEmoji}>🌡</Text>
-          <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Sin señal</Text>
+          <Text style={s.wCircleEmoji}>{sinPermiso ? "📍" : "🌡"}</Text>
+          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+            {sinPermiso ? "Ubicación\ndenegada" : "Sin señal"}
+          </Text>
         </>
       ) : (
         <>
-          <Text style={s.wEmoji}>{emoji}</Text>
-          <Text style={[s.wBigNum, { color: INK(isDark) }]}>{temperatura}°</Text>
-          <Text style={[s.wTitle, { color: INK(isDark) }]} numberOfLines={1}>{ciudad}</Text>
-          <Text style={[s.wLabel, { color: MUTED(isDark) }]} numberOfLines={1}>{condicion}</Text>
+          <Text style={s.wCircleEmoji}>{emoji}</Text>
+          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{temperatura}°</Text>
+          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]} numberOfLines={1}>{ciudad}</Text>
         </>
       )}
     </View>
@@ -199,68 +205,62 @@ function WidgetClima({ card, isDark }: WProps) {
 }
 
 // ─── Widget: Resumen del día ──────────────────────────────────────────────────
-function WidgetResumen({ card, isDark }: WProps) {
-  const gastos   = useGastosStore((state) => state.gastos);
-  const ingresos = useIngresosStore((state) => state.ingresos);
+function WidgetResumen({ isDark }: WProps) {
+  const gastos   = useGastosStore((s) => s.gastos);
+  const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
   const totalG = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
                        .reduce((a, g) => a + (g.monto ?? 0), 0);
   const totalI = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
                          .reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
-  const balanceColor = balance >= 0
+  const balColor = balance >= 0
     ? (isDark ? "#34D399" : "#059669")
     : (isDark ? "#F87171" : "#DC2626");
 
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
-      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Resumen</Text>
-      <Text style={[s.wBigNum, { color: balanceColor }]}>{formatCOP(balance)}</Text>
-      <View style={[s.wDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }]} />
-      <Text style={[s.wSmallRow, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
-      <Text style={[s.wSmallRow, { color: isDark ? "#F87171" : "#DC2626" }]}>↓ {formatCOP(totalG)}</Text>
+    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+      <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Hoy</Text>
+      <Text style={[s.wCircleBig, { color: balColor }]}>{formatCOP(balance)}</Text>
+      <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
+      <Text style={[s.wCircleSub, { color: isDark ? "#F87171" : "#DC2626" }]}>↓ {formatCOP(totalG)}</Text>
     </View>
   );
 }
 
 // ─── Widget: Combustible hoy ─────────────────────────────────────────────────
-function WidgetCombustible({ card, isDark }: WProps) {
-  const gastos = useGastosStore((state) => state.gastos);
+function WidgetCombustible({ isDark }: WProps) {
+  const gastos = useGastosStore((s) => s.gastos);
   const hoy = fechaLocalHoy();
-  const total = gastos
-    .filter((g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy))
-    .reduce((a, g) => a + (g.monto ?? 0), 0);
-  const cargas = gastos.filter(
+  const filtrados = gastos.filter(
     (g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy),
-  ).length;
+  );
+  const total  = filtrados.reduce((a, g) => a + (g.monto ?? 0), 0);
+  const cargas = filtrados.length;
 
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
-      <Text style={s.wEmoji}>⛽</Text>
-      <Text style={[s.wBigNum, { color: INK(isDark) }]}>{formatCOP(total)}</Text>
-      <Text style={[s.wTitle, { color: INK(isDark) }]}>Combustible</Text>
-      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>
-        {cargas === 0 ? "Sin cargas hoy" : `${cargas} carga${cargas > 1 ? "s" : ""}`}
+    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+      <Text style={s.wCircleEmoji}>⛽</Text>
+      <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{formatCOP(total)}</Text>
+      <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+        {cargas === 0 ? "Sin cargas" : `${cargas} carga${cargas > 1 ? "s" : ""}`}
       </Text>
     </View>
   );
 }
 
 // ─── Widget: Viajes hoy ───────────────────────────────────────────────────────
-function WidgetViajes({ card, isDark }: WProps) {
-  const ingresos = useIngresosStore((state) => state.ingresos);
+function WidgetViajes({ isDark }: WProps) {
+  const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
-  const viajes = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
-  const count = viajes.length;
-  const totalKm = 0; // placeholder — no hay campo km en el store aún
+  const count = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy)).length;
 
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
-      <Text style={s.wEmoji}>🚛</Text>
-      <Text style={[s.wBigNum, { color: INK(isDark) }]}>{count}</Text>
-      <Text style={[s.wTitle, { color: INK(isDark) }]}>Viajes</Text>
-      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>
-        {count === 0 ? "Sin viajes hoy" : `hoy`}
+    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+      <Text style={s.wCircleEmoji}>🚛</Text>
+      <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{count}</Text>
+      <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+        {count === 1 ? "viaje" : "viajes"}
       </Text>
     </View>
   );
@@ -853,10 +853,10 @@ export default function HomeBaseAdapted({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.widgetScroll}
               style={s.widgetScrollWrap}>
-              <WidgetClima      card={cardBase} isDark={isDark} />
-              <WidgetResumen    card={cardBase} isDark={isDark} />
-              <WidgetCombustible card={cardBase} isDark={isDark} />
-              <WidgetViajes     card={cardBase} isDark={isDark} />
+              <WidgetClima       isDark={isDark} />
+              <WidgetResumen     isDark={isDark} />
+              <WidgetCombustible isDark={isDark} />
+              <WidgetViajes      isDark={isDark} />
             </ScrollView>
 
             {/* HERO — dos cards cuadradas lado a lado */}
@@ -1583,26 +1583,19 @@ const s = StyleSheet.create({
   cancelText: { fontSize: 15, fontWeight: "500" },
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
-  widgetScrollWrap: {
-    marginBottom: 10,
-  },
-  widgetScroll: {
-    gap: 10,
-    paddingRight: 4,
-  },
-  widgetBase: {
-    width: 126,
-    borderRadius: 24,
-    padding: 14,
-    justifyContent: "flex-end",
+  widgetScrollWrap: { marginBottom: 10 },
+  widgetScroll: { gap: 12, paddingRight: 4 },
+
+  wCircle: {
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    alignItems: "center",
+    justifyContent: "center",
     gap: 2,
   },
-
-  // Shared widget typography
-  wEmoji:    { fontSize: 26, lineHeight: 32, marginBottom: 4 },
-  wBigNum:   { fontSize: 22, fontWeight: "800", letterSpacing: -0.6 },
-  wTitle:    { fontSize: 12, fontWeight: "600", letterSpacing: -0.1 },
-  wLabel:    { fontSize: 11 },
-  wDivider:  { height: 1, marginVertical: 6 },
-  wSmallRow: { fontSize: 12, fontWeight: "600" },
+  wCircleEmoji:  { fontSize: 24, lineHeight: 28 },
+  wCircleBig:    { fontSize: 20, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
+  wCircleLabel:  { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, textTransform: "uppercase", textAlign: "center" },
+  wCircleSub:    { fontSize: 10, textAlign: "center" },
 });
