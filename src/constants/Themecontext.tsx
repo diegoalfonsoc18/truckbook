@@ -233,18 +233,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
-  // Determinar si es modo oscuro
-  const isDark =
-    mode === "system" ? systemColorScheme === "dark" : mode === "dark";
+  // LIGHT ONLY — dark mode desactivado hasta v2
+  const isDark = false;
+  const colors = LIGHT_COLORS;
 
-  // Obtener colores según el tema
-  const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
-
-  // Toggle entre claro y oscuro
-  const toggleTheme = () => {
-    const newMode = isDark ? "light" : "dark";
-    setMode(newMode);
-  };
+  // Toggle desactivado temporalmente (dark mode v2)
+  const toggleTheme = () => {};
 
   // No renderizar hasta que se cargue la preferencia
   if (!isLoaded) {

@@ -134,8 +134,8 @@ function getGreeting() {
   return "Buenas noches";
 }
 
-// ─── Hero card (first item — full width, horizontal) ─────────────────────────
-function HeroCard({
+// ─── Hero square card (dos lado a lado en el hero) ───────────────────────────
+function HeroSquareCard({
   item,
   card,
   colors: c,
@@ -156,14 +156,8 @@ function HeroCard({
   useEffect(() => {
     if (reduceMotion) return;
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
-    opacity.value = withDelay(
-      40,
-      withTiming(1, { duration: 300, easing: easeOut }),
-    );
-    transY.value = withDelay(
-      40,
-      withTiming(0, { duration: 340, easing: easeOut }),
-    );
+    opacity.value = withDelay(40, withTiming(1, { duration: 300, easing: easeOut }));
+    transY.value = withDelay(40, withTiming(0, { duration: 340, easing: easeOut }));
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -172,61 +166,37 @@ function HeroCard({
   }));
 
   const accent = item.color || c.accent;
-  const hasBadge = !!item.badgeCount && item.badgeCount > 0;
 
   return (
     <AnimatedPressable
-      style={[s.heroCard, card, animStyle]}
-      onPressIn={() => {
-        scale.value = withTiming(0.97, { duration: 100 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 14, stiffness: 280 });
-      }}
+      style={[s.heroSquare, card, animStyle]}
+      onPressIn={() => { scale.value = withTiming(0.97, { duration: 100 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
       onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* App-icon — cuadrado redondeado con color sólido del item */}
-      <View style={[s.heroIconApp, { backgroundColor: accent }]}>
+
+      {/* Badge absoluto (multas pendientes, etc.) */}
+      {renderBadge?.(item)}
+
+      {/* Icono con fondo muy sutil */}
+      <View style={[s.heroSquareIcon, { backgroundColor: accent + "18" }]}>
         {item.iconName ? (
-          <ItemIcon
-            name={item.iconName}
-            size={Math.min(item.iconSize ?? 42, 42)}
-          />
+          <ItemIcon name={item.iconName} size={64} />
         ) : (
-          <Ionicons
-            name={(item.icon || "grid-outline") as any}
-            size={30}
-            color="#fff"
-          />
+          <Ionicons name={(item.icon || "grid-outline") as any} size={56} color={accent} />
         )}
       </View>
 
-      {/* Text */}
-      <View style={s.heroInfo}>
-        <Text style={[s.heroName, { color: c.text }]}>{item.name}</Text>
-        {item.subtitle && (
-          <Text
-            style={[s.heroSub, { color: c.textSecondary }]}
-            numberOfLines={1}>
-            {item.subtitle}
-          </Text>
-        )}
-        {renderBadge?.(item)}
-      </View>
-
-      {/* Right indicator */}
-      {hasBadge ? (
-        <View style={[s.heroBadgePill, { backgroundColor: c.expense }]}>
-          <Text style={[s.heroBadgeText, { color: c.textInverse }]}>
-            {item.badgeCount! > 99 ? "99+" : item.badgeCount}
-          </Text>
-        </View>
-      ) : (
-        <View style={[s.heroChevron, { backgroundColor: accent + "18" }]}>
-          <Ionicons name="chevron-forward" size={15} color={accent} />
-        </View>
+      {/* Texto */}
+      <Text style={[s.heroSquareName, { color: c.text }]} numberOfLines={1}>
+        {item.name}
+      </Text>
+      {item.subtitle && (
+        <Text style={[s.heroSquareSub, { color: c.textSecondary }]} numberOfLines={1}>
+          {item.subtitle}
+        </Text>
       )}
     </AnimatedPressable>
   );
@@ -288,15 +258,15 @@ function ListRow({
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* App-icon */}
-      <View style={[s.listRowIcon, { backgroundColor: accent }]}>
+      {/* Icono con fondo muy sutil */}
+      <View style={[s.listRowIcon, { backgroundColor: accent + "18" }]}>
         {item.iconName ? (
-          <ItemIcon name={item.iconName} size={26} />
+          <ItemIcon name={item.iconName} size={36} />
         ) : (
           <Ionicons
             name={(item.icon || "grid-outline") as any}
-            size={22}
-            color="#fff"
+            size={32}
+            color={accent}
           />
         )}
       </View>
@@ -653,19 +623,31 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
-            {/* HERO — primer item, ancho completo */}
+
+            {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
-              <HeroCard
-                item={items[0]}
-                card={card}
-                colors={c}
-                onPress={onItemPress ?? (() => {})}
-                renderBadge={renderBadge}
-              />
+              <View style={s.heroRow}>
+                <HeroSquareCard
+                  item={items[0]}
+                  card={card}
+                  colors={c}
+                  onPress={onItemPress ?? (() => {})}
+                  renderBadge={renderBadge}
+                />
+                {items.length > 1 && (
+                  <HeroSquareCard
+                    item={items[1]}
+                    card={card}
+                    colors={c}
+                    onPress={onItemPress ?? (() => {})}
+                    renderBadge={renderBadge}
+                  />
+                )}
+              </View>
             )}
 
             {/* LIST ROWS — resto de items, estilo Apple Support */}
-            {items.length > 1 && (
+            {items.length > 2 && (
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
@@ -673,7 +655,7 @@ export default function HomeBaseAdapted({
                   </Text>
                 </View>
                 <View style={s.listSection}>
-                  {items.slice(1).map((item, index) => (
+                  {items.slice(2).map((item, index) => (
                     <ListRow
                       key={item.id}
                       item={item}
@@ -838,48 +820,40 @@ const s = StyleSheet.create({
   },
   avatarText: { fontSize: 15, fontWeight: "800" },
 
-  // HERO CARD — full width, horizontal
-  heroCard: {
+  // HERO ROW — dos cards cuadradas lado a lado
+  heroRow: {
     flexDirection: "row",
+    gap: 12,
+    marginBottom: 10,
+  },
+  heroSquare: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 16,
+    minHeight: 148,
     alignItems: "center",
-    padding: 18,
-    gap: 16,
-    marginBottom: 12,
-    minHeight: 90,
+    justifyContent: "center",
     overflow: "hidden",
+    gap: 10,
   },
-  // Apple-style: app-icon cuadrado redondeado
-  heroIconApp: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+  heroSquareIcon: {
+    width: 90,
+    height: 90,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  heroInfo: { flex: 1 },
-  heroName: {
-    fontSize: 17,
-    fontWeight: "800",
-    letterSpacing: -0.4,
-    marginBottom: 4,
+  heroSquareName: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
-  heroSub: { fontSize: 12, lineHeight: 17 },
-  heroChevron: {
-    width: 44,
-    height: 44,
-    borderRadius: 99,
-    alignItems: "center",
-    justifyContent: "center",
+  heroSquareSub: {
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: "center",
   },
-  heroBadgePill: {
-    minWidth: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 8,
-  },
-  heroBadgeText: { fontSize: 12, fontWeight: "800" },
 
   // VEHICLE STATUS
   vehicleStatusRow: {
