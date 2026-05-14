@@ -63,11 +63,15 @@ function AppContent() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        await asegurarUsuarioEnDB(session.user);
-        await useRoleStore.getState().cargarRolDesdeDB(session.user.id);
-        // Verifica que la placa guardada pertenezca a este usuario
-        await useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id);
+        await Promise.all([
+          asegurarUsuarioEnDB(session.user),
+          useRoleStore.getState().cargarRolDesdeDB(session.user.id),
+          useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
+        ]);
       }
+    }).catch((err) => {
+      console.error("❌ Error al inicializar sesión:", err);
+    }).finally(() => {
       setLoading(false);
     });
 
