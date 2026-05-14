@@ -45,6 +45,7 @@ import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
+import { useGasolineras } from "../../hooks/useGasolineras";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 
@@ -261,6 +262,51 @@ function WidgetViajes({ isDark }: WProps) {
       <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
         {count === 1 ? "viaje" : "viajes"}
       </Text>
+    </View>
+  );
+}
+
+// ─── Widget: Gasolineras cercanas ────────────────────────────────────────────
+function WidgetGasolineras({ isDark }: WProps) {
+  const { cercanas, cargando, error, sinPermiso } = useGasolineras();
+  const { colors: c } = useTheme();
+
+  const primera = cercanas[0];
+
+  return (
+    <View style={[s.wCircle, { backgroundColor: "transparent" }]}>
+      {cargando ? (
+        <ActivityIndicator size="small" color={c.accent} />
+      ) : sinPermiso || error ? (
+        <>
+          <Text style={s.wCircleEmoji}>⛽</Text>
+          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+            {sinPermiso ? "Sin permiso" : "Sin señal"}
+          </Text>
+        </>
+      ) : !primera ? (
+        <>
+          <Text style={s.wCircleEmoji}>⛽</Text>
+          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>Sin datos{"\n"}cercanos</Text>
+        </>
+      ) : (
+        <>
+          <Text style={s.wCircleEmoji}>⛽</Text>
+          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>
+            {primera.distanciaKm < 1
+              ? `${Math.round(primera.distanciaKm * 1000)} m`
+              : `${primera.distanciaKm.toFixed(1)} km`}
+          </Text>
+          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]} numberOfLines={2}>
+            {primera.nombre}
+          </Text>
+          {cercanas[1] && (
+            <Text style={[s.wCircleSub, { color: MUTED(isDark) }]} numberOfLines={1}>
+              +{cercanas.length - 1} más
+            </Text>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -856,10 +902,11 @@ export default function HomeBaseAdapted({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.widgetScroll}
               style={s.widgetScrollWrap}>
-              <WidgetClima       isDark={isDark} />
-              <WidgetResumen     isDark={isDark} />
-              <WidgetCombustible isDark={isDark} />
-              <WidgetViajes      isDark={isDark} />
+              <WidgetClima        isDark={isDark} />
+              <WidgetResumen      isDark={isDark} />
+              <WidgetCombustible  isDark={isDark} />
+              <WidgetViajes       isDark={isDark} />
+              <WidgetGasolineras  isDark={isDark} />
             </ScrollView>
 
             {/* HERO — dos cards cuadradas lado a lado */}
