@@ -42,7 +42,7 @@ import {
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
-import { WebView } from "react-native-webview";
+import MapView, { Marker, Callout, PROVIDER_DEFAULT } from "react-native-maps";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -229,59 +229,6 @@ function WidgetResumen({ isDark }: WProps) {
   );
 }
 
-// ─── Leaflet HTML para el mapa de gasolineras ────────────────────────────────
-function buildLeafletHTML(
-  ubicacion: { lat: number; lon: number },
-  estaciones: { nombre: string; distanciaKm: number; lat: number; lon: number }[],
-): string {
-  const markers = estaciones
-    .map(
-      (g) => `
-      L.marker([${g.lat},${g.lon}], {icon: gasIcon})
-        .addTo(map)
-        .bindPopup('<b>${g.nombre.replace(/'/g, "&#39;")}</b><br>${
-          g.distanciaKm < 1
-            ? `${Math.round(g.distanciaKm * 1000)} m`
-            : `${g.distanciaKm.toFixed(1)} km`
-        }');`,
-    )
-    .join("\n");
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    html,body,#map { margin:0; padding:0; width:100%; height:100%; }
-    .leaflet-control-attribution { display:none; }
-  </style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  var map = L.map('map', { zoomControl: true }).setView([${ubicacion.lat},${ubicacion.lon}], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-
-  // Marcador usuario
-  var userIcon = L.divIcon({
-    html: '<div style="width:14px;height:14px;background:#3B82F6;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>',
-    iconSize:[14,14], iconAnchor:[7,7], className:''
-  });
-  L.marker([${ubicacion.lat},${ubicacion.lon}], {icon:userIcon}).addTo(map).bindPopup('Tu ubicación');
-
-  // Marcadores gasolineras
-  var gasIcon = L.divIcon({
-    html: '<div style="font-size:20px;line-height:1">⛽</div>',
-    iconSize:[24,24], iconAnchor:[12,24], popupAnchor:[0,-24], className:''
-  });
-  ${markers}
-</script>
-</body>
-</html>`;
-}
 
 // ─── Widget: Gasolineras cercanas ────────────────────────────────────────────
 function WidgetGasolineras({ isDark }: WProps) {
@@ -340,14 +287,39 @@ function WidgetGasolineras({ isDark }: WProps) {
               </TouchableOpacity>
             </View>
 
-            {/* Mapa Leaflet + OpenStreetMap */}
+            {/* Mapa — datos de OpenStreetMap (Overpass API), tiles de Apple Maps */}
             {ubicacion && (
-              <WebView
+              <MapView
                 style={s.gasMap}
-                originWhitelist={["*"]}
-                source={{ html: buildLeafletHTML(ubicacion, cercanas) }}
-                scrollEnabled={false}
-              />
+                provider={PROVIDER_DEFAULT}
+                initialRegion={{
+                  latitude: ubicacion.lat,
+                  longitude: ubicacion.lon,
+                  latitudeDelta: 0.04,
+                  longitudeDelta: 0.04,
+                }}
+                scrollEnabled
+                zoomEnabled
+                showsUserLocation
+                showsMyLocationButton={false}
+              >
+                {cercanas.map((g) => (
+                  <Marker
+                    key={g.id}
+                    coordinate={{ latitude: g.lat, longitude: g.lon }}
+                    title={g.nombre}
+                    description={
+                      g.distanciaKm < 1
+                        ? `${Math.round(g.distanciaKm * 1000)} m`
+                        : `${g.distanciaKm.toFixed(1)} km`
+                    }
+                  >
+                    <View style={s.gasMarker}>
+                      <Text style={s.gasMarkerEmoji}>⛽</Text>
+                    </View>
+                  </Marker>
+                ))}
+              </MapView>
             )}
 
             {/* Lista */}
@@ -1713,6 +1685,8 @@ const s = StyleSheet.create({
   gasCallout: { padding: 6, minWidth: 120, maxWidth: 200 },
   gasCalloutName: { fontSize: 13, fontWeight: "700", color: "#111827" },
   gasCalloutDist: { fontSize: 11, color: "#6B7280", marginTop: 2 },
+  gasMarker: { alignItems: "center", justifyContent: "center" },
+  gasMarkerEmoji: { fontSize: 24 },
   gasMapList: { maxHeight: 180 },
   gasListRow: {
     flexDirection: "row",
