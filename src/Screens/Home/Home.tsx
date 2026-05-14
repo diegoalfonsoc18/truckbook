@@ -166,16 +166,6 @@ const WBG   = (d: boolean) => d ? "#1C1C1E" : "#FFFFFF";
 const MUTED = (d: boolean) => d ? "#94A3B8"  : "#6B7280";
 const INK   = (d: boolean) => d ? "#FFFFFF"  : "#111827";
 
-const wShadow = (isDark: boolean) =>
-  isDark
-    ? ({ borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" } as const)
-    : ({
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.10,
-        shadowRadius: 10,
-        elevation: 4,
-      } as const);
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ isDark }: WProps) {
@@ -183,7 +173,7 @@ function WidgetClima({ isDark }: WProps) {
   const { colors: c } = useTheme();
 
   return (
-    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCircle]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPermiso || error ? (
@@ -219,7 +209,7 @@ function WidgetResumen({ isDark }: WProps) {
     : (isDark ? "#F87171" : "#DC2626");
 
   return (
-    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCircle]}>
       <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Hoy</Text>
       <Text style={[s.wCircleBig, { color: balColor }]}>{formatCOP(balance)}</Text>
       <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
@@ -239,7 +229,7 @@ function WidgetCombustible({ isDark }: WProps) {
   const cargas = filtrados.length;
 
   return (
-    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCircle]}>
       <Text style={s.wCircleEmoji}>⛽</Text>
       <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{formatCOP(total)}</Text>
       <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
@@ -256,7 +246,7 @@ function WidgetViajes({ isDark }: WProps) {
   const count = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy)).length;
 
   return (
-    <View style={[s.wCircle, wShadow(isDark), { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCircle]}>
       <Text style={s.wCircleEmoji}>🚛</Text>
       <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{count}</Text>
       <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
