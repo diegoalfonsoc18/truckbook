@@ -1587,15 +1587,15 @@ const s = StyleSheet.create({
   widgetScroll: { gap: 12, paddingRight: 4 },
 
   wCircle: {
-    width: 118,
-    height: 118,
-    borderRadius: 59,
+    width: 136,
+    height: 136,
+    borderRadius: 68,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
+    gap: 1,
   },
-  wCircleEmoji:  { fontSize: 24, lineHeight: 28 },
-  wCircleBig:    { fontSize: 20, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
-  wCircleLabel:  { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, textTransform: "uppercase", textAlign: "center" },
-  wCircleSub:    { fontSize: 10, textAlign: "center" },
+  wCircleEmoji:  { fontSize: 34, lineHeight: 40 },
+  wCircleBig:    { fontSize: 22, fontWeight: "800", letterSpacing: -0.6, textAlign: "center" },
+  wCircleLabel:  { fontSize: 10, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase", textAlign: "center" },
+  wCircleSub:    { fontSize: 11, textAlign: "center" },
 });
