@@ -39,6 +39,13 @@
       "expo-web-browser",
       "expo-font",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
+          "color": "#00D9A5"
+        }
+      ],
+      [
         "expo-contacts",
         {
           "contactsPermission": "TruckBook necesita acceso a tus contactos para agregar clientes a la cuenta de cobro."
