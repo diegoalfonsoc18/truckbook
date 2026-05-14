@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { COLORS } from "../../constants/colors";
-import { styles } from "../../Screens/Gastos/GastosStyles";
+import { useTheme } from "../../constants/Themecontext";
+import { createStyles } from "../../Screens/Gastos/GastosStyles";
 
 interface IngresGastProps {
   selectedDate: string;
@@ -25,6 +25,8 @@ export default function IngresGast({
   totalLabel = "Total",
   title,
 }: IngresGastProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const total = itemsFiltrados.reduce(
     (sum, item) => sum + parseFloat(String(item.value)),
     0
@@ -60,13 +62,13 @@ export default function IngresGast({
 
               <View style={styles.actionButtons}>
                 <TouchableOpacity onPress={() => onEdit(item.id)}>
-                  <MaterialIcons name="edit" size={24} color={COLORS.primary} />
+                  <MaterialIcons name="edit" size={24} color={colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => onDelete(item.id)}>
                   <MaterialIcons
                     name="delete"
                     size={24}
-                    color={COLORS.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
               </View>

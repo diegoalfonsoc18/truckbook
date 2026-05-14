@@ -1,17 +1,44 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
-import { COLORS } from "../constants/colors";
+import { useTheme } from "../constants/Themecontext";
 
 interface SummaryProps {
   values: Record<string, string>;
 }
 
 const Summary: React.FC<SummaryProps> = ({ values }) => {
+  const { colors } = useTheme();
   // Calcular la suma total de los valores ingresados
   const totalSum = Object.values(values).reduce((sum, value) => {
     const numericValue = parseFloat(value);
     return sum + (isNaN(numericValue) ? 0 : numericValue);
   }, 0);
+
+  const styles = StyleSheet.create({
+    summaryContainer: {
+      marginHorizontal: 20,
+      marginVertical: 10,
+      padding: 10,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+    },
+    summaryTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: colors.text,
+      marginBottom: 10,
+    },
+    summaryItem: {
+      fontSize: 16,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    totalText: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginTop: 10,
+    },
+  });
 
   return (
     <View style={styles.summaryContainer}>
@@ -29,31 +56,5 @@ const Summary: React.FC<SummaryProps> = ({ values }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  summaryContainer: {
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: COLORS.inputBackground,
-    borderRadius: 10,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.text,
-    marginBottom: 10,
-  },
-  summaryItem: {
-    fontSize: 16,
-    color: COLORS.text,
-    marginBottom: 5,
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 10,
-  },
-});
 
 export default Summary;

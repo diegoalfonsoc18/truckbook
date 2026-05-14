@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export const styles = StyleSheet.create({
+export const createStyles = (colors: Colors) => StyleSheet.create({
   container: {
     //backgroundColor: "#cc0", // Fondo principal de la pantalla
     alignItems: "center",
@@ -59,7 +59,7 @@ export const styles = StyleSheet.create({
   resumenContainer: {
     flex: 0.3, // Espacio proporcional para el resumen
     width: "90%",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
 
     padding: 30,
     borderRadius: 20,
@@ -81,13 +81,13 @@ export const styles = StyleSheet.create({
   resumenText: {
     fontSize: 16,
     marginBottom: 4,
-    color: COLORS.textTertiary,
+    color: colors.textMuted,
   },
   titleContainer: {
     width: "100%",
     flexDirection: "row",
     paddingHorizontal: 20,
-    color: COLORS.primary,
+    color: colors.primary,
     alignItems: "center",
     justifyContent: "space-between",
   },

@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export default StyleSheet.create({
+export default (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -92,7 +92,7 @@ export default StyleSheet.create({
   changeRoleText: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
   },
 
   // ✅ OPCIONES
@@ -218,7 +218,7 @@ export default StyleSheet.create({
 
   rolOptionActive: {
     backgroundColor: "#E8F4FF",
-    borderColor: COLORS.primary || "#2196F3",
+    borderColor: colors.primary,
     borderWidth: 2,
   },
 
@@ -242,7 +242,7 @@ export default StyleSheet.create({
   rolOptionCheck: {
     fontSize: 18,
     fontWeight: "700",
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
     marginLeft: 12,
   },
 

@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export const styles = StyleSheet.create({
+export const createStyles = (colors: Colors) => StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     paddingHorizontal: 20,
-    color: COLORS.primary,
+    color: colors.primary,
     alignItems: "center",
     justifyContent: "space-between",
     flex: 0,
@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: "600",
-    color: COLORS.primary,
+    color: colors.primary,
   },
 
   dateContainer: {
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
   dateText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: COLORS.text,
+    color: colors.text,
     textAlign: "center",
     textAlignVertical: "center",
     flex: 0,
@@ -53,7 +53,7 @@ export const styles = StyleSheet.create({
   placaImage: {
     fontSize: 20,
     fontWeight: "bold",
-    color: COLORS.text,
+    color: colors.text,
     textAlign: "center",
     textAlignVertical: "center",
     flex: 0,
@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 10, // ← CAMBIO
   },
   calendarOverlay: {
@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
   },
   calendarContainer: {
     width: "80%",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -123,7 +123,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.primary,
+    color: colors.primary,
     textAlign: "left",
     alignSelf: "flex-start",
   },
@@ -153,7 +153,7 @@ export const styles = StyleSheet.create({
     paddingInlineStart: 10,
     fontSize: 18,
     fontWeight: "bold",
-    color: COLORS.textTertiary,
+    color: colors.textMuted,
     marginBottom: 10,
     padding: 10,
   },
@@ -167,7 +167,7 @@ export const styles = StyleSheet.create({
 
   picker: {
     flex: 2,
-    color: COLORS.primary,
+    color: colors.primary,
     borderRadius: 10,
     padding: 10,
     width: "100%",
@@ -184,16 +184,16 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.inputBorder,
+    borderBottomColor: colors.border,
   },
   resumenValue: {
     fontWeight: "bold",
-    color: COLORS.text,
+    color: colors.text,
     textAlign: "right",
   },
   resumenText: {
     fontSize: 16,
-    color: COLORS.text,
+    color: colors.text,
     textAlign: "left",
   },
   totalContainer: {
@@ -204,7 +204,7 @@ export const styles = StyleSheet.create({
   totalText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.primary,
+    color: colors.primary,
   },
   actionButtons: {
     flexDirection: "row",
@@ -221,10 +221,10 @@ export const styles = StyleSheet.create({
     width: "100%",
     height: 40,
     borderWidth: 1,
-    borderColor: COLORS.inputBorder,
+    borderColor: colors.border,
     borderRadius: 10, // ← CAMBIO (era 5)
     paddingHorizontal: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   flatList: {
     flex: 1,
@@ -244,7 +244,7 @@ export const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   buttonText: {
-    color: COLORS.white,
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: "bold",
   },

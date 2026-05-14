@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, FlatList } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { styles } from "../Screens/Gastos/GastosStyles";
+import { createStyles } from "../Screens/Gastos/GastosStyles";
+import { useTheme } from "../constants/Themecontext";
 
 type PickerItemProps = {
   data: Array<Record<string, any>>;
@@ -23,6 +24,8 @@ export default function PickerItem({
   //containerStyle,
   renderSelectedItem,
 }: PickerItemProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [selected, setSelected] = useState(data[0]?.[pickerValueKey] || "");
 
   const handleChange = (value: any) => {

@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export default StyleSheet.create({
+export default (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
@@ -90,7 +90,7 @@ export default StyleSheet.create({
   },
 
   textPassword: {
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
     fontSize: 13,
     fontWeight: "600",
   },
@@ -98,12 +98,12 @@ export default StyleSheet.create({
   button: {
     width: "100%",
     height: 44,
-    backgroundColor: COLORS.primary || "#2196F3",
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     marginBottom: 2,
-    shadowColor: COLORS.primary || "#2196F3",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -230,7 +230,7 @@ export default StyleSheet.create({
   },
 
   textLoginLink: {
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
     fontSize: 13,
     fontWeight: "600",
     textDecorationLine: "underline",
@@ -341,7 +341,7 @@ export default StyleSheet.create({
   },
 
   disclaimerLink: {
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
     fontWeight: "600",
     textDecorationLine: "underline",
   },

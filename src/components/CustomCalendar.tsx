@@ -1,6 +1,6 @@
 import React from "react";
 import { Calendar } from "react-native-calendars";
-import { COLORS } from "../constants/colors";
+import { useTheme } from "../constants/Themecontext";
 import * as Localization from "expo-localization"; // Importa expo-localization
 
 interface CustomCalendarProps {
@@ -14,6 +14,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   onDateChange,
   onClose,
 }) => {
+  const { colors } = useTheme();
   // Obtén el idioma del dispositivo
   const deviceLocale = Localization.locale; // Ejemplo: "es-ES" o "en-US"
 
@@ -26,39 +27,39 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
       }}
       maxDate={new Date().toISOString().split("T")[0]} // Permite solo fechas anteriores o actuales
       markedDates={{
-        [selectedDate]: { selected: true, selectedColor: COLORS.primary },
+        [selectedDate]: { selected: true, selectedColor: colors.accent },
       }}
       theme={{
         // Fondo del día seleccionado
-        selectedDayBackgroundColor: COLORS.title,
-        selectedDayTextColor: COLORS.background, // Texto del día seleccionado
+        selectedDayBackgroundColor: colors.accent,
+        selectedDayTextColor: colors.accentText, // Texto del día seleccionado
 
         // Texto del día actual
-        todayTextColor: COLORS.secondary,
+        todayTextColor: colors.info,
 
         // Color de las flechas del calendario
-        arrowColor: COLORS.textSecondary,
+        arrowColor: colors.textSecondary,
 
         // Fondo del mes
-        backgroundColor: COLORS.background,
+        backgroundColor: colors.primary,
 
         // Texto de los días del mes
-        dayTextColor: COLORS.textSecondary,
+        dayTextColor: colors.textSecondary,
 
         // Texto de los días inactivos (fuera del mes actual)
         textDisabledColor: "#000",
 
         // Texto de los encabezados (días de la semana)
-        textSectionTitleColor: COLORS.primary,
+        textSectionTitleColor: colors.accent,
 
         // Fondo de los encabezados (días de la semana)
-        textSectionTitleDisabledColor: COLORS.textSecondary,
+        textSectionTitleDisabledColor: colors.textSecondary,
 
         // Color de las líneas divisorias
         borderColor: "#27ff10df",
 
         // Texto de los meses
-        monthTextColor: COLORS.textSecondary,
+        monthTextColor: colors.textSecondary,
         textMonthFontWeight: "bold",
         textMonthFontSize: 18,
       }}

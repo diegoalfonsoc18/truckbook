@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Modal, Platform } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { COLORS } from "../../constants/colors";
-import { styles } from "./stylesFilCalendar";
+import { useTheme } from "../../constants/Themecontext";
+import { createStyles } from "./stylesFilCalendar";
 
 type FilterCalendarProps = {
   onChangeRango: (rango: { inicio: string; fin: string }) => void;
@@ -30,6 +30,8 @@ export default function FilterCalendar({
   onChangeRango,
   placa, // ✅ AGREGAR PARÁMETRO
 }: FilterCalendarProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [modalVisible, setModalVisible] = useState(false);
   const [showInicio, setShowInicio] = useState(false);
   const [showFin, setShowFin] = useState(false);
@@ -60,12 +62,12 @@ export default function FilterCalendar({
   return (
     <>
       <View style={styles.headerContainer}>
-        <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
+        <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         <Text style={styles.headerTitle}>Reportes</Text>
         <MaterialIcons
           name="notifications-active"
           size={24}
-          color={COLORS.black}
+          color={colors.text}
         />
       </View>
       <View style={styles.containerMain}>
@@ -183,7 +185,7 @@ export default function FilterCalendar({
               <TouchableOpacity
                 style={{
                   marginTop: 20,
-                  backgroundColor: COLORS.secondary,
+                  backgroundColor: colors.secondary,
                   padding: 10,
                   borderRadius: 5,
                   width: "60%",

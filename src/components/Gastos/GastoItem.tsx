@@ -7,7 +7,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
 import { CamionIcon } from "../../assets/icons/icons";
 
 export default function GastoItem({

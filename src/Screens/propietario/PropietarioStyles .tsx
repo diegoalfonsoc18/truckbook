@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export default StyleSheet.create({
+export default (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -71,7 +71,7 @@ export default StyleSheet.create({
   resumenValue: {
     fontSize: 20,
     fontWeight: "700",
-    color: COLORS.primary || "#2196F3",
+    color: colors.primary,
   },
 
   // ✅ ACTION CARDS

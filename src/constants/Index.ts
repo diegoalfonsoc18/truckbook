@@ -14,6 +14,3 @@ export {
 } from "./Themecontext";
 
 export { default as ThemeSelector } from "./ThemeSelector";
-
-// Compatibilidad con código existente
-export { COLORS } from "./colors";

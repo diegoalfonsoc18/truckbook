@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from "react-native";
-import { styles } from "../../Screens/Gastos/GastosStyles";
-import { COLORS } from "../../constants/colors";
+import { createStyles } from "../../Screens/Gastos/GastosStyles";
+import { useTheme } from "../../constants/Themecontext";
 import CustomCalendar from "../CustomCalendar";
 
 type HeaderCalendarProps = {
@@ -25,6 +25,8 @@ export default function HeaderCalendar({
   setSelectedDate,
   placa, // ✅ AGREGAR PARÁMETRO
 }: HeaderCalendarProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
   // Función reutilizable para filtrar por fecha
@@ -41,12 +43,12 @@ export default function HeaderCalendar({
     <>
       {/* Header */}
       <View style={styles.headerContainer}>
-        <MaterialIcons name="arrow-back" size={24} color={COLORS.black} />
+        <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         <Text style={styles.headerTitle}>{title}</Text>
         <MaterialIcons
           name="notifications-active"
           size={24}
-          color={COLORS.black}
+          color={colors.text}
         />
       </View>
 

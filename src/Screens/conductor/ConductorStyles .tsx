@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export default StyleSheet.create({
+export default (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -214,12 +214,12 @@ export default StyleSheet.create({
   },
 
   guardarButton: {
-    backgroundColor: COLORS.primary || "#2196F3",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
     flex: 1,
-    shadowColor: COLORS.primary || "#2196F3",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,

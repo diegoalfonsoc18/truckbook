@@ -1,12 +1,12 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { Colors } from "../../constants/Themecontext";
 
-export const styles = StyleSheet.create({
+export const createStyles = (colors: Colors) => StyleSheet.create({
   headerContainer: {
     width: "100%",
     flexDirection: "row",
     paddingHorizontal: 20,
-    color: COLORS.primary, // Fondo del encabezado
+    color: colors.primary, // Fondo del encabezado
     alignItems: "center",
     justifyContent: "space-between", // Color del borde del encabezado
     flex: 0,
@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: "600",
-    color: COLORS.primary, // Color del texto del título
+    color: colors.primary, // Color del texto del título
   },
   containerMain: {
     width: "90%",
@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
     borderRadius: 20,
-    backgroundColor: COLORS.surface, // Fondo del contenedor de filtro
+    backgroundColor: colors.surface, // Fondo del contenedor de filtro
     // Sombra para iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -47,7 +47,7 @@ export const styles = StyleSheet.create({
   titleCalendar: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.textTertiary,
+    color: colors.textMuted,
     marginBottom: 8,
   },
 
@@ -58,6 +58,6 @@ export const styles = StyleSheet.create({
   },
   periodoText: {
     fontSize: 16,
-    color: COLORS.textTertiary,
+    color: colors.textMuted,
   },
 });
