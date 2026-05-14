@@ -1574,7 +1574,7 @@ const s = StyleSheet.create({
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
   widgetScrollWrap: { marginBottom: 10 },
-  widgetScroll: { gap: 12, paddingRight: 4 },
+  widgetScroll: { gap: 2, paddingRight: 4 },
 
   wCircle: {
     width: 136,
