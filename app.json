@@ -31,7 +31,10 @@
         "backgroundColor": "#393E46"
       },
       "package": "com.truckbook.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -58,7 +61,8 @@
         {
           "contactsPermission": "TruckBook necesita acceso a tus contactos para agregar clientes a la cuenta de cobro."
         }
-      ]
+      ],
+      "expo-maps"
     ],
     "extra": {
       "eas": {

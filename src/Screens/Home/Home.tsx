@@ -42,7 +42,7 @@ import {
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
-import MapView, { Marker, Callout, PROVIDER_DEFAULT } from "react-native-maps";
+import { AppleMaps } from "expo-maps";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -289,37 +289,21 @@ function WidgetGasolineras({ isDark }: WProps) {
 
             {/* Mapa — datos de OpenStreetMap (Overpass API), tiles de Apple Maps */}
             {ubicacion && (
-              <MapView
+              <AppleMaps.View
                 style={s.gasMap}
-                provider={PROVIDER_DEFAULT}
-                initialRegion={{
-                  latitude: ubicacion.lat,
-                  longitude: ubicacion.lon,
-                  latitudeDelta: 0.04,
-                  longitudeDelta: 0.04,
+                cameraPosition={{
+                  coordinates: { latitude: ubicacion.lat, longitude: ubicacion.lon },
+                  zoom: 14,
                 }}
-                scrollEnabled
-                zoomEnabled
-                showsUserLocation
-                showsMyLocationButton={false}
-              >
-                {cercanas.map((g) => (
-                  <Marker
-                    key={g.id}
-                    coordinate={{ latitude: g.lat, longitude: g.lon }}
-                    title={g.nombre}
-                    description={
-                      g.distanciaKm < 1
-                        ? `${Math.round(g.distanciaKm * 1000)} m`
-                        : `${g.distanciaKm.toFixed(1)} km`
-                    }
-                  >
-                    <View style={s.gasMarker}>
-                      <Text style={s.gasMarkerEmoji}>⛽</Text>
-                    </View>
-                  </Marker>
-                ))}
-              </MapView>
+                properties={{ isMyLocationEnabled: true }}
+                uiSettings={{ myLocationButtonEnabled: false, compassEnabled: false }}
+                markers={cercanas.map((g) => ({
+                  id: g.id,
+                  coordinates: { latitude: g.lat, longitude: g.lon },
+                  title: g.nombre,
+                  tintColor: "#F59E0B",
+                }))}
+              />
             )}
 
             {/* Lista */}
@@ -1682,11 +1666,6 @@ const s = StyleSheet.create({
     borderRadius: 18,
     marginBottom: 16,
   },
-  gasCallout: { padding: 6, minWidth: 120, maxWidth: 200 },
-  gasCalloutName: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  gasCalloutDist: { fontSize: 11, color: "#6B7280", marginTop: 2 },
-  gasMarker: { alignItems: "center", justifyContent: "center" },
-  gasMarkerEmoji: { fontSize: 24 },
   gasMapList: { maxHeight: 180 },
   gasListRow: {
     flexDirection: "row",
