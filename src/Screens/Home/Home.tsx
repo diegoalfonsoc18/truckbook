@@ -150,84 +150,102 @@ function getGreeting() {
   return "Buenas noches";
 }
 
+// ─── Widget base props ────────────────────────────────────────────────────────
+interface WProps { card: object; isDark: boolean }
+
+const WBG = (isDark: boolean) => isDark ? "#1C1C1E" : "#FFFFFF";
+const MUTED = (isDark: boolean) => isDark ? "#94A3B8" : "#6B7280";
+const INK   = (isDark: boolean) => isDark ? "#FFFFFF"  : "#111827";
+
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
-function WidgetClima({ card, isDark }: { card: object; isDark: boolean }) {
+function WidgetClima({ card, isDark }: WProps) {
   const { temperatura, condicion, emoji, ciudad, cargando, error } = useClima();
   const { colors: c } = useTheme();
 
-  const bgColor = isDark ? "#1C1C1E" : "#FFFFFF";
-
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: bgColor }]}>
+    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
       ) : error ? (
         <>
-          <Text style={s.widgetErrorEmoji}>🌡</Text>
-          <Text style={[s.widgetErrorText, { color: c.textMuted }]}>Sin señal</Text>
+          <Text style={s.wEmoji}>🌡</Text>
+          <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Sin señal</Text>
         </>
       ) : (
         <>
-          <View style={s.widgetClimaTop}>
-            <Text style={s.widgetClimaEmoji}>{emoji}</Text>
-            <Text style={[s.widgetClimaTemp, { color: isDark ? "#FFFFFF" : "#111827" }]}>
-              {temperatura}°
-            </Text>
-          </View>
-          <Text style={[s.widgetCiudad, { color: isDark ? "#FFFFFF" : "#111827" }]} numberOfLines={1}>
-            {ciudad}
-          </Text>
-          <Text style={[s.widgetCondicion, { color: isDark ? "#94A3B8" : "#6B7280" }]} numberOfLines={1}>
-            {condicion}
-          </Text>
+          <Text style={s.wEmoji}>{emoji}</Text>
+          <Text style={[s.wBigNum, { color: INK(isDark) }]}>{temperatura}°</Text>
+          <Text style={[s.wTitle, { color: INK(isDark) }]} numberOfLines={1}>{ciudad}</Text>
+          <Text style={[s.wLabel, { color: MUTED(isDark) }]} numberOfLines={1}>{condicion}</Text>
         </>
       )}
     </View>
   );
 }
 
-// ─── Widget: Resumen del día ───────────────────────────────────────────────────
-function WidgetResumen({ card, isDark }: { card: object; isDark: boolean }) {
-  const { colors: c } = useTheme();
+// ─── Widget: Resumen del día ──────────────────────────────────────────────────
+function WidgetResumen({ card, isDark }: WProps) {
   const gastos   = useGastosStore((state) => state.gastos);
   const ingresos = useIngresosStore((state) => state.ingresos);
-
   const hoy = new Date().toISOString().split("T")[0];
-  const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
-  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
-  const totalG = gastosHoy.reduce((acc, g) => acc + (g.monto ?? 0), 0);
-  const totalI = ingresosHoy.reduce((acc, i) => acc + (i.monto ?? 0), 0);
+  const totalG = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
+                       .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalI = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
+                         .reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
-  const bgColor = isDark ? "#1C1C1E" : "#FFFFFF";
-
   const balanceColor = balance >= 0
     ? (isDark ? "#34D399" : "#059669")
     : (isDark ? "#F87171" : "#DC2626");
 
   return (
-    <View style={[s.widgetBase, card, { backgroundColor: bgColor }]}>
-      <Text style={[s.widgetResumenTitle, { color: isDark ? "#94A3B8" : "#6B7280" }]}>
-        Hoy
+    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
+      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Resumen</Text>
+      <Text style={[s.wBigNum, { color: balanceColor }]}>{formatCOP(balance)}</Text>
+      <View style={[s.wDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }]} />
+      <Text style={[s.wSmallRow, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
+      <Text style={[s.wSmallRow, { color: isDark ? "#F87171" : "#DC2626" }]}>↓ {formatCOP(totalG)}</Text>
+    </View>
+  );
+}
+
+// ─── Widget: Combustible hoy ─────────────────────────────────────────────────
+function WidgetCombustible({ card, isDark }: WProps) {
+  const gastos = useGastosStore((state) => state.gastos);
+  const hoy = new Date().toISOString().split("T")[0];
+  const total = gastos
+    .filter((g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy))
+    .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const cargas = gastos.filter(
+    (g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy),
+  ).length;
+
+  return (
+    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
+      <Text style={s.wEmoji}>⛽</Text>
+      <Text style={[s.wBigNum, { color: INK(isDark) }]}>{formatCOP(total)}</Text>
+      <Text style={[s.wTitle, { color: INK(isDark) }]}>Combustible</Text>
+      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>
+        {cargas === 0 ? "Sin cargas hoy" : `${cargas} carga${cargas > 1 ? "s" : ""}`}
       </Text>
+    </View>
+  );
+}
 
-      <View style={s.widgetResumenRow}>
-        <Text style={[s.widgetResumenDot, { color: isDark ? "#34D399" : "#059669" }]}>↑</Text>
-        <Text style={[s.widgetResumenVal, { color: isDark ? "#FFFFFF" : "#111827" }]}>
-          {formatCOP(totalI)}
-        </Text>
-      </View>
+// ─── Widget: Viajes hoy ───────────────────────────────────────────────────────
+function WidgetViajes({ card, isDark }: WProps) {
+  const ingresos = useIngresosStore((state) => state.ingresos);
+  const hoy = new Date().toISOString().split("T")[0];
+  const viajes = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
+  const count = viajes.length;
+  const totalKm = 0; // placeholder — no hay campo km en el store aún
 
-      <View style={s.widgetResumenRow}>
-        <Text style={[s.widgetResumenDot, { color: isDark ? "#F87171" : "#DC2626" }]}>↓</Text>
-        <Text style={[s.widgetResumenVal, { color: isDark ? "#FFFFFF" : "#111827" }]}>
-          {formatCOP(totalG)}
-        </Text>
-      </View>
-
-      <View style={[s.widgetResumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }]} />
-
-      <Text style={[s.widgetResumenBalance, { color: balanceColor }]}>
-        {formatCOP(balance)}
+  return (
+    <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
+      <Text style={s.wEmoji}>🚛</Text>
+      <Text style={[s.wBigNum, { color: INK(isDark) }]}>{count}</Text>
+      <Text style={[s.wTitle, { color: INK(isDark) }]}>Viajes</Text>
+      <Text style={[s.wLabel, { color: MUTED(isDark) }]}>
+        {count === 0 ? "Sin viajes hoy" : `hoy`}
       </Text>
     </View>
   );
@@ -810,16 +828,22 @@ export default function HomeBaseAdapted({
             </AnimatedPressable>
           )}
 
-          {/* WIDGETS — clima + resumen del día */}
-          <View style={s.widgetRow}>
-            <WidgetClima card={cardBase} isDark={isDark} />
-            <WidgetResumen card={cardBase} isDark={isDark} />
-          </View>
-
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
+            {/* WIDGETS — fila horizontal con scroll */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.widgetScroll}
+              style={s.widgetScrollWrap}>
+              <WidgetClima      card={cardBase} isDark={isDark} />
+              <WidgetResumen    card={cardBase} isDark={isDark} />
+              <WidgetCombustible card={cardBase} isDark={isDark} />
+              <WidgetViajes     card={cardBase} isDark={isDark} />
+            </ScrollView>
+
             {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
               <View style={s.heroRow}>
@@ -1544,86 +1568,26 @@ const s = StyleSheet.create({
   cancelText: { fontSize: 15, fontWeight: "500" },
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
-  widgetRow: {
-    flexDirection: "row",
-    gap: 12,
+  widgetScrollWrap: {
     marginBottom: 10,
   },
+  widgetScroll: {
+    gap: 10,
+    paddingRight: 4,
+  },
   widgetBase: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 16,
-    minHeight: 130,
-    justifyContent: "center",
-    gap: 4,
+    width: 126,
+    borderRadius: 24,
+    padding: 14,
+    justifyContent: "flex-end",
+    gap: 2,
   },
 
-  // Clima
-  widgetClimaTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  widgetClimaEmoji: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  widgetClimaTemp: {
-    fontSize: 36,
-    fontWeight: "700",
-    letterSpacing: -1,
-    lineHeight: 40,
-  },
-  widgetCiudad: {
-    fontSize: 14,
-    fontWeight: "600",
-    letterSpacing: -0.2,
-  },
-  widgetCondicion: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  widgetErrorEmoji: {
-    fontSize: 28,
-    textAlign: "center",
-  },
-  widgetErrorText: {
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 4,
-  },
-
-  // Resumen del día
-  widgetResumenTitle: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.3,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  widgetResumenRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  widgetResumenDot: {
-    fontSize: 14,
-    fontWeight: "800",
-    lineHeight: 20,
-  },
-  widgetResumenVal: {
-    fontSize: 15,
-    fontWeight: "600",
-    letterSpacing: -0.3,
-  },
-  widgetResumenDivider: {
-    height: 1,
-    marginVertical: 8,
-  },
-  widgetResumenBalance: {
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-  },
+  // Shared widget typography
+  wEmoji:    { fontSize: 26, lineHeight: 32, marginBottom: 4 },
+  wBigNum:   { fontSize: 22, fontWeight: "800", letterSpacing: -0.6 },
+  wTitle:    { fontSize: 12, fontWeight: "600", letterSpacing: -0.1 },
+  wLabel:    { fontSize: 11 },
+  wDivider:  { height: 1, marginVertical: 6 },
+  wSmallRow: { fontSize: 12, fontWeight: "600" },
 });
