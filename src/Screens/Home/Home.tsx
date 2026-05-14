@@ -40,6 +40,7 @@ import {
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
+import { HOME_COLORS } from "./HomeConstants";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -77,48 +78,13 @@ const ICON_MAP: Record<TipoCamion, IconName> = {
 };
 
 const TIPOS_CAMION = [
-  {
-    id: "estacas" as TipoCamion,
-    label: "Estacas",
-    iconName: "estacas" as IconName,
-    color: "#00D9A5",
-  },
-  {
-    id: "volqueta" as TipoCamion,
-    label: "Volqueta",
-    iconName: "volqueta2" as IconName,
-    color: "#FFB800",
-  },
-  {
-    id: "furgon" as TipoCamion,
-    label: "Furgón",
-    iconName: "furgon" as IconName,
-    color: "#6C5CE7",
-  },
-  {
-    id: "grua" as TipoCamion,
-    label: "Grúa",
-    iconName: "grua" as IconName,
-    color: "#E94560",
-  },
-  {
-    id: "cisterna" as TipoCamion,
-    label: "Cisterna",
-    iconName: "cisterna" as IconName,
-    color: "#74B9FF",
-  },
-  {
-    id: "planchon" as TipoCamion,
-    label: "Planchón",
-    iconName: "planchon" as IconName,
-    color: "#FDCB6E",
-  },
-  {
-    id: "portacontenedor" as TipoCamion,
-    label: "Porta cont.",
-    iconName: "portaContenedor" as IconName,
-    color: "#00CEC9",
-  },
+  { id: "estacas" as TipoCamion,          label: "Estacas",      iconName: "estacas" as IconName,         color: HOME_COLORS.trucks.estacas },
+  { id: "volqueta" as TipoCamion,         label: "Volqueta",     iconName: "volqueta2" as IconName,       color: HOME_COLORS.trucks.volqueta },
+  { id: "furgon" as TipoCamion,           label: "Furgón",       iconName: "furgon" as IconName,          color: HOME_COLORS.trucks.furgon },
+  { id: "grua" as TipoCamion,             label: "Grúa",         iconName: "grua" as IconName,            color: HOME_COLORS.trucks.grua },
+  { id: "cisterna" as TipoCamion,         label: "Cisterna",     iconName: "cisterna" as IconName,        color: HOME_COLORS.trucks.cisterna },
+  { id: "planchon" as TipoCamion,         label: "Planchón",     iconName: "planchon" as IconName,        color: HOME_COLORS.trucks.planchon },
+  { id: "portacontenedor" as TipoCamion,  label: "Porta cont.",  iconName: "portaContenedor" as IconName, color: HOME_COLORS.trucks.portacontenedor },
 ];
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
@@ -156,8 +122,14 @@ function HeroSquareCard({
   useEffect(() => {
     if (reduceMotion) return;
     const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
-    opacity.value = withDelay(40, withTiming(1, { duration: 300, easing: easeOut }));
-    transY.value = withDelay(40, withTiming(0, { duration: 340, easing: easeOut }));
+    opacity.value = withDelay(
+      40,
+      withTiming(1, { duration: 300, easing: easeOut }),
+    );
+    transY.value = withDelay(
+      40,
+      withTiming(0, { duration: 340, easing: easeOut }),
+    );
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -170,13 +142,16 @@ function HeroSquareCard({
   return (
     <AnimatedPressable
       style={[s.heroSquare, card, animStyle]}
-      onPressIn={() => { scale.value = withTiming(0.97, { duration: 100 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 280 }); }}
+      onPressIn={() => {
+        scale.value = withTiming(0.97, { duration: 100 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 14, stiffness: 280 });
+      }}
       onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-
       {/* Badge absoluto (multas pendientes, etc.) */}
       {renderBadge?.(item)}
 
@@ -185,7 +160,11 @@ function HeroSquareCard({
         {item.iconName ? (
           <ItemIcon name={item.iconName} size={64} />
         ) : (
-          <Ionicons name={(item.icon || "grid-outline") as any} size={56} color={accent} />
+          <Ionicons
+            name={(item.icon || "grid-outline") as any}
+            size={56}
+            color={accent}
+          />
         )}
       </View>
 
@@ -194,7 +173,9 @@ function HeroSquareCard({
         {item.name}
       </Text>
       {item.subtitle && (
-        <Text style={[s.heroSquareSub, { color: c.textSecondary }]} numberOfLines={1}>
+        <Text
+          style={[s.heroSquareSub, { color: c.textSecondary }]}
+          numberOfLines={1}>
           {item.subtitle}
         </Text>
       )}
@@ -414,7 +395,6 @@ export default function HomeBaseAdapted({
     setModalVehiculosVisible(false);
   };
 
-
   const tipoCamionData = getTipoCamionData(tipoCamion);
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
@@ -504,11 +484,7 @@ export default function HomeBaseAdapted({
             <AnimatedPressable
               style={[
                 s.vehicleCardOuter,
-                {
-                  backgroundColor: isDark
-                    ? c.border
-                    : (tipoCamionData?.color || c.accent) + "1A",
-                },
+                { backgroundColor: isDark ? HOME_COLORS.vehicleCardBgDark : HOME_COLORS.vehicleCardBg },
                 vcAnimStyle,
               ]}
               onPressIn={() => {
@@ -526,28 +502,14 @@ export default function HomeBaseAdapted({
               }
               accessibilityHint="Toca para cambiar de vehículo">
               {/* Inner core — double-bezel */}
-              <View style={[s.vehicleCardInner, { backgroundColor: c.cardBg }]}>
+              <View
+                style={[
+                  s.vehicleCardInner,
+                  { backgroundColor: c.cardVehicleHome },
+                ]}>
                 <View style={s.vehicleCardContent}>
-                  {/* Circular icon bg — consistent with grid cards */}
-                  <View
-                    style={[
-                      s.vehicleIconBg,
-                      {
-                        backgroundColor:
-                          (tipoCamionData?.color || c.accent) + "1A",
-                      },
-                    ]}>
-                    <View
-                      style={[
-                        s.vehicleIconCore,
-                        {
-                          backgroundColor:
-                            (tipoCamionData?.color || c.accent) + "2E",
-                        },
-                      ]}>
-                      <ItemIcon name={camionIconName} size={44} />
-                    </View>
-                  </View>
+                  {/* Ícono del camión sin fondo */}
+                  <ItemIcon name={camionIconName} size={52} />
                   <View style={s.vehicleInfo}>
                     <View style={s.vehicleStatusRow}>
                       <Text style={[s.vehicleType, { color: c.text }]}>
@@ -575,18 +537,12 @@ export default function HomeBaseAdapted({
                         style={[
                           s.placaBadge,
                           {
-                            backgroundColor:
-                              (tipoCamionData?.color || c.accent) + "22",
-                            borderColor:
-                              (tipoCamionData?.color || c.accent) + "55",
+                            backgroundColor: c.plateYellow,
+                            borderColor: c.plateBorder,
                             borderWidth: 1,
                           },
                         ]}>
-                        <Text
-                          style={[
-                            s.placaText,
-                            { color: tipoCamionData?.color || c.accent },
-                          ]}>
+                        <Text style={[s.placaText, { color: c.plateText }]}>
                           {placaActual}
                         </Text>
                       </View>
@@ -623,7 +579,6 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
-
             {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
               <View style={s.heroRow}>
@@ -679,12 +634,14 @@ export default function HomeBaseAdapted({
         transparent
         animationType="slide"
         onRequestClose={() => setModalVehiculosVisible(false)}>
-        <TouchableWithoutFeedback onPress={() => setModalVehiculosVisible(false)}>
+        <TouchableWithoutFeedback
+          onPress={() => setModalVehiculosVisible(false)}>
           <View style={[s.overlay, { backgroundColor: c.overlay }]}>
             <TouchableWithoutFeedback>
               <View style={[s.sheetBase, sheet]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
-                <Text style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
+                <Text
+                  style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
                   Mis Vehículos
                 </Text>
 
@@ -693,51 +650,91 @@ export default function HomeBaseAdapted({
                     <ActivityIndicator size="large" color={c.accent} />
                   </View>
                 ) : vehiculos.length > 0 ? (
-                  <ScrollView style={s.vehicleList} showsVerticalScrollIndicator={false}>
+                  <ScrollView
+                    style={s.vehicleList}
+                    showsVerticalScrollIndicator={false}>
                     {vehiculos.map((v) => {
                       const tipo = getTipoCamionData(v.tipo_camion);
                       const isActive = placaActual === v.placa;
-                      const vIconName: IconName = tipo ? ICON_MAP[tipo.id] : "truck";
+                      const vIconName: IconName = tipo
+                        ? ICON_MAP[tipo.id]
+                        : "truck";
                       return (
                         <TouchableOpacity
                           key={v.id}
                           style={[
                             s.vehicleOption,
                             { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
-                            isActive && { borderWidth: 1.5, borderColor: c.accent },
+                            isActive && {
+                              borderWidth: 1.5,
+                              borderColor: c.accent,
+                            },
                           ]}
                           onPress={() => handleSeleccionarVehiculo(v)}
                           activeOpacity={0.7}>
                           {/* App-icon */}
-                          <View style={[s.vehicleOptionIcon, { backgroundColor: tipo?.color || c.accent }]}>
+                          <View
+                            style={[
+                              s.vehicleOptionIcon,
+                              { backgroundColor: tipo?.color || c.accent },
+                            ]}>
                             <ItemIcon name={vIconName} size={28} />
                           </View>
 
                           {/* Info */}
                           <View style={s.vehicleOptionInfo}>
-                            <Text style={[s.vehicleOptionPlaca, { color: c.text }]}>
+                            <Text
+                              style={[s.vehicleOptionPlaca, { color: c.text }]}>
                               {v.placa}
                             </Text>
-                            <Text style={[s.vehicleOptionType, { color: c.textSecondary }]}>
+                            <Text
+                              style={[
+                                s.vehicleOptionType,
+                                { color: c.textSecondary },
+                              ]}>
                               {tipo?.label || "Vehículo"}
                             </Text>
                           </View>
 
                           {/* Estado */}
                           {v.estado === "pendiente" ? (
-                            <View style={[s.statusBadge, { backgroundColor: "#FFB800" }]}>
-                              <Ionicons name="time-outline" size={14} color="#fff" />
+                            <View
+                              style={[
+                                s.statusBadge,
+                                { backgroundColor: "#FFB800" },
+                              ]}>
+                              <Ionicons
+                                name="time-outline"
+                                size={14}
+                                color="#fff"
+                              />
                             </View>
                           ) : v.estado === "rechazado" ? (
-                            <View style={[s.statusBadge, { backgroundColor: c.danger }]}>
+                            <View
+                              style={[
+                                s.statusBadge,
+                                { backgroundColor: c.danger },
+                              ]}>
                               <Ionicons name="close" size={14} color="#fff" />
                             </View>
                           ) : isActive ? (
-                            <View style={[s.statusBadge, { backgroundColor: c.accent }]}>
-                              <Ionicons name="checkmark" size={14} color={c.accentText} />
+                            <View
+                              style={[
+                                s.statusBadge,
+                                { backgroundColor: c.accent },
+                              ]}>
+                              <Ionicons
+                                name="checkmark"
+                                size={14}
+                                color={c.accentText}
+                              />
                             </View>
                           ) : (
-                            <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+                            <Ionicons
+                              name="chevron-forward"
+                              size={16}
+                              color={c.textMuted}
+                            />
                           )}
                         </TouchableOpacity>
                       );
@@ -745,8 +742,13 @@ export default function HomeBaseAdapted({
                   </ScrollView>
                 ) : (
                   <View style={s.emptyBox}>
-                    <View style={[s.emptyIconWrap, { backgroundColor: c.surface }]}>
-                      <Ionicons name="car-outline" size={36} color={c.textMuted} />
+                    <View
+                      style={[s.emptyIconWrap, { backgroundColor: c.surface }]}>
+                      <Ionicons
+                        name="car-outline"
+                        size={36}
+                        color={c.textMuted}
+                      />
                     </View>
                     <Text style={[s.emptyText, { color: c.textSecondary }]}>
                       Aún no tienes vehículos
@@ -757,14 +759,15 @@ export default function HomeBaseAdapted({
                 <TouchableOpacity
                   style={s.cancelTouchable}
                   onPress={() => setModalVehiculosVisible(false)}>
-                  <Text style={[s.cancelText, { color: c.textSecondary }]}>Cerrar</Text>
+                  <Text style={[s.cancelText, { color: c.textSecondary }]}>
+                    Cerrar
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
     </View>
   );
 }

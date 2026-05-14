@@ -183,6 +183,11 @@ interface ThemeContextType {
   colors: Colors;
   setMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
+  // Utilidades directamente en el hook
+  spacing: typeof SPACING;
+  typography: typeof TYPOGRAPHY;
+  radius: typeof BORDER_RADIUS;
+  shadow: (elevation?: "sm" | "md" | "lg") => ReturnType<typeof getShadow>;
 }
 
 // ============================================
@@ -245,9 +250,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return null;
   }
 
+  const shadow = (elevation: "sm" | "md" | "lg" = "md") =>
+    getShadow(isDark, elevation);
+
   return (
     <ThemeContext.Provider
-      value={{ mode, isDark, colors, setMode, toggleTheme }}>
+      value={{
+        mode,
+        isDark,
+        colors,
+        setMode,
+        toggleTheme,
+        spacing: SPACING,
+        typography: TYPOGRAPHY,
+        radius: BORDER_RADIUS,
+        shadow,
+      }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -264,6 +282,9 @@ export const useTheme = (): ThemeContextType => {
   }
   return context;
 };
+
+// Alias corto: const c = useColors()
+export const useColors = () => useTheme().colors;
 
 // ============================================
 // UTILIDADES
