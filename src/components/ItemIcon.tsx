@@ -19,7 +19,7 @@ const ICONS = {
   furgon: require("../assets/icons/furgon.webp"),
   grua: require("../assets/icons/grua.webp"),
   mechanic: require("../assets/icons/mechanic.webp"),
-  motor: require("../assets/icons/motor.webp")
+  motor: require("../assets/icons/motor.webp"),
   // Ingresos
   freight: require("../assets/icons/freight.webp"),
   trip: require("../assets/icons/trip.webp"),
