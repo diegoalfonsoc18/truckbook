@@ -78,10 +78,13 @@ export function useClima(): ClimaData {
         if (cancelled) return;
 
         // 4. Clima desde Open-Meteo (gratis, sin API key)
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`,
-          { signal: AbortSignal.timeout(8000) },
+          { signal: controller.signal },
         );
+        clearTimeout(timer);
         const json = await res.json();
         if (cancelled) return;
 
