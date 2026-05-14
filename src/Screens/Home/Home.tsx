@@ -42,6 +42,7 @@ import {
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
+import MapView, { Marker, Callout, PROVIDER_DEFAULT } from "react-native-maps";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -230,46 +231,108 @@ function WidgetResumen({ isDark }: WProps) {
 
 // ─── Widget: Gasolineras cercanas ────────────────────────────────────────────
 function WidgetGasolineras({ isDark }: WProps) {
-  const { cercanas, cargando, error, sinPermiso } = useGasolineras();
+  const { cercanas, ubicacion, cargando, error, sinPermiso } = useGasolineras();
   const { colors: c } = useTheme();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const primera = cercanas[0];
 
+  const fmtDist = (km: number) =>
+    km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+
   return (
-    <View style={[s.wCircle, { backgroundColor: "transparent" }]}>
-      {cargando ? (
-        <ActivityIndicator size="small" color={c.accent} />
-      ) : sinPermiso || error ? (
-        <>
-          <Text style={s.wCircleEmoji}>⛽</Text>
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-            {sinPermiso ? "Sin permiso" : "Sin señal"}
-          </Text>
-        </>
-      ) : !primera ? (
-        <>
-          <Text style={s.wCircleEmoji}>⛽</Text>
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>Sin datos{"\n"}cercanos</Text>
-        </>
-      ) : (
-        <>
-          <Text style={s.wCircleEmoji}>⛽</Text>
-          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>
-            {primera.distanciaKm < 1
-              ? `${Math.round(primera.distanciaKm * 1000)} m`
-              : `${primera.distanciaKm.toFixed(1)} km`}
-          </Text>
-          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]} numberOfLines={2}>
-            {primera.nombre}
-          </Text>
-          {cercanas[1] && (
-            <Text style={[s.wCircleSub, { color: MUTED(isDark) }]} numberOfLines={1}>
-              +{cercanas.length - 1} más
-            </Text>
+    <>
+      <Pressable onPress={() => !cargando && !sinPermiso && !error && primera && setModalVisible(true)}>
+        <View style={s.wCircle}>
+          {cargando ? (
+            <ActivityIndicator size="small" color={c.accent} />
+          ) : sinPermiso || error ? (
+            <>
+              <Text style={s.wCircleEmoji}>⛽</Text>
+              <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+                {sinPermiso ? "Sin permiso" : "Sin señal"}
+              </Text>
+            </>
+          ) : !primera ? (
+            <>
+              <Text style={s.wCircleEmoji}>⛽</Text>
+              <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>Sin datos{"\n"}cercanos</Text>
+            </>
+          ) : (
+            <>
+              <Text style={s.wCircleEmoji}>⛽</Text>
+              <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{fmtDist(primera.distanciaKm)}</Text>
+              <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]} numberOfLines={2}>{primera.nombre}</Text>
+              {cercanas.length > 1 && (
+                <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>+{cercanas.length - 1} más</Text>
+              )}
+            </>
           )}
-        </>
-      )}
-    </View>
+        </View>
+      </Pressable>
+
+      {/* Modal mapa */}
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+        <View style={s.gasMapOverlay}>
+          <View style={[s.gasMapSheet, { backgroundColor: c.modalBg }]}>
+            {/* Handle */}
+            <View style={[s.handle, { backgroundColor: c.border, marginBottom: 12 }]} />
+
+            {/* Header */}
+            <View style={s.gasMapHeader}>
+              <Text style={[s.sheetTitle, { color: c.text }]}>Gasolineras cercanas</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close" size={22} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Mapa */}
+            {ubicacion && (
+              <MapView
+                style={s.gasMap}
+                provider={PROVIDER_DEFAULT}
+                initialRegion={{
+                  latitude: ubicacion.lat,
+                  longitude: ubicacion.lon,
+                  latitudeDelta: 0.04,
+                  longitudeDelta: 0.04,
+                }}
+                showsUserLocation
+                showsMyLocationButton>
+                {cercanas.map((g) => (
+                  <Marker
+                    key={g.id}
+                    coordinate={{ latitude: g.lat, longitude: g.lon }}
+                    pinColor="#F59E0B">
+                    <Callout tooltip={false}>
+                      <View style={s.gasCallout}>
+                        <Text style={s.gasCalloutName}>{g.nombre}</Text>
+                        <Text style={s.gasCalloutDist}>{fmtDist(g.distanciaKm)}</Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                ))}
+              </MapView>
+            )}
+
+            {/* Lista */}
+            <ScrollView style={s.gasMapList} showsVerticalScrollIndicator={false}>
+              {cercanas.map((g, i) => (
+                <View key={g.id} style={[s.gasListRow, { borderBottomColor: c.divider }]}>
+                  <View style={[s.gasListNum, { backgroundColor: c.accent }]}>
+                    <Text style={[s.gasListNumText, { color: c.accentText }]}>{i + 1}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.gasListName, { color: c.text }]}>{g.nombre}</Text>
+                    <Text style={[s.gasListDist, { color: c.textMuted }]}>{fmtDist(g.distanciaKm)}</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -1589,6 +1652,51 @@ const s = StyleSheet.create({
 
   cancelTouchable: { alignItems: "center", padding: 12 },
   cancelText: { ...TYPOGRAPHY.body },
+
+  // ─── GASOLINERAS MODAL ──────────────────────────────────────────────────────
+  gasMapOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.4)" },
+  gasMapSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    maxHeight: "88%",
+  },
+  gasMapHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  gasMap: {
+    width: "100%",
+    height: 260,
+    borderRadius: 18,
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  gasCallout: { padding: 6, minWidth: 120, maxWidth: 200 },
+  gasCalloutName: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  gasCalloutDist: { fontSize: 11, color: "#6B7280", marginTop: 2 },
+  gasMapList: { maxHeight: 180 },
+  gasListRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  gasListNum: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gasListNumText: { fontSize: 12, fontWeight: "800" },
+  gasListName: { ...TYPOGRAPHY.captionBold },
+  gasListDist: { ...TYPOGRAPHY.small, marginTop: 1 },
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
   widgetScrollWrap: { marginBottom: 10 },

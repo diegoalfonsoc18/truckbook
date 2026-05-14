@@ -5,10 +5,18 @@ export interface Gasolinera {
   id: string;
   nombre: string;
   distanciaKm: number;
+  lat: number;
+  lon: number;
+}
+
+export interface Coordenadas {
+  lat: number;
+  lon: number;
 }
 
 export interface GasolinerasData {
   cercanas: Gasolinera[];
+  ubicacion: Coordenadas | null;
   cargando: boolean;
   error: boolean;
   sinPermiso: boolean;
@@ -39,6 +47,7 @@ function nombreEstacion(tags: Record<string, string>): string {
 export function useGasolineras(): GasolinerasData {
   const [data, setData] = useState<GasolinerasData>({
     cercanas: [],
+    ubicacion: null,
     cargando: true,
     error: false,
     sinPermiso: false,
@@ -87,12 +96,20 @@ export function useGasolineras(): GasolinerasData {
             id: String(el.id),
             nombre: nombreEstacion(el.tags || {}),
             distanciaKm: haversine(lat, lon, el.lat, el.lon),
+            lat: el.lat,
+            lon: el.lon,
           }))
           .sort((a, b) => a.distanciaKm - b.distanciaKm)
-          .slice(0, 3);
+          .slice(0, 10);
 
         if (!cancelled) {
-          setData({ cercanas: estaciones, cargando: false, error: false, sinPermiso: false });
+          setData({
+            cercanas: estaciones,
+            ubicacion: { lat, lon },
+            cargando: false,
+            error: false,
+            sinPermiso: false,
+          });
         }
       } catch {
         if (!cancelled) setData((p) => ({ ...p, cargando: false, error: true }));
