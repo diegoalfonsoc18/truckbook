@@ -21,7 +21,8 @@
         "tinted": "./assets/TruckBook/truckbook-iOS-TintedDark-1024x1024@1x.png"
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "TruckBook usa tu ubicación para mostrarte el clima actual en tu ruta."
       }
     },
     "android": {
@@ -29,13 +30,20 @@
         "foregroundImage": "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
         "backgroundColor": "#393E46"
       },
-      "package": "com.truckbook.app"
+      "package": "com.truckbook.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "TruckBook usa tu ubicación para mostrarte el clima actual en tu ruta."
+        }
+      ],
       "expo-web-browser",
       "expo-font",
       [

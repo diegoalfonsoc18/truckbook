@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as Location from "expo-location";
 
 export interface ClimaData {
   temperatura: number;
@@ -7,30 +8,31 @@ export interface ClimaData {
   ciudad: string;
   cargando: boolean;
   error: boolean;
+  sinPermiso: boolean;
 }
 
 const WMO: Record<number, { condicion: string; emoji: string }> = {
-  0:  { condicion: "Despejado",               emoji: "☀️" },
-  1:  { condicion: "Mayormente despejado",     emoji: "🌤" },
-  2:  { condicion: "Parcialmente nublado",     emoji: "⛅" },
-  3:  { condicion: "Nublado",                  emoji: "☁️" },
-  45: { condicion: "Neblina",                  emoji: "🌫" },
-  48: { condicion: "Neblina helada",           emoji: "🌫" },
-  51: { condicion: "Llovizna leve",            emoji: "🌦" },
-  53: { condicion: "Llovizna moderada",        emoji: "🌦" },
-  55: { condicion: "Llovizna intensa",         emoji: "🌧" },
-  61: { condicion: "Lluvia leve",              emoji: "🌧" },
-  63: { condicion: "Lluvia moderada",          emoji: "🌧" },
-  65: { condicion: "Lluvia intensa",           emoji: "🌧" },
-  71: { condicion: "Nieve leve",               emoji: "❄️" },
-  73: { condicion: "Nieve moderada",           emoji: "❄️" },
-  75: { condicion: "Nieve intensa",            emoji: "❄️" },
-  80: { condicion: "Chubascos leves",          emoji: "🌦" },
-  81: { condicion: "Chubascos moderados",      emoji: "🌧" },
-  82: { condicion: "Chubascos intensos",       emoji: "⛈" },
-  95: { condicion: "Tormenta",                 emoji: "⛈" },
-  96: { condicion: "Tormenta con granizo",     emoji: "⛈" },
-  99: { condicion: "Tormenta con granizo",     emoji: "⛈" },
+  0:  { condicion: "Despejado",            emoji: "☀️" },
+  1:  { condicion: "Mayormente despejado", emoji: "🌤" },
+  2:  { condicion: "Parcialmente nublado", emoji: "⛅" },
+  3:  { condicion: "Nublado",              emoji: "☁️" },
+  45: { condicion: "Neblina",              emoji: "🌫" },
+  48: { condicion: "Neblina helada",       emoji: "🌫" },
+  51: { condicion: "Llovizna leve",        emoji: "🌦" },
+  53: { condicion: "Llovizna",             emoji: "🌦" },
+  55: { condicion: "Llovizna intensa",     emoji: "🌧" },
+  61: { condicion: "Lluvia leve",          emoji: "🌧" },
+  63: { condicion: "Lluvia",               emoji: "🌧" },
+  65: { condicion: "Lluvia intensa",       emoji: "🌧" },
+  71: { condicion: "Nieve leve",           emoji: "❄️" },
+  73: { condicion: "Nieve",                emoji: "❄️" },
+  75: { condicion: "Nieve intensa",        emoji: "❄️" },
+  80: { condicion: "Chubascos leves",      emoji: "🌦" },
+  81: { condicion: "Chubascos",            emoji: "🌧" },
+  82: { condicion: "Chubascos intensos",   emoji: "⛈" },
+  95: { condicion: "Tormenta",             emoji: "⛈" },
+  96: { condicion: "Tormenta con granizo", emoji: "⛈" },
+  99: { condicion: "Tormenta con granizo", emoji: "⛈" },
 };
 
 function getWMO(code: number) {
@@ -45,6 +47,7 @@ export function useClima(): ClimaData {
     ciudad: "",
     cargando: true,
     error: false,
+    sinPermiso: false,
   });
 
   useEffect(() => {
@@ -52,34 +55,47 @@ export function useClima(): ClimaData {
 
     (async () => {
       try {
-        // IP-based geolocation — sin permisos de dispositivo
-        const geoRes = await fetch("https://ip-api.com/json/?lang=es&fields=status,city,lat,lon", {
-          signal: AbortSignal.timeout(6000),
+        // 1. Solicitar permiso de ubicación
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (cancelled) return;
+
+        if (status !== "granted") {
+          setData((p) => ({ ...p, cargando: false, sinPermiso: true }));
+          return;
+        }
+
+        // 2. Obtener coordenadas del dispositivo
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
         });
-        const geo = await geoRes.json();
         if (cancelled) return;
-        if (geo.status !== "success") throw new Error("geo");
 
-        const { lat, lon, city } = geo as { lat: number; lon: number; city: string; status: string };
+        const { latitude: lat, longitude: lon } = loc.coords;
 
-        // Open-Meteo — gratis, sin API key
-        const weatherRes = await fetch(
+        // 3. Nombre de ciudad via geocodificación inversa (sin API externa)
+        const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lon });
+        const ciudad = place?.city ?? place?.subregion ?? place?.region ?? "Mi ubicación";
+        if (cancelled) return;
+
+        // 4. Clima desde Open-Meteo (gratis, sin API key)
+        const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`,
-          { signal: AbortSignal.timeout(6000) },
+          { signal: AbortSignal.timeout(8000) },
         );
-        const weather = await weatherRes.json();
+        const json = await res.json();
         if (cancelled) return;
 
-        const temp  = Math.round(weather.current.temperature_2m as number);
-        const wmo   = getWMO(weather.current.weather_code as number);
+        const temp = Math.round(json.current.temperature_2m as number);
+        const wmo  = getWMO(json.current.weather_code as number);
 
         setData({
           temperatura: temp,
           condicion:   wmo.condicion,
           emoji:       wmo.emoji,
-          ciudad:      city || "Mi ciudad",
+          ciudad,
           cargando:    false,
           error:       false,
+          sinPermiso:  false,
         });
       } catch {
         if (!cancelled) setData((p) => ({ ...p, cargando: false, error: true }));

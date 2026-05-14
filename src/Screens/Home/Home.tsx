@@ -133,6 +133,15 @@ const ICON_BG = Platform.OS === "android" ? 62 : 70;
 const ICON_CORE = Platform.OS === "android" ? 46 : 52;
 const ICON_MAX = Platform.OS === "android" ? 46 : 52;
 
+// ─── Fecha local YYYY-MM-DD (no UTC) ─────────────────────────────────────────
+function fechaLocalHoy(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 // ─── Currency formatter (pesos colombianos) ───────────────────────────────────
 function formatCOP(amount: number): string {
   const abs = Math.abs(amount);
@@ -159,13 +168,19 @@ const INK   = (isDark: boolean) => isDark ? "#FFFFFF"  : "#111827";
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ card, isDark }: WProps) {
-  const { temperatura, condicion, emoji, ciudad, cargando, error } = useClima();
+  const { temperatura, condicion, emoji, ciudad, cargando, error, sinPermiso } = useClima();
   const { colors: c } = useTheme();
 
   return (
     <View style={[s.widgetBase, card, { backgroundColor: WBG(isDark) }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
+      ) : sinPermiso ? (
+        <>
+          <Text style={s.wEmoji}>📍</Text>
+          <Text style={[s.wTitle, { color: INK(isDark) }]}>Clima</Text>
+          <Text style={[s.wLabel, { color: MUTED(isDark) }]}>Sin permiso de ubicación</Text>
+        </>
       ) : error ? (
         <>
           <Text style={s.wEmoji}>🌡</Text>
@@ -187,7 +202,7 @@ function WidgetClima({ card, isDark }: WProps) {
 function WidgetResumen({ card, isDark }: WProps) {
   const gastos   = useGastosStore((state) => state.gastos);
   const ingresos = useIngresosStore((state) => state.ingresos);
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaLocalHoy();
   const totalG = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
                        .reduce((a, g) => a + (g.monto ?? 0), 0);
   const totalI = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
@@ -211,7 +226,7 @@ function WidgetResumen({ card, isDark }: WProps) {
 // ─── Widget: Combustible hoy ─────────────────────────────────────────────────
 function WidgetCombustible({ card, isDark }: WProps) {
   const gastos = useGastosStore((state) => state.gastos);
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaLocalHoy();
   const total = gastos
     .filter((g) => g.tipo_gasto === "combustible" && (g.fecha ?? g.created_at ?? "").startsWith(hoy))
     .reduce((a, g) => a + (g.monto ?? 0), 0);
@@ -234,7 +249,7 @@ function WidgetCombustible({ card, isDark }: WProps) {
 // ─── Widget: Viajes hoy ───────────────────────────────────────────────────────
 function WidgetViajes({ card, isDark }: WProps) {
   const ingresos = useIngresosStore((state) => state.ingresos);
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaLocalHoy();
   const viajes = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
   const count = viajes.length;
   const totalKm = 0; // placeholder — no hay campo km en el store aún
