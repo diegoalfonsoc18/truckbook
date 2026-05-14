@@ -14,14 +14,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const LIGHT_COLORS = {
   // Fondos — blanco puro con superficies muy sutilmente cálidas
-  primary: "#F7F7F5",
+  primary: "#F8FAFC",
   secondary: "#EFEFED",
   surface: "#EDEDEB",
   cardBg: "#FFFFFF",
   modalBg: "#FFFFFF",
 
   // Texto — máximo contraste y jerarquía clara
-  text: "#111111",
+  text: "#111827",
   textSecondary: "#6B6B6B",
   textMuted: "#AFAFAF",
   textInverse: "#FFFFFF",
@@ -31,10 +31,10 @@ export const LIGHT_COLORS = {
   divider: "#EBEBEB",
 
   // Acento — verde premium
-  accent: "#2ECC71",
-  accentLight: "rgba(46, 204, 113, 0.14)",
+  accent: "#0F172A",
+  accentLight: "rgba(15, 23, 42, 0.10)",
   accentText: "#FFFFFF",
-  accentGradient: ["#4ADE80", "#16A34A"] as [string, string],
+  accentGradient: ["#1E293B", "#020617"] as [string, string],
 
   // Semánticos
   success: "#22C55E",

@@ -8,8 +8,14 @@ import IngresosNavigation from "./IngresosNavigation";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorNavigation from "./ConductorNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
-import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../constants/Themecontext";
+import {
+  renderHome,
+  renderGastos,
+  renderIngresos,
+  renderFinanzas,
+  renderCuenta,
+} from "../assets/icons/icons";
 
 const Tab = createBottomTabNavigator();
 
@@ -45,25 +51,14 @@ export default function AppStack() {
         tabBarLabelStyle: styles.tabBarLabel,
 
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string;
-          const iconSize = 24;
           switch (route.name) {
-            case "Home":
-              iconName = focused ? "home" : "home-outline";
-              break;
-            case "Gastos":
-              iconName = focused ? "wallet" : "wallet-outline";
-              break;
-            case "Ingresos":
-              iconName = focused ? "trending-up" : "trending-up-outline";
-              break;
-            case "Reportes":
-              iconName = focused ? "bar-chart" : "bar-chart-outline";
-              break;
-            default:
-              iconName = "ellipse-outline";
+            case "Home":     return renderHome({ color, size, focused });
+            case "Gastos":   return renderGastos({ color, size, focused });
+            case "Ingresos": return renderIngresos({ color, size, focused });
+            case "Reportes": return renderFinanzas({ color, size, focused });
+            case "Cuenta":   return renderCuenta({ color, size, focused });
+            default:         return null;
           }
-          return <Ionicons name={iconName} size={iconSize} color={color} />;
         },
       })}>
       {/* CONDUCTOR (único rol activo por ahora) */}
