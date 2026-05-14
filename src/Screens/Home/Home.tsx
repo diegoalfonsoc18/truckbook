@@ -41,7 +41,7 @@ import {
   removerConductorDeVehiculo,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
-import { useTheme } from "../../constants/Themecontext";
+import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -1403,12 +1403,12 @@ const s = StyleSheet.create({
     marginBottom: 22,
   },
   sheetTitle: {
-    fontSize: 20,
-    fontWeight: "800",
+    ...TYPOGRAPHY.subtitle,
+    fontWeight: "800" as const,
     letterSpacing: -0.3,
   },
   sheetSubtitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.caption,
     textAlign: "center",
     marginBottom: 24,
     lineHeight: 20,
@@ -1448,13 +1448,12 @@ const s = StyleSheet.create({
   },
   vehicleOptionInfo: { flex: 1 },
   vehicleOptionPlaca: {
-    fontSize: 16,
-    fontWeight: "700",
+    ...TYPOGRAPHY.bodyBold,
     letterSpacing: 1,
     fontFamily: Platform.select({ ios: "Courier New", android: "monospace" }),
   },
   vehicleOptionType: {
-    fontSize: 13,
+    ...TYPOGRAPHY.caption,
     marginTop: 2,
   },
   statusBadge: {
@@ -1514,7 +1513,7 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  selectorLabel: { fontSize: 13, fontWeight: "600", marginBottom: 10 },
+  selectorLabel: { ...TYPOGRAPHY.captionBold, marginBottom: 10 },
   tipoScroll: { marginBottom: 24 },
   tipoChip: {
     alignItems: "center",
@@ -1525,14 +1524,14 @@ const s = StyleSheet.create({
     marginRight: 10,
     minWidth: 72,
   },
-  tipoChipLabel: { fontSize: 11, fontWeight: "600", textAlign: "center" },
+  tipoChipLabel: { ...TYPOGRAPHY.small, fontWeight: "600" as const, textAlign: "center" },
   confirmBtn: {
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: "center",
     marginBottom: 8,
   },
-  confirmBtnText: { fontSize: 16, fontWeight: "700" },
+  confirmBtnText: { ...TYPOGRAPHY.bodyBold },
 
   // Placa Input
   placaIconWrap: {
@@ -1569,7 +1568,7 @@ const s = StyleSheet.create({
   sheetCtaText: { fontSize: 16, fontWeight: "700" },
 
   cancelTouchable: { alignItems: "center", padding: 12 },
-  cancelText: { fontSize: 15, fontWeight: "500" },
+  cancelText: { ...TYPOGRAPHY.body },
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
   widgetScrollWrap: { marginBottom: 10 },
