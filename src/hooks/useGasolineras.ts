@@ -74,10 +74,10 @@ export function useGasolineras(): GasolinerasData {
 
         const { latitude: lat, longitude: lon } = loc.coords;
 
-        // 3. Overpass API — estaciones de gasolina en radio de 5 km
-        const query = `[out:json][timeout:10];node["amenity"="fuel"](around:5000,${lat},${lon});out body 10;`;
+        // 3. Overpass API — EDS en radio de 10 km (node + way + relation)
+        const query = `[out:json][timeout:15];(node["amenity"="fuel"](around:10000,${lat},${lon});way["amenity"="fuel"](around:10000,${lat},${lon});relation["amenity"="fuel"](around:10000,${lat},${lon}););out center 30;`;
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 10000);
+        const timer = setTimeout(() => controller.abort(), 15000);
 
         const res = await fetch("https://overpass-api.de/api/interpreter", {
           method: "POST",
@@ -91,16 +91,23 @@ export function useGasolineras(): GasolinerasData {
         const elementos: any[] = json.elements || [];
 
         // 4. Calcular distancia y ordenar
+        // Los way/relation usan el.center.lat/lon; los node usan el.lat/lon
         const estaciones: Gasolinera[] = elementos
-          .map((el) => ({
-            id: String(el.id),
-            nombre: nombreEstacion(el.tags || {}),
-            distanciaKm: haversine(lat, lon, el.lat, el.lon),
-            lat: el.lat,
-            lon: el.lon,
-          }))
-          .sort((a, b) => a.distanciaKm - b.distanciaKm)
-          .slice(0, 10);
+          .map((el) => {
+            const elLat = el.lat ?? el.center?.lat;
+            const elLon = el.lon ?? el.center?.lon;
+            if (elLat == null || elLon == null) return null;
+            return {
+              id: String(el.id),
+              nombre: nombreEstacion(el.tags || {}),
+              distanciaKm: haversine(lat, lon, elLat, elLon),
+              lat: elLat,
+              lon: elLon,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a!.distanciaKm - b!.distanciaKm)
+          .slice(0, 30) as Gasolinera[];
 
         if (!cancelled) {
           setData({
