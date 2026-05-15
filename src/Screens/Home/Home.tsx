@@ -314,6 +314,93 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
   );
 }
 
+// ─── Publicidad ───────────────────────────────────────────────────────────────
+interface Ad {
+  id: string;
+  categoria: "taller" | "repuestos" | "eds";
+  nombre: string;
+  descripcion: string;
+  emoji: string;
+  color: string;
+  cta: string;
+}
+
+const ADS: Ad[] = [
+  {
+    id: "1",
+    categoria: "taller",
+    nombre: "Taller El Camionero",
+    descripcion: "Frenos, suspensión y motor. Servicio 24h para vehículos de carga.",
+    emoji: "🔧",
+    color: "#3B82F6",
+    cta: "Ver taller",
+  },
+  {
+    id: "2",
+    categoria: "repuestos",
+    nombre: "Repuestos La Vía",
+    descripcion: "Filtros, llantas y repuestos originales para todas las marcas.",
+    emoji: "⚙️",
+    color: "#F59E0B",
+    cta: "Ver catálogo",
+  },
+  {
+    id: "3",
+    categoria: "eds",
+    nombre: "EDS Ruta Norte",
+    descripcion: "ACPM, GNV y lubricantes. Parqueadero para tractomulas.",
+    emoji: "⛽",
+    color: "#10B981",
+    cta: "Ver ubicación",
+  },
+  {
+    id: "4",
+    categoria: "taller",
+    nombre: "Tecni-Diesel Centro",
+    descripcion: "Especialistas en motores diésel y sistemas eléctricos.",
+    emoji: "🛠️",
+    color: "#8B5CF6",
+    cta: "Llamar ahora",
+  },
+];
+
+function AdCarousel({ isDark }: WProps) {
+  const bg = isDark ? "#1C1C1E" : "#FFFFFF";
+  return (
+    <View style={s.adWrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.adScroll}
+        decelerationRate="fast"
+        snapToInterval={width - H_PAD * 2 + 12}
+        snapToAlignment="start">
+        {ADS.map((ad) => (
+          <View key={ad.id} style={[s.adCard, { backgroundColor: bg }]}>
+            <View style={[s.adIconCircle, { backgroundColor: ad.color + "22" }]}>
+              <Text style={s.adEmoji}>{ad.emoji}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.adCategoria, { color: ad.color }]}>
+                {ad.categoria === "taller" ? "TALLER" : ad.categoria === "repuestos" ? "REPUESTOS" : "EDS"}
+              </Text>
+              <Text style={[s.adNombre, { color: isDark ? "#FFFFFF" : "#111827" }]} numberOfLines={1}>
+                {ad.nombre}
+              </Text>
+              <Text style={[s.adDesc, { color: isDark ? "#94A3B8" : "#6B7280" }]} numberOfLines={2}>
+                {ad.descripcion}
+              </Text>
+            </View>
+            <TouchableOpacity style={[s.adCta, { backgroundColor: ad.color }]}>
+              <Text style={s.adCtaText}>{ad.cta}</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 // ─── Hero square card (dos lado a lado en el hero) ───────────────────────────
 function HeroSquareCard({
   item,
@@ -970,40 +1057,11 @@ export default function HomeBaseAdapted({
               <WidgetPicoYPlaca isDark={isDark} />
             </View>
 
-            {/* HERO — dos cards cuadradas lado a lado */}
-            {items.length > 0 && (
-              <View style={s.heroRow}>
-                <HeroSquareCard
-                  item={items[0]}
-                  card={{
-                    ...card,
-                    backgroundColor: isDark
-                      ? "#1C1C1E"
-                      : HOME_COLORS.heroCard1Bg,
-                  }}
-                  colors={c}
-                  onPress={onItemPress ?? (() => {})}
-                  renderBadge={renderBadge}
-                />
-                {items.length > 1 && (
-                  <HeroSquareCard
-                    item={items[1]}
-                    card={{
-                      ...card,
-                      backgroundColor: isDark
-                        ? "#1C1C1E"
-                        : HOME_COLORS.heroCard2Bg,
-                    }}
-                    colors={c}
-                    onPress={onItemPress ?? (() => {})}
-                    renderBadge={renderBadge}
-                  />
-                )}
-              </View>
-            )}
+            {/* PUBLICIDAD — carrusel horizontal */}
+            <AdCarousel isDark={isDark} />
 
-            {/* LIST ROWS — resto de items, estilo Apple Support */}
-            {items.length > 2 && (
+            {/* PANEL DE CONTROL — todos los items en grid 2 columnas */}
+            {items.length > 0 && (
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
@@ -1011,7 +1069,7 @@ export default function HomeBaseAdapted({
                   </Text>
                 </View>
                 <View style={s.listSection}>
-                  {items.slice(2).reduce<Item[][]>((rows, item, i) => {
+                  {items.reduce<Item[][]>((rows, item, i) => {
                     if (i % 2 === 0) rows.push([item]);
                     else rows[rows.length - 1].push(item);
                     return rows;
@@ -1852,6 +1910,41 @@ const s = StyleSheet.create({
   cancelText: { ...TYPOGRAPHY.body },
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
+  // ─── AD CAROUSEL ──────────────────────────────────────────────────────────
+  adWrap: { marginBottom: 12 },
+  adScroll: { paddingHorizontal: H_PAD, gap: 12 },
+  adCard: {
+    width: width - H_PAD * 2,
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  adIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adEmoji: { fontSize: 26 },
+  adCategoria: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 },
+  adNombre: { fontSize: 14, fontWeight: "700", letterSpacing: -0.2, marginBottom: 3 },
+  adDesc: { fontSize: 12, lineHeight: 16 },
+  adCta: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignSelf: "center",
+  },
+  adCtaText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+
   widgetRow: {
     flexDirection: "row",
     justifyContent: "space-evenly",
