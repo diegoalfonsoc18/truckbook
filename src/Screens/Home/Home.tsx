@@ -183,7 +183,7 @@ function WidgetClima({ isDark }: WProps) {
   const { colors: c } = useTheme();
 
   return (
-    <View style={[s.wCircle]}>
+    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPermiso || error ? (
@@ -219,7 +219,7 @@ function WidgetResumen({ isDark }: WProps) {
     : (isDark ? "#F87171" : "#DC2626");
 
   return (
-    <View style={[s.wCircle]}>
+    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
       <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Hoy</Text>
       <Text style={[s.wCircleBig, { color: balColor }]}>{formatCOP(balance)}</Text>
       <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
@@ -238,7 +238,7 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
   const bloq    = isDark ? "#F87171" : "#DC2626";
 
   return (
-    <View style={s.wCircle}>
+    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPlaca ? (
@@ -857,16 +857,12 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gridContainer}>
-            {/* WIDGETS — fila horizontal con scroll */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.widgetScroll}
-              style={s.widgetScrollWrap}>
-              <WidgetClima        isDark={isDark} />
-              <WidgetResumen      isDark={isDark} />
+            {/* WIDGETS — fila centrada a ancho completo, sin scroll */}
+            <View style={s.widgetRow}>
+              <WidgetClima      isDark={isDark} />
+              <WidgetResumen    isDark={isDark} />
               <WidgetPicoYPlaca isDark={isDark} />
-            </ScrollView>
+            </View>
 
             {/* HERO — dos cards cuadradas lado a lado */}
             {items.length > 0 && (
@@ -1591,19 +1587,26 @@ const s = StyleSheet.create({
 
 
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
-  widgetScrollWrap: { marginBottom: 10 },
-  widgetScroll: { gap: 2, paddingRight: 4 },
+  widgetRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 10,
+    paddingHorizontal: H_PAD,
+  },
 
   wCircle: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
+    overflow: "hidden",
   },
-  wCircleEmoji:  { fontSize: 34, lineHeight: 40 },
-  wCircleBig:    { fontSize: 22, fontWeight: "800", letterSpacing: -0.6, textAlign: "center" },
-  wCircleLabel:  { fontSize: 10, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase", textAlign: "center" },
-  wCircleSub:    { fontSize: 11, textAlign: "center" },
+  wCircleEmoji:  { fontSize: 24, lineHeight: 28 },
+  wCircleBig:    { fontSize: 16, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
+  wCircleLabel:  { fontSize: 9, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase", textAlign: "center" },
+  wCircleSub:    { fontSize: 10, textAlign: "center" },
 });
