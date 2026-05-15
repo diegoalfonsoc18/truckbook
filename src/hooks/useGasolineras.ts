@@ -40,7 +40,7 @@ function nombreEstacion(tags: Record<string, string>): string {
     tags["brand"] ||
     tags["name"] ||
     tags["operator"] ||
-    "Estación de gasolina"
+    "EDS"
   );
 }
 

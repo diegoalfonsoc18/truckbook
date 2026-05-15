@@ -281,7 +281,7 @@ function WidgetGasolineras({ isDark }: WProps) {
 
             {/* Header */}
             <View style={s.gasMapHeader}>
-              <Text style={[s.sheetTitle, { color: c.text }]}>Gasolineras cercanas</Text>
+              <Text style={[s.sheetTitle, { color: c.text }]}>EDS cercanas</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close" size={22} color={c.textMuted} />
               </TouchableOpacity>
