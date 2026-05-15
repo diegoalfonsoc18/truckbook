@@ -74,10 +74,11 @@ export function useGasolineras(): GasolinerasData {
 
         const { latitude: lat, longitude: lon } = loc.coords;
 
-        // 3. Overpass API — EDS en radio de 10 km (node + way + relation)
-        const query = `[out:json][timeout:15];(node["amenity"="fuel"](around:10000,${lat},${lon});way["amenity"="fuel"](around:10000,${lat},${lon});relation["amenity"="fuel"](around:10000,${lat},${lon}););out center 30;`;
+        // 3. Overpass API — EDS en radio de 10 km (amenity=fuel + shop=fuel)
+        const r = 10000;
+        const query = `[out:json][timeout:20];(node["amenity"="fuel"](around:${r},${lat},${lon});way["amenity"="fuel"](around:${r},${lat},${lon});relation["amenity"="fuel"](around:${r},${lat},${lon});node["shop"="fuel"](around:${r},${lat},${lon});way["shop"="fuel"](around:${r},${lat},${lon}););out center 50;`;
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 15000);
+        const timer = setTimeout(() => controller.abort(), 20000);
 
         const res = await fetch("https://overpass-api.de/api/interpreter", {
           method: "POST",

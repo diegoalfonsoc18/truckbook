@@ -311,8 +311,12 @@ function WidgetGasolineras({ isDark }: WProps) {
                         ? `${Math.round(g.distanciaKm * 1000)} m`
                         : `${g.distanciaKm.toFixed(1)} km`
                     }
-                    pinColor="#F59E0B"
-                  />
+                    anchor={{ x: 0.5, y: 1 }}
+                  >
+                    <View style={s.edsPin}>
+                      <Text style={s.edsPinEmoji}>⛽</Text>
+                    </View>
+                  </Marker>
                 ))}
               </MapView>
             )}
@@ -1678,6 +1682,19 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   gasMapList: { maxHeight: 180 },
+  edsPin: {
+    backgroundColor: "#F59E0B",
+    borderRadius: 20,
+    padding: 6,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  edsPinEmoji: { fontSize: 18, lineHeight: 22 },
   gasListRow: {
     flexDirection: "row",
     alignItems: "center",
