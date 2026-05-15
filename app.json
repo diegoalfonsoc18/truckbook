@@ -62,7 +62,6 @@
           "contactsPermission": "TruckBook necesita acceso a tus contactos para agregar clientes a la cuenta de cobro."
         }
       ],
-      "expo-maps"
     ],
     "extra": {
       "eas": {

@@ -42,7 +42,7 @@ import {
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
-import { AppleMaps } from "expo-maps";
+import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -289,22 +289,32 @@ function WidgetGasolineras({ isDark }: WProps) {
 
             {/* Mapa — datos de OpenStreetMap (Overpass API), tiles de Apple Maps */}
             {ubicacion && (
-              <AppleMaps.View
+              <MapView
                 style={s.gasMap}
-                cameraPosition={{
-                  coordinates: { latitude: ubicacion.lat, longitude: ubicacion.lon },
-                  zoom: 14,
+                provider={PROVIDER_DEFAULT}
+                initialRegion={{
+                  latitude: ubicacion.lat,
+                  longitude: ubicacion.lon,
+                  latitudeDelta: 0.04,
+                  longitudeDelta: 0.04,
                 }}
-                properties={{ isMyLocationEnabled: true }}
-                uiSettings={{ myLocationButtonEnabled: false, compassEnabled: false }}
-                markers={cercanas.map((g) => ({
-                  id: g.id,
-                  coordinates: { latitude: g.lat, longitude: g.lon },
-                  title: g.nombre,
-                  systemImage: "fuelpump.fill",
-                  tintColor: "#F59E0B",
-                }))}
-              />
+                showsUserLocation
+                showsMyLocationButton={false}
+              >
+                {cercanas.map((g) => (
+                  <Marker
+                    key={g.id}
+                    coordinate={{ latitude: g.lat, longitude: g.lon }}
+                    title={g.nombre}
+                    description={
+                      g.distanciaKm < 1
+                        ? `${Math.round(g.distanciaKm * 1000)} m`
+                        : `${g.distanciaKm.toFixed(1)} km`
+                    }
+                    pinColor="#F59E0B"
+                  />
+                ))}
+              </MapView>
             )}
 
             {/* Lista */}
