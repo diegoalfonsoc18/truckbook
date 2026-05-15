@@ -157,7 +157,7 @@ function formatCOP(amount: number): string {
   const abs = Math.abs(amount);
   const sign = amount < 0 ? "-" : "";
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000)     return `${sign}$${(abs / 1_000).toFixed(0)}k`;
+  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}k`;
   return `${sign}$${abs.toFixed(0)}`;
 }
 
@@ -170,16 +170,18 @@ function getGreeting() {
 }
 
 // ─── Widget helpers ───────────────────────────────────────────────────────────
-interface WProps { isDark: boolean }
+interface WProps {
+  isDark: boolean;
+}
 
-const WBG   = (d: boolean) => d ? "#1C1C1E" : "#FFFFFF";
-const MUTED = (d: boolean) => d ? "#94A3B8"  : "#6B7280";
-const INK   = (d: boolean) => d ? "#FFFFFF"  : "#111827";
-
+const WBG = (d: boolean) => (d ? "#1C1C1E" : "#FFFFFF");
+const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
+const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ isDark }: WProps) {
-  const { temperatura, condicion, emoji, ciudad, cargando, error, sinPermiso } = useClima();
+  const { temperatura, condicion, emoji, ciudad, cargando, error, sinPermiso } =
+    useClima();
   const { colors: c } = useTheme();
 
   return (
@@ -196,8 +198,14 @@ function WidgetClima({ isDark }: WProps) {
       ) : (
         <>
           <Text style={s.wCircleEmoji}>{emoji}</Text>
-          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>{temperatura}°</Text>
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]} numberOfLines={1}>{ciudad}</Text>
+          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>
+            {temperatura}°
+          </Text>
+          <Text
+            style={[s.wCircleSub, { color: MUTED(isDark) }]}
+            numberOfLines={1}>
+            {ciudad}
+          </Text>
         </>
       )}
     </View>
@@ -206,36 +214,56 @@ function WidgetClima({ isDark }: WProps) {
 
 // ─── Widget: Resumen del día ──────────────────────────────────────────────────
 function WidgetResumen({ isDark }: WProps) {
-  const gastos   = useGastosStore((s) => s.gastos);
+  const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
-  const totalG = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
-                       .reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalI = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
-                         .reduce((a, i) => a + (i.monto ?? 0), 0);
+  const totalG = gastos
+    .filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
+    .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalI = ingresos
+    .filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
+    .reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
-  const balColor = balance >= 0
-    ? (isDark ? "#34D399" : "#059669")
-    : (isDark ? "#F87171" : "#DC2626");
+  const balColor =
+    balance >= 0
+      ? isDark
+        ? "#34D399"
+        : "#059669"
+      : isDark
+        ? "#F87171"
+        : "#DC2626";
 
   return (
     <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
       <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Hoy</Text>
-      <Text style={[s.wCircleBig, { color: balColor }]}>{formatCOP(balance)}</Text>
-      <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>↑ {formatCOP(totalI)}</Text>
-      <Text style={[s.wCircleSub, { color: isDark ? "#F87171" : "#DC2626" }]}>↓ {formatCOP(totalG)}</Text>
+      <Text style={[s.wCircleBig, { color: balColor }]}>
+        {formatCOP(balance)}
+      </Text>
+      <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>
+        ↑ {formatCOP(totalI)}
+      </Text>
+      <Text style={[s.wCircleSub, { color: isDark ? "#F87171" : "#DC2626" }]}>
+        ↓ {formatCOP(totalG)}
+      </Text>
     </View>
   );
 }
 
-
 // ─── Widget: Pico y Placa ─────────────────────────────────────────────────────
 function WidgetPicoYPlaca({ isDark }: WProps) {
-  const { restringido, ultimoDigito, ciudad, hastaHora, cargando, sinPlaca, sinCobertura } = usePicoYPlaca();
+  const {
+    restringido,
+    ultimoDigito,
+    ciudad,
+    hastaHora,
+    cargando,
+    sinPlaca,
+    sinCobertura,
+  } = usePicoYPlaca();
   const { colors: c } = useTheme();
 
-  const libre   = isDark ? "#34D399" : "#059669";
-  const bloq    = isDark ? "#F87171" : "#DC2626";
+  const libre = isDark ? "#34D399" : "#059669";
+  const bloq = isDark ? "#F87171" : "#DC2626";
 
   return (
     <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
@@ -244,12 +272,16 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
       ) : sinPlaca ? (
         <>
           <Text style={s.wCircleEmoji}>🚛</Text>
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>Sin{"\n"}vehículo</Text>
+          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+            Sin{"\n"}vehículo
+          </Text>
         </>
       ) : sinCobertura ? (
         <>
           <Text style={s.wCircleEmoji}>🚦</Text>
-          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Pico y Placa</Text>
+          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>
+            Pico y Placa
+          </Text>
           <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
             {ciudad ? `Sin datos\n${ciudad}` : "Ubic.\nno disponible"}
           </Text>
@@ -257,11 +289,21 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
       ) : (
         <>
           <Text style={s.wCircleEmoji}>{restringido ? "🚫" : "✅"}</Text>
-          <Text style={[s.wCircleBig, { color: restringido ? bloq : libre, fontSize: 13, fontWeight: "700" }]}>
+          <Text
+            style={[
+              s.wCircleBig,
+              {
+                color: restringido ? bloq : libre,
+                fontSize: 13,
+                fontWeight: "700",
+              },
+            ]}>
             {restringido ? "Restringido" : "Puede\ncircular"}
           </Text>
           {restringido && hastaHora && (
-            <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>hasta {hastaHora}</Text>
+            <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+              hasta {hastaHora}
+            </Text>
           )}
           <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>
             Placa …{ultimoDigito}
@@ -340,11 +382,22 @@ function HeroSquareCard({
           },
         ]}>
         {item.iconName ? (
-          <ItemIcon name={item.iconName} size={HOME_COLORS.heroIconSizes[item.id as keyof typeof HOME_COLORS.heroIconSizes] ?? HOME_COLORS.heroIconSize} />
+          <ItemIcon
+            name={item.iconName}
+            size={
+              HOME_COLORS.heroIconSizes[
+                item.id as keyof typeof HOME_COLORS.heroIconSizes
+              ] ?? HOME_COLORS.heroIconSize
+            }
+          />
         ) : (
           <Ionicons
             name={(item.icon || "grid-outline") as any}
-            size={(HOME_COLORS.heroIconSizes[item.id as keyof typeof HOME_COLORS.heroIconSizes] ?? HOME_COLORS.heroIconSize) - 8}
+            size={
+              (HOME_COLORS.heroIconSizes[
+                item.id as keyof typeof HOME_COLORS.heroIconSizes
+              ] ?? HOME_COLORS.heroIconSize) - 8
+            }
             color={accent}
           />
         )}
@@ -492,11 +545,16 @@ export default function HomeBaseAdapted({
   const [cargando, setCargando] = useState(false);
   const [conductorActual, setConductorActual] = useState<string | undefined>();
   const [placaInput, setPlacaInput] = useState("");
-  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(null);
+  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
+    null,
+  );
   const [guardando, setGuardando] = useState(false);
-  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(null);
+  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(
+    null,
+  );
   const [placaEditInput, setPlacaEditInput] = useState("");
-  const [tipoCamionEditInput, setTipoCamionEditInput] = useState<TipoCamion | null>(null);
+  const [tipoCamionEditInput, setTipoCamionEditInput] =
+    useState<TipoCamion | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-8)).current;
@@ -619,7 +677,8 @@ export default function HomeBaseAdapted({
   };
 
   const handleGuardarEdicion = async () => {
-    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput) return;
+    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput)
+      return;
     setGuardando(true);
     const placaNueva = placaEditInput.trim().toUpperCase();
     try {
@@ -633,16 +692,25 @@ export default function HomeBaseAdapted({
       if (placaNueva !== vehiculoEditando.placa) {
         // Asegurar que exista el vehiculo con la nueva placa
         const { data: existeNueva } = await supabase
-          .from("vehiculos").select("placa").eq("placa", placaNueva).maybeSingle();
+          .from("vehiculos")
+          .select("placa")
+          .eq("placa", placaNueva)
+          .maybeSingle();
         if (!existeNueva) {
           await supabase.from("vehiculos").insert([{ placa: placaNueva }]);
         }
-        await supabase.from("vehiculo_conductores").update({ vehiculo_placa: placaNueva }).eq("vehiculo_placa", vehiculoEditando.placa);
+        await supabase
+          .from("vehiculo_conductores")
+          .update({ vehiculo_placa: placaNueva })
+          .eq("vehiculo_placa", vehiculoEditando.placa);
         if (placaActual === vehiculoEditando.placa) {
           setPlaca(placaNueva);
           setTipoCamion(tipoCamionEditInput);
         }
-      } else if (tipoCamionEditInput !== vehiculoEditando.tipo_camion && placaActual === vehiculoEditando.placa) {
+      } else if (
+        tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
+        placaActual === vehiculoEditando.placa
+      ) {
         setTipoCamion(tipoCamionEditInput);
       }
 
@@ -658,33 +726,36 @@ export default function HomeBaseAdapted({
   };
 
   const handleEliminarVehiculo = (v: Vehiculo) => {
-    Alert.alert(
-      "Quitar vehículo",
-      `¿Quitar ${v.placa} de tu lista?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Quitar",
-          style: "destructive",
-          onPress: async () => {
-            const result = await removerConductorDeVehiculo(v.id);
-            if (!result.success) {
-              Alert.alert("Error", result.error || "No se pudo quitar el vehículo");
-              return;
-            }
-            if (placaActual === v.placa) setPlaca("");
-            await cargarVehiculos();
-          },
+    Alert.alert("Quitar vehículo", `¿Quitar ${v.placa} de tu lista?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Quitar",
+        style: "destructive",
+        onPress: async () => {
+          const result = await removerConductorDeVehiculo(v.id);
+          if (!result.success) {
+            Alert.alert(
+              "Error",
+              result.error || "No se pudo quitar el vehículo",
+            );
+            return;
+          }
+          if (placaActual === v.placa) setPlaca("");
+          await cargarVehiculos();
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleAgregarVehiculo = async () => {
     if (!user?.id || !placaInput.trim() || !tipoCamionInput) return;
     setGuardando(true);
     const placa = placaInput.trim().toUpperCase();
-    const result = await registrarVehiculoPropietario(user.id, placa, tipoCamionInput);
+    const result = await registrarVehiculoPropietario(
+      user.id,
+      placa,
+      tipoCamionInput,
+    );
     setGuardando(false);
     if (!result.success) {
       Alert.alert("Error", result.error || "No se pudo registrar el vehículo");
@@ -811,45 +882,80 @@ export default function HomeBaseAdapted({
                   : "Seleccionar vehículo"
               }
               accessibilityHint="Toca para cambiar de vehículo">
-                <View style={s.vehicleCardContent}>
-                  {placaActual ? (
-                    <>
-                      {/* Con vehículo — info apilada */}
-                      <View style={s.vehicleInfo}>
-                        <Text style={[s.vehicleLabel, { color: HOME_COLORS.vehicleCardTextMuted }]}>
-                          vehículo activo
-                        </Text>
-                        <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
-                          {vehicleCardTitle || tipoCamionData?.label || ""}
-                        </Text>
-                        <View style={[s.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
-                          <Text style={[s.placaText, { color: c.plateText }]}>
-                            {placaActual}
-                          </Text>
-                        </View>
-                        {conductorActual && (
-                          <Text style={[s.vehicleConductor, { color: HOME_COLORS.vehicleCardTextMuted }]} numberOfLines={1}>
-                            {conductorActual}
-                          </Text>
-                        )}
-                      </View>
-                      <ItemIcon name={camionIconName} size={HOME_COLORS.vehicleIconSize} />
-                    </>
-                  ) : (
-                    <>
-                      {/* Sin vehículo — estado vacío */}
-                      <View style={s.vehicleInfo}>
-                        <Text style={[s.vehicleType, { color: HOME_COLORS.vehicleCardText }]}>
-                          Sin vehículo
-                        </Text>
-                        <Text style={[s.vehicleHint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
-                          Toca para seleccionar un camión
+              <View style={s.vehicleCardContent}>
+                {placaActual ? (
+                  <>
+                    {/* Con vehículo — info apilada */}
+                    <View style={s.vehicleInfo}>
+                      <Text
+                        style={[
+                          s.vehicleLabel,
+                          { color: HOME_COLORS.vehicleCardTextMuted },
+                        ]}>
+                        vehículo activo
+                      </Text>
+                      <Text
+                        style={[
+                          s.vehicleType,
+                          { color: HOME_COLORS.vehicleCardText },
+                        ]}>
+                        {vehicleCardTitle || tipoCamionData?.label || ""}
+                      </Text>
+                      <View
+                        style={[
+                          s.placaBadge,
+                          {
+                            backgroundColor: c.plateYellow,
+                            borderColor: c.plateBorder,
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        <Text style={[s.placaText, { color: c.plateText }]}>
+                          {placaActual}
                         </Text>
                       </View>
-                      <ItemIcon name="conductor" size={HOME_COLORS.vehicleIconSize} />
-                    </>
-                  )}
-                </View>
+                      {conductorActual && (
+                        <Text
+                          style={[
+                            s.vehicleConductor,
+                            { color: HOME_COLORS.vehicleCardTextMuted },
+                          ]}
+                          numberOfLines={1}>
+                          {conductorActual}
+                        </Text>
+                      )}
+                    </View>
+                    <ItemIcon
+                      name={camionIconName}
+                      size={HOME_COLORS.vehicleIconSize}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* Sin vehículo — estado vacío */}
+                    <View style={s.vehicleInfo}>
+                      <Text
+                        style={[
+                          s.vehicleType,
+                          { color: HOME_COLORS.vehicleCardText },
+                        ]}>
+                        Sin vehículo
+                      </Text>
+                      <Text
+                        style={[
+                          s.vehicleHint,
+                          { color: HOME_COLORS.vehicleCardTextMuted },
+                        ]}>
+                        Toca para seleccionar un camión
+                      </Text>
+                    </View>
+                    <ItemIcon
+                      name="conductor"
+                      size={HOME_COLORS.vehicleIconSize}
+                    />
+                  </>
+                )}
+              </View>
             </AnimatedPressable>
           )}
 
@@ -859,8 +965,8 @@ export default function HomeBaseAdapted({
             contentContainerStyle={s.gridContainer}>
             {/* WIDGETS — fila centrada a ancho completo, sin scroll */}
             <View style={s.widgetRow}>
-              <WidgetClima      isDark={isDark} />
-              <WidgetResumen    isDark={isDark} />
+              <WidgetClima isDark={isDark} />
+              <WidgetResumen isDark={isDark} />
               <WidgetPicoYPlaca isDark={isDark} />
             </View>
 
@@ -901,20 +1007,30 @@ export default function HomeBaseAdapted({
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Herramientas
+                    Panel de control
                   </Text>
                 </View>
                 <View style={s.listSection}>
-                  {items.slice(2).map((item, index) => (
-                    <ListRow
-                      key={item.id}
-                      item={item}
-                      index={index + 1}
-                      card={card}
-                      colors={c}
-                      onPress={onItemPress ?? (() => {})}
-                      renderBadge={renderBadge}
-                    />
+                  {items.slice(2).reduce<Item[][]>((rows, item, i) => {
+                    if (i % 2 === 0) rows.push([item]);
+                    else rows[rows.length - 1].push(item);
+                    return rows;
+                  }, []).map((row, rowIdx) => (
+                    <View key={rowIdx} style={s.listGridRow}>
+                      {row.map((item, colIdx) => (
+                        <View key={item.id} style={s.listGridCell}>
+                          <ListRow
+                            item={item}
+                            index={rowIdx * 2 + colIdx + 1}
+                            card={card}
+                            colors={c}
+                            onPress={onItemPress ?? (() => {})}
+                            renderBadge={renderBadge}
+                          />
+                        </View>
+                      ))}
+                      {row.length === 1 && <View style={s.listGridCell} />}
+                    </View>
                   ))}
                 </View>
               </>
@@ -942,9 +1058,12 @@ export default function HomeBaseAdapted({
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{ paddingBottom: 8 }}>
-
                     {/* ── Título ── */}
-                    <Text style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
+                    <Text
+                      style={[
+                        s.sheetTitle,
+                        { color: c.text, marginBottom: 20 },
+                      ]}>
                       Mis Vehículos
                     </Text>
 
@@ -958,7 +1077,9 @@ export default function HomeBaseAdapted({
                         {vehiculos.map((v) => {
                           const tipo = getTipoCamionData(v.tipo_camion);
                           const isActive = placaActual === v.placa;
-                          const vIconName: IconName = tipo ? ICON_MAP[tipo.id] : "conductor";
+                          const vIconName: IconName = tipo
+                            ? ICON_MAP[tipo.id]
+                            : "conductor";
                           return (
                             <Swipeable
                               key={v.id}
@@ -966,39 +1087,82 @@ export default function HomeBaseAdapted({
                               renderRightActions={() => (
                                 <View style={s.swipeActions}>
                                   <TouchableOpacity
-                                    style={[s.swipeActionBtn, { backgroundColor: "#3B82F6" }]}
+                                    style={[
+                                      s.swipeActionBtn,
+                                      { backgroundColor: "#3B82F6" },
+                                    ]}
                                     onPress={() => abrirEdicion(v)}>
-                                    <Ionicons name="pencil-outline" size={20} color="#fff" />
+                                    <Ionicons
+                                      name="pencil-outline"
+                                      size={20}
+                                      color="#fff"
+                                    />
                                   </TouchableOpacity>
                                   <TouchableOpacity
-                                    style={[s.swipeActionBtn, { backgroundColor: "#EF4444" }]}
+                                    style={[
+                                      s.swipeActionBtn,
+                                      { backgroundColor: "#EF4444" },
+                                    ]}
                                     onPress={() => handleEliminarVehiculo(v)}>
-                                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                                    <Ionicons
+                                      name="trash-outline"
+                                      size={20}
+                                      color="#fff"
+                                    />
                                   </TouchableOpacity>
                                 </View>
                               )}>
                               <TouchableOpacity
                                 style={[
                                   s.vehicleOption,
-                                  { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
-                                  isActive && { borderWidth: 1.5, borderColor: c.accent },
+                                  {
+                                    backgroundColor: isDark
+                                      ? "#1C1C1E"
+                                      : "#F2F2F7",
+                                  },
+                                  isActive && {
+                                    borderWidth: 1.5,
+                                    borderColor: c.accent,
+                                  },
                                 ]}
                                 onPress={() => handleSeleccionarVehiculo(v)}
                                 activeOpacity={0.7}>
-                                <View style={[s.vehicleOptionIcon, { backgroundColor: tipo?.color || c.accent }]}>
+                                <View
+                                  style={[
+                                    s.vehicleOptionIcon,
+                                    {
+                                      backgroundColor: tipo?.color || c.accent,
+                                    },
+                                  ]}>
                                   <ItemIcon name={vIconName} size={28} />
                                 </View>
                                 <View style={s.vehicleOptionInfo}>
-                                  <Text style={[s.vehicleOptionPlaca, { color: c.text }]}>
+                                  <Text
+                                    style={[
+                                      s.vehicleOptionPlaca,
+                                      { color: c.text },
+                                    ]}>
                                     {v.placa}
                                   </Text>
-                                  <Text style={[s.vehicleOptionType, { color: c.textSecondary }]}>
+                                  <Text
+                                    style={[
+                                      s.vehicleOptionType,
+                                      { color: c.textSecondary },
+                                    ]}>
                                     {tipo?.label || "Vehículo"}
                                   </Text>
                                 </View>
                                 {isActive && (
-                                  <View style={[s.statusBadge, { backgroundColor: c.accent }]}>
-                                    <Ionicons name="checkmark" size={14} color={c.accentText} />
+                                  <View
+                                    style={[
+                                      s.statusBadge,
+                                      { backgroundColor: c.accent },
+                                    ]}>
+                                    <Ionicons
+                                      name="checkmark"
+                                      size={14}
+                                      color={c.accentText}
+                                    />
                                   </View>
                                 )}
                               </TouchableOpacity>
@@ -1010,29 +1174,53 @@ export default function HomeBaseAdapted({
 
                     {/* ── Formulario edición ── */}
                     {vehiculoEditando && (
-                      <View style={[s.addSection, { borderTopColor: c.divider }]}>
+                      <View
+                        style={[s.addSection, { borderTopColor: c.divider }]}>
                         <View style={s.editSectionHeader}>
-                          <Text style={[s.selectorLabel, { color: c.text, marginBottom: 0 }]}>
+                          <Text
+                            style={[
+                              s.selectorLabel,
+                              { color: c.text, marginBottom: 0 },
+                            ]}>
                             Editar — {vehiculoEditando.placa}
                           </Text>
-                          <TouchableOpacity onPress={() => setVehiculoEditando(null)}>
-                            <Ionicons name="close" size={20} color={c.textMuted} />
+                          <TouchableOpacity
+                            onPress={() => setVehiculoEditando(null)}>
+                            <Ionicons
+                              name="close"
+                              size={20}
+                              color={c.textMuted}
+                            />
                           </TouchableOpacity>
                         </View>
 
                         <TextInput
-                          style={[s.placaInputField, { backgroundColor: c.surface, color: c.text, borderColor: c.accent, marginTop: 12 }]}
+                          style={[
+                            s.placaInputField,
+                            {
+                              backgroundColor: c.surface,
+                              color: c.text,
+                              borderColor: c.accent,
+                              marginTop: 12,
+                            },
+                          ]}
                           placeholder="Placa"
                           placeholderTextColor={c.textMuted}
                           value={placaEditInput}
-                          onChangeText={(t) => setPlacaEditInput(t.toUpperCase())}
+                          onChangeText={(t) =>
+                            setPlacaEditInput(t.toUpperCase())
+                          }
                           autoCapitalize="characters"
                           maxLength={7}
                           returnKeyType="done"
                           onSubmitEditing={Keyboard.dismiss}
                         />
 
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={s.tipoScroll}>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          keyboardShouldPersistTaps="handled"
+                          style={s.tipoScroll}>
                           {TIPOS_CAMION.map((tipo) => {
                             const selected = tipoCamionEditInput === tipo.id;
                             return (
@@ -1040,12 +1228,26 @@ export default function HomeBaseAdapted({
                                 key={tipo.id}
                                 style={[
                                   s.tipoChip,
-                                  { backgroundColor: c.surface, borderColor: c.border },
-                                  selected && { backgroundColor: tipo.color + "22", borderColor: tipo.color },
+                                  {
+                                    backgroundColor: c.surface,
+                                    borderColor: c.border,
+                                  },
+                                  selected && {
+                                    backgroundColor: tipo.color + "22",
+                                    borderColor: tipo.color,
+                                  },
                                 ]}
                                 onPress={() => setTipoCamionEditInput(tipo.id)}>
                                 <ItemIcon name={tipo.iconName} size={32} />
-                                <Text style={[s.tipoChipLabel, { color: selected ? tipo.color : c.textSecondary }]}>
+                                <Text
+                                  style={[
+                                    s.tipoChipLabel,
+                                    {
+                                      color: selected
+                                        ? tipo.color
+                                        : c.textSecondary,
+                                    },
+                                  ]}>
                                   {tipo.label}
                                 </Text>
                               </TouchableOpacity>
@@ -1057,14 +1259,21 @@ export default function HomeBaseAdapted({
                           style={[
                             s.confirmBtn,
                             { backgroundColor: "#3B82F6" },
-                            (!placaEditInput.trim() || !tipoCamionEditInput) && { opacity: 0.4 },
+                            (!placaEditInput.trim() ||
+                              !tipoCamionEditInput) && { opacity: 0.4 },
                           ]}
                           onPress={handleGuardarEdicion}
-                          disabled={!placaEditInput.trim() || !tipoCamionEditInput || guardando}>
+                          disabled={
+                            !placaEditInput.trim() ||
+                            !tipoCamionEditInput ||
+                            guardando
+                          }>
                           {guardando ? (
                             <ActivityIndicator size="small" color="#fff" />
                           ) : (
-                            <Text style={[s.confirmBtnText, { color: "#fff" }]}>Guardar cambios</Text>
+                            <Text style={[s.confirmBtnText, { color: "#fff" }]}>
+                              Guardar cambios
+                            </Text>
                           )}
                         </TouchableOpacity>
                       </View>
@@ -1072,12 +1281,23 @@ export default function HomeBaseAdapted({
 
                     {/* ── Separador + sección agregar ── */}
                     <View style={[s.addSection, { borderTopColor: c.divider }]}>
-                      <Text style={[s.selectorLabel, { color: c.textSecondary, marginBottom: 12 }]}>
+                      <Text
+                        style={[
+                          s.selectorLabel,
+                          { color: c.textSecondary, marginBottom: 12 },
+                        ]}>
                         Agregar vehículo
                       </Text>
 
                       <TextInput
-                        style={[s.placaInputField, { backgroundColor: c.surface, color: c.text, borderColor: c.border }]}
+                        style={[
+                          s.placaInputField,
+                          {
+                            backgroundColor: c.surface,
+                            color: c.text,
+                            borderColor: c.border,
+                          },
+                        ]}
                         placeholder="Placa — Ej: EKA854"
                         placeholderTextColor={c.textMuted}
                         value={placaInput}
@@ -1100,12 +1320,26 @@ export default function HomeBaseAdapted({
                               key={tipo.id}
                               style={[
                                 s.tipoChip,
-                                { backgroundColor: c.surface, borderColor: c.border },
-                                selected && { backgroundColor: tipo.color + "22", borderColor: tipo.color },
+                                {
+                                  backgroundColor: c.surface,
+                                  borderColor: c.border,
+                                },
+                                selected && {
+                                  backgroundColor: tipo.color + "22",
+                                  borderColor: tipo.color,
+                                },
                               ]}
                               onPress={() => setTipoCamionInput(tipo.id)}>
                               <ItemIcon name={tipo.iconName} size={32} />
-                              <Text style={[s.tipoChipLabel, { color: selected ? tipo.color : c.textSecondary }]}>
+                              <Text
+                                style={[
+                                  s.tipoChipLabel,
+                                  {
+                                    color: selected
+                                      ? tipo.color
+                                      : c.textSecondary,
+                                  },
+                                ]}>
                                 {tipo.label}
                               </Text>
                             </TouchableOpacity>
@@ -1117,22 +1351,34 @@ export default function HomeBaseAdapted({
                         style={[
                           s.confirmBtn,
                           { backgroundColor: c.accent },
-                          (!placaInput.trim() || !tipoCamionInput) && { opacity: 0.4 },
+                          (!placaInput.trim() || !tipoCamionInput) && {
+                            opacity: 0.4,
+                          },
                         ]}
                         onPress={handleAgregarVehiculo}
-                        disabled={!placaInput.trim() || !tipoCamionInput || guardando}>
+                        disabled={
+                          !placaInput.trim() || !tipoCamionInput || guardando
+                        }>
                         {guardando ? (
-                          <ActivityIndicator size="small" color={c.accentText} />
+                          <ActivityIndicator
+                            size="small"
+                            color={c.accentText}
+                          />
                         ) : (
-                          <Text style={[s.confirmBtnText, { color: c.accentText }]}>
+                          <Text
+                            style={[s.confirmBtnText, { color: c.accentText }]}>
                             Registrar vehículo
                           </Text>
                         )}
                       </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={s.cancelTouchable} onPress={cerrarModal}>
-                      <Text style={[s.cancelText, { color: c.textSecondary }]}>Cerrar</Text>
+                    <TouchableOpacity
+                      style={s.cancelTouchable}
+                      onPress={cerrarModal}>
+                      <Text style={[s.cancelText, { color: c.textSecondary }]}>
+                        Cerrar
+                      </Text>
                     </TouchableOpacity>
                   </ScrollView>
                 </View>
@@ -1288,7 +1534,11 @@ const s = StyleSheet.create({
     letterSpacing: HOME_COLORS.vehicleLabelLetterSpacing,
     marginBottom: 2,
   },
-  vehicleType: { fontSize: HOME_COLORS.vehicleTypeSize, fontWeight: HOME_COLORS.vehicleTypeWeight, letterSpacing: -0.3 },
+  vehicleType: {
+    fontSize: HOME_COLORS.vehicleTypeSize,
+    fontWeight: HOME_COLORS.vehicleTypeWeight,
+    letterSpacing: -0.3,
+  },
   vehicleHint: { fontSize: HOME_COLORS.vehicleHintSize },
   vehicleCtaWrap: {
     flexDirection: "row",
@@ -1300,7 +1550,10 @@ const s = StyleSheet.create({
     paddingVertical: 5,
   },
   vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
-  vehicleConductor: { fontSize: HOME_COLORS.vehicleConductorSize, marginTop: 3 },
+  vehicleConductor: {
+    fontSize: HOME_COLORS.vehicleConductorSize,
+    marginTop: 3,
+  },
   placaBadge: {
     borderRadius: HOME_COLORS.vehicleBadgeBorderRadius,
     paddingHorizontal: HOME_COLORS.vehicleBadgePaddingH,
@@ -1340,13 +1593,21 @@ const s = StyleSheet.create({
   listSection: {
     gap: 10,
   },
+  listGridRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  listGridCell: {
+    width: (width - H_PAD * 2 - 10) / 2,
+  },
   listRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 13,
-    paddingHorizontal: 16,
-    gap: 14,
+    paddingHorizontal: 14,
+    gap: 10,
     borderRadius: 16,
+    width: "100%",
   },
   listRowIconShadow: {
     borderRadius: 11,
@@ -1540,7 +1801,11 @@ const s = StyleSheet.create({
     marginRight: 10,
     minWidth: 72,
   },
-  tipoChipLabel: { ...TYPOGRAPHY.small, fontWeight: "600" as const, textAlign: "center" },
+  tipoChipLabel: {
+    ...TYPOGRAPHY.small,
+    fontWeight: "600" as const,
+    textAlign: "center",
+  },
   confirmBtn: {
     borderRadius: 14,
     paddingVertical: 15,
@@ -1586,7 +1851,6 @@ const s = StyleSheet.create({
   cancelTouchable: { alignItems: "center", padding: 12 },
   cancelText: { ...TYPOGRAPHY.body },
 
-
   // ─── WIDGETS ────────────────────────────────────────────────────────────────
   widgetRow: {
     flexDirection: "row",
@@ -1606,8 +1870,19 @@ const s = StyleSheet.create({
     gap: 1,
     overflow: "hidden",
   },
-  wCircleEmoji:  { fontSize: 24, lineHeight: 28 },
-  wCircleBig:    { fontSize: 16, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
-  wCircleLabel:  { fontSize: 9, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase", textAlign: "center" },
-  wCircleSub:    { fontSize: 10, textAlign: "center" },
+  wCircleEmoji: { fontSize: 24, lineHeight: 28 },
+  wCircleBig: {
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    textAlign: "center",
+  },
+  wCircleLabel: {
+    fontSize: 9,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+  wCircleSub: { fontSize: 10, textAlign: "center" },
 });
