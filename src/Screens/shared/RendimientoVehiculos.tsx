@@ -18,6 +18,7 @@ import {
   cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
+import logger from "../../utils/logger";
 
 interface VehiculoRendimiento {
   placa: string;
@@ -137,7 +138,7 @@ export default function RendimientoVehiculos() {
 
       setVehiculos(resultado);
     } catch (err) {
-      console.error("Error cargando rendimiento:", err);
+      logger.error("Error cargando rendimiento:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);

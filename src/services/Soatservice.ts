@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import type { RespuestaSOAT, VehiculoSOAT } from "../assets/types/Soat.types";
+import logger from "../utils/logger";
 
 const API_BASE_URL = "https://tu-api.com/api"; // ✅ REEMPLAZAR CON TU API
 
@@ -21,7 +22,7 @@ class SOATService {
 
       return response.data;
     } catch (error: any) {
-      console.error("❌ Error consultando SOAT:", error);
+      logger.error("❌ Error consultando SOAT:", error);
 
       return {
         exito: false,
@@ -49,7 +50,7 @@ class SOATService {
 
       return response.data;
     } catch (error: any) {
-      console.error("❌ Error consultando SOAT por VIN:", error);
+      logger.error("❌ Error consultando SOAT por VIN:", error);
 
       return {
         exito: false,

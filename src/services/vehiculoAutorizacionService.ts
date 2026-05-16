@@ -1,5 +1,6 @@
 import supabase from "../config/SupaBaseConfig";
 import { enviarPushNotificacion, getPushTokenDeUsuario } from "./NotificationService";
+import logger from "../utils/logger";
 
 export type EstadoAutorizacion = "pendiente" | "autorizado" | "rechazado";
 
@@ -231,7 +232,7 @@ export async function solicitarAccesoVehiculo(
     }
   } catch (e) {
     // No falla el flujo principal si la notificación falla
-    console.warn("Error enviando push:", e);
+    logger.warn("Error enviando push:", e);
   }
 
   return { success: true };
@@ -334,7 +335,7 @@ export async function aprobarSolicitud(
       }
     }
   } catch (e) {
-    console.warn("Error enviando push aprobación:", e);
+    logger.warn("Error enviando push aprobación:", e);
   }
 
   return { success: true };
@@ -374,7 +375,7 @@ export async function rechazarSolicitud(
       }
     }
   } catch (e) {
-    console.warn("Error enviando push rechazo:", e);
+    logger.warn("Error enviando push rechazo:", e);
   }
 
   return { success: true };
@@ -412,7 +413,7 @@ export async function buscarConductorPorEmail(
   email: string
 ): Promise<{ data: { user_id: string; nombre: string; email: string; cedula: string } | null; error?: string }> {
   const emailLimpio = email.toLowerCase().trim();
-  console.log("🔍 Buscando conductor por email:", emailLimpio);
+  logger.log("🔍 Buscando conductor por email:", emailLimpio);
 
   // Primero intentar buscar por email en la tabla usuarios
   const { data, error } = await supabase
@@ -421,10 +422,10 @@ export async function buscarConductorPorEmail(
     .ilike("email", emailLimpio)
     .maybeSingle();
 
-  console.log("📦 Resultado busqueda:", JSON.stringify({ data, error }));
+  logger.log("📦 Resultado busqueda:", JSON.stringify({ data, error }));
 
   if (error) {
-    console.error("❌ Error buscando conductor:", error);
+    logger.error("❌ Error buscando conductor:", error);
     // Si el error es que la columna email no existe, informar
     if (error.message.includes("column") || error.code === "42703") {
       return { data: null, error: "La columna 'email' no existe en la tabla usuarios. Agregala en Supabase." };
@@ -435,12 +436,12 @@ export async function buscarConductorPorEmail(
   // Si no lo encontro por email, puede que el registro no tenga email guardado
   // Intentar buscar todos los usuarios y ver si alguno coincide
   if (!data) {
-    console.log("⚠️ No encontrado por email directo, buscando todos los usuarios...");
+    logger.log("⚠️ No encontrado por email directo, buscando todos los usuarios...");
     const { data: todos, error: errorTodos } = await supabase
       .from("usuarios")
       .select("user_id, nombre, email, cedula");
 
-    console.log("📦 Todos los usuarios:", JSON.stringify(todos?.map(u => ({ nombre: u.nombre, email: u.email }))));
+    logger.log("📦 Todos los usuarios:", JSON.stringify(todos?.map(u => ({ nombre: u.nombre, email: u.email }))));
 
     if (!errorTodos && todos) {
       // Buscar match manual (por si el email tiene espacios o diferencias)
@@ -568,7 +569,7 @@ export async function cambiarAutorizacionConductor(
   nuevoEstado: EstadoAutorizacion,
   autorizadoPor: string
 ): Promise<{ success: boolean; error?: string }> {
-  console.log("🔄 Cambiando autorizacion:", { relacionId, nuevoEstado, autorizadoPor });
+  logger.log("🔄 Cambiando autorizacion:", { relacionId, nuevoEstado, autorizadoPor });
 
   const { data, error } = await supabase
     .from("vehiculo_conductores")
@@ -580,7 +581,7 @@ export async function cambiarAutorizacionConductor(
     .eq("id", relacionId)
     .select();
 
-  console.log("📦 Resultado update:", JSON.stringify({ data, error }));
+  logger.log("📦 Resultado update:", JSON.stringify({ data, error }));
 
   if (error) return { success: false, error: error.message };
   if (!data || data.length === 0) {
@@ -609,7 +610,7 @@ export async function cargarTodosVehiculosConConductores(): Promise<{
     .order("placa", { ascending: true });
 
   if (vError) {
-    console.error("❌ Error cargando vehiculos:", vError);
+    logger.error("❌ Error cargando vehiculos:", vError);
     return { data: [], error: vError };
   }
 
@@ -626,7 +627,7 @@ export async function cargarTodosVehiculosConConductores(): Promise<{
     .order("created_at", { ascending: false });
 
   if (rError) {
-    console.error("❌ Error cargando relaciones:", rError);
+    logger.error("❌ Error cargando relaciones:", rError);
   }
 
   const rels = relaciones || [];
@@ -642,7 +643,7 @@ export async function cargarTodosVehiculosConConductores(): Promise<{
       .in("user_id", conductorIds);
 
     if (uError) {
-      console.error("❌ Error cargando usuarios:", uError);
+      logger.error("❌ Error cargando usuarios:", uError);
     }
 
     for (const u of usuarios || []) {

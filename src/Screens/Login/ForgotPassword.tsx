@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import logger from "../../utils/logger";
 
 type AuthStackParamList = {
   ForgotPassword: undefined;
@@ -42,7 +43,7 @@ export default function ForgotPassword({ navigation }: Props) {
       });
 
       if (error) {
-        console.error(error);
+        logger.error(error);
         Alert.alert("Error", error.message);
       } else {
         Alert.alert(

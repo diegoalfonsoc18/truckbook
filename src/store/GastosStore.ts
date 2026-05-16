@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 export interface Gasto {
   id: string;
@@ -65,7 +66,7 @@ export const useGastosStore = create<GastosState>((set) => ({
       if (error) throw error;
       set({ gastos: data || [] });
     } catch (err) {
-      console.error("Error cargando gastos:", err);
+      logger.error("Error cargando gastos:", err);
     }
   },
 }));

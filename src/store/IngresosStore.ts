@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 export interface Ingreso {
   id: string;
@@ -71,7 +72,7 @@ export const useIngresosStore = create<IngresosState>((set) => ({
       if (error) throw error;
       set({ ingresos: data || [] });
     } catch (err) {
-      console.error("Error loading ingresos:", err);
+      logger.error("Error loading ingresos:", err);
     }
   },
 }));

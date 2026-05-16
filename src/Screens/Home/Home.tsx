@@ -48,6 +48,7 @@ import { useClima } from "../../hooks/useClima";
 import { usePicoYPlaca } from "../../hooks/usePicoYPlaca";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
+import logger from "../../utils/logger";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -715,7 +716,7 @@ export default function HomeBaseAdapted({
         if (actual) setConductorActual(actual.conductorNombre);
       }
     } catch (err) {
-      console.error("Error cargando vehículos:", err);
+      logger.error("Error cargando vehículos:", err);
     } finally {
       setCargando(false);
     }

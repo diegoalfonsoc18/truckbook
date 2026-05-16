@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import licenciaService from "../services/licenciaService";
 import type { RespuestaLicencia } from "../assets/types/licencia.types";
+import logger from "../utils/logger";
 
 interface UseLicenciaReturn {
   licencia: RespuestaLicencia | null;
@@ -28,22 +29,22 @@ export function useLicencia(
     setError(null);
 
     try {
-      console.log(`📋 Consultando licencia para documento: ${documento}`);
+      logger.log(`📋 Consultando licencia para documento: ${documento}`);
 
       const respuesta =
         await licenciaService.consultarLicenciaPorDocumento(documento);
 
       if (respuesta.exito) {
         setLicencia(respuesta);
-        console.log("✅ Licencia consultada exitosamente:", respuesta);
+        logger.log("✅ Licencia consultada exitosamente:", respuesta);
       } else {
         setError(respuesta.error || "Error desconocido");
-        console.error("❌ Error en consulta licencia:", respuesta.error);
+        logger.error("❌ Error en consulta licencia:", respuesta.error);
       }
     } catch (err: any) {
       const errorMsg = err?.message || "Error al consultar licencia";
       setError(errorMsg);
-      console.error("❌ Error en useLicencia:", err);
+      logger.error("❌ Error en useLicencia:", err);
     } finally {
       setCargando(false);
     }

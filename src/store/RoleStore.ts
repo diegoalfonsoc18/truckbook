@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 export type UserRole = "conductor" | "administrador" | "propietario";
 
@@ -34,7 +35,7 @@ export const useRoleStore = create<RoleState>()(
             set({ role: data.rol as UserRole });
           }
         } catch (err) {
-          console.error("Error cargando rol:", err);
+          logger.error("Error cargando rol:", err);
         }
       },
 
@@ -49,7 +50,7 @@ export const useRoleStore = create<RoleState>()(
             set({ role });
           }
         } catch (err) {
-          console.error("Error guardando rol:", err);
+          logger.error("Error guardando rol:", err);
         }
       },
     }),

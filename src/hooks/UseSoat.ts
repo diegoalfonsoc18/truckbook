@@ -7,6 +7,7 @@ import type {
   VehiculoSOAT,
   SOAT,
 } from "../assets/types/Soat.types";
+import logger from "../utils/logger";
 
 interface UseSOATReturn {
   soat: RespuestaSOAT | null;
@@ -35,22 +36,22 @@ export function useSOAT(
     setError(null);
 
     try {
-      console.log(`📋 Consultando SOAT para placa: ${placa}`);
+      logger.log(`📋 Consultando SOAT para placa: ${placa}`);
 
       const respuesta = await soatService.consultarSOATporPlaca(placa);
 
       if (respuesta.exito) {
         setSOAT(respuesta);
         setVehiculo(respuesta.vehiculo || null);
-        console.log("✅ SOAT consultado exitosamente:", respuesta);
+        logger.log("✅ SOAT consultado exitosamente:", respuesta);
       } else {
         setError(respuesta.error || "Error desconocido");
-        console.error("❌ Error en consulta SOAT:", respuesta.error);
+        logger.error("❌ Error en consulta SOAT:", respuesta.error);
       }
     } catch (err: any) {
       const errorMsg = err?.message || "Error al consultar SOAT";
       setError(errorMsg);
-      console.error("❌ Error en useSOAT:", err);
+      logger.error("❌ Error en useSOAT:", err);
     } finally {
       setCargando(false);
     }

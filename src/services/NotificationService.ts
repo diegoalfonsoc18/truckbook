@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -43,7 +44,7 @@ export async function registrarPushToken(userId: string): Promise<void> {
       .update({ push_token: tokenData.data })
       .eq("user_id", userId);
   } catch (err) {
-    console.error("Error registrando push token:", err);
+    logger.error("Error registrando push token:", err);
   }
 }
 
@@ -65,7 +66,7 @@ export async function enviarPushNotificacion(
       body: JSON.stringify({ to: pushToken, title, body, data, sound: "default" }),
     });
   } catch (err) {
-    console.error("Error enviando push:", err);
+    logger.error("Error enviando push:", err);
   }
 }
 

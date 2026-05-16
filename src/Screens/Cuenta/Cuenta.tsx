@@ -13,6 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme } from "../../constants/Themecontext";
+import logger from "../../utils/logger";
 
 const CONDUCTOR_COLOR = "#00D9A5";
 const H_PAD = 20;
@@ -54,7 +55,7 @@ export default function Cuenta() {
       if (error) throw error;
       setUser(currentUser);
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", error);
     }
   };
 

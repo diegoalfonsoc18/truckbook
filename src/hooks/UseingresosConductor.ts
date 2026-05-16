@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 export interface Ingreso {
   id: string;
@@ -58,7 +59,7 @@ export const useIngresosConductor = (
           filter: `placa=eq.${placa}`,
         },
         (payload) => {
-          console.log("📡 Cambio detectado en ingresos:", payload);
+          logger.log("📡 Cambio detectado en ingresos:", payload);
 
           if (payload.eventType === "INSERT") {
             setIngresos((prev) => [payload.new as Ingreso, ...prev]);

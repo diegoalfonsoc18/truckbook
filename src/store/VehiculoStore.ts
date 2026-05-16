@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua" | "cisterna" | "planchon" | "portacontenedor";
 
@@ -26,7 +27,7 @@ export const useVehiculoStore = create<VehiculoStore>()(
 
       setPlaca: async (placa: string) => {
         try {
-          console.log("🔍 Insertando placa:", placa);
+          logger.log("🔍 Insertando placa:", placa);
 
           // 1️⃣ Verificar si ya existe
           const { data: existe, error: checkError } = await supabase
@@ -36,32 +37,32 @@ export const useVehiculoStore = create<VehiculoStore>()(
             .maybeSingle();
 
           if (checkError) {
-            console.error("❌ Error al verificar placa:", checkError);
+            logger.error("❌ Error al verificar placa:", checkError);
           }
 
           // 2️⃣ Si NO existe, insertar
           if (!existe) {
-            console.log("📝 Placa no existe, insertando...");
+            logger.log("📝 Placa no existe, insertando...");
             const { data, error } = await supabase
               .from("vehiculos")
               .insert([{ placa }])
               .select();
 
             if (error) {
-              console.error("❌ Error al insertar placa:", error);
+              logger.error("❌ Error al insertar placa:", error);
               throw error;
             }
 
-            console.log("✅ Placa insertada:", data);
+            logger.log("✅ Placa insertada:", data);
           } else {
-            console.log("ℹ️ Placa ya existe");
+            logger.log("ℹ️ Placa ya existe");
           }
 
           // 3️⃣ Guardar en el store
           set({ placa });
-          console.log("✅ Placa guardada en store:", placa);
+          logger.log("✅ Placa guardada en store:", placa);
         } catch (err: any) {
-          console.error("❌ Error en setPlaca:", err);
+          logger.error("❌ Error en setPlaca:", err);
           throw err;
         }
       },

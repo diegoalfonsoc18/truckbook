@@ -12,6 +12,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useRoleStore, UserRole } from "../../store/RoleStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import logger from "../../utils/logger";
 
 const { width } = Dimensions.get("window");
 
@@ -69,7 +70,7 @@ export default function SelectRoleScreen({ navigation }: Props) {
         useRoleStore.getState().setRole(role);
       }
     } catch (err) {
-      console.error("Error guardando rol:", err);
+      logger.error("Error guardando rol:", err);
     } finally {
       setLoading(false);
     }

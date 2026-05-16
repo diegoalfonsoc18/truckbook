@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import logger from "../utils/logger";
 
 // ============================================
 // DEFINICIÓN DE COLORES
@@ -220,7 +221,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           setModeState(savedMode as ThemeMode);
         }
       } catch (error) {
-        console.log("Error loading theme preference:", error);
+        logger.log("Error loading theme preference:", error);
       } finally {
         setIsLoaded(true);
       }
@@ -234,7 +235,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode);
     } catch (error) {
-      console.log("Error saving theme preference:", error);
+      logger.log("Error saving theme preference:", error);
     }
   };
 

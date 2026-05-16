@@ -29,6 +29,7 @@ import {
   cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
+import logger from "../../utils/logger";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -267,7 +268,7 @@ export default function AdministradorReportes() {
 
       setSecciones(seccionesData);
     } catch (err) {
-      console.error("Error cargando reportes:", err);
+      logger.error("Error cargando reportes:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);

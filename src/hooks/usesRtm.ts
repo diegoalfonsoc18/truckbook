@@ -6,6 +6,7 @@ import type {
   RespuestaTecnicomecanica,
   RTM,
 } from "../assets/types/tecnicomecanica.types";
+import logger from "../utils/logger";
 
 interface UseRTMReturn {
   rtm: RespuestaTecnicomecanica | null;
@@ -31,21 +32,21 @@ export function useRTM(
     setError(null);
 
     try {
-      console.log(`🔧 Consultando RTM para placa: ${placa}`);
+      logger.log(`🔧 Consultando RTM para placa: ${placa}`);
 
       const respuesta = await rtmService.consultarRTMporPlaca(placa);
 
       if (respuesta.exito) {
         setRTM(respuesta);
-        console.log("✅ RTM consultado exitosamente:", respuesta);
+        logger.log("✅ RTM consultado exitosamente:", respuesta);
       } else {
         setError(respuesta.error || "Error desconocido");
-        console.error("❌ Error en consulta RTM:", respuesta.error);
+        logger.error("❌ Error en consulta RTM:", respuesta.error);
       }
     } catch (err: any) {
       const errorMsg = err?.message || "Error al consultar RTM";
       setError(errorMsg);
-      console.error("❌ Error en useRTM:", err);
+      logger.error("❌ Error en useRTM:", err);
     } finally {
       setCargando(false);
     }
