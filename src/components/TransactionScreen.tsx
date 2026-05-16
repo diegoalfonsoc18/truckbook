@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { validarMonto, validarFecha, parsearMonto } from "../utils/validacion";
 import {
   View,
   Text,
@@ -307,7 +308,14 @@ export default function TransactionScreen({
   };
 
   const handleSave = useCallback(async () => {
-    if (!editValue) return Alert.alert("Error", "Ingresa un monto");
+    // Validar monto
+    const montoResult = validarMonto(editValue);
+    if (!montoResult.valido) return Alert.alert("Error", montoResult.error);
+
+    // Validar fecha
+    const fechaResult = validarFecha(editDate);
+    if (!fechaResult.valido) return Alert.alert("Error", fechaResult.error);
+
     setLoading(true);
     try {
       const result = isEditing

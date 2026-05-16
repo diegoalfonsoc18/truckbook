@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { validarPlaca } from "../../utils/validacion";
 import {
   View,
   Text,
@@ -243,8 +244,10 @@ export default function GestionVehiculos() {
 
   const handleAgregar = async () => {
     const placa = nuevaPlaca.trim().toUpperCase();
-    if (placa.length < 3) {
-      Alert.alert("Error", "La placa debe tener al menos 3 caracteres");
+
+    const placaResult = validarPlaca(placa);
+    if (!placaResult.valido) {
+      Alert.alert("Error", placaResult.error);
       return;
     }
     if (!user?.id) return;

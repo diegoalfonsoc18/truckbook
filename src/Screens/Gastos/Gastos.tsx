@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect } from "react";
+import { validarMonto, validarFecha, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore } from "../../store/GastosStore";
@@ -73,12 +74,18 @@ export default function Gastos() {
       const cat = ALL_CATEGORIAS.find((x) => x.id === catId);
       if (!cat) return { success: false, error: "Categoría no encontrada" };
 
+      const montoResult = validarMonto(monto);
+      if (!montoResult.valido) return { success: false, error: montoResult.error };
+
+      const fechaResult = validarFecha(fecha);
+      if (!fechaResult.valido) return { success: false, error: fechaResult.error };
+
       return agregarGasto({
         placa: placaActual,
         conductor_id: user.id,
         tipo_gasto: cat.name,
         descripcion: descripcion?.trim() || cat.name,
-        monto: parseFloat(monto),
+        monto: parsearMonto(monto),
         fecha,
         estado: "pendiente",
       });
@@ -87,8 +94,15 @@ export default function Gastos() {
   );
 
   const onUpdate = useCallback(
-    async (id: string, monto: string, fecha: string) =>
-      actualizarGasto(id, { monto: parseFloat(monto), fecha }),
+    async (id: string, monto: string, fecha: string) => {
+      const montoResult = validarMonto(monto);
+      if (!montoResult.valido) return { success: false, error: montoResult.error };
+
+      const fechaResult = validarFecha(fecha);
+      if (!fechaResult.valido) return { success: false, error: fechaResult.error };
+
+      return actualizarGasto(id, { monto: parsearMonto(monto), fecha });
+    },
     [actualizarGasto],
   );
 

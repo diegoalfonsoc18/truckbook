@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect } from "react";
+import { validarMonto, validarFecha, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -64,12 +65,18 @@ export default function Ingresos() {
       const cat = INGRESOS_CATEGORIAS.find((x) => x.id === catId);
       if (!cat) return { success: false, error: "Categoría no encontrada" };
 
+      const montoResult = validarMonto(monto);
+      if (!montoResult.valido) return { success: false, error: montoResult.error };
+
+      const fechaResult = validarFecha(fecha);
+      if (!fechaResult.valido) return { success: false, error: fechaResult.error };
+
       const { error } = await supabase.from("conductor_ingresos").insert([{
         placa: placaActual,
         conductor_id: user.id,
         tipo_ingreso: cat.name,
         descripcion: cat.name,
-        monto: parseFloat(monto),
+        monto: parsearMonto(monto),
         fecha,
         estado: "confirmado",
       }]);
@@ -83,9 +90,15 @@ export default function Ingresos() {
 
   const onUpdate = useCallback(
     async (id: string, monto: string, fecha: string) => {
+      const montoResult = validarMonto(monto);
+      if (!montoResult.valido) return { success: false, error: montoResult.error };
+
+      const fechaResult = validarFecha(fecha);
+      if (!fechaResult.valido) return { success: false, error: fechaResult.error };
+
       const { error } = await supabase
         .from("conductor_ingresos")
-        .update({ monto: parseFloat(monto), fecha })
+        .update({ monto: parsearMonto(monto), fecha })
         .eq("id", id);
       if (error) return { success: false, error: error.message };
       useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
