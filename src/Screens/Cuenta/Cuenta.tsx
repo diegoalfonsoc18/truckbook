@@ -67,6 +67,14 @@ export default function Cuenta() {
         onPress: async () => {
           setLoading(true);
           try {
+            // Borrar push_token antes de cerrar sesión
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase
+                .from("usuarios")
+                .update({ push_token: null })
+                .eq("id", user.id);
+            }
             const { error } = await supabase.auth.signOut();
             if (error) Alert.alert("Error", error.message);
             else navigation.replace("Login");
