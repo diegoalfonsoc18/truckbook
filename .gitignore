@@ -38,3 +38,4 @@ yarn-error.*
 
 # Claude Code skills
 .agents/
+.claude/worktrees/
