@@ -66,7 +66,7 @@ export default {
     ],
     extra: {
       supabaseUrl: process.env.SUPABASE_URL ?? "https://erinesvycnvmqbsrawlk.supabase.co",
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyaW5lc3Z5Y252bXFic3Jhd2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzY5NjgsImV4cCI6MjA5Mjc1Mjk2OH0.mPMGwgcrcAfepUFs19PD75XjkPDIKRqzYWXWcAsQ0nM",
       eas: {
         projectId: "494c025d-768e-41f8-a040-ee0dd05aaaf0",
       },

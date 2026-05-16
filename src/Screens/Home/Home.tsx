@@ -29,7 +29,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Swipeable } from "react-native-gesture-handler";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
@@ -54,6 +54,8 @@ const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
+// Tamaño responsivo: 3 widgets + 2 gaps de 20 + padding horizontal
+const WIDGET_SIZE = Math.min(Math.floor((width - H_PAD * 2 - 40) / 3), 100);
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -181,9 +183,10 @@ const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ isDark }: WProps) {
-  const { temperatura, condicion, emoji, ciudad, cargando, error, sinPermiso } =
+  const { temperatura, icono, ciudad, cargando, error, sinPermiso } =
     useClima();
   const { colors: c } = useTheme();
+  const iconColor = INK(isDark);
 
   return (
     <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
@@ -191,14 +194,18 @@ function WidgetClima({ isDark }: WProps) {
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPermiso || error ? (
         <>
-          <Text style={s.wCircleEmoji}>{sinPermiso ? "📍" : "🌡"}</Text>
+          <Ionicons
+            name={sinPermiso ? "location-outline" : "thermometer-outline"}
+            size={30}
+            color={iconColor}
+          />
           <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
             {sinPermiso ? "Ubicación\ndenegada" : "Sin señal"}
           </Text>
         </>
       ) : (
         <>
-          <Text style={s.wCircleEmoji}>{emoji}</Text>
+          <Ionicons name={icono} size={30} color={iconColor} />
           <Text style={[s.wCircleBig, { color: INK(isDark) }]}>
             {temperatura}°
           </Text>
@@ -272,16 +279,16 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPlaca ? (
         <>
-          <Text style={s.wCircleEmoji}>🚛</Text>
+          <Ionicons name="car-outline" size={30} color={INK(isDark)} />
           <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
             Sin{"\n"}vehículo
           </Text>
         </>
       ) : sinCobertura ? (
         <>
-          <Text style={s.wCircleEmoji}>🚦</Text>
+          <Ionicons name="car-outline" size={30} color={INK(isDark)} />
           <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>
-            Pico y Placa
+            Pico y placa
           </Text>
           <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
             {ciudad ? `Sin datos\n${ciudad}` : "Ubic.\nno disponible"}
@@ -289,7 +296,11 @@ function WidgetPicoYPlaca({ isDark }: WProps) {
         </>
       ) : (
         <>
-          <Text style={s.wCircleEmoji}>{restringido ? "🚫" : "✅"}</Text>
+          <Ionicons
+            name="car-outline"
+            size={30}
+            color={restringido ? bloq : libre}
+          />
           <Text
             style={[
               s.wCircleBig,
@@ -331,7 +342,8 @@ const ADS: Ad[] = [
     id: "1",
     categoria: "taller",
     nombre: "Taller El Camionero",
-    descripcion: "Frenos, suspensión y motor. Servicio 24h para vehículos de carga.",
+    descripcion:
+      "Frenos, suspensión y motor. Servicio 24h para vehículos de carga.",
     emoji: "🔧",
     color: "#3B82F6",
     cta: "Ver taller",
@@ -340,7 +352,8 @@ const ADS: Ad[] = [
     id: "2",
     categoria: "repuestos",
     nombre: "Repuestos La Vía",
-    descripcion: "Filtros, llantas y repuestos originales para todas las marcas.",
+    descripcion:
+      "Filtros, llantas y repuestos originales para todas las marcas.",
     emoji: "⚙️",
     color: "#F59E0B",
     cta: "Ver catálogo",
@@ -378,17 +391,26 @@ function AdCarousel({ isDark }: WProps) {
         snapToAlignment="start">
         {ADS.map((ad) => (
           <View key={ad.id} style={[s.adCard, { backgroundColor: bg }]}>
-            <View style={[s.adIconCircle, { backgroundColor: ad.color + "22" }]}>
+            <View
+              style={[s.adIconCircle, { backgroundColor: ad.color + "22" }]}>
               <Text style={s.adEmoji}>{ad.emoji}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.adCategoria, { color: ad.color }]}>
-                {ad.categoria === "taller" ? "TALLER" : ad.categoria === "repuestos" ? "REPUESTOS" : "EDS"}
+                {ad.categoria === "taller"
+                  ? "TALLER"
+                  : ad.categoria === "repuestos"
+                    ? "REPUESTOS"
+                    : "EDS"}
               </Text>
-              <Text style={[s.adNombre, { color: isDark ? "#FFFFFF" : "#111827" }]} numberOfLines={1}>
+              <Text
+                style={[s.adNombre, { color: isDark ? "#FFFFFF" : "#111827" }]}
+                numberOfLines={1}>
                 {ad.nombre}
               </Text>
-              <Text style={[s.adDesc, { color: isDark ? "#94A3B8" : "#6B7280" }]} numberOfLines={2}>
+              <Text
+                style={[s.adDesc, { color: isDark ? "#94A3B8" : "#6B7280" }]}
+                numberOfLines={2}>
                 {ad.descripcion}
               </Text>
             </View>
@@ -739,8 +761,7 @@ export default function HomeBaseAdapted({
     }
     // Si ya está activo, deseleccionar
     if (placaActual === vehiculo.placa) {
-      setPlaca("");
-      setTipoCamion(null);
+      useVehiculoStore.getState().clearVehiculo();
       setConductorActual(undefined);
       return;
     }
@@ -1058,8 +1079,8 @@ export default function HomeBaseAdapted({
               <WidgetPicoYPlaca isDark={isDark} />
             </View>
 
-            {/* PUBLICIDAD — carrusel horizontal */}
-            <AdCarousel isDark={isDark} />
+            {/* PUBLICIDAD — carrusel horizontal (próxima actualización) */}
+            {/* <AdCarousel isDark={isDark} /> */}
 
             {/* PANEL DE CONTROL — todos los items en grid 2 columnas */}
             {items.length > 0 && (
@@ -1070,27 +1091,29 @@ export default function HomeBaseAdapted({
                   </Text>
                 </View>
                 <View style={s.listSection}>
-                  {items.reduce<Item[][]>((rows, item, i) => {
-                    if (i % 2 === 0) rows.push([item]);
-                    else rows[rows.length - 1].push(item);
-                    return rows;
-                  }, []).map((row, rowIdx) => (
-                    <View key={rowIdx} style={s.listGridRow}>
-                      {row.map((item, colIdx) => (
-                        <View key={item.id} style={s.listGridCell}>
-                          <ListRow
-                            item={item}
-                            index={rowIdx * 2 + colIdx + 1}
-                            card={card}
-                            colors={c}
-                            onPress={onItemPress ?? (() => {})}
-                            renderBadge={renderBadge}
-                          />
-                        </View>
-                      ))}
-                      {row.length === 1 && <View style={s.listGridCell} />}
-                    </View>
-                  ))}
+                  {items
+                    .reduce<Item[][]>((rows, item, i) => {
+                      if (i % 2 === 0) rows.push([item]);
+                      else rows[rows.length - 1].push(item);
+                      return rows;
+                    }, [])
+                    .map((row, rowIdx) => (
+                      <View key={rowIdx} style={s.listGridRow}>
+                        {row.map((item, colIdx) => (
+                          <View key={item.id} style={s.listGridCell}>
+                            <ListRow
+                              item={item}
+                              index={rowIdx * 2 + colIdx + 1}
+                              card={card}
+                              colors={c}
+                              onPress={onItemPress ?? (() => {})}
+                              renderBadge={renderBadge}
+                            />
+                          </View>
+                        ))}
+                        {row.length === 1 && <View style={s.listGridCell} />}
+                      </View>
+                    ))}
                 </View>
               </>
             )}
@@ -1585,18 +1608,18 @@ const s = StyleSheet.create({
   },
   vehicleInfo: {
     flex: 1,
-    gap: 5,
   },
   vehicleLabel: {
     fontSize: HOME_COLORS.vehicleLabelSize,
     fontWeight: HOME_COLORS.vehicleLabelWeight,
     letterSpacing: HOME_COLORS.vehicleLabelLetterSpacing,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   vehicleType: {
     fontSize: HOME_COLORS.vehicleTypeSize,
     fontWeight: HOME_COLORS.vehicleTypeWeight,
     letterSpacing: -0.3,
+    marginBottom: 8,
   },
   vehicleHint: { fontSize: HOME_COLORS.vehicleHintSize },
   vehicleCtaWrap: {
@@ -1611,7 +1634,6 @@ const s = StyleSheet.create({
   vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
   vehicleConductor: {
     fontSize: HOME_COLORS.vehicleConductorSize,
-    marginTop: 3,
   },
   placaBadge: {
     borderRadius: HOME_COLORS.vehicleBadgeBorderRadius,
@@ -1935,8 +1957,18 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   adEmoji: { fontSize: 26 },
-  adCategoria: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 },
-  adNombre: { fontSize: 14, fontWeight: "700", letterSpacing: -0.2, marginBottom: 3 },
+  adCategoria: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  adNombre: {
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    marginBottom: 3,
+  },
   adDesc: { fontSize: 12, lineHeight: 16 },
   adCta: {
     paddingHorizontal: 12,
@@ -1948,17 +1980,17 @@ const s = StyleSheet.create({
 
   widgetRow: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
+    justifyContent: "center",
     alignItems: "center",
     width: "100%",
     marginBottom: 10,
-    paddingHorizontal: H_PAD,
+    gap: 20,
   },
 
   wCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: WIDGET_SIZE,
+    height: WIDGET_SIZE,
+    borderRadius: WIDGET_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
@@ -1975,7 +2007,6 @@ const s = StyleSheet.create({
     fontSize: 9,
     fontWeight: "600",
     letterSpacing: 0.3,
-    textTransform: "uppercase",
     textAlign: "center",
   },
   wCircleSub: { fontSize: 10, textAlign: "center" },

@@ -1,49 +1,59 @@
 import { useState, useEffect } from "react";
 import * as Location from "expo-location";
 
+export type ClimaIconName =
+  | "sunny-outline"
+  | "partly-sunny-outline"
+  | "cloudy-outline"
+  | "cloud-outline"
+  | "rainy-outline"
+  | "thunderstorm-outline"
+  | "snow-outline"
+  | "thermometer-outline";
+
 export interface ClimaData {
   temperatura: number;
   condicion: string;
-  emoji: string;
+  icono: ClimaIconName;
   ciudad: string;
   cargando: boolean;
   error: boolean;
   sinPermiso: boolean;
 }
 
-const WMO: Record<number, { condicion: string; emoji: string }> = {
-  0:  { condicion: "Despejado",            emoji: "☀️" },
-  1:  { condicion: "Mayormente despejado", emoji: "🌤" },
-  2:  { condicion: "Parcialmente nublado", emoji: "⛅" },
-  3:  { condicion: "Nublado",              emoji: "☁️" },
-  45: { condicion: "Neblina",              emoji: "🌫" },
-  48: { condicion: "Neblina helada",       emoji: "🌫" },
-  51: { condicion: "Llovizna leve",        emoji: "🌦" },
-  53: { condicion: "Llovizna",             emoji: "🌦" },
-  55: { condicion: "Llovizna intensa",     emoji: "🌧" },
-  61: { condicion: "Lluvia leve",          emoji: "🌧" },
-  63: { condicion: "Lluvia",               emoji: "🌧" },
-  65: { condicion: "Lluvia intensa",       emoji: "🌧" },
-  71: { condicion: "Nieve leve",           emoji: "❄️" },
-  73: { condicion: "Nieve",                emoji: "❄️" },
-  75: { condicion: "Nieve intensa",        emoji: "❄️" },
-  80: { condicion: "Chubascos leves",      emoji: "🌦" },
-  81: { condicion: "Chubascos",            emoji: "🌧" },
-  82: { condicion: "Chubascos intensos",   emoji: "⛈" },
-  95: { condicion: "Tormenta",             emoji: "⛈" },
-  96: { condicion: "Tormenta con granizo", emoji: "⛈" },
-  99: { condicion: "Tormenta con granizo", emoji: "⛈" },
+const WMO: Record<number, { condicion: string; icono: ClimaIconName }> = {
+  0:  { condicion: "Despejado",            icono: "sunny-outline"        },
+  1:  { condicion: "Mayormente despejado", icono: "partly-sunny-outline" },
+  2:  { condicion: "Parcialmente nublado", icono: "partly-sunny-outline" },
+  3:  { condicion: "Nublado",              icono: "cloudy-outline"       },
+  45: { condicion: "Neblina",              icono: "cloud-outline"        },
+  48: { condicion: "Neblina helada",       icono: "cloud-outline"        },
+  51: { condicion: "Llovizna leve",        icono: "rainy-outline"        },
+  53: { condicion: "Llovizna",             icono: "rainy-outline"        },
+  55: { condicion: "Llovizna intensa",     icono: "rainy-outline"        },
+  61: { condicion: "Lluvia leve",          icono: "rainy-outline"        },
+  63: { condicion: "Lluvia",               icono: "rainy-outline"        },
+  65: { condicion: "Lluvia intensa",       icono: "rainy-outline"        },
+  71: { condicion: "Nieve leve",           icono: "snow-outline"         },
+  73: { condicion: "Nieve",                icono: "snow-outline"         },
+  75: { condicion: "Nieve intensa",        icono: "snow-outline"         },
+  80: { condicion: "Chubascos leves",      icono: "rainy-outline"        },
+  81: { condicion: "Chubascos",            icono: "rainy-outline"        },
+  82: { condicion: "Chubascos intensos",   icono: "thunderstorm-outline" },
+  95: { condicion: "Tormenta",             icono: "thunderstorm-outline" },
+  96: { condicion: "Tormenta con granizo", icono: "thunderstorm-outline" },
+  99: { condicion: "Tormenta con granizo", icono: "thunderstorm-outline" },
 };
 
 function getWMO(code: number) {
-  return WMO[code] ?? { condicion: "Variable", emoji: "🌡" };
+  return WMO[code] ?? { condicion: "Variable", icono: "thermometer-outline" as ClimaIconName };
 }
 
 export function useClima(): ClimaData {
   const [data, setData] = useState<ClimaData>({
     temperatura: 0,
     condicion: "",
-    emoji: "🌡",
+    icono: "thermometer-outline",
     ciudad: "",
     cargando: true,
     error: false,
@@ -94,7 +104,7 @@ export function useClima(): ClimaData {
         setData({
           temperatura: temp,
           condicion:   wmo.condicion,
-          emoji:       wmo.emoji,
+          icono:       wmo.icono,
           ciudad,
           cargando:    false,
           error:       false,
