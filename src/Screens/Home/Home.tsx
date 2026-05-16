@@ -177,7 +177,7 @@ interface WProps {
   isDark: boolean;
 }
 
-const WBG = (d: boolean) => (d ? "#1C1C1E" : "#FFFFFF");
+const WBG = (d: boolean) => (d ? "#1C1C1E" : "#f7f7f7");
 const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
 const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
@@ -196,7 +196,7 @@ function WidgetClima({ isDark }: WProps) {
         <>
           <Ionicons
             name={sinPermiso ? "location-outline" : "thermometer-outline"}
-            size={30}
+            size={40}
             color={iconColor}
           />
           <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
@@ -586,47 +586,36 @@ function ListRow({
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* Icono — capa exterior con sombra, interior con fondo semitransparente */}
-      <View
-        style={[
-          s.listRowIconShadow,
-          {
-            shadowColor: accent,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.28,
-            shadowRadius: 6,
-            elevation: 6,
-          },
-        ]}>
-        <View style={s.listRowIcon}>
-          {item.iconName ? (
-            <ItemIcon name={item.iconName} size={36} />
-          ) : (
-            <Ionicons
-              name={(item.icon || "grid-outline") as any}
-              size={32}
-              color={accent}
-            />
-          )}
-        </View>
+      {/* Icono — sin fondo */}
+      <View style={s.listRowIcon}>
+        {item.iconName ? (
+          <ItemIcon
+            name={item.iconName}
+            size={Platform.OS === "android" ? 40 : 54}
+          />
+        ) : (
+          <Ionicons
+            name={(item.icon || "grid-outline") as any}
+            size={Platform.OS === "android" ? 26 : 32}
+            color={accent}
+          />
+        )}
       </View>
 
       {/* Label */}
-      <Text style={[s.listRowLabel, { color: c.text }]} numberOfLines={1}>
+      <Text style={[s.listRowLabel, { color: c.text }]} numberOfLines={2}>
         {item.name}
       </Text>
 
       {renderBadge?.(item)}
 
       {/* Right side */}
-      {hasBadge ? (
+      {hasBadge && (
         <View style={[s.listBadgePill, { backgroundColor: c.expense }]}>
           <Text style={s.listBadgeText}>
             {item.badgeCount! > 99 ? "99+" : item.badgeCount}
           </Text>
         </View>
-      ) : (
-        <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
       )}
     </AnimatedPressable>
   );
@@ -892,15 +881,6 @@ export default function HomeBaseAdapted({
   // Estilo base compartido (sombra/borde)
   const cardBase = {
     borderRadius: 20,
-    ...(isDark
-      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" }
-      : {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.09,
-          shadowRadius: 14,
-          elevation: 4,
-        }),
   };
 
   // Card para list rows — personalizable desde HomeConstants
@@ -1087,7 +1067,7 @@ export default function HomeBaseAdapted({
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Panel de control
+                    Control
                   </Text>
                 </View>
                 <View style={s.listSection}>
@@ -1673,20 +1653,21 @@ const s = StyleSheet.create({
   // Apple Support — lista vertical de filas
   listSection: {
     gap: 10,
+    paddingHorizontal: 2,
   },
   listGridRow: {
     flexDirection: "row",
     gap: 10,
   },
   listGridCell: {
-    width: (width - H_PAD * 2 - 10) / 2,
+    flex: 1,
   },
   listRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 13,
     paddingHorizontal: 14,
-    gap: 10,
+    gap: Platform.OS === "android" ? 14 : 18,
     borderRadius: 16,
     width: "100%",
   },
@@ -1990,7 +1971,7 @@ const s = StyleSheet.create({
   wCircle: {
     width: WIDGET_SIZE,
     height: WIDGET_SIZE,
-    borderRadius: WIDGET_SIZE / 2,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
@@ -1998,7 +1979,7 @@ const s = StyleSheet.create({
   },
   wCircleEmoji: { fontSize: 24, lineHeight: 28 },
   wCircleBig: {
-    fontSize: 16,
+    fontSize: Platform.OS === "android" ? 22 : 24,
     fontWeight: "800",
     letterSpacing: -0.5,
     textAlign: "center",

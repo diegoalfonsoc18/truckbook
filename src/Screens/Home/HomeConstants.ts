@@ -2,6 +2,8 @@
 // Estos colores son propios de los componentes de Home y no forman parte del
 // design system global. Para cambiar el aspecto de un elemento, edita aquí.
 
+import { Platform } from "react-native";
+
 export const HOME_COLORS = {
   // Vehicle Card — fondo
   vehicleCardBg: "#222831", // borde exterior (double-bezel)
@@ -21,7 +23,7 @@ export const HOME_COLORS = {
   heroCard2Bg: "#FFFFFF", // fondo card 2 (derecha)
 
   // List Rows — fondo
-  listRowBg: "#FFFFFF", // fondo de los items de la lista
+  listRowBg: "#f7f7f7", // fondo de los items de la lista
 
   // Hero Cards — texto (color)
   heroCardText: "#111827", // nombre del item
@@ -35,7 +37,7 @@ export const HOME_COLORS = {
   heroCardSubLineHeight: 15,
 
   // List Rows — tipografía
-  listRowLabelSize: 16,
+  listRowLabelSize: Platform.OS === "android" ? 13 : 16,
   listRowLabelWeight: "400" as const,
   listRowLabelLetterSpacing: -0.2,
 

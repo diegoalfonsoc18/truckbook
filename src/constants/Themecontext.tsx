@@ -15,7 +15,7 @@ import logger from "../utils/logger";
 
 export const LIGHT_COLORS = {
   // Fondos — blanco puro con superficies muy sutilmente cálidas
-  primary: "#F8FAFC",
+  primary: "#FFFFFF",
   secondary: "#EFEFED",
   surface: "#EDEDEB",
   cardBg: "#FFFFFF",
