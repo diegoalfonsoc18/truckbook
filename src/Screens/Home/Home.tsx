@@ -335,6 +335,174 @@ function WidgetResumen({ isDark }: WProps) {
   );
 }
 
+// ─── Widget: Clientes frecuentes ─────────────────────────────────────────────
+function WidgetClientes({ isDark }: WProps) {
+  const ingresos = useIngresosStore((s) => s.ingresos);
+  const { colors: c } = useTheme();
+
+  const { clienteData, topCarga } = React.useMemo(() => {
+    const clienteMap = new Map<
+      string,
+      { viajes: number; total: number; ultimaFecha: string }
+    >();
+    const cargaMap = new Map<string, number>();
+
+    for (const ing of ingresos) {
+      if (ing.tipo_ingreso !== "Flete" || !ing.descripcion) continue;
+      const partes = ing.descripcion.split(" · ");
+      const nombre = partes[0]?.trim();
+      if (!nombre || nombre === "Flete") continue;
+
+      const prev = clienteMap.get(nombre) ?? { viajes: 0, total: 0, ultimaFecha: "" };
+      prev.viajes += 1;
+      prev.total += ing.monto ?? 0;
+      const fecha = ing.fecha ?? ing.created_at ?? "";
+      if (fecha > prev.ultimaFecha) prev.ultimaFecha = fecha;
+      clienteMap.set(nombre, prev);
+
+      // Mercancía: último segmento (si hay ruta con →, mercancía es el 3ro; si no, el 2do)
+      const mercancia = partes.length >= 3
+        ? partes[partes.length - 1]?.trim()
+        : partes.length === 2 ? partes[1]?.trim() : null;
+      if (mercancia && !mercancia.includes("→")) {
+        cargaMap.set(mercancia, (cargaMap.get(mercancia) ?? 0) + 1);
+      }
+    }
+
+    const clientes = [...clienteMap.entries()]
+      .sort((a, b) => b[1].viajes - a[1].viajes)
+      .slice(0, 3);
+
+    const cargas = [...cargaMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+
+    return { clienteData: clientes, topCarga: cargas };
+  }, [ingresos]);
+
+  if (clienteData.length === 0) {
+    return (
+      <View style={[s.clientesCard, { backgroundColor: WBG(isDark) }]}>
+        <View style={s.clientesHeader}>
+          <Ionicons name="people-outline" size={18} color={MUTED(isDark)} />
+          <Text style={[s.clientesTitle, { color: INK(isDark) }]}>Clientes</Text>
+        </View>
+        <View style={s.clientesEmpty}>
+          <Ionicons name="person-add-outline" size={28} color={MUTED(isDark)} />
+          <Text style={[s.clientesEmptyText, { color: MUTED(isDark) }]}>
+            Registra fletes para ver{"\n"}tus clientes frecuentes
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const medalColors = ["#FFB800", "#94A3B8", "#CD7F32"];
+
+  return (
+    <View style={[s.clientesCard, { backgroundColor: WBG(isDark) }]}>
+      <View style={s.clientesColumns}>
+        {/* Columna izquierda — Top clientes */}
+        <View style={s.clientesCol}>
+          <View style={s.clientesColHeader}>
+            <Ionicons name="people-outline" size={16} color={MUTED(isDark)} />
+            <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
+              Top clientes
+            </Text>
+          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            style={s.clientesScroll}>
+            {clienteData.map(([nombre, info], idx) => (
+              <View
+                key={nombre}
+                style={[
+                  s.clienteRow,
+                  idx < clienteData.length - 1 && {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: isDark ? "#333" : "#E5E7EB",
+                  },
+                ]}>
+                <View
+                  style={[
+                    s.clienteRank,
+                    { backgroundColor: (medalColors[idx] ?? c.accent) + "22" },
+                  ]}>
+                  <Text
+                    style={[
+                      s.clienteRankText,
+                      { color: medalColors[idx] ?? c.accent },
+                    ]}>
+                    {idx + 1}
+                  </Text>
+                </View>
+                <View style={s.clienteInfo}>
+                  <Text
+                    style={[s.clienteNombre, { color: INK(isDark) }]}
+                    numberOfLines={1}>
+                    {nombre}
+                  </Text>
+                  <Text style={[s.clienteMeta, { color: MUTED(isDark) }]}>
+                    {info.viajes} viaje{info.viajes !== 1 ? "s" : ""} ·{" "}
+                    {formatCOP(info.total)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Separador vertical */}
+        <View
+          style={[
+            s.clientesVDivider,
+            { backgroundColor: isDark ? "#333" : "#E5E7EB" },
+          ]}
+        />
+
+        {/* Columna derecha — Carga frecuente */}
+        <View style={s.clientesCol}>
+          <View style={s.clientesColHeader}>
+            <Ionicons name="cube-outline" size={16} color={MUTED(isDark)} />
+            <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
+              Carga
+            </Text>
+          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            style={s.clientesScroll}>
+            {topCarga.length > 0 ? (
+              topCarga.map(([tipo, count]) => (
+                <View
+                  key={tipo}
+                  style={[
+                    s.cargaChip,
+                    { backgroundColor: isDark ? "#2A2A2E" : "#F0F0F5" },
+                  ]}>
+                  <Text
+                    style={[s.cargaChipText, { color: INK(isDark) }]}
+                    numberOfLines={1}>
+                    {tipo}
+                  </Text>
+                  <Text style={[s.cargaChipCount, { color: MUTED(isDark) }]}>
+                    {count}x
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={[s.clientesEmptyText, { color: MUTED(isDark) }]}>
+                Sin datos
+              </Text>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Widget: Pico y Placa ─────────────────────────────────────────────────────
 function WidgetPicoYPlaca({ isDark }: WProps) {
   const {
@@ -1132,6 +1300,9 @@ export default function HomeBaseAdapted({
               <WidgetResumen isDark={isDark} />
             </View>
 
+            {/* CLIENTES FRECUENTES */}
+            <WidgetClientes isDark={isDark} />
+
             {/* PUBLICIDAD — carrusel horizontal (próxima actualización) */}
             {/* <AdCarousel isDark={isDark} /> */}
 
@@ -1712,8 +1883,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
-    marginTop: 10,
+    marginBottom: 12,
+    marginTop: 4,
   },
   sectionLabel: {
     fontSize: 22,
@@ -2036,7 +2207,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    marginBottom: 10,
+    marginBottom: 12,
     gap: 16,
   },
 
@@ -2135,5 +2306,102 @@ const s = StyleSheet.create({
   },
   wBarFill: {
     height: 4,
+  },
+
+  // ─── CLIENTES WIDGET ────────────────────────────────────────────────────────
+  clientesCard: {
+    width: "100%",
+    height: 180,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+    overflow: "hidden",
+  },
+  clientesColumns: {
+    flexDirection: "row",
+    flex: 1,
+  },
+  clientesCol: {
+    flex: 1,
+  },
+  clientesColHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  clientesScroll: {
+    flex: 1,
+  },
+  clientesVDivider: {
+    width: StyleSheet.hairlineWidth,
+    marginHorizontal: 12,
+  },
+  clientesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  clientesTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  clientesEmpty: {
+    alignItems: "center",
+    paddingVertical: 16,
+    gap: 8,
+  },
+  clientesEmptyText: {
+    fontSize: 11,
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  clienteRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    gap: 8,
+  },
+  clienteRank: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clienteRankText: {
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  clienteInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  clienteNombre: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  clienteMeta: {
+    fontSize: 10,
+  },
+  cargaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginBottom: 6,
+  },
+  cargaChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
+  },
+  cargaChipCount: {
+    fontSize: 11,
+    fontWeight: "700",
   },
 });
