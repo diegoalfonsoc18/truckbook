@@ -126,17 +126,11 @@ export default function Gastos() {
     [placaActual],
   );
 
-  const getStatusColor = (estado?: string) => {
-    if (estado === "pagado")   return c.success;
-    if (estado === "aprobado") return c.success;
-    return c.expense; // pendiente
-  };
+  const getStatusColor = (estado?: string) =>
+    estado === "pendiente" ? c.expense : c.success; // pendiente=rojo, pagado/aprobado=verde
 
-  const getStatusLabel = (estado?: string) => {
-    if (estado === "pagado")   return "Pagado";
-    if (estado === "aprobado") return "Aprobado";
-    return "Pendiente";
-  };
+  const getStatusLabel = (estado?: string) =>
+    estado === "pendiente" ? "Pendiente" : "Pagado"; // aprobado (legacy) → Pagado
 
   return (
     <TransactionScreen

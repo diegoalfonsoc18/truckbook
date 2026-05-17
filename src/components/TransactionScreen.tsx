@@ -190,7 +190,7 @@ function TransactionRow({
   }));
 
   const statusColor = getStatusColor(item.estado);
-  const canToggle = !!onToggleEstado && (item.estado === "pendiente" || item.estado === "pagado");
+  const canToggle = !!onToggleEstado && item.estado !== undefined;
 
   // Bloquea el onPress mientras el swipe esté activo para evitar que abra el edit
   const swipeOpenRef = useRef(false);

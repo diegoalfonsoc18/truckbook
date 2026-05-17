@@ -100,9 +100,8 @@ export default function Ingresos() {
         if (partes.length > 0) desc = partes.join(" · ");
       }
 
-      // Fletes inician como "pendiente" (pago aún no cobrado)
-      // El resto de ingresos se confirman directamente
-      const estadoInicial = catId === "flete" ? "pendiente" : "confirmado";
+      // Todos los ingresos inician como "pendiente" hasta que el conductor confirme el cobro
+      const estadoInicial = "pendiente";
 
       const { error } = await supabase.from("conductor_ingresos").insert([{
         placa: placaActual,
@@ -169,15 +168,13 @@ export default function Ingresos() {
   );
 
   const getStatusColor = (estado?: string) => {
-    if (estado === "pagado")    return c.success;
-    if (estado === "pendiente") return "#FFB800"; // amarillo — pendiente de cobro
-    return c.accent;                              // confirmado / resto
+    if (estado === "pendiente")  return "#FFB800"; // amarillo — aún no cobrado
+    return c.success;                              // pagado / confirmado (legacy) → verde
   };
 
   const getStatusLabel = (estado?: string) => {
-    if (estado === "pagado")    return "Pagado";
     if (estado === "pendiente") return "Por cobrar";
-    return "Confirmado";
+    return "Pagado";                               // pagado y confirmado (legacy)
   };
 
   return (
