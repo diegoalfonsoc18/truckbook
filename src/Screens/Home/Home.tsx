@@ -41,7 +41,7 @@ import {
   removerConductorDeVehiculo,
   type EstadoAutorizacion,
 } from "../../services/vehiculoAutorizacionService";
-import { useTheme, TYPOGRAPHY } from "../../constants/Themecontext";
+import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
@@ -709,6 +709,7 @@ export default function HomeBaseAdapted({
 }: HomeBaseAdaptedProps) {
   const navigation = useNavigation<any>();
   const { colors: c, isDark } = useTheme();
+  const vcShadow = getShadow(isDark, "md");
   const {
     placa: placaActual,
     tipoCamion,
@@ -1023,14 +1024,11 @@ export default function HomeBaseAdapted({
               style={[
                 s.vehicleCard,
                 {
-                  backgroundColor: isDark
-                    ? HOME_COLORS.vehicleCardBgDark
-                    : HOME_COLORS.vehicleCardBg,
-                  borderWidth: HOME_COLORS.vehicleCardBorderWidth,
-                  borderColor: isDark
-                    ? HOME_COLORS.vehicleCardBorderColorDark
-                    : HOME_COLORS.vehicleCardBorderColor,
+                  backgroundColor: isDark ? `${c.accent}14` : c.cardBg,
                 },
+                isDark
+                  ? { borderWidth: 1, borderColor: `${c.accent}33` }
+                  : vcShadow,
                 vcAnimStyle,
               ]}
               onPressIn={() => {
@@ -1633,10 +1631,9 @@ const s = StyleSheet.create({
   activoDot: { width: 5, height: 5, borderRadius: 99 },
   activoText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
 
-  // VEHICLE CARD — double-bezel
+  // VEHICLE CARD
   vehicleCard: {
-    borderRadius: 20,
-    overflow: "hidden",
+    borderRadius: 22,
     marginBottom: 20,
   },
   vehicleCardContent: {
