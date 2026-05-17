@@ -200,6 +200,7 @@ export default function Ingresos() {
         }
         return false;
       }}
+      tipoTransaccion="ingreso"
     />
   );
 }

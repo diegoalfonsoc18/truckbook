@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoleStore } from "../store/RoleStore";
@@ -9,6 +9,7 @@ import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorNavigation from "./ConductorNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
 import { useTheme } from "../constants/Themecontext";
+import FabEscanear from "../components/FabEscanear";
 import {
   renderHome,
   renderGastos,
@@ -41,6 +42,7 @@ export default function AppStack() {
   };
 
   return (
+    <View style={styles.root}>
     <Tab.Navigator
       initialRouteName={getInitialRouteName()}
       screenOptions={({ route }) => ({
@@ -74,10 +76,13 @@ export default function AppStack() {
       {/* SIN ROL */}
       {!role && <Tab.Screen name="Cuenta" component={Account} />}
     </Tab.Navigator>
+    {role && <FabEscanear />}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   tabBar: {
     position: "absolute",
     left: 0,

@@ -35,6 +35,8 @@ import { Ionicons } from "@expo/vector-icons";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
 import * as Contacts from "expo-contacts";
+import { useEscanearFactura } from "../hooks/useEscanearFactura";
+import { TipoTransaccion } from "../services/geminiService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -98,6 +100,8 @@ export interface TransactionScreenProps {
   getStatusLabel: (estado?: string) => string;
   headerAction?: { label: string; icon: string; onPress: () => void };
   onCategoryAction?: (catId: string) => boolean; // retorna true si manejó el press externamente
+  // Tipo de transacción para escanear factura con IA — si está presente, muestra botón Escanear
+  tipoTransaccion?: "gasto" | "ingreso";
 }
 
 // ─── Animated category card ───────────────────────────────────────────────────
@@ -351,6 +355,82 @@ function TransactionRow({
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── Escanear factura con IA ─────────────────────────────────────────────────
+function EscanearButton({
+  tipo,
+  accentColor,
+  isDark,
+  onDone,
+}: {
+  tipo: TipoTransaccion;
+  accentColor: string;
+  isDark: boolean;
+  onDone: () => void;
+}) {
+  const { escanear, procesando } = useEscanearFactura();
+
+  const handlePress = () => {
+    Alert.alert(
+      "Escanear factura",
+      "¿De dónde viene la foto?",
+      [
+        {
+          text: "Tomar foto",
+          onPress: async () => {
+            await escanear(tipo, "camara");
+            onDone();
+          },
+        },
+        {
+          text: "Galería",
+          onPress: async () => {
+            await escanear(tipo, "galeria");
+            onDone();
+          },
+        },
+        { text: "Cancelar", style: "cancel" },
+      ],
+    );
+  };
+
+  return (
+    <TouchableOpacity
+      style={[
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 16,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderRadius: 14,
+          borderWidth: 1.5,
+          borderColor: accentColor,
+          backgroundColor: accentColor + (isDark ? "1A" : "0F"),
+        },
+      ]}
+      onPress={handlePress}
+      disabled={procesando}
+      activeOpacity={0.8}>
+      {procesando ? (
+        <ActivityIndicator size="small" color={accentColor} />
+      ) : (
+        <Ionicons name="sparkles" size={18} color={accentColor} />
+      )}
+      <Text
+        style={{
+          color: accentColor,
+          fontSize: 14,
+          fontWeight: "700",
+          letterSpacing: -0.1,
+        }}>
+        {procesando ? "Analizando factura..." : "Escanear factura con IA"}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TransactionScreen({
@@ -372,6 +452,7 @@ export default function TransactionScreen({
   getStatusLabel,
   headerAction,
   onCategoryAction,
+  tipoTransaccion,
 }: TransactionScreenProps) {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
@@ -905,6 +986,16 @@ export default function TransactionScreen({
                     ? `Editar ${title.slice(0, -1).toLowerCase()}`
                     : `Nuevo ${title.slice(0, -1).toLowerCase()}`}
                 </Text>
+
+                {/* Botón escanear factura con IA (solo al agregar) */}
+                {!isEditing && tipoTransaccion && (
+                  <EscanearButton
+                    tipo={tipoTransaccion}
+                    accentColor={accentColor}
+                    isDark={isDark}
+                    onDone={() => setModalVisible(false)}
+                  />
+                )}
 
                 {/* Contenido scrollable */}
                 <ScrollView

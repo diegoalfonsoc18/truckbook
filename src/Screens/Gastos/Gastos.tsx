@@ -155,6 +155,7 @@ export default function Gastos() {
       onToggleEstado={onToggleEstado}
       getStatusColor={getStatusColor}
       getStatusLabel={getStatusLabel}
+      tipoTransaccion="gasto"
     />
   );
 }
