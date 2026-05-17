@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { styles } from "../Modales/ModalsStyles";
+import { localDateStr } from "../../utils/dataUtils";
 
 interface ModalGastIngreProps {
   visible: boolean;
@@ -138,7 +139,7 @@ export function ModalGastIngre({
                     onChange={(_, date) => {
                       setShowDatePicker(false);
                       if (date) {
-                        setEditDate(date.toISOString().split("T")[0]);
+                        setEditDate(localDateStr(date));
                       }
                     }}
                   />

@@ -2,6 +2,7 @@ import React from "react";
 import { Calendar } from "react-native-calendars";
 import { useTheme } from "../constants/Themecontext";
 import * as Localization from "expo-localization"; // Importa expo-localization
+import { localDateStr } from "../utils/dataUtils";
 
 interface CustomCalendarProps {
   selectedDate: string;
@@ -25,7 +26,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
         onDateChange(day.dateString);
         onClose(); // Oculta el calendario después de seleccionar una fecha
       }}
-      maxDate={new Date().toISOString().split("T")[0]} // Permite solo fechas anteriores o actuales
+      maxDate={localDateStr()} // Permite solo fechas anteriores o actuales
       markedDates={{
         [selectedDate]: { selected: true, selectedColor: colors.accent },
       }}

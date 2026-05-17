@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { validarMonto, validarFecha, parsearMonto } from "../utils/validacion";
+import { localDateStr } from "../utils/dataUtils";
 import {
   View,
   Text,
@@ -214,7 +215,7 @@ export default function TransactionScreen({
   const shadow = getShadow(isDark, "md");
 
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
+    localDateStr(),
   );
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);

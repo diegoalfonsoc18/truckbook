@@ -19,6 +19,7 @@ import {
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
 import logger from "../../utils/logger";
+import { localDateStr } from "../../utils/dataUtils";
 
 interface VehiculoRendimiento {
   placa: string;
@@ -53,14 +54,14 @@ export default function RendimientoVehiculos() {
   const getRangoFechas = useCallback(() => {
     const now = new Date();
     let inicio: string;
-    const fin = now.toISOString().split("T")[0];
+    const fin = localDateStr(now);
 
     if (periodo === "mes") {
       inicio = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     } else if (periodo === "trimestre") {
       const mesInicio = now.getMonth() - 2;
       const fecha = new Date(now.getFullYear(), mesInicio, 1);
-      inicio = fecha.toISOString().split("T")[0];
+      inicio = localDateStr(fecha);
     } else {
       inicio = `${now.getFullYear()}-01-01`;
     }
