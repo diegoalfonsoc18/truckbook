@@ -39,7 +39,11 @@ export const useGastosStore = create<GastosState>((set) => ({
     })),
 
   agregarGasto: (gasto) =>
-    set((state) => ({ gastos: [gasto, ...state.gastos] })),
+    set((state) => {
+      // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
+      if (state.gastos.some((g) => g.id === gasto.id)) return state;
+      return { gastos: [gasto, ...state.gastos] };
+    }),
 
   editarGasto: (id, updates) =>
     set((state) => ({

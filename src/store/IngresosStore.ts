@@ -39,9 +39,11 @@ export const useIngresosStore = create<IngresosState>((set) => ({
     })),
 
   agregarIngreso: (ingreso) =>
-    set((state) => ({
-      ingresos: [ingreso, ...state.ingresos],
-    })),
+    set((state) => {
+      // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
+      if (state.ingresos.some((i) => i.id === ingreso.id)) return state;
+      return { ingresos: [ingreso, ...state.ingresos] };
+    }),
 
   editarIngreso: (id, updates) =>
     set((state) => ({
