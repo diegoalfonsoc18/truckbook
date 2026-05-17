@@ -26,7 +26,9 @@ import Reanimated, {
   withDelay,
   withSpring,
   Easing,
+  SharedValue,
 } from "react-native-reanimated";
+import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
@@ -129,6 +131,36 @@ function CatCard({
   );
 }
 
+// ─── Swipe delete action ──────────────────────────────────────────────────────
+function SwipeDeleteAction({
+  drag,
+  onDelete,
+}: {
+  drag: SharedValue<number>;
+  onDelete: () => void;
+}) {
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: drag.value + 72 }],
+  }));
+  return (
+    <Reanimated.View style={animStyle}>
+      <TouchableOpacity
+        onPress={onDelete}
+        style={{
+          width: 72,
+          height: "100%",
+          backgroundColor: "#EF4444",
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: 16,
+          marginLeft: 8,
+        }}>
+        <Ionicons name="trash-outline" size={22} color="#fff" />
+      </TouchableOpacity>
+    </Reanimated.View>
+  );
+}
+
 // ─── Animated transaction row ─────────────────────────────────────────────────
 function TransactionRow({
   item, index, cat, accentColor, isDark, cardStyle, textColor, textSecondary, textMuted,
@@ -161,48 +193,55 @@ function TransactionRow({
   const canToggle = !!onToggleEstado && (item.estado === "pendiente" || item.estado === "pagado");
 
   return (
-    <AnimatedPressable
-      style={[s.row, cardStyle, { marginBottom: 10 }, animStyle]}
-      onPressIn={() => { scale.value = withTiming(0.97, { duration: 110 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
-      onPress={() => onPress(item.id)}
-      onLongPress={() => onLongPress(item.id)}
+    <ReanimatedSwipeable
+      friction={2}
+      overshootRight={false}
+      rightThreshold={50}
+      renderRightActions={(_, drag) => (
+        <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
+      )}
+      containerStyle={{ marginBottom: 10 }}
     >
-      <View style={[s.rowIconWrap, { backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}` }]}>
-        {cat?.iconName
-          ? <ItemIcon name={cat.iconName} size={cat.size ?? 26} />
-          : <Ionicons name="cash" size={22} color={accentColor} />}
-      </View>
-      <View style={s.rowInfo}>
-        <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
-          {item.descripcion || item.tipo}
-        </Text>
-        <View style={s.rowMeta}>
-          <View style={[s.datePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}>
-            <Text style={[s.datePillText, { color: textMuted }]}>{formatDate(item.fecha)}</Text>
-          </View>
-          {/* Badge de estado — tappable si canToggle */}
-          <TouchableOpacity
-            activeOpacity={canToggle ? 0.65 : 1}
-            onPress={canToggle ? () => onToggleEstado!(item.id, item.estado) : undefined}
-            hitSlop={canToggle ? { top: 6, bottom: 6, left: 6, right: 6 } : undefined}>
-            <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "28" : "15"}` }]}>
-              <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-              <Text style={[s.statusText, { color: statusColor }]}>{getStatusLabel(item.estado)}</Text>
-              {canToggle && (
-                <Ionicons
-                  name={item.estado === "pendiente" ? "checkmark-circle-outline" : "refresh-outline"}
-                  size={11}
-                  color={statusColor}
-                  style={{ marginLeft: 2 }}
-                />
-              )}
-            </View>
-          </TouchableOpacity>
+      <AnimatedPressable
+        style={[s.row, cardStyle, animStyle]}
+        onPressIn={() => { scale.value = withTiming(0.97, { duration: 110 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+        onPress={() => onPress(item.id)}
+        onLongPress={() => onLongPress(item.id)}
+      >
+        <View style={[s.rowIconWrap, { backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}` }]}>
+          {cat?.iconName
+            ? <ItemIcon name={cat.iconName} size={cat.size ?? 26} />
+            : <Ionicons name="cash" size={22} color={accentColor} />}
         </View>
-      </View>
-      <Text style={[s.rowAmount, { color: textColor }]}>{formatCurrency(item.monto)}</Text>
-    </AnimatedPressable>
+        <View style={s.rowInfo}>
+          <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
+            {item.descripcion || item.tipo}
+          </Text>
+          <View style={s.rowMeta}>
+            {/* Badge de estado — tappable si canToggle */}
+            <TouchableOpacity
+              activeOpacity={canToggle ? 0.65 : 1}
+              onPress={canToggle ? () => onToggleEstado!(item.id, item.estado) : undefined}
+              hitSlop={canToggle ? { top: 6, bottom: 6, left: 6, right: 6 } : undefined}>
+              <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "28" : "15"}` }]}>
+                <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+                <Text style={[s.statusText, { color: statusColor }]}>{getStatusLabel(item.estado)}</Text>
+                {canToggle && (
+                  <Ionicons
+                    name={item.estado === "pendiente" ? "checkmark-circle-outline" : "refresh-outline"}
+                    size={11}
+                    color={statusColor}
+                    style={{ marginLeft: 2 }}
+                  />
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={[s.rowAmount, { color: textColor }]}>{formatCurrency(item.monto)}</Text>
+      </AnimatedPressable>
+    </ReanimatedSwipeable>
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────

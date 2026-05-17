@@ -9,6 +9,7 @@ import { useTheme } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
+import supabase from "../../config/SupaBaseConfig";
 
 const MANTENIMIENTO_SUBCATEGORIAS: Categoria[] = [
   { id: "reparacion", name: "Reparación", iconName: "repair" as IconName, color: "#74B9FF", size: 60 },
@@ -111,11 +112,31 @@ export default function Gastos() {
     [eliminarGasto],
   );
 
-  const getStatusColor = (estado?: string) =>
-    estado === "aprobado" ? c.success : c.expense;
+  const onToggleEstado = useCallback(
+    async (id: string, estadoActual: string) => {
+      const nuevoEstado = estadoActual === "pendiente" ? "pagado" : "pendiente";
+      const { error } = await supabase
+        .from("conductor_gastos")
+        .update({ estado: nuevoEstado })
+        .eq("id", id);
+      if (error) return { success: false, error: error.message };
+      useGastosStore.getState().cargarGastosDelDB(placaActual!);
+      return { success: true };
+    },
+    [placaActual],
+  );
 
-  const getStatusLabel = (estado?: string) =>
-    estado === "aprobado" ? "Aprobado" : "Pendiente";
+  const getStatusColor = (estado?: string) => {
+    if (estado === "pagado")   return c.success;
+    if (estado === "aprobado") return c.success;
+    return c.expense; // pendiente
+  };
+
+  const getStatusLabel = (estado?: string) => {
+    if (estado === "pagado")   return "Pagado";
+    if (estado === "aprobado") return "Aprobado";
+    return "Pendiente";
+  };
 
   return (
     <TransactionScreen
@@ -131,6 +152,7 @@ export default function Gastos() {
       onAdd={onAdd}
       onUpdate={onUpdate}
       onDelete={onDelete}
+      onToggleEstado={onToggleEstado}
       getStatusColor={getStatusColor}
       getStatusLabel={getStatusLabel}
     />
