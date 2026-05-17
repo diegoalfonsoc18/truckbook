@@ -275,7 +275,7 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
       )}
-      containerStyle={{ marginBottom: 10 }}>
+      containerStyle={{ marginBottom: 10, marginHorizontal: 2 }}>
       <AnimatedPressable
         style={[s.row, cardStyle, animStyle]}
         onPressIn={() => {
@@ -565,6 +565,7 @@ export default function TransactionScreen({
   const card = {
     backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
     borderRadius: 20,
+    marginHorizontal: 2,
     ...(isDark
       ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
       : {}),
@@ -1345,7 +1346,7 @@ const s = StyleSheet.create({
   scrollContent: { paddingHorizontal: H_PAD, paddingTop: 6, paddingBottom: 110 },
 
   // SUMMARY
-  summaryCard: { borderRadius: 22, padding: 20, marginBottom: 24 },
+  summaryCard: { borderRadius: 22, padding: 20, marginBottom: 24, marginHorizontal: 2 },
   summaryTop: {
     flexDirection: "row",
     justifyContent: "space-between",
