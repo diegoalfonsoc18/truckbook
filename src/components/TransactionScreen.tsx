@@ -815,22 +815,6 @@ export default function TransactionScreen({
                     </View>
                   </View>
 
-                  {/* Fecha */}
-                  <View style={s.inputGroup}>
-                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
-                    <TouchableOpacity
-                      style={[s.inputRow, inputStyle]}
-                      onPress={() => {
-                        setModalVisible(false);
-                        setTimeout(() => setCalendarVisible(true), 300);
-                      }}>
-                      <Ionicons name="calendar-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
-                      <Text style={[s.textInput, { color: c.text, paddingLeft: 0 }]}>
-                        {formatDate(editDate)}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
                   {/* Estado (solo al agregar, no al editar) */}
                   {!isEditing && (
                     <View style={s.inputGroup}>
