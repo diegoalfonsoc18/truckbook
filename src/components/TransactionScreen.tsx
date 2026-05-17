@@ -84,6 +84,7 @@ export interface TransactionScreenProps {
     fecha: string,
   ) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onToggleEstado?: (id: string, estadoActual: string) => Promise<{ success: boolean; error?: string }>;
   getStatusColor: (estado?: string) => string;
   getStatusLabel: (estado?: string) => string;
   headerAction?: { label: string; icon: string; onPress: () => void };
@@ -131,13 +132,14 @@ function CatCard({
 // ─── Animated transaction row ─────────────────────────────────────────────────
 function TransactionRow({
   item, index, cat, accentColor, isDark, cardStyle, textColor, textSecondary, textMuted,
-  getStatusColor, getStatusLabel, formatCurrency, formatDate, onPress, onLongPress,
+  getStatusColor, getStatusLabel, formatCurrency, formatDate, onPress, onLongPress, onToggleEstado,
 }: {
   item: Transaction; index: number; cat?: Categoria; accentColor: string;
   isDark: boolean; cardStyle: object; textColor: string; textSecondary: string; textMuted: string;
   getStatusColor: (e?: string) => string; getStatusLabel: (e?: string) => string;
   formatCurrency: (v: number) => string; formatDate: (d: string) => string;
   onPress: (id: string) => void; onLongPress: (id: string) => void;
+  onToggleEstado?: (id: string, estadoActual: string) => void;
 }) {
   const scale   = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -156,6 +158,7 @@ function TransactionRow({
   }));
 
   const statusColor = getStatusColor(item.estado);
+  const canToggle = !!onToggleEstado && (item.estado === "pendiente" || item.estado === "pagado");
 
   return (
     <AnimatedPressable
@@ -178,10 +181,24 @@ function TransactionRow({
           <View style={[s.datePill, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}>
             <Text style={[s.datePillText, { color: textMuted }]}>{formatDate(item.fecha)}</Text>
           </View>
-          <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "28" : "15"}` }]}>
-            <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-            <Text style={[s.statusText, { color: statusColor }]}>{getStatusLabel(item.estado)}</Text>
-          </View>
+          {/* Badge de estado — tappable si canToggle */}
+          <TouchableOpacity
+            activeOpacity={canToggle ? 0.65 : 1}
+            onPress={canToggle ? () => onToggleEstado!(item.id, item.estado) : undefined}
+            hitSlop={canToggle ? { top: 6, bottom: 6, left: 6, right: 6 } : undefined}>
+            <View style={[s.statusBadge, { backgroundColor: `${statusColor}${isDark ? "28" : "15"}` }]}>
+              <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+              <Text style={[s.statusText, { color: statusColor }]}>{getStatusLabel(item.estado)}</Text>
+              {canToggle && (
+                <Ionicons
+                  name={item.estado === "pendiente" ? "checkmark-circle-outline" : "refresh-outline"}
+                  size={11}
+                  color={statusColor}
+                  style={{ marginLeft: 2 }}
+                />
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
       <Text style={[s.rowAmount, { color: textColor }]}>{formatCurrency(item.monto)}</Text>
@@ -206,6 +223,7 @@ export default function TransactionScreen({
   onAdd,
   onUpdate,
   onDelete,
+  onToggleEstado,
   getStatusColor,
   getStatusLabel,
   headerAction,
@@ -543,6 +561,9 @@ export default function TransactionScreen({
                     formatDate={formatDate}
                     onPress={openEdit}
                     onLongPress={handleDelete}
+                    onToggleEstado={onToggleEstado
+                      ? (id, estado) => onToggleEstado(id, estado)
+                      : undefined}
                   />
                 );
               })

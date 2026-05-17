@@ -10,6 +10,10 @@ import supabase from "../../config/SupaBaseConfig";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
 import { useNavigation } from "@react-navigation/native";
+import {
+  actualizarRecordatorioFletes,
+  fletesPendientes,
+} from "../../services/fleteNotifications";
 
 const FLETE_CAMPOS = [
   { key: "cliente",   label: "Cliente",    placeholder: "Nombre del cliente o empresa" },
@@ -40,6 +44,12 @@ export default function Ingresos() {
       useIngresosStore.getState().cargarIngresosDelDB(placaActual);
     }
   }, [placaActual]);
+
+  // Sincroniza el recordatorio de fletes pendientes cada vez que cambian los ingresos
+  useEffect(() => {
+    const pendientes = fletesPendientes(ingresos);
+    actualizarRecordatorioFletes(pendientes.length);
+  }, [ingresos]);
 
   // Normalise to the shared Transaction shape
   const transactions = ingresos.map((i) => ({
@@ -82,13 +92,17 @@ export default function Ingresos() {
       let desc = cat.name;
       if (catId === "flete" && extras) {
         const partes: string[] = [];
-        if (extras.cliente) partes.push(extras.cliente);
+        if (extras.cliente)   partes.push(extras.cliente);
         if (extras.origen && extras.destino) partes.push(`${extras.origen} → ${extras.destino}`);
-        else if (extras.origen) partes.push(extras.origen);
+        else if (extras.origen)  partes.push(extras.origen);
         else if (extras.destino) partes.push(extras.destino);
         if (extras.mercancia) partes.push(extras.mercancia);
         if (partes.length > 0) desc = partes.join(" · ");
       }
+
+      // Fletes inician como "pendiente" (pago aún no cobrado)
+      // El resto de ingresos se confirman directamente
+      const estadoInicial = catId === "flete" ? "pendiente" : "confirmado";
 
       const { error } = await supabase.from("conductor_ingresos").insert([{
         placa: placaActual,
@@ -97,7 +111,7 @@ export default function Ingresos() {
         descripcion: desc,
         monto: parsearMonto(monto),
         fecha,
-        estado: "confirmado",
+        estado: estadoInicial,
       }]);
 
       if (error) return { success: false, error: error.message };
@@ -139,11 +153,32 @@ export default function Ingresos() {
     [placaActual],
   );
 
-  const getStatusColor = (estado?: string) =>
-    estado === "confirmado" ? c.success : c.accent;
+  /** Alterna el estado de pago de un flete: pendiente ↔ pagado */
+  const onToggleEstado = useCallback(
+    async (id: string, estadoActual: string) => {
+      const nuevoEstado = estadoActual === "pendiente" ? "pagado" : "pendiente";
+      const { error } = await supabase
+        .from("conductor_ingresos")
+        .update({ estado: nuevoEstado })
+        .eq("id", id);
+      if (error) return { success: false, error: error.message };
+      useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
+      return { success: true };
+    },
+    [placaActual],
+  );
 
-  const getStatusLabel = (estado?: string) =>
-    estado === "confirmado" ? "Confirmado" : "Pendiente";
+  const getStatusColor = (estado?: string) => {
+    if (estado === "pagado")    return c.success;
+    if (estado === "pendiente") return "#FFB800"; // amarillo — pendiente de cobro
+    return c.accent;                              // confirmado / resto
+  };
+
+  const getStatusLabel = (estado?: string) => {
+    if (estado === "pagado")    return "Pagado";
+    if (estado === "pendiente") return "Por cobrar";
+    return "Confirmado";
+  };
 
   return (
     <TransactionScreen
@@ -158,6 +193,7 @@ export default function Ingresos() {
       onAdd={onAdd}
       onUpdate={onUpdate}
       onDelete={onDelete}
+      onToggleEstado={onToggleEstado}
       getStatusColor={getStatusColor}
       getStatusLabel={getStatusLabel}
       onCategoryAction={(catId) => {
