@@ -647,8 +647,8 @@ export default function TransactionScreen({
                 </Text>
               </TouchableOpacity>
             )}
-            <View style={[s.placaBadge, { backgroundColor: accentColor }]}>
-              <Text style={[s.placaText, { color: "#fff" }]}>
+            <View style={[s.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
+              <Text style={[s.placaText, { color: c.plateText }]}>
                 {placaActual}
               </Text>
             </View>
