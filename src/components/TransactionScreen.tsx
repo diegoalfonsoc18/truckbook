@@ -347,7 +347,7 @@ export default function TransactionScreen({
     } finally {
       setLoading(false);
     }
-  }, [editValue, editId, editDate, selectedCat, customDescription, extraValues, isEditing]);
+  }, [editValue, editId, editDate, selectedCat, customDescription, extraValues, isEditing, onAdd, onUpdate]);
 
   const handleDelete = (id: string) => {
     Alert.alert("Eliminar", "¿Eliminar este registro?", [
