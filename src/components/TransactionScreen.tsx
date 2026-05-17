@@ -275,7 +275,7 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
       )}
-      containerStyle={{ marginBottom: 10, marginHorizontal: 2 }}>
+      containerStyle={{ marginBottom: 6, paddingVertical: 4 }}>
       <AnimatedPressable
         style={[s.row, cardStyle, animStyle]}
         onPressIn={() => {
@@ -1414,7 +1414,7 @@ const s = StyleSheet.create({
   listBadgeText: { fontSize: 12, fontWeight: "700" },
 
   // ROW
-  row: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
+  row: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12, marginHorizontal: 2 },
   rowIconWrap: {
     width: 46,
     height: 46,
