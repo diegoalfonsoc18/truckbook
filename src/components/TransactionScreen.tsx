@@ -192,11 +192,19 @@ function TransactionRow({
   const statusColor = getStatusColor(item.estado);
   const canToggle = !!onToggleEstado && (item.estado === "pendiente" || item.estado === "pagado");
 
+  // Bloquea el onPress mientras el swipe esté activo para evitar que abra el edit
+  const swipeOpenRef = useRef(false);
+
   return (
     <ReanimatedSwipeable
       friction={2}
       overshootRight={false}
       rightThreshold={50}
+      onSwipeableWillOpen={() => { swipeOpenRef.current = true; }}
+      onSwipeableClose={() => {
+        // Delay para que el evento onPress (que dispara al soltar el dedo) ya haya pasado
+        setTimeout(() => { swipeOpenRef.current = false; }, 150);
+      }}
       renderRightActions={(_, drag) => (
         <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
       )}
@@ -206,7 +214,7 @@ function TransactionRow({
         style={[s.row, cardStyle, animStyle]}
         onPressIn={() => { scale.value = withTiming(0.97, { duration: 110 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
-        onPress={() => onPress(item.id)}
+        onPress={() => { if (!swipeOpenRef.current) onPress(item.id); }}
         onLongPress={() => onLongPress(item.id)}
       >
         <View style={[s.rowIconWrap, { backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}` }]}>
