@@ -114,7 +114,9 @@ export default function Gastos() {
 
   const onToggleEstado = useCallback(
     async (id: string, estadoActual: string) => {
-      const nuevoEstado = estadoActual === "pendiente" ? "pagado" : "pendiente";
+      // conductor_gastos solo acepta: "pendiente" | "aprobado" | "rechazado"
+      // Usamos "aprobado" como equivalente a "pagado"
+      const nuevoEstado = estadoActual === "pendiente" ? "aprobado" : "pendiente";
       const { error } = await supabase
         .from("conductor_gastos")
         .update({ estado: nuevoEstado })
