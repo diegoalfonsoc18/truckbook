@@ -275,7 +275,7 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
       )}
-      containerStyle={{ marginBottom: 10 }}>
+      containerStyle={{ marginBottom: 10, marginHorizontal: 2 }}>
       <AnimatedPressable
         style={[s.row, cardStyle, animStyle]}
         onPressIn={() => {
