@@ -56,7 +56,7 @@ export default function Gastos() {
   }));
 
   const onAdd = useCallback(
-    async (catId: string, monto: string, fecha: string, descripcion?: string) => {
+    async (catId: string, monto: string, fecha: string, descripcion?: string, _extras?: Record<string, string>, estado?: string) => {
       if (!placaActual || !user?.id) {
         return {
           success: false,
@@ -81,6 +81,10 @@ export default function Gastos() {
       const fechaResult = validarFecha(fecha);
       if (!fechaResult.valido) return { success: false, error: fechaResult.error };
 
+      // conductor_gastos solo permite: "pendiente" | "aprobado" | "rechazado"
+      // "pagado" del modal se mapea a "aprobado"
+      const estadoDB = (estado === "pendiente" ? "pendiente" : "aprobado") as "pendiente" | "aprobado";
+
       return agregarGasto({
         placa: placaActual,
         conductor_id: user.id,
@@ -88,7 +92,7 @@ export default function Gastos() {
         descripcion: descripcion?.trim() || cat.name,
         monto: parsearMonto(monto),
         fecha,
-        estado: "pendiente",
+        estado: estadoDB,
       });
     },
     [placaActual, user?.id, agregarGasto],

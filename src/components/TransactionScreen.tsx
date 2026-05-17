@@ -79,6 +79,7 @@ export interface TransactionScreenProps {
     fecha: string,
     descripcion?: string,
     extras?: Record<string, string>,
+    estado?: string,
   ) => Promise<{ success: boolean; error?: string }>;
   onUpdate: (
     id: string,
@@ -291,6 +292,7 @@ export default function TransactionScreen({
   const [editDate, setEditDate] = useState(selectedDate);
   const [customDescription, setCustomDescription] = useState("");
   const [extraValues, setExtraValues] = useState<Record<string, string>>({});
+  const [editEstado, setEditEstado] = useState("pagado");
   const [loading, setLoading] = useState(false);
   const [contactsVisible, setContactsVisible] = useState(false);
   const [contactsList, setContactsList] = useState<Contacts.Contact[]>([]);
@@ -358,6 +360,7 @@ export default function TransactionScreen({
     setEditDate(selectedDate);
     setCustomDescription("");
     setExtraValues({});
+    setEditEstado("pagado");
   };
 
   const openAdd = (catId: string) => {
@@ -397,7 +400,7 @@ export default function TransactionScreen({
       const result = isEditing
         ? await onUpdate(editId!, editValue, editDate)
         : selectedCat
-          ? await onAdd(selectedCat, editValue, editDate, customDescription, extraValues)
+          ? await onAdd(selectedCat, editValue, editDate, customDescription, extraValues, editEstado)
           : { success: false, error: "Sin categoría" };
 
       if (result.success) {
@@ -412,7 +415,7 @@ export default function TransactionScreen({
     } finally {
       setLoading(false);
     }
-  }, [editValue, editId, editDate, selectedCat, customDescription, extraValues, isEditing, onAdd, onUpdate]);
+  }, [editValue, editId, editDate, selectedCat, customDescription, extraValues, editEstado, isEditing, onAdd, onUpdate]);
 
   const handleDelete = (id: string) => {
     Alert.alert("Eliminar", "¿Eliminar este registro?", [
@@ -828,6 +831,43 @@ export default function TransactionScreen({
                     </TouchableOpacity>
                   </View>
 
+                  {/* Estado (solo al agregar, no al editar) */}
+                  {!isEditing && (
+                    <View style={s.inputGroup}>
+                      <Text style={[s.inputLabel, { color: c.textSecondary }]}>Estado</Text>
+                      <View style={[s.estadoToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}>
+                        <TouchableOpacity
+                          style={[s.estadoBtn, editEstado === "pagado" && { backgroundColor: accentColor }]}
+                          onPress={() => setEditEstado("pagado")}
+                          activeOpacity={0.8}>
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={14}
+                            color={editEstado === "pagado" ? "#fff" : c.textMuted}
+                            style={{ marginRight: 5 }}
+                          />
+                          <Text style={[s.estadoBtnText, { color: editEstado === "pagado" ? "#fff" : c.textMuted }]}>
+                            Pagado
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[s.estadoBtn, editEstado === "pendiente" && { backgroundColor: "#FFB800" }]}
+                          onPress={() => setEditEstado("pendiente")}
+                          activeOpacity={0.8}>
+                          <Ionicons
+                            name="time-outline"
+                            size={14}
+                            color={editEstado === "pendiente" ? "#fff" : c.textMuted}
+                            style={{ marginRight: 5 }}
+                          />
+                          <Text style={[s.estadoBtnText, { color: editEstado === "pendiente" ? "#fff" : c.textMuted }]}>
+                            Pendiente
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+
                 </ScrollView>
 
                 {/* Botones — fuera del scroll, siempre visibles */}
@@ -1051,6 +1091,11 @@ const s = StyleSheet.create({
   inputPrefix: { fontSize: 18, fontWeight: "700", marginRight: 4 },
   textInput: { flex: 1, fontSize: 16, fontWeight: "500", paddingVertical: 12 },
   textInputLg: { fontSize: 22, fontWeight: "700" },
+
+  // ESTADO TOGGLE
+  estadoToggle: { flexDirection: "row", borderRadius: 12, borderWidth: 1, padding: 4, gap: 4 },
+  estadoBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 10, borderRadius: 9 },
+  estadoBtnText: { fontSize: 14, fontWeight: "700" },
 
   // BUTTONS
   modalBtns: { flexDirection: "row", gap: 10, marginTop: 6 },

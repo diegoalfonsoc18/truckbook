@@ -63,7 +63,7 @@ export default function Ingresos() {
   }));
 
   const onAdd = useCallback(
-    async (catId: string, monto: string, fecha: string, _descripcion?: string, extras?: Record<string, string>) => {
+    async (catId: string, monto: string, fecha: string, _descripcion?: string, extras?: Record<string, string>, estado?: string) => {
       if (!placaActual || !user?.id) {
         return {
           success: false,
@@ -100,8 +100,8 @@ export default function Ingresos() {
         if (partes.length > 0) desc = partes.join(" · ");
       }
 
-      // Todos los ingresos inician como "pendiente" hasta que el conductor confirme el cobro
-      const estadoInicial = "pendiente";
+      // El estado lo elige el usuario en el modal; por defecto "pagado"
+      const estadoInicial = (estado === "pendiente" ? "pendiente" : "pagado") as "pendiente" | "pagado";
 
       const { error } = await supabase.from("conductor_ingresos").insert([{
         placa: placaActual,
