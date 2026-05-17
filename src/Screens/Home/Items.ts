@@ -46,14 +46,7 @@ export const items: Item[] = [
     color: "#E94560",
     mostrarBadge: true,
   },
-  {
-    id: "Reparaciones",
-    iconName: "mechanic",
-    iconSize: 80,
-    name: "Reparación",
-    subtitle: "Próximo",
-    color: "#74B9FF",
-  },
+
   {
     id: "licencia",
     iconName: "licencia",

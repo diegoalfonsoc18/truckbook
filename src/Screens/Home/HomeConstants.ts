@@ -6,17 +6,22 @@ import { Platform } from "react-native";
 
 export const HOME_COLORS = {
   // Vehicle Card — fondo
-  vehicleCardBg: "#222831", // borde exterior (double-bezel)
+  vehicleCardBg: "#ffffff",
   vehicleCardBgDark: "#1C1C1E",
-  vehicleCardInnerBg: "#2D3440", // relleno interior (ligeramente más claro)
+  vehicleCardInnerBg: "#2D3440",
+
+  // Vehicle Card — borde
+  vehicleCardBorderWidth: 1.5,
+  vehicleCardBorderColor: "#E5E7EB", // light mode
+  vehicleCardBorderColorDark: "rgba(255,255,255,0.10)", // dark mode
 
   // Vehicle Card — texto
-  vehicleCardText: "#FFFFFF",
-  vehicleCardTextMuted: "#94A3B8",
+  vehicleCardText: "#000000",
+  vehicleCardTextMuted: "#373839",
   vehicleCardChevronBg: "rgba(255,255,255,0.10)",
 
   // Vehicle Card — icono
-  vehicleIconSize: 90,
+  vehicleIconSize: 120,
 
   // Hero Cards — fondo (cada card independiente)
   heroCard1Bg: "#FFFFFF", // fondo card 1 (izquierda)

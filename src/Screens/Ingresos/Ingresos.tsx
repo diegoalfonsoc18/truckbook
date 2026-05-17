@@ -11,6 +11,13 @@ import TransactionScreen, { Categoria } from "../../components/TransactionScreen
 import { IconName } from "../../components/ItemIcon";
 import { useNavigation } from "@react-navigation/native";
 
+const FLETE_CAMPOS = [
+  { key: "cliente",   label: "Cliente",    placeholder: "Nombre del cliente o empresa" },
+  { key: "mercancia", label: "Mercancía",  placeholder: "Ej: Cemento, Electrodomésticos" },
+  { key: "origen",    label: "Origen",     placeholder: "Ciudad de carga" },
+  { key: "destino",   label: "Destino",    placeholder: "Ciudad de entrega" },
+];
+
 const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "flete",        name: "Flete",          iconName: "freight"  as IconName, color: "#00D9A5", size: 60 },
   { id: "viaje",        name: "Viaje",          iconName: "trip"     as IconName, color: "#00B894", size: 60 },
@@ -46,7 +53,7 @@ export default function Ingresos() {
   }));
 
   const onAdd = useCallback(
-    async (catId: string, monto: string, fecha: string) => {
+    async (catId: string, monto: string, fecha: string, _descripcion?: string, extras?: Record<string, string>) => {
       if (!placaActual || !user?.id) {
         return {
           success: false,
@@ -71,11 +78,23 @@ export default function Ingresos() {
       const fechaResult = validarFecha(fecha);
       if (!fechaResult.valido) return { success: false, error: fechaResult.error };
 
+      // Build descripcion — for flete, compose a rich summary from extra fields
+      let desc = cat.name;
+      if (catId === "flete" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente) partes.push(extras.cliente);
+        if (extras.origen && extras.destino) partes.push(`${extras.origen} → ${extras.destino}`);
+        else if (extras.origen) partes.push(extras.origen);
+        else if (extras.destino) partes.push(extras.destino);
+        if (extras.mercancia) partes.push(extras.mercancia);
+        if (partes.length > 0) desc = partes.join(" · ");
+      }
+
       const { error } = await supabase.from("conductor_ingresos").insert([{
         placa: placaActual,
         conductor_id: user.id,
         tipo_ingreso: cat.name,
-        descripcion: cat.name,
+        descripcion: desc,
         monto: parsearMonto(monto),
         fecha,
         estado: "confirmado",
@@ -135,6 +154,7 @@ export default function Ingresos() {
       accentColor={c.income}
       accentColorLight={c.incomeLight}
       emptyIcon="💸"
+      camposExtra={{ flete: FLETE_CAMPOS }}
       onAdd={onAdd}
       onUpdate={onUpdate}
       onDelete={onDelete}

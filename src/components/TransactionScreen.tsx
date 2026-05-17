@@ -31,6 +31,7 @@ import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
+import * as Contacts from "expo-contacts";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -67,11 +68,14 @@ export interface TransactionScreenProps {
   accentColorLight: string;
   emptyIcon?: string;                   // emoji fallback
   hasCustomDescription?: boolean;       // "otros" en Gastos
+  // Extra fields per category (e.g. flete needs mercancía, origen, destino, cliente)
+  camposExtra?: Record<string, Array<{ key: string; label: string; placeholder: string }>>;
   onAdd: (
     categoriaId: string,
     monto: string,
     fecha: string,
     descripcion?: string,
+    extras?: Record<string, string>,
   ) => Promise<{ success: boolean; error?: string }>;
   onUpdate: (
     id: string,
@@ -197,6 +201,7 @@ export default function TransactionScreen({
   accentColorLight,
   emptyIcon = "💸",
   hasCustomDescription = false,
+  camposExtra,
   onAdd,
   onUpdate,
   onDelete,
@@ -219,7 +224,11 @@ export default function TransactionScreen({
   const [editId, setEditId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState(selectedDate);
   const [customDescription, setCustomDescription] = useState("");
+  const [extraValues, setExtraValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [contactsVisible, setContactsVisible] = useState(false);
+  const [contactsList, setContactsList] = useState<Contacts.Contact[]>([]);
+  const [contactsSearch, setContactsSearch] = useState("");
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const headerY   = useRef(new Animated.Value(-10)).current;
@@ -282,6 +291,7 @@ export default function TransactionScreen({
     setSelectedCat(null);
     setEditDate(selectedDate);
     setCustomDescription("");
+    setExtraValues({});
   };
 
   const openAdd = (catId: string) => {
@@ -321,7 +331,7 @@ export default function TransactionScreen({
       const result = isEditing
         ? await onUpdate(editId!, editValue, editDate)
         : selectedCat
-          ? await onAdd(selectedCat, editValue, editDate, customDescription)
+          ? await onAdd(selectedCat, editValue, editDate, customDescription, extraValues)
           : { success: false, error: "Sin categoría" };
 
       if (result.success) {
@@ -336,7 +346,7 @@ export default function TransactionScreen({
     } finally {
       setLoading(false);
     }
-  }, [editValue, editId, editDate, selectedCat, customDescription, isEditing]);
+  }, [editValue, editId, editDate, selectedCat, customDescription, extraValues, isEditing]);
 
   const handleDelete = (id: string) => {
     Alert.alert("Eliminar", "¿Eliminar este registro?", [
@@ -625,88 +635,134 @@ export default function TransactionScreen({
         animationType="slide"
         onRequestClose={closeModal}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}>
           <TouchableOpacity
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
             onPress={closeModal}>
             <TouchableWithoutFeedback>
-              <View style={[s.sheet, { backgroundColor: c.modalBg }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
+              <View style={[s.sheet, { backgroundColor: c.modalBg, maxHeight: "90%" }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>
                   {isEditing ? `Editar ${title.slice(0, -1).toLowerCase()}` : `Nuevo ${title.slice(0, -1).toLowerCase()}`}
                 </Text>
 
-                {/* Categoría seleccionada */}
-                {selectedCat && (() => {
-                  const cat = allCategorias.find((x) => x.id === selectedCat);
-                  return (
-                    <View style={s.selectedCat}>
-                      <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}` }]}>
-                        {cat?.iconName
-                          ? <ItemIcon name={cat.iconName} size={cat.size ?? 32} />
-                          : <Ionicons name="cash" size={28} color={accentColor} />}
-                      </View>
-                      <Text style={[s.selectedCatName, { color: c.text }]}>
-                        {cat?.name || selectedCat}
-                      </Text>
-                    </View>
-                  );
-                })()}
+                {/* Contenido scrollable */}
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingBottom: 4 }}>
 
-                {/* Descripción personalizada (ej: "otros") */}
-                {hasCustomDescription && selectedCat === "otros" && !isEditing && (
+                  {/* Categoría seleccionada */}
+                  {selectedCat && (() => {
+                    const cat = allCategorias.find((x) => x.id === selectedCat);
+                    return (
+                      <View style={s.selectedCat}>
+                        <View style={[s.selectedCatCircle, { backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}` }]}>
+                          {cat?.iconName
+                            ? <ItemIcon name={cat.iconName} size={cat.size ?? 32} />
+                            : <Ionicons name="cash" size={28} color={accentColor} />}
+                        </View>
+                        <Text style={[s.selectedCatName, { color: c.text }]}>
+                          {cat?.name || selectedCat}
+                        </Text>
+                      </View>
+                    );
+                  })()}
+
+                  {/* Descripción personalizada (ej: "otros") */}
+                  {hasCustomDescription && selectedCat === "otros" && !isEditing && (
+                    <View style={s.inputGroup}>
+                      <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
+                      <View style={[s.inputRow, inputStyle]}>
+                        <TextInput
+                          style={[s.textInput, { color: c.text }]}
+                          placeholder="Ej: Multa, Seguro..."
+                          placeholderTextColor={c.textMuted}
+                          value={customDescription}
+                          onChangeText={setCustomDescription}
+                          autoFocus
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Campos extra (ej: flete) */}
+                  {!isEditing && selectedCat && camposExtra?.[selectedCat]?.map((campo) => (
+                    <View key={campo.key} style={s.inputGroup}>
+                      <Text style={[s.inputLabel, { color: c.textSecondary }]}>{campo.label}</Text>
+                      <View style={[s.inputRow, inputStyle]}>
+                        <TextInput
+                          style={[s.textInput, { color: c.text }]}
+                          placeholder={campo.placeholder}
+                          placeholderTextColor={c.textMuted}
+                          value={extraValues[campo.key] || ""}
+                          onChangeText={(v) => setExtraValues((prev) => ({ ...prev, [campo.key]: v }))}
+                        />
+                        {campo.key === "cliente" && (
+                          <TouchableOpacity
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            onPress={async () => {
+                              const { status } = await Contacts.requestPermissionsAsync();
+                              if (status !== "granted") {
+                                Alert.alert("Permiso denegado", "Activa el acceso a contactos en Configuración.");
+                                return;
+                              }
+                              const { data } = await Contacts.getContactsAsync({
+                                fields: [Contacts.Fields.Name],
+                              });
+                              const lista = data
+                                .filter((ct) => ct.name)
+                                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+                              setContactsList(lista);
+                              setContactsSearch("");
+                              setContactsVisible(true);
+                            }}>
+                            <Ionicons name="people-outline" size={20} color={c.textMuted} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Monto */}
                   <View style={s.inputGroup}>
-                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
+                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
                     <View style={[s.inputRow, inputStyle]}>
+                      <Text style={[s.inputPrefix, { color: c.textMuted }]}>$</Text>
                       <TextInput
-                        style={[s.textInput, { color: c.text }]}
-                        placeholder="Ej: Multa, Seguro..."
+                        style={[s.textInput, s.textInputLg, { color: c.text }]}
+                        placeholder="0"
                         placeholderTextColor={c.textMuted}
-                        value={customDescription}
-                        onChangeText={setCustomDescription}
-                        autoFocus
+                        keyboardType="numeric"
+                        value={editValue}
+                        onChangeText={setEditValue}
+                        autoFocus={!(hasCustomDescription && selectedCat === "otros")}
                       />
                     </View>
                   </View>
-                )}
 
-                {/* Monto */}
-                <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
-                  <View style={[s.inputRow, inputStyle]}>
-                    <Text style={[s.inputPrefix, { color: c.textMuted }]}>$</Text>
-                    <TextInput
-                      style={[s.textInput, s.textInputLg, { color: c.text }]}
-                      placeholder="0"
-                      placeholderTextColor={c.textMuted}
-                      keyboardType="numeric"
-                      value={editValue}
-                      onChangeText={setEditValue}
-                      autoFocus={!(hasCustomDescription && selectedCat === "otros")}
-                    />
+                  {/* Fecha */}
+                  <View style={s.inputGroup}>
+                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
+                    <TouchableOpacity
+                      style={[s.inputRow, inputStyle]}
+                      onPress={() => {
+                        setModalVisible(false);
+                        setTimeout(() => setCalendarVisible(true), 300);
+                      }}>
+                      <Ionicons name="calendar-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
+                      <Text style={[s.textInput, { color: c.text, paddingLeft: 0 }]}>
+                        {formatDate(editDate)}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                </View>
 
-                {/* Fecha */}
-                <View style={s.inputGroup}>
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Fecha</Text>
-                  <TouchableOpacity
-                    style={[s.inputRow, inputStyle]}
-                    onPress={() => {
-                      setModalVisible(false);
-                      setTimeout(() => setCalendarVisible(true), 300);
-                    }}>
-                    <Ionicons name="calendar-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
-                    <Text style={[s.textInput, { color: c.text, paddingLeft: 0 }]}>
-                      {formatDate(editDate)}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                </ScrollView>
 
-                {/* Botones */}
-                <View style={s.modalBtns}>
+                {/* Botones — fuera del scroll, siempre visibles */}
+                <View style={[s.modalBtns, { marginTop: 10 }]}>
                   <TouchableOpacity
                     style={[s.cancelBtn, { backgroundColor: c.surface, borderColor: c.border }]}
                     onPress={closeModal}>
@@ -729,6 +785,66 @@ export default function TransactionScreen({
             </TouchableWithoutFeedback>
           </TouchableOpacity>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── MODAL CONTACTOS ──────────────────────────────────────────────── */}
+      <Modal
+        visible={contactsVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setContactsVisible(false)}>
+        <TouchableOpacity
+          style={[s.overlay, { backgroundColor: c.overlay }]}
+          activeOpacity={1}
+          onPress={() => setContactsVisible(false)}>
+          <TouchableWithoutFeedback>
+            <View style={[s.sheet, { backgroundColor: c.modalBg, maxHeight: "80%" }, isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {}]}>
+              <View style={[s.handle, { backgroundColor: c.border }]} />
+              <Text style={[s.sheetTitle, { color: c.text }]}>Seleccionar cliente</Text>
+
+              {/* Buscador */}
+              <View style={[s.inputRow, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border, marginBottom: 12 }]}>
+                <Ionicons name="search-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={[s.textInput, { color: c.text }]}
+                  placeholder="Buscar contacto..."
+                  placeholderTextColor={c.textMuted}
+                  value={contactsSearch}
+                  onChangeText={setContactsSearch}
+                  autoFocus
+                />
+                {contactsSearch.length > 0 && (
+                  <TouchableOpacity onPress={() => setContactsSearch("")}>
+                    <Ionicons name="close-circle" size={16} color={c.textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Lista filtrada */}
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                {contactsList
+                  .filter((ct) => (ct.name ?? "").toLowerCase().includes(contactsSearch.toLowerCase()))
+                  .map((ct, i) => (
+                    <TouchableOpacity
+                      key={ct.id ?? `${i}`}
+                      style={[s.contactRow, { borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}
+                      onPress={() => {
+                        setExtraValues((prev) => ({ ...prev, cliente: ct.name ?? "" }));
+                        setContactsVisible(false);
+                      }}>
+                      <View style={[s.contactAvatar, { backgroundColor: accentColor + "22" }]}>
+                        <Text style={[s.contactAvatarText, { color: accentColor }]}>
+                          {(ct.name ?? "?").charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={[s.contactName, { color: c.text }]}>{ct.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                <View style={{ height: 20 }} />
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -873,4 +989,10 @@ const s = StyleSheet.create({
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
   saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
   saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
+
+  // CONTACTS MODAL
+  contactRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1 },
+  contactAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
+  contactAvatarText: { fontSize: 16, fontWeight: "700" },
+  contactName: { fontSize: 15, fontWeight: "500", flex: 1 },
 });

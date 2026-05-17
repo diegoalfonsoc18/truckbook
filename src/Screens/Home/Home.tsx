@@ -980,12 +980,6 @@ export default function HomeBaseAdapted({
           <Animated.View
             style={[s.header, { transform: [{ translateY: headerY }] }]}>
             <View style={{ flex: 1 }}>
-              <View style={s.rolePill}>
-                <View style={[s.roleDot, { backgroundColor: c.accent }]} />
-                <Text style={[s.roleText, { color: c.textMuted }]}>
-                  {getGreeting()} · Conductor
-                </Text>
-              </View>
               <Text
                 style={[s.greetingName, { color: c.text }]}
                 numberOfLines={1}>
@@ -1032,6 +1026,10 @@ export default function HomeBaseAdapted({
                   backgroundColor: isDark
                     ? HOME_COLORS.vehicleCardBgDark
                     : HOME_COLORS.vehicleCardBg,
+                  borderWidth: HOME_COLORS.vehicleCardBorderWidth,
+                  borderColor: isDark
+                    ? HOME_COLORS.vehicleCardBorderColorDark
+                    : HOME_COLORS.vehicleCardBorderColor,
                 },
                 vcAnimStyle,
               ]}
