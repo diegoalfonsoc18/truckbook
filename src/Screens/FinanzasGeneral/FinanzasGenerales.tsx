@@ -367,8 +367,8 @@ export default function FinanzasGenerales() {
               </Text>
             </View>
             {!esMultiVehiculo && (
-              <View style={[styles.placaBadge, { backgroundColor: c.accent }, shadow]}>
-                <Text style={[styles.placaText, { color: c.accentText }]}>{placaActual}</Text>
+              <View style={[styles.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
+                <Text style={[styles.placaText, { color: c.plateText }]}>{placaActual}</Text>
               </View>
             )}
           </View>
