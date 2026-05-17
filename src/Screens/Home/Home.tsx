@@ -54,8 +54,9 @@ const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
-// Tamaño responsivo: 3 widgets + 2 gaps de 20 + padding horizontal
-const WIDGET_SIZE = Math.min(Math.floor((width - H_PAD * 2 - 40) / 3), 100);
+// Tamaño responsivo: 2 widgets + 1 gap de 16 + padding horizontal
+const WIDGET_SIZE = Math.floor((width - H_PAD * 2 - 16) / 2);
+const WIDGET_HEIGHT = 160;
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -181,39 +182,78 @@ const WBG = (d: boolean) => (d ? "#1C1C1E" : "#f7f7f7");
 const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
 const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
+// Colores de fondo según condición climática
+const CLIMA_BG: Record<string, { light: string; dark: string }> = {
+  "sunny-outline":        { light: "#FFF3C4", dark: "#3D2E00" },
+  "partly-sunny-outline": { light: "#FFF9E6", dark: "#2E2A1A" },
+  "cloudy-outline":       { light: "#E8EDF2", dark: "#1E2530" },
+  "cloud-outline":        { light: "#EDF0F4", dark: "#1C222B" },
+  "rainy-outline":        { light: "#DCE9F7", dark: "#0D1E33" },
+  "thunderstorm-outline": { light: "#DDD8F0", dark: "#1A1530" },
+  "snow-outline":         { light: "#E8F4FB", dark: "#0D1E2E" },
+  "thermometer-outline":  { light: "#F2F2F2", dark: "#1C1C1E" },
+};
+
+function getClimaBg(icono: string, isDark: boolean): string {
+  const entry = CLIMA_BG[icono] ?? CLIMA_BG["thermometer-outline"];
+  return isDark ? entry.dark : entry.light;
+}
+
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ isDark }: WProps) {
-  const { temperatura, icono, ciudad, cargando, error, sinPermiso } =
+  const { temperatura, icono, condicion, ciudad, manana, tarde, noche, cargando, error, sinPermiso } =
     useClima();
   const { colors: c } = useTheme();
-  const iconColor = INK(isDark);
+
+  const bg = (sinPermiso || error || cargando) ? WBG(isDark) : getClimaBg(icono, isDark);
 
   return (
-    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
+    <View style={[s.wCard, { backgroundColor: bg }]}>
       {cargando ? (
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPermiso || error ? (
         <>
           <Ionicons
             name={sinPermiso ? "location-outline" : "thermometer-outline"}
-            size={40}
-            color={iconColor}
+            size={32}
+            color={INK(isDark)}
           />
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
+          <Text style={[s.wCardSub, { color: MUTED(isDark) }]}>
             {sinPermiso ? "Ubicación\ndenegada" : "Sin señal"}
           </Text>
         </>
       ) : (
         <>
-          <Ionicons name={icono} size={30} color={iconColor} />
-          <Text style={[s.wCircleBig, { color: INK(isDark) }]}>
-            {temperatura}°
+          {/* Temperatura grande + icono */}
+          <View style={s.wCardTopRow}>
+            <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>{temperatura}°</Text>
+            <Ionicons name={icono} size={26} color={INK(isDark)} />
+          </View>
+
+          {/* Condición */}
+          <Text style={[s.wCardCondicion, { color: INK(isDark) }]} numberOfLines={1}>
+            {condicion}
           </Text>
-          <Text
-            style={[s.wCircleSub, { color: MUTED(isDark) }]}
-            numberOfLines={1}>
+
+          {/* Ciudad sin emoji */}
+          <Text style={[s.wCardLabel, { color: MUTED(isDark) }]} numberOfLines={1}>
             {ciudad}
           </Text>
+
+          {/* Pronóstico mañana / tarde / noche */}
+          <View style={s.wCardForecastRow}>
+            {[
+              { label: "Mañana", periodo: manana },
+              { label: "Tarde",  periodo: tarde  },
+              { label: "Noche",  periodo: noche  },
+            ].map(({ label, periodo }) => (
+              <View key={label} style={s.wCardForecastItem}>
+                <Text style={[s.wCardForecastLabel, { color: MUTED(isDark) }]}>{label}</Text>
+                <Ionicons name={periodo.icono} size={14} color={INK(isDark)} />
+                <Text style={[s.wCardForecastTemp, { color: INK(isDark) }]}>{periodo.temp}°</Text>
+              </View>
+            ))}
+          </View>
         </>
       )}
     </View>
@@ -225,33 +265,71 @@ function WidgetResumen({ isDark }: WProps) {
   const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
-  const totalG = gastos
-    .filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy))
-    .reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalI = ingresos
-    .filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy))
-    .reduce((a, i) => a + (i.monto ?? 0), 0);
+
+  // Hoy
+  const gastosHoy = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
+  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
+  const totalG = gastosHoy.reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalI = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
-  const balColor =
-    balance >= 0
-      ? isDark
-        ? "#34D399"
-        : "#059669"
-      : isDark
-        ? "#F87171"
-        : "#DC2626";
+
+  // Semana (últimos 7 días)
+  const hace7 = new Date();
+  hace7.setDate(hace7.getDate() - 6);
+  const hace7Str = `${hace7.getFullYear()}-${String(hace7.getMonth() + 1).padStart(2, "0")}-${String(hace7.getDate()).padStart(2, "0")}`;
+  const totalGSemana = gastos
+    .filter((g) => (g.fecha ?? g.created_at ?? "") >= hace7Str)
+    .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalISemana = ingresos
+    .filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str)
+    .reduce((a, i) => a + (i.monto ?? 0), 0);
+  const balanceSemana = totalISemana - totalGSemana;
+
+  const balColor = balance >= 0
+    ? isDark ? "#34D399" : "#059669"
+    : isDark ? "#F87171" : "#DC2626";
+
+  const verdeColor = isDark ? "#34D399" : "#059669";
+  const rojoColor  = isDark ? "#F87171" : "#DC2626";
+
+  // Barra proporcional ingreso vs gasto
+  const total = totalI + totalG;
+  const ratioI = total > 0 ? totalI / total : 0.5;
+
+  const registros = `${gastosHoy.length} gasto${gastosHoy.length !== 1 ? "s" : ""} · ${ingresosHoy.length} ingreso${ingresosHoy.length !== 1 ? "s" : ""}`;
+
+  const resumenBg = balance >= 0
+    ? isDark ? "#0D2E1A" : "#EDFAF3"
+    : isDark ? "#2E0D0D" : "#FAEAEA";
 
   return (
-    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
-      <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>Hoy</Text>
-      <Text style={[s.wCircleBig, { color: balColor }]}>
-        {formatCOP(balance)}
+    <View style={[s.wCard, { backgroundColor: resumenBg }]}>
+      {/* Label */}
+      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]}>Balance hoy</Text>
+
+      {/* Balance grande */}
+      <Text style={[s.wCardTemp, { color: balColor }]}>{formatCOP(balance)}</Text>
+
+      {/* Ingresos y gastos */}
+      <View style={s.wCardRowInline}>
+        <Text style={[s.wCardSub, { color: verdeColor }]}>↑ {formatCOP(totalI)}</Text>
+        <Text style={[s.wCardSub, { color: rojoColor }]}>↓ {formatCOP(totalG)}</Text>
+      </View>
+
+      {/* Barra visual */}
+      <View style={[s.wBarBg, { backgroundColor: isDark ? "#333" : "#E5E7EB" }]}>
+        <View style={[s.wBarFill, { flex: ratioI, backgroundColor: verdeColor }]} />
+        <View style={[s.wBarFill, { flex: 1 - ratioI, backgroundColor: rojoColor }]} />
+      </View>
+
+      {/* Registros */}
+      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]} numberOfLines={1}>
+        {registros}
       </Text>
-      <Text style={[s.wCircleSub, { color: isDark ? "#34D399" : "#059669" }]}>
-        ↑ {formatCOP(totalI)}
-      </Text>
-      <Text style={[s.wCircleSub, { color: isDark ? "#F87171" : "#DC2626" }]}>
-        ↓ {formatCOP(totalG)}
+
+      {/* Semana */}
+      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]}>
+        Semana {formatCOP(balanceSemana)}
       </Text>
     </View>
   );
@@ -1056,7 +1134,6 @@ export default function HomeBaseAdapted({
             <View style={s.widgetRow}>
               <WidgetClima isDark={isDark} />
               <WidgetResumen isDark={isDark} />
-              <WidgetPicoYPlaca isDark={isDark} />
             </View>
 
             {/* PUBLICIDAD — carrusel horizontal (próxima actualización) */}
@@ -1965,7 +2042,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginBottom: 10,
-    gap: 20,
+    gap: 16,
   },
 
   wCircle: {
@@ -1991,4 +2068,77 @@ const s = StyleSheet.create({
     textAlign: "center",
   },
   wCircleSub: { fontSize: 10, textAlign: "center" },
+
+  // ─── Nuevos estilos de widgets card ──────────────────────────────────────────
+  wCard: {
+    width: WIDGET_SIZE,
+    height: WIDGET_HEIGHT,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 5,
+    overflow: "hidden",
+  },
+  wCardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  wCardTemp: {
+    fontSize: Platform.OS === "android" ? 26 : 30,
+    fontWeight: "800",
+    letterSpacing: -1,
+  },
+  wCardTempBig: {
+    fontSize: Platform.OS === "android" ? 36 : 42,
+    fontWeight: "800",
+    letterSpacing: -2,
+    lineHeight: Platform.OS === "android" ? 40 : 46,
+  },
+  wCardForecastRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: "auto" as any,
+  },
+  wCardForecastItem: {
+    alignItems: "center",
+    gap: 2,
+  },
+  wCardForecastLabel: {
+    fontSize: 9,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+  wCardForecastTemp: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  wCardCondicion: {
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+  },
+  wCardSub: {
+    fontSize: 11,
+  },
+  wCardLabel: {
+    fontSize: 10,
+    fontWeight: "500",
+    letterSpacing: 0.1,
+  },
+  wCardRowInline: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  wBarBg: {
+    flexDirection: "row",
+    height: 4,
+    borderRadius: 99,
+    overflow: "hidden",
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  wBarFill: {
+    height: 4,
+  },
 });

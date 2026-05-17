@@ -11,11 +11,19 @@ export type ClimaIconName =
   | "snow-outline"
   | "thermometer-outline";
 
+export interface ClimaPeriodo {
+  icono: ClimaIconName;
+  temp: number;
+}
+
 export interface ClimaData {
   temperatura: number;
   condicion: string;
   icono: ClimaIconName;
   ciudad: string;
+  manana: ClimaPeriodo;
+  tarde: ClimaPeriodo;
+  noche: ClimaPeriodo;
   cargando: boolean;
   error: boolean;
   sinPermiso: boolean;
@@ -49,12 +57,17 @@ function getWMO(code: number) {
   return WMO[code] ?? { condicion: "Variable", icono: "thermometer-outline" as ClimaIconName };
 }
 
+const DEFAULT_PERIODO: ClimaPeriodo = { icono: "thermometer-outline", temp: 0 };
+
 export function useClima(): ClimaData {
   const [data, setData] = useState<ClimaData>({
     temperatura: 0,
     condicion: "",
     icono: "thermometer-outline",
     ciudad: "",
+    manana: DEFAULT_PERIODO,
+    tarde:  DEFAULT_PERIODO,
+    noche:  DEFAULT_PERIODO,
     cargando: true,
     error: false,
     sinPermiso: false,
@@ -87,11 +100,14 @@ export function useClima(): ClimaData {
         const ciudad = place?.city ?? place?.subregion ?? place?.region ?? "Mi ubicación";
         if (cancelled) return;
 
-        // 4. Clima desde Open-Meteo (gratis, sin API key)
+        // 4. Clima desde Open-Meteo — current + hourly para mañana/tarde/noche
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 8000);
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`,
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&current=temperature_2m,weather_code` +
+          `&hourly=temperature_2m,weather_code` +
+          `&timezone=auto&forecast_days=1`,
           { signal: controller.signal },
         );
         clearTimeout(timer);
@@ -101,11 +117,22 @@ export function useClima(): ClimaData {
         const temp = Math.round(json.current.temperature_2m as number);
         const wmo  = getWMO(json.current.weather_code as number);
 
+        // Hourly: índice 9 = 9am (mañana), 15 = 3pm (tarde), 21 = 9pm (noche)
+        const temps: number[]   = json.hourly.temperature_2m;
+        const codes: number[]   = json.hourly.weather_code;
+
+        const manana: ClimaPeriodo = { temp: Math.round(temps[9]),  icono: getWMO(codes[9]).icono  };
+        const tarde:  ClimaPeriodo = { temp: Math.round(temps[15]), icono: getWMO(codes[15]).icono };
+        const noche:  ClimaPeriodo = { temp: Math.round(temps[21]), icono: getWMO(codes[21]).icono };
+
         setData({
           temperatura: temp,
           condicion:   wmo.condicion,
           icono:       wmo.icono,
           ciudad,
+          manana,
+          tarde,
+          noche,
           cargando:    false,
           error:       false,
           sinPermiso:  false,
