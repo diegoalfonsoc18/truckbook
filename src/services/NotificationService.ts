@@ -1,8 +1,14 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
+
+/** Devuelve true si la app corre dentro de Expo Go (no development build) */
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === "storeClient";
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -15,7 +21,8 @@ Notifications.setNotificationHandler({
 /** Registra el dispositivo y guarda el push token en usuarios */
 export async function registrarPushToken(userId: string): Promise<void> {
   try {
-    if (!Device.isDevice) return;
+    // Remote push tokens no están disponibles en Expo Go desde SDK 53
+    if (!Device.isDevice || isExpoGo()) return;
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;

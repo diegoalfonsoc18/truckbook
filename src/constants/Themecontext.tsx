@@ -92,6 +92,10 @@ export const LIGHT_COLORS = {
   overlayLight: "rgba(0, 0, 0, 0.2)",
 };
 
+// Colores de acento global (botones CTA, badges, placa)
+export const ACCENT      = LIGHT_COLORS.plateYellow; // "#FFE500"
+export const ACCENT_TEXT = LIGHT_COLORS.plateText;   // "#000000"
+
 export const DARK_COLORS = {
   // Fondos — negro puro con capas de profundidad
   primary: "#0A0A0A",
@@ -354,6 +358,36 @@ export const TYPOGRAPHY = {
     fontWeight: "600" as const,
   },
 };
+
+// Estilos de input compartidos (usados en TransactionScreen, Login, Register, etc.)
+export const getInputStyles = (isDark: boolean, colors: Colors) => ({
+  // Fondo + borde del contenedor del input
+  wrap: {
+    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : colors.surface,
+    borderColor:     isDark ? "rgba(255,255,255,0.1)"  : colors.border,
+    borderRadius: BORDER_RADIUS.md,   // 12
+    borderWidth: 1,
+    flexDirection: "row"  as const,
+    alignItems: "center"  as const,
+    paddingHorizontal: 14,
+    minHeight: 50,
+  },
+  // Texto del input
+  text: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "500" as const,
+    paddingVertical: 12,
+  },
+  // Label superior del input
+  label: {
+    fontSize: 11,
+    fontWeight: "700" as const,
+    letterSpacing: 0.8,
+    textTransform: "uppercase" as const,
+    marginBottom: 8,
+  },
+});
 
 // Sombras por tema
 export const getShadow = (

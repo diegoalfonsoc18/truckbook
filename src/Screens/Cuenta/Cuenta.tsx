@@ -25,16 +25,34 @@ import logger from "../../utils/logger";
 
 const H_PAD = 20;
 
-const ROLE_META: Record<string, { label: string; color: string; icon: string }> = {
-  conductor:     { label: "Conductor",     color: "#00D9A5", icon: "🚛" },
-  propietario:   { label: "Propietario",   color: "#FFB800", icon: "🏢" },
+const ROLE_META: Record<
+  string,
+  { label: string; color: string; icon: string }
+> = {
+  conductor: { label: "Conductor", color: "#111827", icon: "🚛" },
+  propietario: { label: "Propietario", color: "#FFB800", icon: "🏢" },
   administrador: { label: "Administrador", color: "#74B9FF", icon: "⚙️" },
 };
 
 const MENU_ITEMS = [
-  { id: "profile",  icon: "person-outline"      as const, label: "Mi Perfil",  subtitle: "Nombre y datos personales" },
-  { id: "security", icon: "lock-closed-outline"  as const, label: "Seguridad",  subtitle: "Cambiar contraseña" },
-  { id: "help",     icon: "chatbubble-outline"   as const, label: "Ayuda",      subtitle: "Soporte y contacto" },
+  {
+    id: "profile",
+    icon: "person-outline" as const,
+    label: "Mi Perfil",
+    subtitle: "Nombre y datos personales",
+  },
+  {
+    id: "security",
+    icon: "lock-closed-outline" as const,
+    label: "Seguridad",
+    subtitle: "Cambiar contraseña",
+  },
+  {
+    id: "help",
+    icon: "chatbubble-outline" as const,
+    label: "Ayuda",
+    subtitle: "Soporte y contacto",
+  },
 ];
 
 export default function Cuenta() {
@@ -46,12 +64,12 @@ export default function Cuenta() {
   const [user, setUser] = useState<any>(null);
 
   // ─── Animations ────────────────────────────────────────────────────────────
-  const fadeAnim  = useRef(new Animated.Value(0)).current;
-  const headerY   = useRef(new Animated.Value(-10)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const headerY = useRef(new Animated.Value(-10)).current;
 
   const cardOpacity = useSharedValue(0);
-  const cardScale   = useSharedValue(0.97);
-  const cardStyle   = useAnimatedStyle(() => ({
+  const cardScale = useSharedValue(0.97);
+  const cardStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
     transform: [{ scale: cardScale.value }],
   }));
@@ -60,18 +78,35 @@ export default function Cuenta() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 380, useNativeDriver: true }),
-      Animated.timing(headerY,  { toValue: 0, duration: 420,
-        easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerY, {
+        toValue: 0,
+        duration: 420,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        useNativeDriver: true,
+      }),
     ]).start();
-    cardOpacity.value = withDelay(80, withTiming(1,    { duration: 320, easing: easeOut }));
-    cardScale.value   = withDelay(80, withTiming(1,    { duration: 360, easing: easeOut }));
+    cardOpacity.value = withDelay(
+      80,
+      withTiming(1, { duration: 320, easing: easeOut }),
+    );
+    cardScale.value = withDelay(
+      80,
+      withTiming(1, { duration: 360, easing: easeOut }),
+    );
     cargarUsuario();
   }, []);
 
   const cargarUsuario = async () => {
     try {
-      const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+      const {
+        data: { user: currentUser },
+        error,
+      } = await supabase.auth.getUser();
       if (error) throw error;
       setUser(currentUser);
     } catch (error) {
@@ -88,9 +123,14 @@ export default function Cuenta() {
         onPress: async () => {
           setLoading(true);
           try {
-            const { data: { user: u } } = await supabase.auth.getUser();
+            const {
+              data: { user: u },
+            } = await supabase.auth.getUser();
             if (u) {
-              await supabase.from("usuarios").update({ push_token: null }).eq("id", u.id);
+              await supabase
+                .from("usuarios")
+                .update({ push_token: null })
+                .eq("id", u.id);
             }
             const { error } = await supabase.auth.signOut();
             if (error) Alert.alert("Error", error.message);
@@ -116,16 +156,18 @@ export default function Cuenta() {
   const card = {
     backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
     borderRadius: 20,
-    ...(isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {}),
+    ...(isDark
+      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
+      : {}),
     ...shadow,
   };
 
   return (
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
-
         {/* HEADER */}
-        <Animated.View style={[s.header, { transform: [{ translateY: headerY }] }]}>
+        <Animated.View
+          style={[s.header, { transform: [{ translateY: headerY }] }]}>
           <Text style={[s.headerTitle, { color: c.text }]}>Cuenta</Text>
         </Animated.View>
 
@@ -133,18 +175,21 @@ export default function Cuenta() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={s.scrollContent}>
           <Animated.View style={{ opacity: fadeAnim }}>
-
             {/* PROFILE CARD */}
-            <Reanimated.View style={[s.profileCard, cardStyle,
-              {
-                backgroundColor: isDark ? `${roleMeta.color}14` : c.cardBg,
-              },
-              isDark
-                ? { borderWidth: 1, borderColor: `${roleMeta.color}33` }
-                : shadow,
-            ]}>
+            <Reanimated.View
+              style={[
+                s.profileCard,
+                cardStyle,
+                {
+                  backgroundColor: isDark ? `${roleMeta.color}14` : c.cardBg,
+                },
+                isDark
+                  ? { borderWidth: 1, borderColor: `${roleMeta.color}33` }
+                  : shadow,
+              ]}>
               {/* Avatar */}
-              <View style={[s.avatarRing, { borderColor: `${roleMeta.color}40` }]}>
+              <View
+                style={[s.avatarRing, { borderColor: `${roleMeta.color}40` }]}>
                 <View style={[s.avatar, { backgroundColor: roleMeta.color }]}>
                   <Text style={s.avatarText}>{userInitial}</Text>
                 </View>
@@ -154,7 +199,6 @@ export default function Cuenta() {
               <Text style={[s.userEmail, { color: c.textSecondary }]}>
                 {user?.email || ""}
               </Text>
-
             </Reanimated.View>
 
             {/* CONFIGURACIÓN */}
@@ -168,20 +212,44 @@ export default function Cuenta() {
                 style={[s.menuRow, card]}
                 onPress={handleItemPress}
                 activeOpacity={0.7}>
-                <View style={[s.menuIconWrap, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}>
-                  <Ionicons name={item.icon} size={18} color={c.textSecondary} />
+                <View
+                  style={[
+                    s.menuIconWrap,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.08)"
+                        : c.surface,
+                    },
+                  ]}>
+                  <Ionicons
+                    name={item.icon}
+                    size={18}
+                    color={c.textSecondary}
+                  />
                 </View>
                 <View style={s.menuInfo}>
-                  <Text style={[s.menuLabel, { color: c.text }]}>{item.label}</Text>
-                  <Text style={[s.menuSub, { color: c.textMuted }]}>{item.subtitle}</Text>
+                  <Text style={[s.menuLabel, { color: c.text }]}>
+                    {item.label}
+                  </Text>
+                  <Text style={[s.menuSub, { color: c.textMuted }]}>
+                    {item.subtitle}
+                  </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={c.textMuted}
+                />
               </TouchableOpacity>
             ))}
 
             {/* LOGOUT */}
             <TouchableOpacity
-              style={[s.logoutBtn, card, { borderColor: `${c.danger}30`, borderWidth: 1 }]}
+              style={[
+                s.logoutBtn,
+                card,
+                { borderColor: `${c.danger}30`, borderWidth: 1 },
+              ]}
               onPress={handleLogout}
               disabled={loading}
               activeOpacity={0.7}>
@@ -190,13 +258,16 @@ export default function Cuenta() {
               ) : (
                 <>
                   <Ionicons name="log-out-outline" size={20} color={c.danger} />
-                  <Text style={[s.logoutText, { color: c.danger }]}>Cerrar Sesión</Text>
+                  <Text style={[s.logoutText, { color: c.danger }]}>
+                    Cerrar Sesión
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
 
-            <Text style={[s.version, { color: c.textMuted }]}>TruckBook v1.0.0</Text>
-
+            <Text style={[s.version, { color: c.textMuted }]}>
+              TruckBook v1.0.0
+            </Text>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
@@ -206,7 +277,7 @@ export default function Cuenta() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  safeArea:  { flex: 1 },
+  safeArea: { flex: 1 },
 
   // HEADER
   header: {
@@ -216,7 +287,11 @@ const s = StyleSheet.create({
   },
   headerTitle: { fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
 
-  scrollContent: { paddingHorizontal: H_PAD, paddingTop: 6, paddingBottom: 110 },
+  scrollContent: {
+    paddingHorizontal: H_PAD,
+    paddingTop: 6,
+    paddingBottom: 110,
+  },
 
   // PROFILE CARD
   profileCard: {
@@ -241,10 +316,15 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText:    { fontSize: 32, fontWeight: "800", color: "#fff" },
-  userName:      { fontSize: 20, fontWeight: "800", letterSpacing: -0.3, marginBottom: 4 },
-  userEmail:     { fontSize: 13, fontWeight: "400", marginBottom: 14 },
-  roleBadge:     { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
+  avatarText: { fontSize: 32, fontWeight: "800", color: "#fff" },
+  userName: {
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  userEmail: { fontSize: 13, fontWeight: "400", marginBottom: 14 },
+  roleBadge: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   roleBadgeText: { fontSize: 13, fontWeight: "700" },
 
   // SECTION
@@ -272,9 +352,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  menuInfo:  { flex: 1 },
+  menuInfo: { flex: 1 },
   menuLabel: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
-  menuSub:   { fontSize: 12 },
+  menuSub: { fontSize: 12 },
 
   // LOGOUT
   logoutBtn: {
