@@ -38,6 +38,7 @@ const ICONS = {
   wash: require("../assets/icons/wash.webp"),
   oil: require("../assets/icons/oil.webp"),
   portaContenedor: require("../assets/icons/portaContenedor.webp"),
+  parrilla: require("../assets/icons/parrilla.webp"),
 } as const;
 
 export type IconName = keyof typeof ICONS;

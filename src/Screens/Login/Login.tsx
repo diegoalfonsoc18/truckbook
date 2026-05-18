@@ -20,7 +20,6 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { CamionT800 } from "../../assets/img/img";
 import {
   useTheme,
   getShadow,
@@ -125,7 +124,7 @@ export default function LoginScreen({ navigation }: Props) {
             {/* HERO */}
             <View style={s.hero}>
               <Image
-                source={CamionT800}
+                source={require("../../assets/icons/parrilla.webp")}
                 style={s.heroImg}
                 resizeMode="contain"
               />
@@ -269,7 +268,11 @@ export default function LoginScreen({ navigation }: Props) {
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
+                  style={[
+                    s.socialBtn,
+                    { backgroundColor: c.cardBg, borderColor: c.border },
+                    shadow,
+                  ]}
                   onPress={() => handleSocialLogin("facebook")}
                   disabled={loading}
                   activeOpacity={0.8}>
@@ -305,7 +308,7 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-const IMG_H = Math.min(height * 0.16, 120);
+const IMG_H = Math.min(height * 0.2, 420);
 
 const s = StyleSheet.create({
   root: { flex: 1 },
@@ -321,7 +324,7 @@ const s = StyleSheet.create({
     paddingBottom: COMPACT ? 12 : 20,
     paddingHorizontal: 24,
   },
-  heroImg: { width: width * 0.6, height: IMG_H, marginBottom: 10 },
+  heroImg: { width: width * 0.8, height: IMG_H, marginBottom: 30 },
   badge: {
     borderRadius: 999,
     paddingHorizontal: 14,
