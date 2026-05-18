@@ -70,6 +70,7 @@ export default function AppStack() {
           <Tab.Screen name="Gastos" component={GastosNavigation} />
           <Tab.Screen name="Ingresos" component={IngresosNavigation} />
           <Tab.Screen name="Reportes" component={FinanzasNavigation} />
+          <Tab.Screen name="Cuenta" component={Account} />
         </>
       )}
 

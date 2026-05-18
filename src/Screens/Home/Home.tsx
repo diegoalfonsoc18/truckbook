@@ -45,6 +45,7 @@ import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
 import { useClima } from "../../hooks/useClima";
+import { ClimaIconMap, TermometroIcon } from "../../assets/icons/icons";
 import { usePicoYPlaca } from "../../hooks/usePicoYPlaca";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -182,30 +183,39 @@ const WBG = (d: boolean) => (d ? "#1C1C1E" : "#f7f7f7");
 const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
 const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
-// Colores de fondo según condición climática
 const CLIMA_BG: Record<string, { light: string; dark: string }> = {
-  "sunny-outline":        { light: "#FFF3C4", dark: "#3D2E00" },
-  "partly-sunny-outline": { light: "#FFF9E6", dark: "#2E2A1A" },
-  "cloudy-outline":       { light: "#E8EDF2", dark: "#1E2530" },
-  "cloud-outline":        { light: "#EDF0F4", dark: "#1C222B" },
-  "rainy-outline":        { light: "#DCE9F7", dark: "#0D1E33" },
-  "thunderstorm-outline": { light: "#DDD8F0", dark: "#1A1530" },
-  "snow-outline":         { light: "#E8F4FB", dark: "#0D1E2E" },
-  "thermometer-outline":  { light: "#F2F2F2", dark: "#1C1C1E" },
+  soleado: { light: "#FFF3C4", dark: "#3D2E00" },
+  nubeYSol: { light: "#FFF9E6", dark: "#2E2A1A" },
+  nube: { light: "#E8EDF2", dark: "#1E2530" },
+  lluvioso: { light: "#DCE9F7", dark: "#0D1E33" },
+  tormenta: { light: "#DDD8F0", dark: "#1A1530" },
+  copoDeNieve: { light: "#E8F4FB", dark: "#0D1E2E" },
+  termometro: { light: "#F2F2F2", dark: "#1C1C1E" },
 };
 
 function getClimaBg(icono: string, isDark: boolean): string {
-  const entry = CLIMA_BG[icono] ?? CLIMA_BG["thermometer-outline"];
+  const entry = CLIMA_BG[icono] ?? CLIMA_BG["termometro"];
   return isDark ? entry.dark : entry.light;
 }
 
 // ─── Widget: Clima ────────────────────────────────────────────────────────────
 function WidgetClima({ isDark }: WProps) {
-  const { temperatura, icono, condicion, ciudad, manana, tarde, noche, cargando, error, sinPermiso } =
-    useClima();
+  const {
+    temperatura,
+    icono,
+    condicion,
+    ciudad,
+    manana,
+    tarde,
+    noche,
+    cargando,
+    error,
+    sinPermiso,
+  } = useClima();
   const { colors: c } = useTheme();
 
-  const bg = (sinPermiso || error || cargando) ? WBG(isDark) : getClimaBg(icono, isDark);
+  const bg =
+    sinPermiso || error || cargando ? WBG(isDark) : getClimaBg(icono, isDark);
 
   return (
     <View style={[s.wCard, { backgroundColor: bg }]}>
@@ -213,30 +223,39 @@ function WidgetClima({ isDark }: WProps) {
         <ActivityIndicator size="small" color={c.accent} />
       ) : sinPermiso || error ? (
         <>
-          <Ionicons
-            name={sinPermiso ? "location-outline" : "thermometer-outline"}
-            size={32}
-            color={INK(isDark)}
-          />
+          {sinPermiso ? (
+            <Ionicons name="location-outline" size={32} color={INK(isDark)} />
+          ) : (
+            <TermometroIcon width={32} height={32} color={INK(isDark)} />
+          )}
           <Text style={[s.wCardSub, { color: MUTED(isDark) }]}>
             {sinPermiso ? "Ubicación\ndenegada" : "Sin señal"}
           </Text>
         </>
       ) : (
         <>
-          {/* Temperatura grande + icono */}
           <View style={s.wCardTopRow}>
-            <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>{temperatura}°</Text>
-            <Ionicons name={icono} size={26} color={INK(isDark)} />
+            <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>
+              {temperatura}°
+            </Text>
+            {React.createElement(ClimaIconMap[icono], {
+              width: 26,
+              height: 26,
+              color: INK(isDark),
+            })}
           </View>
 
           {/* Condición */}
-          <Text style={[s.wCardCondicion, { color: INK(isDark) }]} numberOfLines={1}>
+          <Text
+            style={[s.wCardCondicion, { color: INK(isDark) }]}
+            numberOfLines={1}>
             {condicion}
           </Text>
 
           {/* Ciudad sin emoji */}
-          <Text style={[s.wCardLabel, { color: MUTED(isDark) }]} numberOfLines={1}>
+          <Text
+            style={[s.wCardLabel, { color: MUTED(isDark) }]}
+            numberOfLines={1}>
             {ciudad}
           </Text>
 
@@ -244,13 +263,21 @@ function WidgetClima({ isDark }: WProps) {
           <View style={s.wCardForecastRow}>
             {[
               { label: "Mañana", periodo: manana },
-              { label: "Tarde",  periodo: tarde  },
-              { label: "Noche",  periodo: noche  },
+              { label: "Tarde", periodo: tarde },
+              { label: "Noche", periodo: noche },
             ].map(({ label, periodo }) => (
               <View key={label} style={s.wCardForecastItem}>
-                <Text style={[s.wCardForecastLabel, { color: MUTED(isDark) }]}>{label}</Text>
-                <Ionicons name={periodo.icono} size={14} color={INK(isDark)} />
-                <Text style={[s.wCardForecastTemp, { color: INK(isDark) }]}>{periodo.temp}°</Text>
+                <Text style={[s.wCardForecastLabel, { color: MUTED(isDark) }]}>
+                  {label}
+                </Text>
+                {React.createElement(ClimaIconMap[periodo.icono], {
+                  width: 14,
+                  height: 14,
+                  color: INK(isDark),
+                })}
+                <Text style={[s.wCardForecastTemp, { color: INK(isDark) }]}>
+                  {periodo.temp}°
+                </Text>
               </View>
             ))}
           </View>
@@ -267,8 +294,12 @@ function WidgetResumen({ isDark }: WProps) {
   const hoy = fechaLocalHoy();
 
   // Hoy
-  const gastosHoy = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
-  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
+  const gastosHoy = gastos.filter((g) =>
+    (g.fecha ?? g.created_at ?? "").startsWith(hoy),
+  );
+  const ingresosHoy = ingresos.filter((i) =>
+    (i.fecha ?? i.created_at ?? "").startsWith(hoy),
+  );
   const totalG = gastosHoy.reduce((a, g) => a + (g.monto ?? 0), 0);
   const totalI = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
@@ -285,12 +316,17 @@ function WidgetResumen({ isDark }: WProps) {
     .reduce((a, i) => a + (i.monto ?? 0), 0);
   const balanceSemana = totalISemana - totalGSemana;
 
-  const balColor = balance >= 0
-    ? isDark ? "#34D399" : "#059669"
-    : isDark ? "#F87171" : "#DC2626";
+  const balColor =
+    balance >= 0
+      ? isDark
+        ? "#34D399"
+        : "#059669"
+      : isDark
+        ? "#F87171"
+        : "#DC2626";
 
   const verdeColor = isDark ? "#34D399" : "#059669";
-  const rojoColor  = isDark ? "#F87171" : "#DC2626";
+  const rojoColor = isDark ? "#F87171" : "#DC2626";
 
   // Barra proporcional ingreso vs gasto
   const total = totalI + totalG;
@@ -298,9 +334,14 @@ function WidgetResumen({ isDark }: WProps) {
 
   const registros = `${gastosHoy.length} gasto${gastosHoy.length !== 1 ? "s" : ""} · ${ingresosHoy.length} ingreso${ingresosHoy.length !== 1 ? "s" : ""}`;
 
-  const resumenBg = balance >= 0
-    ? isDark ? "#0D2E1A" : "#EDFAF3"
-    : isDark ? "#2E0D0D" : "#FAEAEA";
+  const resumenBg =
+    balance >= 0
+      ? isDark
+        ? "#0D2E1A"
+        : "#EDFAF3"
+      : isDark
+        ? "#2E0D0D"
+        : "#FAEAEA";
 
   return (
     <View style={[s.wCard, { backgroundColor: resumenBg }]}>
@@ -308,18 +349,29 @@ function WidgetResumen({ isDark }: WProps) {
       <Text style={[s.wCardLabel, { color: MUTED(isDark) }]}>Balance hoy</Text>
 
       {/* Balance grande */}
-      <Text style={[s.wCardTemp, { color: balColor }]}>{formatCOP(balance)}</Text>
+      <Text style={[s.wCardTemp, { color: balColor }]}>
+        {formatCOP(balance)}
+      </Text>
 
       {/* Ingresos y gastos */}
       <View style={s.wCardRowInline}>
-        <Text style={[s.wCardSub, { color: verdeColor }]}>↑ {formatCOP(totalI)}</Text>
-        <Text style={[s.wCardSub, { color: rojoColor }]}>↓ {formatCOP(totalG)}</Text>
+        <Text style={[s.wCardSub, { color: verdeColor }]}>
+          ↑ {formatCOP(totalI)}
+        </Text>
+        <Text style={[s.wCardSub, { color: rojoColor }]}>
+          ↓ {formatCOP(totalG)}
+        </Text>
       </View>
 
       {/* Barra visual */}
-      <View style={[s.wBarBg, { backgroundColor: isDark ? "#333" : "#E5E7EB" }]}>
-        <View style={[s.wBarFill, { flex: ratioI, backgroundColor: verdeColor }]} />
-        <View style={[s.wBarFill, { flex: 1 - ratioI, backgroundColor: rojoColor }]} />
+      <View
+        style={[s.wBarBg, { backgroundColor: isDark ? "#333" : "#E5E7EB" }]}>
+        <View
+          style={[s.wBarFill, { flex: ratioI, backgroundColor: verdeColor }]}
+        />
+        <View
+          style={[s.wBarFill, { flex: 1 - ratioI, backgroundColor: rojoColor }]}
+        />
       </View>
 
       {/* Registros */}
@@ -353,7 +405,11 @@ function WidgetClientes({ isDark }: WProps) {
       const nombre = partes[0]?.trim();
       if (!nombre || nombre === "Flete") continue;
 
-      const prev = clienteMap.get(nombre) ?? { viajes: 0, total: 0, ultimaFecha: "" };
+      const prev = clienteMap.get(nombre) ?? {
+        viajes: 0,
+        total: 0,
+        ultimaFecha: "",
+      };
       prev.viajes += 1;
       prev.total += ing.monto ?? 0;
       const fecha = ing.fecha ?? ing.created_at ?? "";
@@ -361,9 +417,12 @@ function WidgetClientes({ isDark }: WProps) {
       clienteMap.set(nombre, prev);
 
       // Mercancía: último segmento (si hay ruta con →, mercancía es el 3ro; si no, el 2do)
-      const mercancia = partes.length >= 3
-        ? partes[partes.length - 1]?.trim()
-        : partes.length === 2 ? partes[1]?.trim() : null;
+      const mercancia =
+        partes.length >= 3
+          ? partes[partes.length - 1]?.trim()
+          : partes.length === 2
+            ? partes[1]?.trim()
+            : null;
       if (mercancia && !mercancia.includes("→")) {
         cargaMap.set(mercancia, (cargaMap.get(mercancia) ?? 0) + 1);
       }
@@ -385,7 +444,9 @@ function WidgetClientes({ isDark }: WProps) {
       <View style={[s.clientesCard, { backgroundColor: WBG(isDark) }]}>
         <View style={s.clientesHeader}>
           <Ionicons name="people-outline" size={18} color={MUTED(isDark)} />
-          <Text style={[s.clientesTitle, { color: INK(isDark) }]}>Clientes</Text>
+          <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
+            Clientes
+          </Text>
         </View>
         <View style={s.clientesEmpty}>
           <Ionicons name="person-add-outline" size={28} color={MUTED(isDark)} />
@@ -465,9 +526,7 @@ function WidgetClientes({ isDark }: WProps) {
         <View style={s.clientesCol}>
           <View style={s.clientesColHeader}>
             <Ionicons name="cube-outline" size={16} color={MUTED(isDark)} />
-            <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
-              Carga
-            </Text>
+            <Text style={[s.clientesTitle, { color: INK(isDark) }]}>Carga</Text>
           </View>
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -1115,15 +1174,6 @@ export default function HomeBaseAdapted({
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
     : "conductor";
-  const avatarUrl =
-    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
-  const userName =
-    (user?.user_metadata as any)?.nombre ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "Usuario";
-  const userInitials = userName.slice(0, 2).toUpperCase();
-
   // Shared card style — Apple: blanco puro / dark elevated
   // Estilo base compartido (sombra/borde)
   const cardBase = {
@@ -1145,47 +1195,6 @@ export default function HomeBaseAdapted({
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
-          {/* HEADER */}
-          <Animated.View
-            style={[s.header, { transform: [{ translateY: headerY }] }]}>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[s.greetingName, { color: c.text }]}
-                numberOfLines={1}>
-                {userName.split(" ")[0]}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Cuenta")}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Mi cuenta"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <View
-                style={[
-                  s.avatarRing,
-                  {
-                    borderColor: isDark
-                      ? c.accent + "70"
-                      : "rgba(255,255,255,0.95)",
-                    shadowColor: c.accent,
-                    shadowOpacity: isDark ? 0.35 : 0.2,
-                  },
-                ]}>
-                {avatarUrl ? (
-                  <Image source={{ uri: avatarUrl }} style={s.avatar} />
-                ) : (
-                  <View
-                    style={[s.avatarFallback, { backgroundColor: c.accent }]}>
-                    <Text style={[s.avatarText, { color: c.accentText }]}>
-                      {userInitials}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-
           {/* VEHICLE CARD */}
           {showCamionHeader && (
             <AnimatedPressable

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -11,12 +11,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme, getShadow } from "../constants/Themecontext";
+import { useTheme } from "../constants/Themecontext";
 import { TipoTransaccion } from "../services/geminiService";
 import { useEscanearFactura } from "../hooks/useEscanearFactura";
 
 const TAB_BAR_HEIGHT = 60;
-const FAB_SIZE = 60;
+const FAB_SIZE = 64;
+
+// Colores AI
+const AI_CORE = "#1A1A1A";
+const AI_ACCENT = "#FFFFFF";
 
 export default function FabEscanear() {
   const { colors: c, isDark } = useTheme();
@@ -40,11 +44,23 @@ export default function FabEscanear() {
     setFuenteVisible(true);
   };
 
-  const elegirFoto = async (fuente: "camara" | "galeria") => {
+  const pendingRef = useRef<{ tipo: TipoTransaccion; fuente: "camara" | "galeria" } | null>(null);
+
+  const elegirFoto = (fuente: "camara" | "galeria") => {
     const tipo = tipoSeleccionado;
-    setFuenteVisible(false);
     if (!tipo) return;
-    await escanear(tipo, fuente);
+    pendingRef.current = { tipo, fuente };
+    setFuenteVisible(false);
+    if (Platform.OS === "android") {
+      setTimeout(onFuenteDismiss, 300);
+    }
+  };
+
+  const onFuenteDismiss = async () => {
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    if (!pending) return;
+    await escanear(pending.tipo, pending.fuente);
     setTipoSeleccionado(null);
   };
 
@@ -53,26 +69,23 @@ export default function FabEscanear() {
 
   return (
     <>
-      {/* FAB */}
       <View
         style={[s.fabContainer, { bottom: bottomOffset }]}
         pointerEvents="box-none">
         <TouchableOpacity
-          style={[
-            s.fab,
-            { backgroundColor: c.accent },
-            getShadow(isDark, "lg"),
-          ]}
+          style={s.fab}
           onPress={abrirSelector}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
           accessibilityRole="button"
-          accessibilityLabel="Escanear factura"
+          accessibilityLabel="Registrar gastos o ingresos automáticamente con IA"
           disabled={procesando}>
-          {procesando ? (
-            <ActivityIndicator color={c.accentText} />
-          ) : (
-            <Ionicons name="scan" size={26} color={c.accentText} />
-          )}
+          <View style={[s.fabInner, { backgroundColor: AI_CORE }]}>
+            {procesando ? (
+              <ActivityIndicator color={AI_ACCENT} />
+            ) : (
+              <Ionicons name="sparkles" size={24} color={AI_ACCENT} />
+            )}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -156,7 +169,8 @@ export default function FabEscanear() {
         visible={fuenteVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setFuenteVisible(false)}>
+        onRequestClose={() => setFuenteVisible(false)}
+        onDismiss={Platform.OS === "ios" ? onFuenteDismiss : undefined}>
         <Pressable
           style={[s.overlay, { backgroundColor: c.overlay }]}
           onPress={() => setFuenteVisible(false)}>
@@ -218,7 +232,10 @@ const s = StyleSheet.create({
   fabContainer: {
     position: "absolute",
     right: 20,
-    alignItems: "flex-end",
+    alignItems: "center",
+    justifyContent: "center",
+    width: FAB_SIZE,
+    height: FAB_SIZE,
   },
   fab: {
     width: FAB_SIZE,
@@ -226,12 +243,17 @@ const s = StyleSheet.create({
     borderRadius: FAB_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    ...Platform.select({
-      android: { elevation: 8 },
-      ios: {},
-    }),
   },
-  overlay: {
+  fabInner: {
+    width: FAB_SIZE - 6,
+    height: FAB_SIZE - 6,
+    borderRadius: (FAB_SIZE - 6) / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+overlay: {
     flex: 1,
     justifyContent: "flex-end",
   },

@@ -8,6 +8,7 @@ import { useIngresosStore } from "../store/IngresosStore";
 import supabase from "../config/SupaBaseConfig";
 import {
   analizarFactura,
+  componerDescripcion,
   TipoTransaccion,
   DatosFactura,
 } from "../services/geminiService";
@@ -43,8 +44,8 @@ export function useEscanearFactura() {
           return;
         }
         result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.7,
+          mediaTypes: ["images"],
+          quality: 0.3,
           base64: true,
         });
       } else {
@@ -58,8 +59,8 @@ export function useEscanearFactura() {
           return;
         }
         result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.7,
+          mediaTypes: ["images"],
+          quality: 0.3,
           base64: true,
         });
       }
@@ -105,7 +106,7 @@ export function useEscanearFactura() {
     const fechaDefault = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
     const fecha = data.fecha ?? fechaDefault;
     const categoria = data.categoria ?? (tipo === "gasto" ? "Otros" : "Otro");
-    const descripcion = data.descripcion ?? data.proveedor ?? categoria;
+    const descripcion = componerDescripcion(data) || categoria;
 
     if (tipo === "gasto") {
       const { error } = await supabase.from("conductor_gastos").insert([

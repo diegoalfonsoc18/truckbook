@@ -24,6 +24,10 @@ export default {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription:
           "TruckBook usa tu ubicación para mostrarte el clima actual en tu ruta.",
+        NSCameraUsageDescription:
+          "TruckBook necesita acceso a la cámara para escanear facturas y recibos.",
+        NSPhotoLibraryUsageDescription:
+          "TruckBook necesita acceso a tus fotos para seleccionar facturas y recibos.",
       },
     },
     android: {
@@ -63,6 +67,15 @@ export default {
         },
       ],
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "TruckBook necesita acceso a tus fotos para seleccionar facturas y recibos.",
+          cameraPermission:
+            "TruckBook necesita acceso a la cámara para escanear facturas y recibos.",
+        },
+      ],
     ],
     extra: {
       supabaseUrl: process.env.SUPABASE_URL ?? "https://erinesvycnvmqbsrawlk.supabase.co",
