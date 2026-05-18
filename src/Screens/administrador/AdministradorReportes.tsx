@@ -21,6 +21,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
 import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
@@ -64,7 +65,7 @@ function RegistroCard({ item, isDark, cardStyle, c, formatCurrency }: {
           <View style={[s.tipoBadge, { backgroundColor: tipoColor + (isDark ? "25" : "15") }]}>
             <View style={[s.tipoDot, { backgroundColor: tipoColor }]} />
             <Text style={{ fontSize: 11, fontWeight: "700", color: tipoColor }}>
-              {isIngreso ? "INGRESO" : "GASTO"}
+              {isIngreso ? "ingreso" : "gasto"}
             </Text>
           </View>
           <View style={[s.miniPlaca, { backgroundColor: c.plateYellow }]}>
@@ -84,7 +85,7 @@ function RegistroCard({ item, isDark, cardStyle, c, formatCurrency }: {
         <View style={[s.estadoBadge, { backgroundColor: estadoColor + (isDark ? "25" : "15") }]}>
           <View style={[s.estadoDot, { backgroundColor: estadoColor }]} />
           <Text style={{ fontSize: 10, fontWeight: "700", color: estadoColor }}>
-            {item.estado?.toUpperCase()}
+            {item.estado}
           </Text>
         </View>
       </View>
@@ -333,9 +334,9 @@ export default function AdministradorReportes() {
       <View style={[s.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.loadingContainer}>
-            <ActivityIndicator size="large" color={c.income} />
+            <ActivityIndicator size="large" color={c.accent} />
             <Text style={[s.loadingText, { color: c.textSecondary }]}>
-              Cargando reportes…
+              cargando reportes…
             </Text>
           </View>
         </SafeAreaView>
@@ -354,13 +355,13 @@ export default function AdministradorReportes() {
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={[s.backButton, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.cardBg }, cardBorder]}>
-              <Text style={{ fontSize: 18 }}>←</Text>
+              <Ionicons name="chevron-back" size={20} color={c.text} />
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={[s.headerTitle, { color: c.text }]}>Reportes</Text>
+              <Text style={[s.headerTitle, { color: c.text }]}>reportes</Text>
               <Text style={[s.headerSubtitle, { color: c.textSecondary }]}>
                 {todasSeleccionadas
-                  ? "Toda la flota"
+                  ? "toda la flota"
                   : `${placasSeleccionadas.size} vehículo${placasSeleccionadas.size !== 1 ? "s" : ""}`}
               </Text>
             </View>
@@ -385,7 +386,7 @@ export default function AdministradorReportes() {
                   s.filtroChipText,
                   { color: todasSeleccionadas ? c.accentText : c.text },
                 ]}>
-                Todos
+                todos
               </Text>
             </TouchableOpacity>
             {placasDisponibles.map((placa) => {
@@ -428,21 +429,21 @@ export default function AdministradorReportes() {
               resumenStyle,
             ]}>
               <View style={s.resumenItem}>
-                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Ingresos</Text>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>ingresos</Text>
                 <Text style={[s.resumenMonto, { color: c.income }]}>
                   +{formatCurrency(totalIngresos)}
                 </Text>
               </View>
               <View style={[s.resumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} />
               <View style={s.resumenItem}>
-                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Gastos</Text>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>gastos</Text>
                 <Text style={[s.resumenMonto, { color: c.expense }]}>
                   -{formatCurrency(totalGastos)}
                 </Text>
               </View>
               <View style={[s.resumenDivider, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]} />
               <View style={s.resumenItem}>
-                <Text style={[s.resumenLabel, { color: c.textMuted }]}>Balance</Text>
+                <Text style={[s.resumenLabel, { color: c.textMuted }]}>balance</Text>
                 <Text
                   style={[
                     s.resumenMonto,
@@ -458,7 +459,7 @@ export default function AdministradorReportes() {
         {/* LISTA POR FECHA */}
         {loading ? (
           <View style={s.loadingContainer}>
-            <ActivityIndicator size="large" color={c.income} />
+            <ActivityIndicator size="large" color={c.accent} />
           </View>
         ) : (
           <SectionList
@@ -468,17 +469,19 @@ export default function AdministradorReportes() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={c.income}
+                tintColor={c.accent}
               />
             }
             contentContainerStyle={s.listContent}
             stickySectionHeadersEnabled={false}
             ListEmptyComponent={
               <View style={s.emptyState}>
-                <Text style={{ fontSize: 56, marginBottom: 12 }}>📭</Text>
-                <Text style={[s.emptyTitle, { color: c.text }]}>Sin registros</Text>
+                <View style={[s.emptyIconWrap, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface }]}>
+                  <Ionicons name="document-text-outline" size={44} color={c.textMuted} />
+                </View>
+                <Text style={[s.emptyTitle, { color: c.text }]}>sin registros</Text>
                 <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
-                  No hay gastos ni ingresos para los vehículos seleccionados
+                  no hay gastos ni ingresos para los vehículos seleccionados
                 </Text>
               </View>
             }
@@ -486,27 +489,27 @@ export default function AdministradorReportes() {
               <View
                 style={[
                   s.sectionHeader,
-                  { backgroundColor: isDark ? "rgba(0,217,165,0.06)" : c.cardBg },
-                  isDark ? { borderWidth: 1, borderColor: "rgba(0,217,165,0.15)" } : {},
+                  { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : c.cardBg },
+                  isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" } : {},
                   shadow,
                 ]}>
                 <Text style={[s.sectionDate, { color: c.text }]}>{section.title}</Text>
 
                 <View style={s.conductoresRow}>
                   <Text style={[s.conductoresLabel, { color: c.textMuted }]}>
-                    Conductor(es):
+                    conductor(es):
                   </Text>
                   {section.conductores.map((nombre, idx) => (
                     <View
                       key={idx}
                       style={[
                         s.conductorChip,
-                        { backgroundColor: isDark ? "rgba(255,229,0,0.15)" : c.accentLight },
+                        { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface },
                       ]}>
                       <Text
                         style={[
                           s.conductorChipText,
-                          { color: isDark ? c.accent : "#8B7A00" },
+                          { color: c.textSecondary },
                         ]}>
                         {nombre}
                       </Text>
@@ -592,7 +595,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   resumenItem: { flex: 1, alignItems: "center" },
-  resumenLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 },
+  resumenLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4, letterSpacing: 0.5 },
   resumenMonto: { fontSize: 14, fontWeight: "800" },
   resumenDivider: { width: 1, height: 30 },
 
@@ -606,7 +609,7 @@ const s = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
-  sectionDate: { fontSize: 15, fontWeight: "700", textTransform: "capitalize" },
+  sectionDate: { fontSize: 15, fontWeight: "700" },
   conductoresRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -691,6 +694,14 @@ const s = StyleSheet.create({
     alignItems: "center",
     padding: 40,
     marginTop: 60,
+  },
+  emptyIconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 13, textAlign: "center" },

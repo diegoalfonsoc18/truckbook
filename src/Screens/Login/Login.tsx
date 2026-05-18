@@ -237,7 +237,7 @@ export default function LoginScreen({ navigation }: Props) {
                   <ActivityIndicator color={c.accentText} size="small" />
                 ) : (
                   <Text style={[s.ctaText, { color: c.accentText }]}>
-                    Iniciar Sesión
+                    Iniciar sesión
                   </Text>
                 )}
               </TouchableOpacity>

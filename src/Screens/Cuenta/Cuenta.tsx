@@ -103,12 +103,8 @@ export default function Cuenta() {
 
   const cargarUsuario = async () => {
     try {
-      const {
-        data: { user: currentUser },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) throw error;
-      setUser(currentUser);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) setUser(session.user);
     } catch (error) {
       logger.error("Error cargando usuario:", error);
     }
@@ -123,14 +119,12 @@ export default function Cuenta() {
         onPress: async () => {
           setLoading(true);
           try {
-            const {
-              data: { user: u },
-            } = await supabase.auth.getUser();
-            if (u) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
               await supabase
                 .from("usuarios")
                 .update({ push_token: null })
-                .eq("id", u.id);
+                .eq("id", session.user.id);
             }
             const { error } = await supabase.auth.signOut();
             if (error) Alert.alert("Error", error.message);

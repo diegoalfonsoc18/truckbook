@@ -35,6 +35,7 @@ import {
   cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
+import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
@@ -123,7 +124,9 @@ export default function FinanzasGenerales() {
   );
 
   const [placasDisponibles, setPlacasDisponibles] = useState<string[]>([]);
-  const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(new Set());
+  const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(
+    new Set(),
+  );
   const esMultiVehiculo = role === "administrador" || role === "propietario";
 
   const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
@@ -136,20 +139,36 @@ export default function FinanzasGenerales() {
     return { inicio: first, fin: last };
   });
 
-  const fadeAnim   = useRef(new Animated.Value(0)).current;
-  const headerY    = useRef(new Animated.Value(-10)).current;
-  const easeOut    = Easing.bezier(0.23, 1, 0.32, 1);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const headerY = useRef(new Animated.Value(-10)).current;
+  const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
 
   // Summary cards staggered entrance
-  const card1Opacity = useSharedValue(0); const card1Scale = useSharedValue(0.95);
-  const card2Opacity = useSharedValue(0); const card2Scale = useSharedValue(0.95);
-  const balOpacity   = useSharedValue(0); const balScale   = useSharedValue(0.96);
-  const chartOpacity = useSharedValue(0); const chartTransY = useSharedValue(12);
+  const card1Opacity = useSharedValue(0);
+  const card1Scale = useSharedValue(0.95);
+  const card2Opacity = useSharedValue(0);
+  const card2Scale = useSharedValue(0.95);
+  const balOpacity = useSharedValue(0);
+  const balScale = useSharedValue(0.96);
+  const chartOpacity = useSharedValue(0);
+  const chartTransY = useSharedValue(12);
 
-  const card1Style  = useAnimatedStyle(() => ({ opacity: card1Opacity.value, transform: [{ scale: card1Scale.value }] }));
-  const card2Style  = useAnimatedStyle(() => ({ opacity: card2Opacity.value, transform: [{ scale: card2Scale.value }] }));
-  const balStyle    = useAnimatedStyle(() => ({ opacity: balOpacity.value,   transform: [{ scale: balScale.value }] }));
-  const chartStyle  = useAnimatedStyle(() => ({ opacity: chartOpacity.value, transform: [{ translateY: chartTransY.value }] }));
+  const card1Style = useAnimatedStyle(() => ({
+    opacity: card1Opacity.value,
+    transform: [{ scale: card1Scale.value }],
+  }));
+  const card2Style = useAnimatedStyle(() => ({
+    opacity: card2Opacity.value,
+    transform: [{ scale: card2Scale.value }],
+  }));
+  const balStyle = useAnimatedStyle(() => ({
+    opacity: balOpacity.value,
+    transform: [{ scale: balScale.value }],
+  }));
+  const chartStyle = useAnimatedStyle(() => ({
+    opacity: chartOpacity.value,
+    transform: [{ translateY: chartTransY.value }],
+  }));
 
   // Cargar placas disponibles para admin/propietario
   useEffect(() => {
@@ -189,7 +208,9 @@ export default function FinanzasGenerales() {
   // Determinar placas activas para filtrado
   const placasActivas = esMultiVehiculo
     ? Array.from(placasSeleccionadas)
-    : placaActual ? [placaActual] : [];
+    : placaActual
+      ? [placaActual]
+      : [];
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -213,18 +234,51 @@ export default function FinanzasGenerales() {
       } finally {
         setLoading(false);
         Animated.parallel([
-          Animated.timing(fadeAnim, { toValue: 1, duration: 380, useNativeDriver: true }),
-          Animated.timing(headerY,  { toValue: 0, duration: 420, easing: (t: number) => 1 - Math.pow(1 - t, 3), useNativeDriver: true }),
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 380,
+            useNativeDriver: true,
+          }),
+          Animated.timing(headerY, {
+            toValue: 0,
+            duration: 420,
+            easing: (t: number) => 1 - Math.pow(1 - t, 3),
+            useNativeDriver: true,
+          }),
         ]).start();
         // Stagger cards
-        card1Opacity.value = withDelay(60,  withTiming(1, { duration: 300, easing: easeOut }));
-        card1Scale.value   = withDelay(60,  withTiming(1, { duration: 340, easing: easeOut }));
-        card2Opacity.value = withDelay(130, withTiming(1, { duration: 300, easing: easeOut }));
-        card2Scale.value   = withDelay(130, withTiming(1, { duration: 340, easing: easeOut }));
-        balOpacity.value   = withDelay(200, withTiming(1, { duration: 320, easing: easeOut }));
-        balScale.value     = withDelay(200, withTiming(1, { duration: 360, easing: easeOut }));
-        chartOpacity.value = withDelay(280, withTiming(1, { duration: 320, easing: easeOut }));
-        chartTransY.value  = withDelay(280, withTiming(0, { duration: 360, easing: easeOut }));
+        card1Opacity.value = withDelay(
+          60,
+          withTiming(1, { duration: 300, easing: easeOut }),
+        );
+        card1Scale.value = withDelay(
+          60,
+          withTiming(1, { duration: 340, easing: easeOut }),
+        );
+        card2Opacity.value = withDelay(
+          130,
+          withTiming(1, { duration: 300, easing: easeOut }),
+        );
+        card2Scale.value = withDelay(
+          130,
+          withTiming(1, { duration: 340, easing: easeOut }),
+        );
+        balOpacity.value = withDelay(
+          200,
+          withTiming(1, { duration: 320, easing: easeOut }),
+        );
+        balScale.value = withDelay(
+          200,
+          withTiming(1, { duration: 360, easing: easeOut }),
+        );
+        chartOpacity.value = withDelay(
+          280,
+          withTiming(1, { duration: 320, easing: easeOut }),
+        );
+        chartTransY.value = withDelay(
+          280,
+          withTiming(0, { duration: 360, easing: easeOut }),
+        );
       }
     };
     if (esMultiVehiculo || placaActual) cargarDatos();
@@ -313,7 +367,7 @@ export default function FinanzasGenerales() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={c.accent} />
             <Text style={[styles.loadingText, { color: c.textSecondary }]}>
-              Cargando…
+              cargando…
             </Text>
           </View>
         </SafeAreaView>
@@ -326,10 +380,13 @@ export default function FinanzasGenerales() {
       <View style={[styles.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>⚠️</Text>
-            <Text style={[styles.errorText, { color: c.danger }]}>
-              {error}
-            </Text>
+            <Ionicons
+              name="alert-circle-outline"
+              size={48}
+              color={c.danger}
+              style={{ marginBottom: 16 }}
+            />
+            <Text style={[styles.errorText, { color: c.danger }]}>{error}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -341,12 +398,26 @@ export default function FinanzasGenerales() {
       <View style={[styles.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📊</Text>
+            <View
+              style={[
+                styles.emptyIconWrap,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.06)"
+                    : c.surface,
+                },
+              ]}>
+              <Ionicons
+                name="bar-chart-outline"
+                size={48}
+                color={c.textMuted}
+              />
+            </View>
             <Text style={[styles.emptyTitle, { color: c.text }]}>
-              Sin vehículo seleccionado
+              sin vehículo seleccionado
             </Text>
             <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
-              Selecciona una placa para ver las finanzas
+              selecciona una placa para ver las finanzas
             </Text>
           </View>
         </SafeAreaView>
@@ -358,17 +429,33 @@ export default function FinanzasGenerales() {
     <View style={[styles.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* HEADER FIJO */}
-        <Animated.View style={[styles.headerFixed, { opacity: fadeAnim, transform: [{ translateY: headerY }] }]}>
+        <Animated.View
+          style={[
+            styles.headerFixed,
+            { opacity: fadeAnim, transform: [{ translateY: headerY }] },
+          ]}>
           <View style={styles.header}>
             <View>
-              <Text style={[styles.headerTitle, { color: c.text }]}>Finanzas</Text>
+              <Text style={[styles.headerTitle, { color: c.text }]}>
+                finanzas
+              </Text>
               <Text style={[styles.headerSubtitle, { color: c.textSecondary }]}>
                 Análisis financiero
               </Text>
             </View>
             {!esMultiVehiculo && (
-              <View style={[styles.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
-                <Text style={[styles.placaText, { color: c.plateText }]}>{placaActual}</Text>
+              <View
+                style={[
+                  styles.placaBadge,
+                  {
+                    backgroundColor: c.plateYellow,
+                    borderColor: c.plateBorder,
+                    borderWidth: 1,
+                  },
+                ]}>
+                <Text style={[styles.placaText, { color: c.plateText }]}>
+                  {placaActual}
+                </Text>
               </View>
             )}
           </View>
@@ -383,16 +470,30 @@ export default function FinanzasGenerales() {
               <TouchableOpacity
                 style={[
                   styles.filterChip,
-                  { backgroundColor: placasSeleccionadas.size === placasDisponibles.length ? c.accent : c.cardBg, borderColor: placasSeleccionadas.size === placasDisponibles.length ? c.accent : c.border },
+                  {
+                    backgroundColor:
+                      placasSeleccionadas.size === placasDisponibles.length
+                        ? c.accent
+                        : c.cardBg,
+                    borderColor:
+                      placasSeleccionadas.size === placasDisponibles.length
+                        ? c.accent
+                        : c.border,
+                  },
                 ]}
                 onPress={toggleTodas}
                 activeOpacity={0.7}>
                 <Text
                   style={[
                     styles.filterChipText,
-                    { color: placasSeleccionadas.size === placasDisponibles.length ? c.accentText : c.textSecondary },
+                    {
+                      color:
+                        placasSeleccionadas.size === placasDisponibles.length
+                          ? c.accentText
+                          : c.textSecondary,
+                    },
                   ]}>
-                  Todos ({placasDisponibles.length})
+                  todos ({placasDisponibles.length})
                 </Text>
               </TouchableOpacity>
               {placasDisponibles.map((placa) => (
@@ -400,14 +501,25 @@ export default function FinanzasGenerales() {
                   key={placa}
                   style={[
                     styles.filterChip,
-                    { backgroundColor: placasSeleccionadas.has(placa) ? c.accent : c.cardBg, borderColor: placasSeleccionadas.has(placa) ? c.accent : c.border },
+                    {
+                      backgroundColor: placasSeleccionadas.has(placa)
+                        ? c.accent
+                        : c.cardBg,
+                      borderColor: placasSeleccionadas.has(placa)
+                        ? c.accent
+                        : c.border,
+                    },
                   ]}
                   onPress={() => togglePlaca(placa)}
                   activeOpacity={0.7}>
                   <Text
                     style={[
                       styles.filterChipText,
-                      { color: placasSeleccionadas.has(placa) ? c.accentText : c.textSecondary },
+                      {
+                        color: placasSeleccionadas.has(placa)
+                          ? c.accentText
+                          : c.textSecondary,
+                      },
                     ]}>
                     {placa}
                   </Text>
@@ -442,7 +554,7 @@ export default function FinanzasGenerales() {
                 </Text>
               </TouchableOpacity>
               <View style={styles.rangeDivider}>
-                <Text style={[styles.rangeDividerText, { color: c.textMuted }]}>→</Text>
+                <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
               </View>
               <TouchableOpacity
                 style={styles.dateButton}
@@ -466,9 +578,19 @@ export default function FinanzasGenerales() {
                   getShadow(isDark, "sm"),
                   card1Style,
                 ]}>
-                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>Ingresos</Text>
-                <Text style={[styles.summaryCardValue, { color: c.income }]}>{formatCurrency(totalIngresos)}</Text>
-                <Text style={styles.cardIcon}>📈</Text>
+                <Text
+                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
+                  Ingresos
+                </Text>
+                <Text style={[styles.summaryCardValue, { color: c.income }]}>
+                  {formatCurrency(totalIngresos)}
+                </Text>
+                <Ionicons
+                  name="trending-up-outline"
+                  size={22}
+                  color={c.income}
+                  style={styles.cardIcon}
+                />
               </Reanimated.View>
               <Reanimated.View
                 style={[
@@ -477,9 +599,19 @@ export default function FinanzasGenerales() {
                   getShadow(isDark, "sm"),
                   card2Style,
                 ]}>
-                <Text style={[styles.summaryCardLabel, { color: c.textSecondary }]}>Gastos</Text>
-                <Text style={[styles.summaryCardValue, { color: c.expense }]}>{formatCurrency(totalGastos)}</Text>
-                <Text style={styles.cardIcon}>📉</Text>
+                <Text
+                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
+                  Gastos
+                </Text>
+                <Text style={[styles.summaryCardValue, { color: c.expense }]}>
+                  {formatCurrency(totalGastos)}
+                </Text>
+                <Ionicons
+                  name="trending-down-outline"
+                  size={22}
+                  color={c.expense}
+                  style={styles.cardIcon}
+                />
               </Reanimated.View>
             </View>
 
@@ -487,13 +619,16 @@ export default function FinanzasGenerales() {
             <Reanimated.View
               style={[
                 styles.balanceCard,
-                { backgroundColor: c.cardBg, borderColor: balance >= 0 ? c.income : c.expense },
+                {
+                  backgroundColor: c.cardBg,
+                  borderColor: balance >= 0 ? c.income : c.expense,
+                },
                 getShadow(isDark, "md"),
                 balStyle,
               ]}>
               <View style={styles.balanceHeader}>
                 <Text style={[styles.balanceLabel, { color: c.textSecondary }]}>
-                  Balance Neto
+                  Balance neto
                 </Text>
                 <View
                   style={[
@@ -509,10 +644,7 @@ export default function FinanzasGenerales() {
                     style={[
                       styles.rentabilidadText,
                       {
-                        color:
-                          Number(rentabilidad) >= 0
-                            ? c.income
-                            : c.expense,
+                        color: Number(rentabilidad) >= 0 ? c.income : c.expense,
                       },
                     ]}>
                     {Number(rentabilidad) >= 0 ? "+" : ""}
@@ -529,13 +661,17 @@ export default function FinanzasGenerales() {
               </Text>
               <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
                 {balance >= 0
-                  ? "Ganancia en el período"
-                  : "Pérdida en el período"}
+                  ? "ganancia en el período"
+                  : "pérdida en el período"}
               </Text>
             </Reanimated.View>
 
             {/* TABS DE VISTA */}
-            <View style={[styles.viewTabs, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+            <View
+              style={[
+                styles.viewTabs,
+                { backgroundColor: c.cardBg, borderColor: c.border },
+              ]}>
               {(["dias", "meses", "años"] as ViewType[]).map((v) => (
                 <TouchableOpacity
                   key={v}
@@ -566,28 +702,26 @@ export default function FinanzasGenerales() {
                 chartStyle,
               ]}>
               <View style={styles.chartHeader}>
-                <Text style={[styles.chartTitle, { color: c.text }]}>Comparativa</Text>
+                <Text style={[styles.chartTitle, { color: c.text }]}>
+                  Comparativa
+                </Text>
                 <View style={styles.chartLegend}>
                   <View style={styles.legendItem}>
                     <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: c.income },
-                      ]}
+                      style={[styles.legendDot, { backgroundColor: c.income }]}
                     />
-                    <Text style={[styles.legendText, { color: c.textSecondary }]}>
-                      Ingresos
+                    <Text
+                      style={[styles.legendText, { color: c.textSecondary }]}>
+                      ingresos
                     </Text>
                   </View>
                   <View style={styles.legendItem}>
                     <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: c.expense },
-                      ]}
+                      style={[styles.legendDot, { backgroundColor: c.expense }]}
                     />
-                    <Text style={[styles.legendText, { color: c.textSecondary }]}>
-                      Gastos
+                    <Text
+                      style={[styles.legendText, { color: c.textSecondary }]}>
+                      gastos
                     </Text>
                   </View>
                 </View>
@@ -654,11 +788,7 @@ export default function FinanzasGenerales() {
                 Detalles del período
               </Text>
 
-              <View
-                style={[
-                  styles.detailRow,
-                  { borderBottomColor: c.border },
-                ]}>
+              <View style={[styles.detailRow, { borderBottomColor: c.border }]}>
                 <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
                   Transacciones
                 </Text>
@@ -667,11 +797,7 @@ export default function FinanzasGenerales() {
                 </Text>
               </View>
 
-              <View
-                style={[
-                  styles.detailRow,
-                  { borderBottomColor: c.border },
-                ]}>
+              <View style={[styles.detailRow, { borderBottomColor: c.border }]}>
                 <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
                   Promedio ingresos
                 </Text>
@@ -713,13 +839,10 @@ export default function FinanzasGenerales() {
           onPress={() => setCalendarVisible(false)}>
           <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
             <View
-              style={[
-                styles.modalHandle,
-                { backgroundColor: c.textMuted },
-              ]}
+              style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
             />
             <Text style={[styles.modalTitle, { color: c.text }]}>
-              Fecha {selectingDate === "inicio" ? "inicial" : "final"}
+              fecha {selectingDate === "inicio" ? "inicial" : "final"}
             </Text>
             <Calendar
               current={selectingDate === "inicio" ? rango.inicio : rango.fin}
@@ -773,7 +896,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
   },
-  headerTitle: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
+  headerTitle: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
   headerSubtitle: { fontSize: 14, marginTop: 2 },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
@@ -807,7 +930,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 40,
   },
-  errorIcon: { fontSize: 48, marginBottom: 16 },
   errorText: { fontSize: 16, textAlign: "center" },
   emptyState: {
     flex: 1,
@@ -815,7 +937,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 40,
   },
-  emptyIcon: { fontSize: 56, marginBottom: 12 },
+  emptyIconWrap: {
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   emptyTitle: { fontSize: 18, fontWeight: "600", marginBottom: 6 },
   emptySubtitle: { fontSize: 13, textAlign: "center" },
 
@@ -829,7 +958,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   dateButton: { flex: 1, alignItems: "center", padding: 6 },
-  dateButtonLabel: { fontSize: 10, textTransform: "uppercase" },
+  dateButtonLabel: { fontSize: 10 },
   dateButtonValue: { fontSize: 15, fontWeight: "600", marginTop: 2 },
   rangeDivider: { paddingHorizontal: 10 },
   rangeDividerText: { fontSize: 16 },
@@ -844,13 +973,12 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   summaryCardLabel: { fontSize: 12, marginBottom: 4 },
-  summaryCardValue: { fontSize: 18, fontWeight: "700" },
+  summaryCardValue: { fontSize: 18, fontWeight: "800" },
   cardIcon: {
     position: "absolute",
     right: 10,
     top: 10,
-    fontSize: 20,
-    opacity: 0.3,
+    opacity: 0.4,
   },
 
   // BALANCE CARD
@@ -873,7 +1001,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   rentabilidadText: { fontSize: 12, fontWeight: "700" },
-  balanceValue: { fontSize: 32, fontWeight: "700", letterSpacing: -1 },
+  balanceValue: { fontSize: 32, fontWeight: "800", letterSpacing: -1 },
   balanceSubtext: { fontSize: 11, marginTop: 4 },
 
   // VIEW TABS
@@ -916,7 +1044,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontWeight: "600",
-    textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 12,
   },

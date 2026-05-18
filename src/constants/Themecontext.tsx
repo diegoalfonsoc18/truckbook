@@ -379,8 +379,7 @@ export const getInputStyles = (isDark: boolean, colors: Colors) => ({
   label: {
     fontSize: 11,
     fontWeight: "700" as const,
-    letterSpacing: 0.8,
-    textTransform: "uppercase" as const,
+    letterSpacing: 0.4,
     marginBottom: 8,
   },
 });
