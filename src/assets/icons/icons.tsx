@@ -284,7 +284,11 @@ interface WeatherIconProps {
   color?: string;
 }
 
-export const SoleadoIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const SoleadoIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 32 32">
     <G fill={color}>
       <Path d="m17 27v2c0 .552-.448 1-1 1s-1-.448-1-1v-2c0-.552.448-1 1-1s1 .448 1 1z" />
@@ -300,7 +304,11 @@ export const SoleadoIcon = ({ width = 24, height = 24, color = "currentColor" }:
   </Svg>
 );
 
-export const NubeYSolIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const NubeYSolIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 385.239 385.239">
     <G fill={color}>
       <Path d="m27.517 151.344h-13.758c-7.599 0-13.759 6.16-13.759 13.758s6.16 13.759 13.759 13.759h13.759c7.599 0 13.759-6.16 13.759-13.759s-6.161-13.758-13.76-13.758z" />
@@ -312,7 +320,11 @@ export const NubeYSolIcon = ({ width = 24, height = 24, color = "currentColor" }
   </Svg>
 );
 
-export const NubeIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const NubeIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 330.248 330.248">
     <G fill={color}>
       <Path d="m247.697 110.102c-3.003 0-6.004.168-8.988.504-22.544-48.206-79.898-69.01-128.104-46.466-29.791 13.932-50.42 42.096-54.714 74.703-37.318 7.133-61.787 43.167-54.655 80.484 6.2 32.438 34.575 55.893 67.6 55.878h178.861c45.592 0 82.551-36.959 82.551-82.551s-36.959-82.552-82.551-82.552zm0 137.585h-178.861c-22.796 0-41.276-18.48-41.276-41.276s18.48-41.276 41.276-41.276c9.055-.035 17.86 2.968 25.005 8.53 6.093 4.54 14.713 3.281 19.253-2.812 4.416-5.927 3.36-14.284-2.391-18.926-7.932-6.102-17.121-10.362-26.903-12.472 6.555-37.393 42.182-62.393 79.575-55.838 25.161 4.411 45.801 22.41 53.593 46.737 2.114 6.808 3.197 13.894 3.211 21.023 0 7.599 6.16 13.759 13.759 13.759s13.759-6.16 13.759-13.759c-.026-4.582-.375-9.156-1.044-13.688.348-.007.696-.07 1.044-.07 30.395 0 55.034 24.64 55.034 55.034s-24.64 55.034-55.034 55.034z" />
@@ -320,7 +332,11 @@ export const NubeIcon = ({ width = 24, height = 24, color = "currentColor" }: We
   </Svg>
 );
 
-export const LluviosoIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const LluviosoIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 357.853 357.853">
     <G fill={color}>
       <Path d="m76.512 249.989c-6.309-4.218-14.842-2.522-19.06 3.786-.006.01-.013.019-.019.029l-27.517 41.276c-4.273 6.283-2.643 14.841 3.64 19.114s14.841 2.643 19.114-3.64c.047-.069.094-.139.14-.21l27.517-41.276c4.215-6.322 2.506-14.863-3.815-19.079z" />
@@ -332,7 +348,11 @@ export const LluviosoIcon = ({ width = 24, height = 24, color = "currentColor" }
   </Svg>
 );
 
-export const TormentaIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const TormentaIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 412.772 412.772">
     <G fill={color}>
       <Path d="m288.962 55.056c-3.069.028-6.135.232-9.181.61-22.401-48.179-79.618-69.076-127.796-46.674-29.885 13.896-50.577 42.122-54.836 74.804-37.318 7.133-61.787 43.167-54.655 80.484 6.2 32.44 34.58 55.896 67.607 55.878h41.276c7.599 0 13.759-6.16 13.759-13.759s-6.16-13.759-13.759-13.759h-41.276c-22.796 0-41.276-18.48-41.276-41.276s18.48-41.276 41.276-41.276c9.051-.038 17.852 2.966 24.991 8.53 6.003 4.66 14.647 3.572 19.307-2.431s3.572-14.647-2.431-19.307c-7.933-6.099-17.122-10.359-26.903-12.472 6.551-37.391 42.173-62.392 79.564-55.841 25.149 4.406 45.783 22.389 53.584 46.699 2.134 6.818 3.224 13.919 3.232 21.063 0 7.599 6.16 13.759 13.759 13.759s13.759-6.16 13.759-13.759c-.026-4.582-.374-9.156-1.042-13.688.354-.007.695-.07 1.042-.07 30.395 0 55.034 24.64 55.034 55.034s-24.64 55.034-55.034 55.034h-27.517c-7.599 0-13.759 6.16-13.759 13.759s6.16 13.759 13.759 13.759h27.517c45.592 0 82.551-36.959 82.551-82.551s-36.96-82.55-82.552-82.55z" />
@@ -341,9 +361,18 @@ export const TormentaIcon = ({ width = 24, height = 24, color = "currentColor" }
   </Svg>
 );
 
-export const CopoDeNieveIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const CopoDeNieveIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 512 512">
-    <G fill="none" stroke={color} strokeWidth={40} strokeLinecap="round" strokeLinejoin="round">
+    <G
+      fill="none"
+      stroke={color}
+      strokeWidth={40}
+      strokeLinecap="round"
+      strokeLinejoin="round">
       <Polygon points="186.718,216 256,176 325.282,216 325.282,296 256,336 186.718,296" />
       <Line x1="256" y1="20" x2="256" y2="176" />
       <Line x1="196" y1="56" x2="256" y2="96" />
@@ -367,7 +396,11 @@ export const CopoDeNieveIcon = ({ width = 24, height = 24, color = "currentColor
   </Svg>
 );
 
-export const TermometroIcon = ({ width = 24, height = 24, color = "currentColor" }: WeatherIconProps) => (
+export const TermometroIcon = ({
+  width = 24,
+  height = 24,
+  color = "currentColor",
+}: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 512 512">
     <G fill={color}>
       <Path d="M341.333,288.593V85.333C341.333,38.205,303.128,0,256,0s-85.333,38.205-85.333,85.333v203.259C144.48,312.03,128,346.091,128,384c0,70.693,57.308,128,128,128s128-57.307,128-128C384,346.091,367.52,312.03,341.333,288.593z M256,469.333c-47.128,0-85.333-38.205-85.333-85.333c0-24.637,10.441-47.492,28.455-63.615l14.212-12.72V85.333c0-23.564,19.103-42.667,42.667-42.667s42.667,19.102,42.667,42.667v222.332l14.212,12.72c18.014,16.123,28.455,38.977,28.455,63.615C341.333,431.128,303.128,469.333,256,469.333z" />
@@ -377,7 +410,14 @@ export const TermometroIcon = ({ width = 24, height = 24, color = "currentColor"
   </Svg>
 );
 
-export type ClimaIconType = "soleado" | "nubeYSol" | "nube" | "lluvioso" | "tormenta" | "copoDeNieve" | "termometro";
+export type ClimaIconType =
+  | "soleado"
+  | "nubeYSol"
+  | "nube"
+  | "lluvioso"
+  | "tormenta"
+  | "copoDeNieve"
+  | "termometro";
 
 export const ClimaIconMap: Record<ClimaIconType, React.FC<WeatherIconProps>> = {
   soleado: SoleadoIcon,

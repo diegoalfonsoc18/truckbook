@@ -12,6 +12,7 @@ import {
   TipoTransaccion,
   DatosFactura,
 } from "../services/geminiService";
+import { extraerTextoOCR } from "../services/visionService";
 import logger from "../utils/logger";
 
 export function useEscanearFactura() {
@@ -73,9 +74,16 @@ export function useEscanearFactura() {
       }
 
       setProcesando(true);
-      const mime = asset.mimeType ?? "image/jpeg";
-      const { data, error } = await analizarFactura(asset.base64, mime, tipo);
 
+      // Paso 1: OCR con Cloud Vision API
+      const { texto, error: ocrError } = await extraerTextoOCR(asset.base64);
+      if (ocrError || !texto) {
+        Alert.alert("Error OCR", ocrError ?? "No se pudo leer el texto de la imagen.");
+        return;
+      }
+
+      // Paso 2: Clasificación con Gemini (solo texto)
+      const { data, error } = await analizarFactura(texto, tipo);
       if (error || !data) {
         Alert.alert("Error de IA", error ?? "No se pudieron extraer los datos.");
         return;

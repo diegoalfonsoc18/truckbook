@@ -63,7 +63,7 @@ Si es un flete o cuenta de cobro, incluye en "detalles":
   - cliente: nombre del cliente o empresa pagadora
   - nit: NIT o cédula del cliente si aparece (solo dígitos)`;
 
-  return `Eres un asistente experto en facturas y recibos del sector transporte colombiano. Analiza esta imagen y extrae los datos en JSON estricto.
+  return `Eres un asistente experto en facturas y recibos del sector transporte colombiano. Analiza el siguiente texto extraído de una factura/recibo por OCR y extrae los datos en JSON estricto.
 
 Devuelve SOLO un objeto JSON (sin markdown, sin texto antes o después) con esta estructura:
 {
@@ -186,8 +186,7 @@ async function fetchConRetry(
 }
 
 export async function analizarFactura(
-  imageBase64: string,
-  mimeType: string,
+  textoOCR: string,
   tipo: TipoTransaccion,
 ): Promise<{ data?: DatosFactura; error?: string }> {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === "TU_API_KEY_AQUI") {
@@ -197,18 +196,11 @@ export async function analizarFactura(
   }
 
   try {
+    const prompt = buildPrompt(tipo) + "\n\n--- TEXTO OCR ---\n" + textoOCR;
     const body = JSON.stringify({
       contents: [
         {
-          parts: [
-            { text: buildPrompt(tipo) },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: imageBase64,
-              },
-            },
-          ],
+          parts: [{ text: prompt }],
         },
       ],
       generationConfig: {

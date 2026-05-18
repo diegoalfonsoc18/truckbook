@@ -1,11 +1,10 @@
-// Reemplaza esta API key con la tuya generada en https://aistudio.google.com/apikey
 // Para producción mover a variables de entorno seguras.
-export const GEMINI_API_KEY = "AIzaSyCScqpJ7kEnx8Tr9uMKWnYh73Cstk-BEJM";
 
+// Gemini (AI Studio) — clasificación de texto
+export const GEMINI_API_KEY = "AIzaSyCScqpJ7kEnx8Tr9uMKWnYh73Cstk-BEJM";
 export const GEMINI_MODEL = "gemini-2.0-flash";
 export const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-// Alternativas gratuitas (cambiar GEMINI_MODEL arriba):
-// "gemini-2.0-flash"              — estable, gratis, buena calidad
-// "gemini-2.0-flash-lite"         — más rápido, menor costo
-// "gemini-3.1-flash-lite-preview" — último preview, gratis
+// Cloud Vision API (Google Cloud Console) — OCR
+export const VISION_API_KEY = "AIzaSyCBUjAPcSEOoK5k6kTVdvpBdUc_8IFxv1Y";
+export const VISION_ENDPOINT = "https://vision.googleapis.com/v1/images:annotate";
