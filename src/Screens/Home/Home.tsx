@@ -238,11 +238,13 @@ function WidgetClima({ isDark }: WProps) {
             <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>
               {temperatura}°
             </Text>
-            {React.createElement(ClimaIconMap[icono], {
-              width: 26,
-              height: 26,
-              color: INK(isDark),
-            })}
+            <View style={{ marginRight: 8, marginTop: 8 }}>
+              {React.createElement(ClimaIconMap[icono], {
+                width: 40,
+                height: 40,
+                color: INK(isDark),
+              })}
+            </View>
           </View>
 
           {/* Condición */}
@@ -252,7 +254,7 @@ function WidgetClima({ isDark }: WProps) {
             {condicion}
           </Text>
 
-          {/* Ciudad sin emoji */}
+          {/* Ciudad */}
           <Text
             style={[s.wCardLabel, { color: MUTED(isDark) }]}
             numberOfLines={1}>
@@ -2257,7 +2259,7 @@ const s = StyleSheet.create({
   wCardTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "space-between",
   },
   wCardTemp: {
     fontSize: Platform.OS === "android" ? 26 : 30,

@@ -1353,7 +1353,7 @@ export default function TransactionScreen({
                   )
                   .map((ct, i) => (
                     <TouchableOpacity
-                      key={ct.id ?? `${i}`}
+                      key={(ct as any).id ?? `${i}`}
                       style={[
                         s.contactRow,
                         {
