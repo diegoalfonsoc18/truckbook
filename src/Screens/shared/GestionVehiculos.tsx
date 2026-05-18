@@ -40,9 +40,11 @@ const { width } = Dimensions.get("window");
 interface VehiculoInfo {
   placa: string;
   tipo_camion: string;
+  color?: string;
   conductoresCount: number;
   conductores: { nombre: string; estado: string }[];
 }
+
 
 const TIPOS_CAMION: {
   id: TipoCamion;
@@ -168,6 +170,7 @@ export default function GestionVehiculos() {
   const [addVisible, setAddVisible] = useState(false);
   const [nuevaPlaca, setNuevaPlaca] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState<TipoCamion>("estacas");
+
   const [guardando, setGuardando] = useState(false);
 
   // Edit modal
@@ -189,6 +192,7 @@ export default function GestionVehiculos() {
     const mapped: VehiculoInfo[] = data.map((v) => ({
       placa: v.placa,
       tipo_camion: v.tipo_camion,
+      color: (v as any).color ?? undefined,
       conductoresCount: v.conductores.length,
       conductores: v.conductores.map((cc) => ({
         nombre: cc.nombre,
@@ -286,6 +290,7 @@ export default function GestionVehiculos() {
     setAddVisible(false);
     setNuevaPlaca("");
     setNuevoTipo("estacas");
+
     setGuardando(false);
     await cargarDatos();
   };
@@ -375,6 +380,7 @@ export default function GestionVehiculos() {
             onPress={() => {
               setVehiculoEditando(v);
               setEditTipo(v.tipo_camion as TipoCamion);
+
               setEditVisible(true);
             }}>
             <Ionicons name="pencil-outline" size={15} color={c.accent} />
@@ -542,54 +548,56 @@ export default function GestionVehiculos() {
                 <View
                   style={[
                     s.sheet,
-                    { backgroundColor: c.modalBg },
+                    { backgroundColor: c.modalBg, maxHeight: "92%" },
                     isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {},
                   ]}>
                   <View style={[s.handle, { backgroundColor: c.border }]} />
-                  <Text style={[s.sheetTitle, { color: c.text }]}>Nuevo vehículo</Text>
-                  <Text style={[s.sheetSub, { color: c.textSecondary }]}>
-                    Ingresa los datos de tu vehículo
-                  </Text>
+                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <Text style={[s.sheetTitle, { color: c.text }]}>Nuevo vehículo</Text>
+                    <Text style={[s.sheetSub, { color: c.textSecondary }]}>
+                      Ingresa los datos de tu vehículo
+                    </Text>
 
-                  {/* Plate input */}
-                  <Text style={[s.inputLabel, { color: c.textSecondary }]}>Placa</Text>
-                  <View style={s.plateInputWrap}>
-                    <TextInput
-                      style={s.plateInput}
-                      placeholder="ABC 123"
-                      placeholderTextColor="#88888888"
-                      value={nuevaPlaca}
-                      onChangeText={(t) => setNuevaPlaca(t.toUpperCase())}
-                      autoCapitalize="characters"
-                      maxLength={7}
-                      autoFocus
-                    />
-                  </View>
+                    {/* Plate input */}
+                    <Text style={[s.inputLabel, { color: c.textSecondary }]}>Placa</Text>
+                    <View style={s.plateInputWrap}>
+                      <TextInput
+                        style={s.plateInput}
+                        placeholder="ABC 123"
+                        placeholderTextColor="#88888888"
+                        value={nuevaPlaca}
+                        onChangeText={(t) => setNuevaPlaca(t.toUpperCase())}
+                        autoCapitalize="characters"
+                        maxLength={7}
+                        autoFocus
+                      />
+                    </View>
 
-                  {/* Type selector */}
-                  <Text style={[s.inputLabel, { color: c.textSecondary, marginTop: 20 }]}>
-                    Tipo de vehículo
-                  </Text>
-                  <TipoSelector selected={nuevoTipo} onChange={setNuevoTipo} />
+                    {/* Type selector */}
+                    <Text style={[s.inputLabel, { color: c.textSecondary, marginTop: 20 }]}>
+                      Tipo de vehículo
+                    </Text>
+                    <TipoSelector selected={nuevoTipo} onChange={setNuevoTipo} />
 
-                  <TouchableOpacity
-                    style={[
-                      s.saveBtn,
-                      { backgroundColor: c.accent },
-                      (!nuevaPlaca.trim() || guardando) && { opacity: 0.4 },
-                    ]}
-                    onPress={handleAgregar}
-                    disabled={!nuevaPlaca.trim() || guardando}>
-                    {guardando
-                      ? <ActivityIndicator color="#FFF" />
-                      : <Text style={s.saveBtnText}>Registrar vehículo</Text>}
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        s.saveBtn,
+                        { backgroundColor: c.accent },
+                        (!nuevaPlaca.trim() || guardando) && { opacity: 0.4 },
+                      ]}
+                      onPress={handleAgregar}
+                      disabled={!nuevaPlaca.trim() || guardando}>
+                      {guardando
+                        ? <ActivityIndicator color="#FFF" />
+                        : <Text style={s.saveBtnText}>Registrar vehículo</Text>}
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={s.cancelBtn}
-                    onPress={() => { setAddVisible(false); setNuevaPlaca(""); }}>
-                    <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={s.cancelBtn}
+                      onPress={() => { setAddVisible(false); setNuevaPlaca(""); }}>
+                      <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
                 </View>
               </TouchableWithoutFeedback>
             </View>
@@ -609,10 +617,11 @@ export default function GestionVehiculos() {
               <View
                 style={[
                   s.sheet,
-                  { backgroundColor: c.modalBg },
+                  { backgroundColor: c.modalBg, maxHeight: "92%" },
                   isDark ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" } : {},
                 ]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={[s.sheetTitle, { color: c.text }]}>Editar vehículo</Text>
 
                 {/* Plate display */}
@@ -647,6 +656,7 @@ export default function GestionVehiculos() {
                   onPress={() => { setEditVisible(false); setVehiculoEditando(null); }}>
                   <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
                 </TouchableOpacity>
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
           </View>

@@ -79,6 +79,7 @@ interface Vehiculo {
   conductorNombre?: string;
 }
 
+
 const ICON_MAP: Record<TipoCamion, IconName> = {
   estacas: "estacas",
   volqueta: "volqueta2",
@@ -1162,11 +1163,12 @@ export default function HomeBaseAdapted({
       placa,
       tipoCamionInput,
     );
-    setGuardando(false);
     if (!result.success) {
+      setGuardando(false);
       Alert.alert("Error", result.error || "No se pudo registrar el vehículo");
       return;
     }
+    setGuardando(false);
     await cargarVehiculos();
     setPlacaInput("");
     setTipoCamionInput(null);
