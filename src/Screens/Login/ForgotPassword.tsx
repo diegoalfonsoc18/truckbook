@@ -118,6 +118,7 @@ export default function ForgotPassword({ navigation }: Props) {
                     ]}>
                     <Text style={styles.inputIcon}>✉️</Text>
                     <TextInput
+                  keyboardAppearance="light"
                       style={[styles.input, ds.text]}
                       placeholder="tu@correo.com"
                       placeholderTextColor={colors.textMuted}

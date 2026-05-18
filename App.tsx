@@ -81,17 +81,20 @@ function AppContent() {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setSession(session);
         if (session?.user) {
+          setLoading(true);
           await asegurarUsuarioEnDB(session.user);
-          await useRoleStore.getState().cargarRolDesdeDB(session.user.id);
-          // Nuevo login: verifica que la placa guardada sea de este usuario.
-          // Si es un usuario nuevo (o diferente al anterior) limpia el vehículo.
-          await useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id);
+          await Promise.all([
+            useRoleStore.getState().cargarRolDesdeDB(session.user.id),
+            useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
+          ]);
+          setSession(session);
+          setLoading(false);
         } else {
           // Logout: limpiar rol y vehículo
           useRoleStore.getState().clearRole();
           useVehiculoStore.getState().clearVehiculo();
+          setSession(null);
         }
       },
     );

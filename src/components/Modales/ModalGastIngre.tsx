@@ -96,6 +96,7 @@ export function ModalGastIngre({
                   <View style={styles.inputRow}>
                     <Text style={styles.currencySymbol}>$</Text>
                     <TextInput
+                  keyboardAppearance="light"
                       value={editValue}
                       onChangeText={setEditValue}
                       keyboardType="numeric"

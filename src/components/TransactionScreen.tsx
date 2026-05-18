@@ -1048,6 +1048,7 @@ export default function TransactionScreen({
                         </Text>
                         <View style={[s.inputRow, inputStyle]}>
                           <TextInput
+                  keyboardAppearance="light"
                             style={[s.textInput, { color: c.text }]}
                             placeholder="Ej: Multa, Seguro..."
                             placeholderTextColor={c.textMuted}
@@ -1070,6 +1071,7 @@ export default function TransactionScreen({
                         </Text>
                         <View style={[s.inputRow, inputStyle]}>
                           <TextInput
+                  keyboardAppearance="light"
                             style={[s.textInput, { color: c.text }]}
                             placeholder={campo.placeholder}
                             placeholderTextColor={c.textMuted}
@@ -1128,6 +1130,7 @@ export default function TransactionScreen({
                         $
                       </Text>
                       <TextInput
+                  keyboardAppearance="light"
                         style={[s.textInput, s.textInputLg, { color: c.text }]}
                         placeholder="0"
                         placeholderTextColor={c.textMuted}
@@ -1314,6 +1317,7 @@ export default function TransactionScreen({
                   style={{ marginRight: 8 }}
                 />
                 <TextInput
+                  keyboardAppearance="light"
                   style={[s.textInput, { color: c.text }]}
                   placeholder="Buscar contacto..."
                   placeholderTextColor={c.textMuted}

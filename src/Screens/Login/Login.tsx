@@ -155,6 +155,7 @@ export default function LoginScreen({ navigation }: Props) {
                   style={s.inputIcon}
                 />
                 <TextInput
+                  keyboardAppearance="light"
                   style={[inputSty.text, { color: c.text }]}
                   placeholder="tu@correo.com"
                   placeholderTextColor={c.textMuted}
@@ -184,6 +185,7 @@ export default function LoginScreen({ navigation }: Props) {
                   style={s.inputIcon}
                 />
                 <TextInput
+                  keyboardAppearance="light"
                   style={[inputSty.text, { color: c.text }]}
                   placeholder="••••••••"
                   placeholderTextColor={c.textMuted}

@@ -192,6 +192,7 @@ export default function Register({ navigation }: Props) {
                   <View style={[inputSty.wrap, shadow, errors.password && s.inputError]}>
                     <Ionicons name="lock-closed-outline" size={18} color={c.textMuted} style={s.icon} />
                     <TextInput
+                  keyboardAppearance="light"
                       style={[inputSty.text, { color: c.text }]}
                       placeholder="Mín. 8 caracteres"
                       placeholderTextColor={c.textMuted}
@@ -241,6 +242,7 @@ export default function Register({ navigation }: Props) {
                   <View style={[inputSty.wrap, shadow, errors.confirmPassword && s.inputError]}>
                     <Ionicons name="lock-closed-outline" size={18} color={c.textMuted} style={s.icon} />
                     <TextInput
+                  keyboardAppearance="light"
                       style={[inputSty.text, { color: c.text }]}
                       placeholder="Repite tu contraseña"
                       placeholderTextColor={c.textMuted}
@@ -333,6 +335,7 @@ function Field({
       <View style={[inputSty.wrap, shadow, error && s.inputError]}>
         <Ionicons name={icon} size={18} color={c.textMuted} style={s.icon} />
         <TextInput
+                  keyboardAppearance="light"
           style={[inputSty.text, { color: c.text }]}
           placeholder={placeholder}
           placeholderTextColor={c.textMuted}
