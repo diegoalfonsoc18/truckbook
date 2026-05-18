@@ -19,7 +19,7 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { useTheme, getShadow, getInputStyles, ACCENT, ACCENT_TEXT } from "../../constants/Themecontext";
+import { useTheme, getShadow, getInputStyles } from "../../constants/Themecontext";
 
 const SUCCESS = "#00D9A5";
 const DANGER  = "#E94560";
@@ -33,7 +33,6 @@ type AuthStackParamList = {
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 type ValidationErrors = {
   nombre?: string;
-  cedula?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -45,7 +44,6 @@ export default function Register({ navigation }: Props) {
   const inputSty = getInputStyles(isDark, c);
 
   const [nombre,          setNombre]          = useState("");
-  const [cedula,          setCedula]          = useState("");
   const [email,           setEmail]           = useState("");
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -71,8 +69,6 @@ export default function Register({ navigation }: Props) {
   const validateForm = (): boolean => {
     const e: ValidationErrors = {};
     if (!nombre.trim())           e.nombre = "El nombre es requerido";
-    if (!cedula.trim())           e.cedula = "La cédula/DNI es requerida";
-    else if (cedula.trim().length < 5) e.cedula = "Cédula/DNI inválida";
     if (!email.trim())            e.email = "El email es requerido";
     else if (!validateEmail(email)) e.email = "Email inválido";
     if (!password.trim())         e.password = "La contraseña es requerida";
@@ -91,7 +87,7 @@ export default function Register({ navigation }: Props) {
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
-        options: { data: { nombre: nombre.trim(), cedula: cedula.trim() } },
+        options: { data: { nombre: nombre.trim() } },
       });
 
       if (error?.message.includes("compromised")) {
@@ -109,16 +105,10 @@ export default function Register({ navigation }: Props) {
       }
 
       if (data.user) {
-        const { error: insertError } = await supabase.from("usuarios").upsert(
-          [{ user_id: data.user.id, nombre: nombre.trim(), cedula: cedula.trim(), email: email.toLowerCase().trim() }],
+        await supabase.from("usuarios").upsert(
+          [{ user_id: data.user.id, nombre: nombre.trim(), email: email.toLowerCase().trim() }],
           { onConflict: "user_id" },
         );
-        if (insertError) {
-          await supabase.from("usuarios").upsert(
-            [{ user_id: data.user.id, nombre: nombre.trim(), email: email.toLowerCase().trim() }],
-            { onConflict: "user_id" },
-          );
-        }
       }
 
       if (data.session) {
@@ -173,9 +163,6 @@ export default function Register({ navigation }: Props) {
                   disabled={loading}>
                   <Ionicons name="chevron-back" size={20} color={c.text} />
                 </TouchableOpacity>
-                <View style={[s.badge, { backgroundColor: ACCENT }]}>
-                  <Text style={[s.badgeText, { color: ACCENT_TEXT }]}>TruckBook</Text>
-                </View>
               </View>
 
               <Text style={[s.title, { color: c.text }]}>Crear cuenta</Text>
@@ -191,14 +178,8 @@ export default function Register({ navigation }: Props) {
                   icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
                 />
 
-                <Field
-                  label="Cédula / DNI" placeholder="Número de documento"
-                  value={cedula} onChangeText={(t) => { setCedula(t); if (errors.cedula) setErrors({ ...errors, cedula: undefined }); }}
-                  error={errors.cedula} keyboardType="numeric" editable={!loading}
-                  icon="card-outline" c={c} shadow={shadow} inputSty={inputSty}
-                />
 
-                <Field
+<Field
                   label="Correo electrónico" placeholder="tu@correo.com"
                   value={email} onChangeText={(t) => { setEmail(t); if (errors.email) setErrors({ ...errors, email: undefined }); }}
                   error={errors.email} autoCapitalize="none" keyboardType="email-address" editable={!loading}
@@ -285,13 +266,13 @@ export default function Register({ navigation }: Props) {
 
               {/* CTA */}
               <TouchableOpacity
-                style={[s.cta, { backgroundColor: ACCENT }, loading && s.ctaOff]}
+                style={[s.cta, { backgroundColor: c.accent }, loading && s.ctaOff]}
                 onPress={register}
                 disabled={loading}
                 activeOpacity={0.85}>
                 {loading
-                  ? <ActivityIndicator color={ACCENT_TEXT} size="small" />
-                  : <Text style={[s.ctaText, { color: ACCENT_TEXT }]}>Crear cuenta</Text>}
+                  ? <ActivityIndicator color={c.accentText} size="small" />
+                  : <Text style={[s.ctaText, { color: c.accentText }]}>Crear cuenta</Text>}
               </TouchableOpacity>
 
               {/* DIVIDER */}
@@ -311,11 +292,11 @@ export default function Register({ navigation }: Props) {
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[s.socialBtn, s.fbBtn, shadow]}
+                  style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
                   onPress={() => handleSocialLogin("facebook")}
                   disabled={loading} activeOpacity={0.8}>
                   <Image source={require("../../assets/img/facebook.png")} style={s.socialIcon} />
-                  <Text style={[s.socialText, { color: "#FFF" }]}>Facebook</Text>
+                  <Text style={[s.socialText, { color: c.text }]}>Facebook</Text>
                 </TouchableOpacity>
               </View>
 
@@ -440,7 +421,6 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     gap: 8,
   },
-  fbBtn:      { backgroundColor: "#1877F2", borderColor: "#1877F2" },
   socialIcon: { width: 20, height: 20 },
   socialText: { fontSize: 14, fontWeight: "600" },
 

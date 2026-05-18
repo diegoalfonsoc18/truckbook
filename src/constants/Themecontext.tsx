@@ -92,10 +92,6 @@ export const LIGHT_COLORS = {
   overlayLight: "rgba(0, 0, 0, 0.2)",
 };
 
-// Colores de acento global (botones CTA, badges, placa)
-export const ACCENT      = LIGHT_COLORS.plateYellow; // "#FFE500"
-export const ACCENT_TEXT = LIGHT_COLORS.plateText;   // "#000000"
-
 export const DARK_COLORS = {
   // Fondos — negro puro con capas de profundidad
   primary: "#0A0A0A",

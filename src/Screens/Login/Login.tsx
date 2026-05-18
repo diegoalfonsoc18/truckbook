@@ -25,8 +25,6 @@ import {
   useTheme,
   getShadow,
   getInputStyles,
-  ACCENT,
-  ACCENT_TEXT,
 } from "../../constants/Themecontext";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -131,11 +129,7 @@ export default function LoginScreen({ navigation }: Props) {
                 style={s.heroImg}
                 resizeMode="contain"
               />
-              <View style={[s.badge, { backgroundColor: ACCENT }]}>
-                <Text style={[s.badgeText, { color: ACCENT_TEXT }]}>
-                  TruckBook
-                </Text>
-              </View>
+
               <Text style={[s.heroTitle, { color: c.text }]}>
                 Gestiona tu camión
               </Text>
@@ -222,21 +216,27 @@ export default function LoginScreen({ navigation }: Props) {
                 }}
                 disabled={loading}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={[s.forgotText, { color: ACCENT }]}>
+                <Text style={[s.forgotText, { color: c.accent }]}>
                   ¿Olvidaste tu contraseña?
                 </Text>
               </TouchableOpacity>
 
               {/* CTA */}
               <TouchableOpacity
-                style={[s.cta, { backgroundColor: ACCENT }, loading && s.ctaOff]}
+                style={[
+                  s.cta,
+                  { backgroundColor: c.accent },
+                  loading && s.ctaOff,
+                ]}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}>
                 {loading ? (
-                  <ActivityIndicator color={ACCENT_TEXT} size="small" />
+                  <ActivityIndicator color={c.accentText} size="small" />
                 ) : (
-                  <Text style={[s.ctaText, { color: ACCENT_TEXT }]}>Iniciar Sesión</Text>
+                  <Text style={[s.ctaText, { color: c.accentText }]}>
+                    Iniciar Sesión
+                  </Text>
                 )}
               </TouchableOpacity>
 
@@ -267,7 +267,7 @@ export default function LoginScreen({ navigation }: Props) {
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[s.socialBtn, s.fbBtn, shadow]}
+                  style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
                   onPress={() => handleSocialLogin("facebook")}
                   disabled={loading}
                   activeOpacity={0.8}>
@@ -275,7 +275,7 @@ export default function LoginScreen({ navigation }: Props) {
                     source={require("../../assets/img/facebook.png")}
                     style={s.socialIcon}
                   />
-                  <Text style={[s.socialText, { color: "#FFF" }]}>
+                  <Text style={[s.socialText, { color: c.text }]}>
                     Facebook
                   </Text>
                 </TouchableOpacity>
@@ -287,18 +287,15 @@ export default function LoginScreen({ navigation }: Props) {
           <View style={[s.footer, { borderTopColor: c.border }]}>
             <Text style={[s.footerText, { color: c.textSecondary }]}>
               ¿No tienes cuenta?{" "}
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                Keyboard.dismiss();
-                navigation.navigate("Register");
-              }}
-              activeOpacity={0.7}
-              hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}>
-              <Text style={[s.footerLink, { color: c.accent }]}>
+              <Text
+                style={[s.footerLink, { color: c.accent }]}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  navigation.navigate("Register");
+                }}>
                 Regístrate
               </Text>
-            </TouchableOpacity>
+            </Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -387,7 +384,6 @@ const s = StyleSheet.create({
     paddingVertical: COMPACT ? 11 : 13,
     gap: 8,
   },
-  fbBtn: { backgroundColor: "#1877F2", borderColor: "#1877F2" },
   socialIcon: { width: 19, height: 19 },
   socialText: { fontSize: 14, fontWeight: "600" },
 
