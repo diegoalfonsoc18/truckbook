@@ -46,17 +46,21 @@ function AppContent() {
   useEffect(() => {
     const asegurarUsuarioEnDB = async (user: any) => {
       if (!user?.id) return;
-      const { error: upsertErr } = await supabase.from("usuarios").upsert(
-        [{
-          user_id: user.id,
-          nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
-          email: user.email,
-          cedula: user.user_metadata?.cedula || "",
-        }],
-        { onConflict: "user_id", ignoreDuplicates: true }
-      );
-      if (upsertErr) {
-        console.error("❌ Error en usuario DB:", JSON.stringify(upsertErr));
+      try {
+        const { error: upsertErr } = await supabase.from("usuarios").upsert(
+          [{
+            user_id: user.id,
+            nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
+            email: user.email,
+            cedula: user.user_metadata?.cedula || "",
+          }],
+          { onConflict: "user_id", ignoreDuplicates: true }
+        );
+        if (upsertErr) {
+          console.error("❌ Error en usuario DB:", upsertErr.message, upsertErr.code, upsertErr.details);
+        }
+      } catch (e: any) {
+        console.error("❌ Error en usuario DB (catch):", e?.message ?? e);
       }
     };
 
