@@ -4,6 +4,7 @@ import { localDateStr } from "../utils/dataUtils";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
@@ -370,27 +371,23 @@ function EscanearButton({
   const { escanear, procesando } = useEscanearFactura();
 
   const handlePress = () => {
-    Alert.alert(
-      "Escanear factura",
-      "¿De dónde viene la foto?",
-      [
-        {
-          text: "Tomar foto",
-          onPress: async () => {
-            await escanear(tipo, "camara");
-            onDone();
-          },
+    Alert.alert("Escanear factura", "¿De dónde viene la foto?", [
+      {
+        text: "Tomar foto",
+        onPress: async () => {
+          await escanear(tipo, "camara");
+          onDone();
         },
-        {
-          text: "Galería",
-          onPress: async () => {
-            await escanear(tipo, "galeria");
-            onDone();
-          },
+      },
+      {
+        text: "Galería",
+        onPress: async () => {
+          await escanear(tipo, "galeria");
+          onDone();
         },
-        { text: "Cancelar", style: "cancel" },
-      ],
-    );
+      },
+      { text: "Cancelar", style: "cancel" },
+    ]);
   };
 
   return (
@@ -663,15 +660,15 @@ export default function TransactionScreen({
       <View style={[s.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.emptyState}>
-            <View
-              style={[s.emptyIconWrap, { backgroundColor: accentColorLight }]}>
-              <Text style={{ fontSize: 40 }}>🚛</Text>
+            <View style={[s.emptyIconWrap]}>
+              <Image
+                source={require("../assets/icons/truck.webp")}
+                style={{ width: 100, height: 100 }}
+                resizeMode="contain"
+              />
             </View>
             <Text style={[s.emptyTitle, { color: c.text }]}>
               Sin vehículo seleccionado
-            </Text>
-            <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
-              Selecciona una placa para registrar {title.toLowerCase()}
             </Text>
           </View>
         </SafeAreaView>
@@ -728,7 +725,15 @@ export default function TransactionScreen({
                 </Text>
               </TouchableOpacity>
             )}
-            <View style={[s.placaBadge, { backgroundColor: c.plateYellow, borderColor: c.plateBorder, borderWidth: 1 }]}>
+            <View
+              style={[
+                s.placaBadge,
+                {
+                  backgroundColor: c.plateYellow,
+                  borderColor: c.plateBorder,
+                  borderWidth: 1,
+                },
+              ]}>
               <Text style={[s.placaText, { color: c.plateText }]}>
                 {placaActual}
               </Text>
@@ -1048,7 +1053,7 @@ export default function TransactionScreen({
                         </Text>
                         <View style={[s.inputRow, inputStyle]}>
                           <TextInput
-                  keyboardAppearance="light"
+                            keyboardAppearance="light"
                             style={[s.textInput, { color: c.text }]}
                             placeholder="Ej: Multa, Seguro..."
                             placeholderTextColor={c.textMuted}
@@ -1071,7 +1076,7 @@ export default function TransactionScreen({
                         </Text>
                         <View style={[s.inputRow, inputStyle]}>
                           <TextInput
-                  keyboardAppearance="light"
+                            keyboardAppearance="light"
                             style={[s.textInput, { color: c.text }]}
                             placeholder={campo.placeholder}
                             placeholderTextColor={c.textMuted}
@@ -1130,7 +1135,7 @@ export default function TransactionScreen({
                         $
                       </Text>
                       <TextInput
-                  keyboardAppearance="light"
+                        keyboardAppearance="light"
                         style={[s.textInput, s.textInputLg, { color: c.text }]}
                         placeholder="0"
                         placeholderTextColor={c.textMuted}
@@ -1437,7 +1442,11 @@ const s = StyleSheet.create({
 
   // SCROLL
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: H_PAD, paddingTop: 6, paddingBottom: 110 },
+  scrollContent: {
+    paddingHorizontal: H_PAD,
+    paddingTop: 6,
+    paddingBottom: 110,
+  },
 
   // SUMMARY
   summaryCard: { borderRadius: 22, padding: 20, marginBottom: 24 },
@@ -1509,7 +1518,13 @@ const s = StyleSheet.create({
   listBadgeText: { fontSize: 12, fontWeight: "700" },
 
   // ROW
-  row: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12, marginHorizontal: 2 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 12,
+    marginHorizontal: 2,
+  },
   rowIconWrap: {
     width: 46,
     height: 46,
@@ -1549,7 +1564,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  emptyTitle: { fontSize: 20, fontWeight: "700", marginBottom: 6 },
   emptySubtitle: { fontSize: 14, textAlign: "center" },
   emptyList: { alignItems: "center" },
   emptyListTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
