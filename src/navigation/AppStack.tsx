@@ -9,7 +9,7 @@ import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorNavigation from "./ConductorNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
 import { useTheme } from "../constants/Themecontext";
-import FabEscanear from "../components/FabEscanear";
+// import FabEscanear from "../components/FabEscanear"; // desactivado v1
 import {
   renderHome,
   renderGastos,
@@ -77,7 +77,7 @@ export default function AppStack() {
       {/* SIN ROL */}
       {!role && <Tab.Screen name="Cuenta" component={Account} />}
     </Tab.Navigator>
-    {role && <FabEscanear />}
+    {/* FAB desactivado v1: {role && <FabEscanear />} */}
     </View>
   );
 }
