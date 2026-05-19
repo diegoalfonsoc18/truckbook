@@ -503,7 +503,7 @@ export default function Cuenta() {
                   <Ionicons
                     name={item.icon}
                     size={18}
-                    color={c.accent}
+                    color="#0F172A"
                   />
                 </View>
                 <View style={s.menuInfo}>
@@ -549,7 +549,7 @@ export default function Cuenta() {
                   <Ionicons
                     name={item.icon}
                     size={18}
-                    color={c.accent}
+                    color="#0F172A"
                   />
                 </View>
                 <View style={s.menuInfo}>
@@ -632,7 +632,7 @@ export default function Cuenta() {
                       : c.surface,
                   },
                 ]}>
-                <Ionicons name="person-outline" size={20} color={c.accent} />
+                <Ionicons name="person-outline" size={20} color="#0F172A" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.modalTitle, { color: c.text }]}>Mi perfil</Text>
@@ -789,7 +789,7 @@ export default function Cuenta() {
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={c.accent}
+                  color="#0F172A"
                 />
               </View>
               <View style={{ flex: 1 }}>
