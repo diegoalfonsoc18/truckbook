@@ -49,7 +49,7 @@ export default function AppStack() {
         headerShown: false,
         tabBarStyle: tabBarStyle,
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarInactiveTintColor: "#0F172A",
         tabBarLabelStyle: styles.tabBarLabel,
 
         tabBarIcon: ({ focused, color, size }) => {
