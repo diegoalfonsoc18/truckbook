@@ -127,23 +127,10 @@ export default function Cuenta() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      const dbNombre   = perfil?.nombre   ?? session.user.user_metadata?.nombre ?? "";
-      const dbApellido = perfil?.apellido ?? "";
-
-      // Si apellido ya tiene valor en DB úsalo directamente.
-      // Si no, el registro guardó nombre+apellido juntos en el campo nombre → dividirlos.
-      if (dbApellido) {
-        setNombre(dbNombre);
-        setApellido(dbApellido);
-      } else if (dbNombre.trim().includes(" ")) {
-        const parts = dbNombre.trim().split(/\s+/);
-        // Última palabra → apellido, el resto → nombre
-        setNombre(parts.slice(0, -1).join(" "));
-        setApellido(parts[parts.length - 1]);
-      } else {
-        setNombre(dbNombre);
-        setApellido("");
-      }
+      // Cargar directamente desde DB; el registro ya guarda nombre y apellido por separado.
+      // Fallback a user_metadata para usuarios registrados antes del cambio.
+      setNombre(perfil?.nombre   ?? session.user.user_metadata?.nombre   ?? "");
+      setApellido(perfil?.apellido ?? session.user.user_metadata?.apellido ?? "");
       setTelefono(perfil?.telefono ?? "");
     } catch (error) {
       logger.error("Error cargando usuario:", error);

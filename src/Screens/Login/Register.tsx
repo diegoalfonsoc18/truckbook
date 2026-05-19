@@ -33,6 +33,7 @@ type AuthStackParamList = {
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 type ValidationErrors = {
   nombre?: string;
+  apellido?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -44,6 +45,7 @@ export default function Register({ navigation }: Props) {
   const inputSty = getInputStyles(isDark, c);
 
   const [nombre,          setNombre]          = useState("");
+  const [apellido,        setApellido]        = useState("");
   const [email,           setEmail]           = useState("");
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -68,7 +70,8 @@ export default function Register({ navigation }: Props) {
 
   const validateForm = (): boolean => {
     const e: ValidationErrors = {};
-    if (!nombre.trim())           e.nombre = "El nombre es requerido";
+    if (!nombre.trim())           e.nombre   = "El nombre es requerido";
+    if (!apellido.trim())         e.apellido = "El apellido es requerido";
     if (!email.trim())            e.email = "El email es requerido";
     else if (!validateEmail(email)) e.email = "Email inválido";
     if (!password.trim())         e.password = "La contraseña es requerida";
@@ -87,7 +90,7 @@ export default function Register({ navigation }: Props) {
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
-        options: { data: { nombre: nombre.trim() } },
+        options: { data: { nombre: nombre.trim(), apellido: apellido.trim() } },
       });
 
       if (error?.message.includes("compromised")) {
@@ -106,7 +109,12 @@ export default function Register({ navigation }: Props) {
 
       if (data.user) {
         await supabase.from("usuarios").upsert(
-          [{ user_id: data.user.id, nombre: nombre.trim(), email: email.toLowerCase().trim() }],
+          [{
+            user_id: data.user.id,
+            nombre:   nombre.trim(),
+            apellido: apellido.trim(),
+            email:    email.toLowerCase().trim(),
+          }],
           { onConflict: "user_id" },
         );
       }
@@ -171,12 +179,25 @@ export default function Register({ navigation }: Props) {
               {/* FIELDS */}
               <View style={s.fields}>
 
-                <Field
-                  label="Nombre completo" placeholder="Tu nombre completo"
-                  value={nombre} onChangeText={(t) => { setNombre(t); if (errors.nombre) setErrors({ ...errors, nombre: undefined }); }}
-                  error={errors.nombre} autoCapitalize="words" editable={!loading}
-                  icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
-                />
+                {/* NOMBRE + APELLIDO en fila */}
+                <View style={s.nameRow}>
+                  <View style={s.nameCol}>
+                    <Field
+                      label="Nombre" placeholder="Juan Carlos"
+                      value={nombre} onChangeText={(t) => { setNombre(t); if (errors.nombre) setErrors({ ...errors, nombre: undefined }); }}
+                      error={errors.nombre} autoCapitalize="words" editable={!loading}
+                      icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
+                    />
+                  </View>
+                  <View style={s.nameCol}>
+                    <Field
+                      label="Apellido" placeholder="Pérez"
+                      value={apellido} onChangeText={(t) => { setApellido(t); if (errors.apellido) setErrors({ ...errors, apellido: undefined }); }}
+                      error={errors.apellido} autoCapitalize="words" editable={!loading}
+                      icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
+                    />
+                  </View>
+                </View>
 
 
 <Field
@@ -430,4 +451,8 @@ const s = StyleSheet.create({
   // FOOTER
   footer:     { alignItems: "center" },
   footerText: { fontSize: 14 },
+
+  // NAME ROW
+  nameRow: { flexDirection: "row", gap: 10 },
+  nameCol: { flex: 1 },
 });
