@@ -57,6 +57,135 @@ const MENU_ITEMS = [
   },
 ];
 
+const LEGAL_ITEMS = [
+  {
+    id: "terms",
+    icon: "document-text-outline" as const,
+    label: "Términos y condiciones",
+    subtitle: "Condiciones de uso de la app",
+  },
+  {
+    id: "privacy",
+    icon: "shield-checkmark-outline" as const,
+    label: "Política de privacidad",
+    subtitle: "Tratamiento de tu información",
+  },
+  {
+    id: "dataauth",
+    icon: "finger-print-outline" as const,
+    label: "Autorización de datos personales",
+    subtitle: "Ley 1581 de 2012 — Habeas Data",
+  },
+];
+
+type LegalDoc = "terms" | "privacy" | "dataauth";
+
+const LEGAL_CONTENT: Record<LegalDoc, { title: string; body: string }> = {
+  terms: {
+    title: "Términos y condiciones",
+    body: `TÉRMINOS Y CONDICIONES DE USO — TRUCKBOOK
+Última actualización: mayo 2025
+
+1. ACEPTACIÓN
+Al descargar, instalar o usar la aplicación TruckBook, el usuario acepta quedar vinculado por los presentes Términos y Condiciones. Si no está de acuerdo, deberá abstenerse de usar la aplicación.
+
+2. OBJETO
+TruckBook es una plataforma móvil de gestión de flotas de transporte de carga que permite registrar vehículos, conductores, gastos, ingresos y reportes operativos.
+
+3. REGISTRO Y CUENTA
+El usuario debe proporcionar información veraz y actualizada al crear su cuenta. Es responsable de mantener la confidencialidad de sus credenciales de acceso.
+
+4. USO PERMITIDO
+El usuario se compromete a usar la aplicación únicamente para fines lícitos relacionados con la gestión de su actividad de transporte de carga, conforme a la normativa colombiana vigente.
+
+5. PROPIEDAD INTELECTUAL
+Todos los derechos de propiedad intelectual sobre TruckBook, incluyendo marca, software, diseño y contenidos, son propiedad exclusiva del desarrollador.
+
+6. LIMITACIÓN DE RESPONSABILIDAD
+TruckBook no se responsabiliza por decisiones operativas tomadas con base en la información registrada en la plataforma. Los datos ingresados son responsabilidad exclusiva del usuario.
+
+7. MODIFICACIONES
+Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios serán notificados a través de la aplicación.
+
+8. LEY APLICABLE
+Estos términos se rigen por las leyes de la República de Colombia. Para cualquier controversia, las partes se someten a los jueces y tribunales de la ciudad de Bogotá D.C.
+
+Contacto: soporte@truckbook.com.co`,
+  },
+  privacy: {
+    title: "Política de privacidad",
+    body: `POLÍTICA DE PRIVACIDAD — TRUCKBOOK
+Última actualización: mayo 2025
+
+1. RESPONSABLE DEL TRATAMIENTO
+TruckBook, con domicilio en la República de Colombia, es el responsable del tratamiento de los datos personales recolectados a través de esta aplicación.
+
+2. DATOS QUE RECOLECTAMOS
+• Datos de identificación: nombre, apellido, cédula, correo electrónico.
+• Datos de operación: vehículos, rutas, gastos e ingresos registrados.
+• Datos técnicos: token de notificaciones push, información del dispositivo.
+
+3. FINALIDAD DEL TRATAMIENTO
+Los datos se utilizan para:
+• Gestionar el acceso y funcionamiento de la cuenta del usuario.
+• Enviar notificaciones relacionadas con la operación de la flota.
+• Generar reportes internos de gestión.
+• Mejorar la experiencia y funcionalidades de la aplicación.
+
+4. BASE LEGAL
+El tratamiento se realiza con base en el consentimiento del titular, de conformidad con la Ley 1581 de 2012 y el Decreto 1377 de 2013.
+
+5. DERECHOS DEL TITULAR
+De acuerdo con la Ley Estatutaria 1581 de 2012, el titular tiene derecho a:
+• Conocer, actualizar y rectificar sus datos personales.
+• Solicitar prueba de la autorización otorgada.
+• Ser informado sobre el uso de sus datos.
+• Presentar quejas ante la Superintendencia de Industria y Comercio.
+• Revocar la autorización y solicitar la supresión de sus datos.
+
+6. SEGURIDAD
+Implementamos medidas técnicas y administrativas para proteger los datos contra acceso no autorizado, pérdida o divulgación.
+
+7. TRANSFERENCIA A TERCEROS
+Los datos no serán vendidos ni compartidos con terceros, salvo obligación legal o cuando sea necesario para la prestación del servicio (ej. proveedor de infraestructura en la nube).
+
+8. CONTACTO
+Para ejercer sus derechos o consultas: soporte@truckbook.com.co`,
+  },
+  dataauth: {
+    title: "Autorización de datos personales",
+    body: `AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES
+Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013
+
+Yo, el usuario titular, en calidad de persona natural, mediante la aceptación de esta autorización al momento del registro en TruckBook, manifiesto de manera libre, expresa, inequívoca e informada que:
+
+AUTORIZO a TruckBook para recolectar, almacenar, usar, circular, suprimir, procesar y en general, tratar mis datos personales, de conformidad con la Política de Privacidad de la aplicación, para las siguientes finalidades:
+
+1. Crear y gestionar mi cuenta de usuario en la plataforma.
+2. Enviar notificaciones push relacionadas con la actividad de mi flota.
+3. Generar reportes operativos de gastos, ingresos y gestión vehicular.
+4. Mejorar los servicios y funcionalidades de la aplicación.
+5. Cumplir con obligaciones legales aplicables.
+
+DATOS AUTORIZADOS PARA TRATAMIENTO:
+• Nombre completo y apellidos.
+• Número de cédula de ciudadanía.
+• Dirección de correo electrónico.
+• Número de teléfono.
+• Información de vehículos y actividad operativa.
+• Token de notificaciones del dispositivo móvil.
+
+DERECHOS QUE ME ASISTEN:
+Como titular tengo derecho a conocer, actualizar, rectificar y suprimir mis datos, así como a revocar esta autorización en cualquier momento, enviando una solicitud a soporte@truckbook.com.co.
+
+Esta autorización fue otorgada al momento de crear mi cuenta en TruckBook y constituye mi consentimiento expreso conforme a la normativa colombiana de protección de datos personales.
+
+Responsable del tratamiento: TruckBook
+Contacto del responsable: soporte@truckbook.com.co
+Superintendencia de Industria y Comercio: www.sic.gov.co`,
+  },
+};
+
 export default function Cuenta() {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
@@ -71,6 +200,10 @@ export default function Cuenta() {
   const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // ─── Legal modal ─────────────────────────────────────────────────────────
+  const [legalVisible, setLegalVisible] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc>("terms");
 
   // ─── Password change ─────────────────────────────────────────────────────
   const [securityVisible, setSecurityVisible] = useState(false);
@@ -252,9 +385,15 @@ export default function Cuenta() {
     }
   };
 
+  const openLegal = (doc: LegalDoc) => {
+    setLegalDoc(doc);
+    setLegalVisible(true);
+  };
+
   const handleItemPress = (id: string) => {
     if (id === "profile")  return openProfile();
     if (id === "security") return openSecurity();
+    if (id === "terms" || id === "privacy" || id === "dataauth") return openLegal(id as LegalDoc);
     Alert.alert("En desarrollo", "Disponible próximamente.");
   };
 
@@ -322,9 +461,29 @@ export default function Cuenta() {
               </TouchableOpacity>
             ))}
 
+            {/* LEGAL */}
+            <Text style={[s.sectionLabel, { color: c.textSecondary, marginTop: 8 }]}>Legal</Text>
+
+            {LEGAL_ITEMS.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[s.menuRow, card]}
+                onPress={() => handleItemPress(item.id)}
+                activeOpacity={0.7}>
+                <View style={[s.menuIconWrap, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}>
+                  <Ionicons name={item.icon} size={18} color={c.textSecondary} />
+                </View>
+                <View style={s.menuInfo}>
+                  <Text style={[s.menuLabel, { color: c.text }]}>{item.label}</Text>
+                  <Text style={[s.menuSub, { color: c.textMuted }]}>{item.subtitle}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+              </TouchableOpacity>
+            ))}
+
             {/* LOGOUT */}
             <TouchableOpacity
-              style={[s.logoutBtn, card, { borderColor: `${c.danger}30`, borderWidth: 1 }]}
+              style={[s.logoutBtn, card, { borderColor: `${c.danger}30`, borderWidth: 1, marginTop: 8 }]}
               onPress={handleLogout}
               disabled={loading}
               activeOpacity={0.7}>
@@ -534,6 +693,40 @@ export default function Cuenta() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* ═══════════════════════════════════════════════════════
+          LEGAL MODAL
+      ═══════════════════════════════════════════════════════ */}
+      <Modal
+        visible={legalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setLegalVisible(false)}>
+        <View style={s.modalOverlay}>
+          <Pressable style={s.modalBackdrop} onPress={() => setLegalVisible(false)} />
+          <View style={[s.legalSheet, { backgroundColor: c.cardBg, borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border }]}>
+            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+
+            {/* Header */}
+            <View style={s.legalHeader}>
+              <Text style={[s.modalTitle, { color: c.text, flex: 1 }]} numberOfLines={2}>
+                {LEGAL_CONTENT[legalDoc].title}
+              </Text>
+              <TouchableOpacity onPress={() => setLegalVisible(false)} hitSlop={12}>
+                <Ionicons name="close-circle" size={24} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Contenido con scroll */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={s.legalBody}>
+              <Text style={[s.legalText, { color: c.textSecondary }]}>
+                {LEGAL_CONTENT[legalDoc].body}
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -672,4 +865,27 @@ const s = StyleSheet.create({
 
   saveBtn: { borderRadius: 16, paddingVertical: 15, alignItems: "center", marginTop: 4 },
   saveBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+
+  // LEGAL MODAL
+  legalSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    maxHeight: "85%",
+  },
+  legalHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 16,
+  },
+  legalBody: {
+    paddingBottom: 48,
+  },
+  legalText: {
+    fontSize: 13,
+    lineHeight: 22,
+  },
 });
