@@ -30,7 +30,7 @@ interface StopIconProps {
 export const StopIconOutline = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -48,7 +48,7 @@ export const StopIconOutline = ({
 export const StopIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -67,7 +67,7 @@ export const StopIcon = ({
 export const GasStationIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -87,7 +87,7 @@ export const GasStationIcon = ({
 export const GasStationIconOutline = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -107,7 +107,7 @@ export const GasStationIconOutline = ({
 export const DollarIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -125,7 +125,7 @@ export const DollarIcon = ({
 export const DollarIconOutline = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -146,7 +146,7 @@ export const DollarIconOutline = ({
 export const FinancesIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -167,7 +167,7 @@ export const FinancesIcon = ({
 export const FinancesIconOutline = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -187,7 +187,7 @@ export const FinancesIconOutline = ({
 export const CuentaIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -211,7 +211,7 @@ export const CuentaIcon = ({
 export const CuentaIconOutline = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
   ...props
 }) => {
   return (
@@ -287,7 +287,7 @@ interface WeatherIconProps {
 export const SoleadoIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 32 32">
     <G fill={color}>
@@ -307,7 +307,7 @@ export const SoleadoIcon = ({
 export const NubeYSolIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 385.239 385.239">
     <G fill={color}>
@@ -323,7 +323,7 @@ export const NubeYSolIcon = ({
 export const NubeIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 330.248 330.248">
     <G fill={color}>
@@ -335,7 +335,7 @@ export const NubeIcon = ({
 export const LluviosoIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 357.853 357.853">
     <G fill={color}>
@@ -351,7 +351,7 @@ export const LluviosoIcon = ({
 export const TormentaIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 412.772 412.772">
     <G fill={color}>
@@ -364,7 +364,7 @@ export const TormentaIcon = ({
 export const CopoDeNieveIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 512 512">
     <G
@@ -399,7 +399,7 @@ export const CopoDeNieveIcon = ({
 export const TermometroIcon = ({
   width = 24,
   height = 24,
-  color = "currentColor",
+  color = "#0F172A",
 }: WeatherIconProps) => (
   <Svg width={width} height={height} viewBox="0 0 512 512">
     <G fill={color}>
