@@ -127,9 +127,22 @@ export default function Cuenta() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      // nombre: DB → user_metadata → parte del email
-      setNombre(perfil?.nombre ?? session.user.user_metadata?.nombre ?? "");
-      setApellido(perfil?.apellido ?? "");
+      const dbNombre   = perfil?.nombre   ?? session.user.user_metadata?.nombre ?? "";
+      const dbApellido = perfil?.apellido ?? "";
+
+      // Si apellido ya tiene valor en DB úsalo directamente.
+      // Si no, el registro guardó nombre+apellido juntos en el campo nombre → dividirlos.
+      if (dbApellido) {
+        setNombre(dbNombre);
+        setApellido(dbApellido);
+      } else if (dbNombre.trim().includes(" ")) {
+        const parts = dbNombre.trim().split(/\s+/);
+        setNombre(parts[0]);
+        setApellido(parts.slice(1).join(" "));
+      } else {
+        setNombre(dbNombre);
+        setApellido("");
+      }
       setTelefono(perfil?.telefono ?? "");
     } catch (error) {
       logger.error("Error cargando usuario:", error);
