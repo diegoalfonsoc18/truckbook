@@ -24,7 +24,6 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 
 const H_PAD = 20;
-const ACCENT = "#00D9A5";
 
 interface Servicio {
   id: string;
@@ -34,6 +33,8 @@ interface Servicio {
 
 interface Cliente {
   nombre: string;
+  empresa: string;
+  nit: string;
   telefono: string;
 }
 
@@ -123,8 +124,16 @@ function generarHTML(
           <div class="info-value">${placa || "—"}</div>
         </div>
         <div class="info-box">
-          <div class="info-label">Cliente</div>
+          <div class="info-label">Nombre / Pagador</div>
           <div class="info-value">${cliente.nombre || "—"}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Empresa</div>
+          <div class="info-value">${cliente.empresa || "—"}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">NIT / Documento</div>
+          <div class="info-value">${cliente.nit || "—"}</div>
         </div>
         <div class="info-box">
           <div class="info-label">Teléfono</div>
@@ -167,6 +176,7 @@ function generarHTML(
 export default function CuentaCobro() {
   const navigation = useNavigation<any>();
   const { colors: c } = useTheme();
+  const ACCENT = c.accent;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
 
@@ -182,7 +192,8 @@ export default function CuentaCobro() {
     year: "numeric",
   });
 
-  const [cliente, setCliente] = useState<Cliente>({ nombre: "", telefono: "" });
+  const [numero] = useState(() => generarNumero());
+  const [cliente, setCliente] = useState<Cliente>({ nombre: "", empresa: "", nit: "", telefono: "" });
   const [servicios, setServicios] = useState<Servicio[]>([
     { id: "1", descripcion: "", valor: "" },
   ]);
@@ -227,10 +238,11 @@ export default function CuentaCobro() {
   };
 
   const seleccionarContacto = (contacto: Contacts.Contact) => {
-    setCliente({
+    setCliente((prev) => ({
+      ...prev,
       nombre: contacto.name!,
       telefono: contacto.phoneNumbers![0].number?.replace(/\s/g, "") || "",
-    });
+    }));
     setContactosModal(false);
   };
 
@@ -269,7 +281,6 @@ export default function CuentaCobro() {
 
     setCargando(true);
     try {
-      const numero = generarNumero();
       const html = generarHTML(
         numero,
         hoy,
@@ -299,13 +310,13 @@ export default function CuentaCobro() {
         {/* HEADER */}
         <View style={s.header}>
           <TouchableOpacity
-            style={[s.backBtn, { backgroundColor: c.surface }]}
+            style={[s.backBtn, { backgroundColor: c.cardBg, borderColor: c.border }]}
             onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={20} color={c.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={[s.headerTitle, { color: c.text }]}>Cuenta de Cobro</Text>
-            <Text style={[s.headerSub, { color: c.textMuted }]}>{hoy}</Text>
+            <Text style={[s.headerSub, { color: c.textMuted }]}>{numero} · {hoy}</Text>
           </View>
           <TouchableOpacity
             style={[s.shareBtn, { backgroundColor: ACCENT }]}
@@ -332,7 +343,7 @@ export default function CuentaCobro() {
             keyboardShouldPersistTaps="handled">
 
             {/* CLIENTE */}
-            <Text style={[s.sectionLabel, { color: c.textMuted }]}>Cliente</Text>
+            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Cliente</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               <TouchableOpacity
                 style={[s.contactBtn, { borderColor: ACCENT + "40", backgroundColor: ACCENT + "0D" }]}
@@ -350,10 +361,37 @@ export default function CuentaCobro() {
                 <Ionicons name="person-outline" size={16} color={c.textMuted} style={s.inputIcon} />
                 <TextInput
                   style={[s.input, { color: c.text }]}
-                  placeholder="Nombre del cliente"
+                  placeholder="Nombre de quien paga"
                   placeholderTextColor={c.textMuted}
                   value={cliente.nombre}
                   onChangeText={(v) => setCliente((p) => ({ ...p, nombre: v }))}
+                />
+              </View>
+
+              <View style={[s.divider, { backgroundColor: c.divider }]} />
+
+              <View style={s.inputRow}>
+                <Ionicons name="business-outline" size={16} color={c.textMuted} style={s.inputIcon} />
+                <TextInput
+                  style={[s.input, { color: c.text }]}
+                  placeholder="Empresa (opcional)"
+                  placeholderTextColor={c.textMuted}
+                  value={cliente.empresa}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, empresa: v }))}
+                />
+              </View>
+
+              <View style={[s.divider, { backgroundColor: c.divider }]} />
+
+              <View style={s.inputRow}>
+                <Ionicons name="card-outline" size={16} color={c.textMuted} style={s.inputIcon} />
+                <TextInput
+                  style={[s.input, { color: c.text }]}
+                  placeholder="NIT o documento"
+                  placeholderTextColor={c.textMuted}
+                  value={cliente.nit}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, nit: v }))}
+                  keyboardType="numbers-and-punctuation"
                 />
               </View>
 
@@ -374,7 +412,7 @@ export default function CuentaCobro() {
 
             {/* SERVICIOS */}
             <View style={s.sectionRow}>
-              <Text style={[s.sectionLabel, { color: c.textMuted }]}>Servicios</Text>
+              <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Servicios</Text>
               <TouchableOpacity onPress={agregarServicio} style={s.addBtn}>
                 <Ionicons name="add" size={16} color={ACCENT} />
                 <Text style={[s.addBtnText, { color: ACCENT }]}>Agregar</Text>
@@ -384,35 +422,49 @@ export default function CuentaCobro() {
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               {servicios.map((item, index) => (
                 <View key={item.id}>
-                  <View style={s.servicioRow}>
+                  {/* Cabecera del servicio */}
+                  <View style={s.servicioHeader}>
+                    <Text style={[s.servicioNumero, { color: c.textSecondary }]}>
+                      Servicio {index + 1}
+                    </Text>
+                    {servicios.length > 1 && (
+                      <TouchableOpacity
+                        onPress={() => eliminarServicio(item.id)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Ionicons name="trash-outline" size={16} color={c.danger} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Input descripción */}
+                  <View style={s.inputRow}>
+                    <Ionicons name="document-text-outline" size={16} color={c.textMuted} style={s.inputIcon} />
                     <TextInput
-                      style={[s.servicioDesc, { color: c.text }]}
+                      style={[s.input, { color: c.text }]}
                       placeholder="Descripción (ej. Flete Bogotá–Medellín)"
                       placeholderTextColor={c.textMuted}
                       value={item.descripcion}
                       onChangeText={(v) => actualizarServicio(item.id, "descripcion", v)}
                     />
-                    <View style={s.servicioValorWrap}>
-                      <Text style={[s.servicioSign, { color: c.textMuted }]}>$</Text>
-                      <TextInput
-                        style={[s.servicioValor, { color: c.text }]}
-                        placeholder="0"
-                        placeholderTextColor={c.textMuted}
-                        value={item.valor}
-                        onChangeText={(v) => actualizarServicio(item.id, "valor", v.replace(/[^0-9]/g, ""))}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    {servicios.length > 1 && (
-                      <TouchableOpacity
-                        onPress={() => eliminarServicio(item.id)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                        <Ionicons name="close-circle" size={20} color={c.textMuted} />
-                      </TouchableOpacity>
-                    )}
                   </View>
+
+                  <View style={[s.divider, { backgroundColor: c.divider }]} />
+
+                  {/* Input valor */}
+                  <View style={s.inputRow}>
+                    <Text style={[s.inputIcon, s.currencySign, { color: c.textMuted }]}>$</Text>
+                    <TextInput
+                      style={[s.input, { color: c.text, fontWeight: "600" }]}
+                      placeholder="0"
+                      placeholderTextColor={c.textMuted}
+                      value={item.valor}
+                      onChangeText={(v) => actualizarServicio(item.id, "valor", v.replace(/[^0-9]/g, ""))}
+                      keyboardType="numeric"
+                    />
+                  </View>
+
                   {index < servicios.length - 1 && (
-                    <View style={[s.divider, { backgroundColor: c.divider }]} />
+                    <View style={[s.divider, { height: 6, backgroundColor: c.secondary }]} />
                   )}
                 </View>
               ))}
@@ -425,7 +477,7 @@ export default function CuentaCobro() {
             </View>
 
             {/* NOTA */}
-            <Text style={[s.sectionLabel, { color: c.textMuted }]}>Nota (opcional)</Text>
+            <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Nota (opcional)</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border, padding: 14 }]}>
               <TextInput
                 style={[s.notaInput, { color: c.text }]}
@@ -545,6 +597,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -563,10 +616,9 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: H_PAD, paddingBottom: 48 },
 
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
     marginBottom: 8,
     marginTop: 20,
   },
@@ -604,17 +656,16 @@ const s = StyleSheet.create({
   input: { flex: 1, fontSize: 15, paddingVertical: 12 },
 
   // Servicios
-  servicioRow: {
+  servicioHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
+    paddingTop: 12,
+    paddingBottom: 6,
   },
-  servicioDesc: { flex: 1, fontSize: 14 },
-  servicioValorWrap: { flexDirection: "row", alignItems: "center" },
-  servicioSign: { fontSize: 14, marginRight: 2 },
-  servicioValor: { fontSize: 14, fontWeight: "600", width: 80, textAlign: "right" },
+  servicioNumero: { fontSize: 11, fontWeight: "600", letterSpacing: 0.3 },
+  currencySign: { fontSize: 16, fontWeight: "600", marginRight: 10 },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -642,7 +693,7 @@ const s = StyleSheet.create({
   shareBtnBottomText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
   // Modal contactos
-  contactModal: { flex: 1 },
+  contactModal: { flex: 1, paddingTop: 8 },
   contactModalHeader: {
     flexDirection: "row",
     alignItems: "center",
