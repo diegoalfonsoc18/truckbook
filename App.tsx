@@ -23,6 +23,7 @@ import supabase from "./src/config/SupaBaseConfig";
 import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useRoleStore } from "./src/store/RoleStore";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
+import logger from "./src/utils/logger";
 
 // Componente interno que usa el tema
 function AppContent() {
@@ -57,10 +58,10 @@ function AppContent() {
           { onConflict: "user_id", ignoreDuplicates: true }
         );
         if (upsertErr) {
-          console.error("❌ Error en usuario DB:", upsertErr.message, upsertErr.code, upsertErr.details);
+          logger.error("❌ Error en usuario DB:", upsertErr.message, upsertErr.code, upsertErr.details);
         }
       } catch (e: any) {
-        console.error("❌ Error en usuario DB (catch):", e?.message ?? e);
+        logger.error("❌ Error en usuario DB (catch):", e?.message ?? e);
       }
     };
 
@@ -74,7 +75,7 @@ function AppContent() {
         ]);
       }
     }).catch((err) => {
-      console.error("❌ Error al inicializar sesión:", err);
+      logger.error("❌ Error al inicializar sesión:", err);
     }).finally(() => {
       setLoading(false);
     });

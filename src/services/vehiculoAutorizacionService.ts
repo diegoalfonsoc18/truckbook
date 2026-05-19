@@ -308,6 +308,25 @@ export async function aprobarSolicitud(
   solicitudId: string,
   propietarioId: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Verificar que la solicitud pertenece a un vehículo del propietario
+  const { data: solicitud } = await supabase
+    .from("vehiculo_conductores")
+    .select("vehiculo_placa")
+    .eq("id", solicitudId)
+    .maybeSingle();
+
+  if (!solicitud) return { success: false, error: "Solicitud no encontrada" };
+
+  const { data: ownership } = await supabase
+    .from("vehiculo_conductores")
+    .select("id")
+    .eq("vehiculo_placa", solicitud.vehiculo_placa)
+    .eq("conductor_id", propietarioId)
+    .eq("rol", "propietario")
+    .maybeSingle();
+
+  if (!ownership) return { success: false, error: "No tienes permiso para gestionar este vehículo" };
+
   const { data: rel, error } = await supabase
     .from("vehiculo_conductores")
     .update({
@@ -348,6 +367,25 @@ export async function rechazarSolicitud(
   solicitudId: string,
   propietarioId: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Verificar que la solicitud pertenece a un vehículo del propietario
+  const { data: solicitud } = await supabase
+    .from("vehiculo_conductores")
+    .select("vehiculo_placa")
+    .eq("id", solicitudId)
+    .maybeSingle();
+
+  if (!solicitud) return { success: false, error: "Solicitud no encontrada" };
+
+  const { data: ownership } = await supabase
+    .from("vehiculo_conductores")
+    .select("id")
+    .eq("vehiculo_placa", solicitud.vehiculo_placa)
+    .eq("conductor_id", propietarioId)
+    .eq("rol", "propietario")
+    .maybeSingle();
+
+  if (!ownership) return { success: false, error: "No tienes permiso para gestionar este vehículo" };
+
   const { data: rel, error } = await supabase
     .from("vehiculo_conductores")
     .update({
@@ -848,7 +886,8 @@ export async function cargarTodasSolicitudesPendientes(): Promise<{
  */
 export async function responderInvitacion(
   relacionId: string,
-  aceptar: boolean
+  aceptar: boolean,
+  userId: string
 ): Promise<{ success: boolean; error?: string }> {
   const nuevoEstado = aceptar ? "autorizado" : "rechazado";
 
@@ -859,11 +898,12 @@ export async function responderInvitacion(
       autorizado_at: new Date().toISOString(),
     })
     .eq("id", relacionId)
+    .eq("conductor_id", userId)
     .select();
 
   if (error) return { success: false, error: error.message };
   if (!data || data.length === 0) {
-    return { success: false, error: "No se pudo actualizar. Verifica permisos en Supabase." };
+    return { success: false, error: "No tienes permiso para responder esta invitación." };
   }
   return { success: true };
 }

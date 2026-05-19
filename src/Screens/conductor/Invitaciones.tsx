@@ -71,7 +71,7 @@ export default function Invitaciones() {
           style: aceptar ? "default" : "destructive",
           onPress: async () => {
             setRespondiendo(inv.relacion_id);
-            const resultado = await responderInvitacion(inv.relacion_id, aceptar);
+            const resultado = await responderInvitacion(inv.relacion_id, aceptar, user!.id);
             if (resultado.success) {
               Alert.alert(
                 aceptar ? "Aceptada" : "Rechazada",
