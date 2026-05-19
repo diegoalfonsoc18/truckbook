@@ -503,7 +503,7 @@ export default function Cuenta() {
                   <Ionicons
                     name={item.icon}
                     size={18}
-                    color={c.textSecondary}
+                    color={c.accent}
                   />
                 </View>
                 <View style={s.menuInfo}>
@@ -549,7 +549,7 @@ export default function Cuenta() {
                   <Ionicons
                     name={item.icon}
                     size={18}
-                    color={c.textSecondary}
+                    color={c.accent}
                   />
                 </View>
                 <View style={s.menuInfo}>
