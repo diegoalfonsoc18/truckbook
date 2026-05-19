@@ -433,27 +433,8 @@ export async function buscarConductorPorEmail(
     return { data: null, error: error.message };
   }
 
-  // Si no lo encontro por email, puede que el registro no tenga email guardado
-  // Intentar buscar todos los usuarios y ver si alguno coincide
   if (!data) {
-    logger.log("⚠️ No encontrado por email directo, buscando todos los usuarios...");
-    const { data: todos, error: errorTodos } = await supabase
-      .from("usuarios")
-      .select("user_id, nombre, email, cedula");
-
-    logger.log("📦 Todos los usuarios:", JSON.stringify(todos?.map(u => ({ nombre: u.nombre, email: u.email }))));
-
-    if (!errorTodos && todos) {
-      // Buscar match manual (por si el email tiene espacios o diferencias)
-      const encontrado = todos.find(
-        (u) => u.email?.toLowerCase()?.trim() === emailLimpio
-      );
-      if (encontrado) {
-        return { data: encontrado };
-      }
-    }
-
-    return { data: null, error: "No se encontro un usuario con ese correo. Verifica que el usuario este registrado en la app." };
+    return { data: null, error: "No se encontró un usuario con ese correo. Verifica que el usuario esté registrado en la app." };
   }
 
   return { data };
