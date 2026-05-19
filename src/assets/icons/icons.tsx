@@ -237,7 +237,11 @@ export const renderHome = ({ color, size, focused }: TabIconProps) => {
 export const renderGastos = ({ color, size, focused }: TabIconProps) => {
   const { colors } = useTheme();
   const iconColor = color ?? colors.text;
-  return <GasStationIconOutline width={26} height={26} color={iconColor} />;
+  return focused ? (
+    <GasStation width={26} height={26} color={iconColor} />
+  ) : (
+    <GasStationOutFilled width={26} height={26} color={iconColor} />
+  );
 };
 
 export const renderIngresos = ({ color, size, focused }: TabIconProps) => {
