@@ -65,32 +65,34 @@ function AppContent() {
       }
     };
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Leer sesión local (AsyncStorage) — instantáneo, sin red
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false); // mostrar app inmediatamente con datos en caché
+
+      // Sincronizar con DB en background sin bloquear la UI
       if (session?.user) {
-        await Promise.all([
+        Promise.all([
           asegurarUsuarioEnDB(session.user),
           useRoleStore.getState().cargarRolDesdeDB(session.user.id),
           useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
-        ]);
+        ]).catch((err) => logger.error("❌ Error en sync background:", err));
       }
     }).catch((err) => {
       logger.error("❌ Error al inicializar sesión:", err);
-    }).finally(() => {
       setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         if (session?.user) {
-          setLoading(true);
-          await asegurarUsuarioEnDB(session.user);
-          await Promise.all([
+          setSession(session);
+          // Sincronizar en background — no bloquear con loading spinner
+          Promise.all([
+            asegurarUsuarioEnDB(session.user),
             useRoleStore.getState().cargarRolDesdeDB(session.user.id),
             useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
-          ]);
-          setSession(session);
-          setLoading(false);
+          ]).catch((err) => logger.error("❌ Error en sync auth:", err));
         } else {
           // Logout: limpiar rol y vehículo
           useRoleStore.getState().clearRole();
