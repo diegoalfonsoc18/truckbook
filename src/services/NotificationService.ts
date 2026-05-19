@@ -55,34 +55,25 @@ export async function registrarPushToken(userId: string): Promise<void> {
   }
 }
 
-/** Envía notificación push vía Expo Push API */
+/**
+ * Envía notificación push a un usuario vía Supabase Edge Function.
+ * El push token nunca se expone al cliente — la Edge Function lo obtiene server-side.
+ */
 export async function enviarPushNotificacion(
-  pushToken: string,
+  targetUserId: string,
   title: string,
   body: string,
   data?: Record<string, any>
 ): Promise<void> {
   try {
-    await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Accept-Encoding": "gzip, deflate",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ to: pushToken, title, body, data, sound: "default" }),
+    const { error } = await supabase.functions.invoke("send-push-notification", {
+      body: { targetUserId, title, body, data },
     });
+
+    if (error) {
+      logger.error("Error enviando push:", error);
+    }
   } catch (err) {
     logger.error("Error enviando push:", err);
   }
-}
-
-/** Obtiene el push token de un usuario */
-export async function getPushTokenDeUsuario(userId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from("usuarios")
-    .select("push_token")
-    .eq("user_id", userId)
-    .maybeSingle();
-  return data?.push_token || null;
 }

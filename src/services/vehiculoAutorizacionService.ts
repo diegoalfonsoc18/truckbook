@@ -1,5 +1,5 @@
 import supabase from "../config/SupaBaseConfig";
-import { enviarPushNotificacion, getPushTokenDeUsuario } from "./NotificationService";
+import { enviarPushNotificacion } from "./NotificationService";
 import logger from "../utils/logger";
 
 export type EstadoAutorizacion = "pendiente" | "autorizado" | "rechazado";
@@ -220,15 +220,12 @@ export async function solicitarAccesoVehiculo(
     ];
 
     for (const destinatarioId of [...new Set(destinatarios)]) {
-      const token = await getPushTokenDeUsuario(destinatarioId);
-      if (token) {
-        await enviarPushNotificacion(
-          token,
-          "Nueva solicitud de acceso",
-          `${conductorNombre} solicita acceso al vehículo ${placa}`,
-          { placa, tipo: "solicitud" }
-        );
-      }
+      await enviarPushNotificacion(
+        destinatarioId,
+        "Nueva solicitud de acceso",
+        `${conductorNombre} solicita acceso al vehículo ${placa}`,
+        { placa, tipo: "solicitud" }
+      );
     }
   } catch (e) {
     // No falla el flujo principal si la notificación falla
@@ -343,15 +340,12 @@ export async function aprobarSolicitud(
   // Notificar al conductor
   try {
     if (rel?.conductor_id) {
-      const token = await getPushTokenDeUsuario(rel.conductor_id);
-      if (token) {
-        await enviarPushNotificacion(
-          token,
-          "Acceso aprobado ✓",
-          `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue aprobada. Ya puedes usarlo.`,
-          { placa: rel.vehiculo_placa, tipo: "aprobado" }
-        );
-      }
+      await enviarPushNotificacion(
+        rel.conductor_id,
+        "Acceso aprobado ✓",
+        `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue aprobada. Ya puedes usarlo.`,
+        { placa: rel.vehiculo_placa, tipo: "aprobado" }
+      );
     }
   } catch (e) {
     logger.warn("Error enviando push aprobación:", e);
@@ -402,15 +396,12 @@ export async function rechazarSolicitud(
   // Notificar al conductor
   try {
     if (rel?.conductor_id) {
-      const token = await getPushTokenDeUsuario(rel.conductor_id);
-      if (token) {
-        await enviarPushNotificacion(
-          token,
-          "Solicitud rechazada",
-          `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue rechazada.`,
-          { placa: rel.vehiculo_placa, tipo: "rechazado" }
-        );
-      }
+      await enviarPushNotificacion(
+        rel.conductor_id,
+        "Solicitud rechazada",
+        `Tu solicitud para el vehículo ${rel.vehiculo_placa} fue rechazada.`,
+        { placa: rel.vehiculo_placa, tipo: "rechazado" }
+      );
     }
   } catch (e) {
     logger.warn("Error enviando push rechazo:", e);
