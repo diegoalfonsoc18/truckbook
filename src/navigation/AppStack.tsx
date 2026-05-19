@@ -43,41 +43,47 @@ export default function AppStack() {
 
   return (
     <View style={styles.root}>
-    <Tab.Navigator
-      initialRouteName={getInitialRouteName()}
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: tabBarStyle,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: "#0F172A",
-        tabBarLabelStyle: styles.tabBarLabel,
+      <Tab.Navigator
+        initialRouteName={getInitialRouteName()}
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarStyle: tabBarStyle,
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarLabelStyle: styles.tabBarLabel,
 
-        tabBarIcon: ({ focused, color, size }) => {
-          switch (route.name) {
-            case "Home":     return renderHome({ color, size, focused });
-            case "Gastos":   return renderGastos({ color, size, focused });
-            case "Ingresos": return renderIngresos({ color, size, focused });
-            case "Reportes": return renderFinanzas({ color, size, focused });
-            case "Cuenta":   return renderCuenta({ color, size, focused });
-            default:         return null;
-          }
-        },
-      })}>
-      {/* CONDUCTOR (único rol activo por ahora) */}
-      {role && (
-        <>
-          <Tab.Screen name="Home" component={ConductorNavigation} />
-          <Tab.Screen name="Gastos" component={GastosNavigation} />
-          <Tab.Screen name="Ingresos" component={IngresosNavigation} />
-          <Tab.Screen name="Reportes" component={FinanzasNavigation} />
-          <Tab.Screen name="Cuenta" component={Account} />
-        </>
-      )}
+          tabBarIcon: ({ focused, color, size }) => {
+            switch (route.name) {
+              case "Home":
+                return renderHome({ color, size, focused });
+              case "Gastos":
+                return renderGastos({ color, size, focused });
+              case "Ingresos":
+                return renderIngresos({ color, size, focused });
+              case "Reportes":
+                return renderFinanzas({ color, size, focused });
+              case "Cuenta":
+                return renderCuenta({ color, size, focused });
+              default:
+                return null;
+            }
+          },
+        })}>
+        {/* CONDUCTOR (único rol activo por ahora) */}
+        {role && (
+          <>
+            <Tab.Screen name="Home" component={ConductorNavigation} />
+            <Tab.Screen name="Gastos" component={GastosNavigation} />
+            <Tab.Screen name="Ingresos" component={IngresosNavigation} />
+            <Tab.Screen name="Reportes" component={FinanzasNavigation} />
+            <Tab.Screen name="Cuenta" component={Account} />
+          </>
+        )}
 
-      {/* SIN ROL */}
-      {!role && <Tab.Screen name="Cuenta" component={Account} />}
-    </Tab.Navigator>
-    {/* FAB desactivado v1: {role && <FabEscanear />} */}
+        {/* SIN ROL */}
+        {!role && <Tab.Screen name="Cuenta" component={Account} />}
+      </Tab.Navigator>
+      {/* FAB desactivado v1: {role && <FabEscanear />} */}
     </View>
   );
 }
