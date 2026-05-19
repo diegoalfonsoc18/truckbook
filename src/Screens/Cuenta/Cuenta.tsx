@@ -8,6 +8,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -62,6 +67,14 @@ export default function Cuenta() {
 
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+
+  // ─── Password change modal ──────────────────────────────────────────────────
+  const [securityVisible, setSecurityVisible] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   // ─── Animations ────────────────────────────────────────────────────────────
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -136,8 +149,43 @@ export default function Cuenta() {
     ]);
   };
 
-  const handleItemPress = () =>
+  const openSecurity = () => {
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowNew(false);
+    setShowConfirm(false);
+    setSecurityVisible(true);
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) {
+      Alert.alert("Contraseña muy corta", "Debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("No coinciden", "Las contraseñas no son iguales.");
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        Alert.alert("Error", error.message);
+      } else {
+        setSecurityVisible(false);
+        Alert.alert("Listo", "Tu contraseña fue actualizada.");
+      }
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo actualizar.");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleItemPress = (id: string) => {
+    if (id === "security") return openSecurity();
     Alert.alert("En desarrollo", "Disponible próximamente.");
+  };
 
   const roleMeta = ROLE_META[role ?? "conductor"] ?? ROLE_META.conductor;
   const userInitial = user?.email?.charAt(0).toUpperCase() || "U";
@@ -204,7 +252,7 @@ export default function Cuenta() {
               <TouchableOpacity
                 key={item.id}
                 style={[s.menuRow, card]}
-                onPress={handleItemPress}
+                onPress={() => handleItemPress(item.id)}
                 activeOpacity={0.7}>
                 <View
                   style={[
@@ -265,6 +313,93 @@ export default function Cuenta() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* ── SECURITY MODAL ── */}
+      <Modal
+        visible={securityVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSecurityVisible(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={s.modalOverlay}>
+          <Pressable style={s.modalBackdrop} onPress={() => setSecurityVisible(false)} />
+          <View
+            style={[
+              s.modalSheet,
+              {
+                backgroundColor: c.cardBg,
+                borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+              },
+            ]}>
+            {/* Handle */}
+            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+
+            {/* Title */}
+            <View style={s.modalHeader}>
+              <View style={[s.modalIconWrap, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : c.surface }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={c.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.modalTitle, { color: c.text }]}>Cambiar contraseña</Text>
+                <Text style={[s.modalSubtitle, { color: c.textMuted }]}>Mínimo 8 caracteres</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSecurityVisible(false)} hitSlop={12}>
+                <Ionicons name="close-circle" size={24} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Nueva contraseña */}
+            <Text style={[s.inputLabel, { color: c.textSecondary }]}>Nueva contraseña</Text>
+            <View style={[s.inputRow, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: c.border }]}>
+              <TextInput
+                style={[s.input, { color: c.text }]}
+                placeholder="••••••••"
+                placeholderTextColor={c.textMuted}
+                secureTextEntry={!showNew}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity onPress={() => setShowNew((v) => !v)} hitSlop={10}>
+                <Ionicons name={showNew ? "eye-off-outline" : "eye-outline"} size={18} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Confirmar contraseña */}
+            <Text style={[s.inputLabel, { color: c.textSecondary }]}>Confirmar contraseña</Text>
+            <View style={[s.inputRow, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface, borderColor: c.border }]}>
+              <TextInput
+                style={[s.input, { color: c.text }]}
+                placeholder="••••••••"
+                placeholderTextColor={c.textMuted}
+                secureTextEntry={!showConfirm}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity onPress={() => setShowConfirm((v) => !v)} hitSlop={10}>
+                <Ionicons name={showConfirm ? "eye-off-outline" : "eye-outline"} size={18} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón */}
+            <TouchableOpacity
+              style={[s.saveBtn, { backgroundColor: c.accent, opacity: savingPassword ? 0.7 : 1 }]}
+              onPress={handleChangePassword}
+              disabled={savingPassword}
+              activeOpacity={0.8}>
+              {savingPassword ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={s.saveBtnText}>Guardar contraseña</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -363,4 +498,64 @@ const s = StyleSheet.create({
   logoutText: { fontSize: 15, fontWeight: "700" },
 
   version: { fontSize: 11, textAlign: "center" },
+
+  // MODAL
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 36,
+    paddingTop: 12,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 24,
+  },
+  modalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTitle: { fontSize: 17, fontWeight: "700", letterSpacing: -0.3 },
+  modalSubtitle: { fontSize: 12, marginTop: 2 },
+
+  inputLabel: { fontSize: 12, fontWeight: "600", marginBottom: 6, letterSpacing: 0.2 },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  input: { flex: 1, fontSize: 15 },
+
+  saveBtn: {
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  saveBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 });
