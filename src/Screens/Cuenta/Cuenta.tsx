@@ -137,8 +137,9 @@ export default function Cuenta() {
         setApellido(dbApellido);
       } else if (dbNombre.trim().includes(" ")) {
         const parts = dbNombre.trim().split(/\s+/);
-        setNombre(parts[0]);
-        setApellido(parts.slice(1).join(" "));
+        // Última palabra → apellido, el resto → nombre
+        setNombre(parts.slice(0, -1).join(" "));
+        setApellido(parts[parts.length - 1]);
       } else {
         setNombre(dbNombre);
         setApellido("");
