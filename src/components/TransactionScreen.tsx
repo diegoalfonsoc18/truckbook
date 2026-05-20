@@ -992,15 +992,7 @@ export default function TransactionScreen({
                     : `Nuevo ${title.slice(0, -1).toLowerCase()}`}
                 </Text>
 
-                {/* Botón escanear factura con IA (solo al agregar) */}
-                {!isEditing && tipoTransaccion && (
-                  <EscanearButton
-                    tipo={tipoTransaccion}
-                    accentColor={accentColor}
-                    isDark={isDark}
-                    onDone={() => setModalVisible(false)}
-                  />
-                )}
+                {/* Botón escanear factura con IA — deshabilitado en esta versión */}
 
                 {/* Contenido scrollable */}
                 <ScrollView
