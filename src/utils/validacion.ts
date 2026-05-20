@@ -18,8 +18,8 @@ export function validarMonto(valor: string): ResultadoValidacion {
     return { valido: false, error: "Ingresa un monto" };
   }
 
-  // Permitir comas como separador decimal (ej. "1,5" → 1.5)
-  const normalizado = valor.trim().replace(",", ".");
+  // Quitar puntos de miles y permitir coma decimal (ej. "1.500.000" → 1500000, "1,5" → 1.5)
+  const normalizado = valor.trim().replace(/\./g, "").replace(",", ".");
   const numero = parseFloat(normalizado);
 
   if (isNaN(numero)) {
@@ -127,7 +127,7 @@ export function validarDescripcion(texto: string): ResultadoValidacion {
 
 /** Parsea un string de monto ya validado. Devuelve 0 si falla (nunca debería). */
 export function parsearMonto(valor: string): number {
-  const normalizado = valor.trim().replace(",", ".");
+  const normalizado = valor.trim().replace(/\./g, "").replace(",", ".");
   const n = parseFloat(normalizado);
   return isFinite(n) && n > 0 ? n : 0;
 }

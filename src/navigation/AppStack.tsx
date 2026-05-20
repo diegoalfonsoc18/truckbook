@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +24,22 @@ export default function AppStack() {
   const { colors, isDark } = useTheme();
   const role = useRoleStore((state) => state.role);
   const insets = useSafeAreaInsets();
+
+  // Esperar a que Zustand rehidrate desde AsyncStorage antes de montar el navigator.
+  // Así getInitialRouteName() recibe el rol real y no null.
+  const [hydrated, setHydrated] = useState(
+    () => useRoleStore.persist.hasHydrated()
+  );
+
+  useEffect(() => {
+    if (hydrated) return;
+    const unsub = useRoleStore.persist.onFinishHydration(() =>
+      setHydrated(true)
+    );
+    return unsub;
+  }, []);
+
+  if (!hydrated) return null;
 
   const getInitialRouteName = (): "Home" | "Cuenta" => {
     if (!role) return "Cuenta";

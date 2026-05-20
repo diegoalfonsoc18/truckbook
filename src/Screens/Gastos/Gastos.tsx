@@ -23,7 +23,7 @@ const GASTOS_CATEGORIAS: Categoria[] = [
   { id: "peajes",        name: "Peajes",      iconName: "toll"    as IconName, color: "#00D9A5", size: 60 },
   { id: "comida",        name: "Comida",      iconName: "food"    as IconName, color: "#FF6B6B", size: 60 },
   { id: "hospedaje",     name: "Hospedaje",   iconName: "hotel"   as IconName, color: "#6C5CE7", size: 60 },
-  { id: "mantenimiento", name: "Manteni.",    iconName: "tool"    as IconName, color: "#74B9FF", size: 60 },
+  { id: "mantenimiento", name: "Taller",      iconName: "tool"    as IconName, color: "#74B9FF", size: 60 },
   { id: "parqueadero",   name: "Parqueo",     iconName: "parking" as IconName, color: "#FD79A8", size: 60 },
   { id: "otros",         name: "Otros",       iconName: "otros"   as IconName, color: "#636E72", size: 60 },
 ];

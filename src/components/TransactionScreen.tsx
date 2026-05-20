@@ -1,6 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { validarMonto, validarFecha, parsearMonto } from "../utils/validacion";
 import { localDateStr } from "../utils/dataUtils";
+
+/** Formatea un número o string de dígitos como pesos colombianos sin símbolo: "1500000" → "1.500.000" */
+function formatMontoInput(raw: string | number): string {
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 import {
   View,
   Text,
@@ -511,6 +518,10 @@ export default function TransactionScreen({
     ? [...categorias, ...subcategorias]
     : categorias;
 
+  // Nombre de la categoría seleccionada para el título del modal
+  const catSeleccionada = allCategorias.find((c) => c.id === selectedCat);
+  const modalTitulo = catSeleccionada?.name ?? title.slice(0, -1);
+
   const filtered = transactions
     .filter((t) => t.placa === placaActual && t.fecha === selectedDate)
     .filter((t, i, self) => i === self.findIndex((x) => x.id === t.id));
@@ -566,7 +577,7 @@ export default function TransactionScreen({
   const openEdit = (id: string) => {
     const t = transactions.find((x) => x.id === id);
     if (!t) return;
-    setEditValue(String(t.monto));
+    setEditValue(formatMontoInput(t.monto));
     setEditId(id);
     setEditDate(t.fecha);
     setSelectedCat(t.tipo?.toLowerCase() || null);
@@ -932,7 +943,7 @@ export default function TransactionScreen({
                 ]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>
-                  Mantenimiento
+                  Taller
                 </Text>
                 <View style={s.subGrid}>
                   {subcategorias.map((sub) => (
@@ -990,8 +1001,8 @@ export default function TransactionScreen({
                 <View style={[s.handle, { backgroundColor: c.border }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>
                   {isEditing
-                    ? `Editar ${title.slice(0, -1).toLowerCase()}`
-                    : `Nuevo ${title.slice(0, -1).toLowerCase()}`}
+                    ? `Editar ${modalTitulo.toLowerCase()}`
+                    : modalTitulo}
                 </Text>
 
                 {/* Botón escanear factura con IA — deshabilitado en esta versión */}
@@ -1029,9 +1040,6 @@ export default function TransactionScreen({
                               />
                             )}
                           </View>
-                          <Text style={[s.selectedCatName, { color: c.text }]}>
-                            {cat?.name || selectedCat}
-                          </Text>
                         </View>
                       );
                     })()}
@@ -1135,7 +1143,9 @@ export default function TransactionScreen({
                         placeholderTextColor={c.textMuted}
                         keyboardType="numeric"
                         value={editValue}
-                        onChangeText={setEditValue}
+                        onChangeText={(text) =>
+                          setEditValue(formatMontoInput(text))
+                        }
                         autoFocus={
                           !(hasCustomDescription && selectedCat === "otros")
                         }
@@ -1624,10 +1634,9 @@ const s = StyleSheet.create({
   // INPUTS
   inputGroup: { marginBottom: 14 },
   inputLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    textTransform: "uppercase" as const,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0,
     marginBottom: 8,
   },
   inputRow: {

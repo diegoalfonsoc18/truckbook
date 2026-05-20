@@ -27,7 +27,7 @@ const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "anticipo",     name: "Anticipo",       iconName: "advance"  as IconName, color: "#74B9FF", size: 60 },
   { id: "reembolso",    name: "Reembolso",      iconName: "refund"   as IconName, color: "#FD79A8", size: 60 },
   { id: "otro",         name: "Otro",           iconName: "otros"    as IconName, color: "#6C5CE7", size: 60 },
-  { id: "cuenta_cobro", name: "Cta. de Cobro", iconName: "factura"  as IconName, color: "#E17055", size: 60 },
+  { id: "cuenta_cobro", name: "Cobro",          iconName: "factura"  as IconName, color: "#E17055", size: 60 },
 ];
 
 export default function Ingresos() {
