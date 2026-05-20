@@ -19,6 +19,7 @@ import {
   Pressable,
   Linking,
 } from "react-native";
+import Svg, { Path, Circle, Line, G, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Rect } from "react-native-svg";
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -305,102 +306,214 @@ function WidgetClima({ isDark }: WProps) {
   );
 }
 
+// ─── Gauge estilo "Threat Level" ─────────────────────────────────────────────
+// Arco amplio ~220°, gradiente rojo→amarillo→verde, ticks, dot brillante.
+// Fondo siempre oscuro (dashboard feel).
+function GaugeBalance({
+  ratio,
+  isDark,
+  balance,
+  totalI,
+  totalG,
+  balSem,
+}: {
+  ratio: number;
+  isDark: boolean;
+  balance: number;
+  balColor: string;
+  totalI: number;
+  totalG: number;
+  balSem: number;
+}) {
+  const W  = WIDGET_SIZE;
+  const H  = WIDGET_HEIGHT;
+  const CX = W / 2;
+
+  // Geometría: R calibrado para que el arco vaya de borde a borde,
+  // pico en y≈22, extremos en y≈108.
+  const R   = 62;
+  const CY  = 87;   // pico en y = CY - R = 25 ✓; extremos en y ≈ CY + R*sin(20°) = 108 ✓
+
+  const START = 160; // grado inicio (izq-abajo)
+  const SPAN  = 220; // barrido total clockwise → fin en 380°=20° (der-abajo)
+  const FILL_W = 8;  // grosor arco gradiente
+
+  const deg2rad = (d: number) => (d * Math.PI) / 180;
+  const pt = (deg: number, r = R) => ({
+    x: CX + r * Math.cos(deg2rad(deg)),
+    y: CY + r * Math.sin(deg2rad(deg)),
+  });
+
+  // Path de arco clockwise
+  const arcPath = (fromDeg: number, sweep: number, r = R): string => {
+    if (sweep < 0.5) return "";
+    const s = pt(fromDeg, r);
+    const e = pt(fromDeg + sweep, r);
+    const large = sweep > 180 ? 1 : 0;
+    return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`;
+  };
+
+  const clamp = (v: number) => Math.max(0.005, Math.min(0.995, v));
+  const filled    = clamp(ratio) * SPAN;
+  const fillEndDeg = START + filled;
+  const dotPt     = pt(fillEndDeg);
+
+  // Gradiente: extremo izquierdo → extremo derecho del arco
+  const gradLX = pt(START).x;
+  const gradRX = pt(START + SPAN).x;
+
+  // Color del dot según zona
+  const dotColor =
+    ratio < 0.38 ? "#EF4444"
+    : ratio < 0.62 ? "#FFB800"
+    : "#22C55E";
+
+  // Estado del balance
+  const statusLabel =
+    ratio < 0.38 ? "Negativo"
+    : ratio < 0.62 ? "Equilibrio"
+    : "Positivo";
+  const statusColor =
+    ratio < 0.38 ? "#F87171"
+    : ratio < 0.62 ? "#FBBF24"
+    : "#4ADE80";
+
+  // Ticks a lo largo del arco completo (fuera del arco, más cortos)
+  const ticks: Array<{ o: {x:number;y:number}; i: {x:number;y:number}; major: boolean }> = [];
+  for (let i = 0; i <= SPAN; i += 5) {
+    const deg    = START + i;
+    const major  = i % 20 === 0;
+    const outerR = R + 3;
+    const innerR = major ? R + 3 - 9 : R + 3 - 5;
+    ticks.push({ o: pt(deg, outerR), i: pt(deg, innerR), major });
+  }
+
+  // Formato compacto
+  const fmt = (n: number) => {
+    const abs  = Math.abs(n);
+    const sign = n < 0 ? "-" : "";
+    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000)     return `${sign}${Math.round(abs / 1_000)}K`;
+    return `${sign}${abs}`;
+  };
+
+  // Posiciones de las etiquetas de extremo del arco
+  const leftLbl  = pt(START, R + 18);
+  const rightLbl = pt(START + SPAN, R + 18);
+
+  return (
+    <Svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0 }}>
+      <Defs>
+        {/* Gradiente horizontal — el arco va de izq (rojo) a der (verde) */}
+        <SvgGradient id="gfill" x1={gradLX} y1={0} x2={gradRX} y2={0} gradientUnits="userSpaceOnUse">
+          <Stop offset="0"    stopColor="#EF4444" />
+          <Stop offset="0.42" stopColor="#FFB800" />
+          <Stop offset="1"    stopColor="#22C55E" />
+        </SvgGradient>
+      </Defs>
+
+      {/* ── Fondo oscuro ── */}
+      <Rect width={W} height={H} fill="#111318" rx={16} />
+
+      {/* ── Ticks del arco completo ── */}
+      {ticks.map((t, idx) => (
+        <Line key={idx}
+          x1={t.o.x} y1={t.o.y} x2={t.i.x} y2={t.i.y}
+          stroke={t.major ? "#3D4258" : "#272B3A"}
+          strokeWidth={t.major ? 1.6 : 0.9}
+          strokeLinecap="round"
+        />
+      ))}
+
+      {/* ── Arco con gradiente (porción activa) ── */}
+      <Path
+        d={arcPath(START, filled)}
+        stroke="url(#gfill)"
+        strokeWidth={FILL_W}
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* ── Dot brillante en la punta del arco ── */}
+      <Circle cx={dotPt.x} cy={dotPt.y} r={13} fill={dotColor} opacity={0.12} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={7}  fill={dotColor} opacity={0.35} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={4}  fill={dotColor} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={2}  fill="#FFFFFF"  opacity={0.85} />
+
+      {/* ── Balance — número grande en el centro del dial ── */}
+      <SvgText
+        x={CX} y={CY + 8}
+        fontSize={26} fontWeight="800"
+        fill="#FFFFFF" textAnchor="middle" letterSpacing={-1}>
+        {fmt(balance)}
+      </SvgText>
+
+      {/* ── Estado (Positivo / Equilibrio / Negativo) ── */}
+      <SvgText
+        x={CX} y={CY + 23}
+        fontSize={10} fontWeight="700"
+        fill={statusColor} textAnchor="middle">
+        {statusLabel}
+      </SvgText>
+
+      {/* ── Zona debajo del arco: Ingresos (izq) y Gastos (der) ── */}
+      <SvgText
+        x={14} y={H - 28}
+        fontSize={9} fontWeight="600"
+        fill="#4ADE80" textAnchor="start">
+        {`↑ ${fmt(totalI)}`}
+      </SvgText>
+      <SvgText
+        x={W - 14} y={H - 28}
+        fontSize={9} fontWeight="600"
+        fill="#F87171" textAnchor="end">
+        {`↓ ${fmt(totalG)}`}
+      </SvgText>
+
+      {/* ── Semana — centrado en la base ── */}
+      <SvgText
+        x={CX} y={H - 14}
+        fontSize={8} fontWeight="500"
+        fill="#4B5268" textAnchor="middle">
+        {`Sem. ${fmt(balSem)}`}
+      </SvgText>
+    </Svg>
+  );
+}
+
 // ─── Widget: Resumen del día ──────────────────────────────────────────────────
 function WidgetResumen({ isDark }: WProps) {
-  const gastos = useGastosStore((s) => s.gastos);
+  const gastos   = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
 
-  // Hoy
-  const gastosHoy = gastos.filter((g) =>
-    (g.fecha ?? g.created_at ?? "").startsWith(hoy),
-  );
-  const ingresosHoy = ingresos.filter((i) =>
-    (i.fecha ?? i.created_at ?? "").startsWith(hoy),
-  );
+  const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
+  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
   const totalG = gastosHoy.reduce((a, g) => a + (g.monto ?? 0), 0);
   const totalI = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
 
-  // Semana (últimos 7 días)
   const hace7 = new Date();
   hace7.setDate(hace7.getDate() - 6);
   const hace7Str = `${hace7.getFullYear()}-${String(hace7.getMonth() + 1).padStart(2, "0")}-${String(hace7.getDate()).padStart(2, "0")}`;
-  const totalGSemana = gastos
-    .filter((g) => (g.fecha ?? g.created_at ?? "") >= hace7Str)
-    .reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalISemana = ingresos
-    .filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str)
-    .reduce((a, i) => a + (i.monto ?? 0), 0);
-  const balanceSemana = totalISemana - totalGSemana;
+  const totalGSem = gastos.filter((g) => (g.fecha ?? g.created_at ?? "") >= hace7Str).reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalISem = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str).reduce((a, i) => a + (i.monto ?? 0), 0);
+  const balSem = totalISem - totalGSem;
 
-  const balColor =
-    balance >= 0
-      ? isDark
-        ? "#34D399"
-        : "#059669"
-      : isDark
-        ? "#F87171"
-        : "#DC2626";
-
-  const verdeColor = isDark ? "#34D399" : "#059669";
-  const rojoColor = isDark ? "#F87171" : "#DC2626";
-
-  // Barra proporcional ingreso vs gasto
-  const total = totalI + totalG;
+  const total  = totalI + totalG;
   const ratioI = total > 0 ? totalI / total : 0.5;
 
-  const registros = `${gastosHoy.length} gasto${gastosHoy.length !== 1 ? "s" : ""} · ${ingresosHoy.length} ingreso${ingresosHoy.length !== 1 ? "s" : ""}`;
-
-  const resumenBg =
-    balance >= 0
-      ? isDark
-        ? "#0D2E1A"
-        : "#EDFAF3"
-      : isDark
-        ? "#2E0D0D"
-        : "#FAEAEA";
-
   return (
-    <View style={[s.wCard, { backgroundColor: resumenBg }]}>
-      {/* Label */}
-      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]}>Balance hoy</Text>
-
-      {/* Balance grande */}
-      <Text style={[s.wCardTemp, { color: balColor }]}>
-        {formatCOP(balance)}
-      </Text>
-
-      {/* Ingresos y gastos */}
-      <View style={s.wCardRowInline}>
-        <Text style={[s.wCardSub, { color: verdeColor }]}>
-          ↑ {formatCOP(totalI)}
-        </Text>
-        <Text style={[s.wCardSub, { color: rojoColor }]}>
-          ↓ {formatCOP(totalG)}
-        </Text>
-      </View>
-
-      {/* Barra visual */}
-      <View
-        style={[s.wBarBg, { backgroundColor: isDark ? "#333" : "#E5E7EB" }]}>
-        <View
-          style={[s.wBarFill, { flex: ratioI, backgroundColor: verdeColor }]}
-        />
-        <View
-          style={[s.wBarFill, { flex: 1 - ratioI, backgroundColor: rojoColor }]}
-        />
-      </View>
-
-      {/* Registros */}
-      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]} numberOfLines={1}>
-        {registros}
-      </Text>
-
-      {/* Semana */}
-      <Text style={[s.wCardLabel, { color: MUTED(isDark) }]}>
-        Semana {formatCOP(balanceSemana)}
-      </Text>
+    <View style={[s.wCard, { padding: 0, overflow: "hidden" }]}>
+      <GaugeBalance
+        ratio={ratioI}
+        isDark={isDark}
+        balance={balance}
+        balColor=""
+        totalI={totalI}
+        totalG={totalG}
+        balSem={balSem}
+      />
     </View>
   );
 }
