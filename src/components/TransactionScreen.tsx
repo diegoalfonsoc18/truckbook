@@ -518,8 +518,13 @@ export default function TransactionScreen({
     ? [...categorias, ...subcategorias]
     : categorias;
 
-  // Nombre de la categoría seleccionada para el título del modal
-  const catSeleccionada = allCategorias.find((c) => c.id === selectedCat);
+  // Nombre de la categoría seleccionada para el título del modal.
+  // Busca por id (al agregar) o por nombre en minúsculas (al editar, donde selectedCat = tipo guardado)
+  const catSeleccionada = allCategorias.find(
+    (c) =>
+      c.id === selectedCat ||
+      c.name.toLowerCase() === (selectedCat ?? "").toLowerCase()
+  );
   const modalTitulo = catSeleccionada?.name ?? title.slice(0, -1);
 
   const filtered = transactions
@@ -1016,7 +1021,9 @@ export default function TransactionScreen({
                   {selectedCat &&
                     (() => {
                       const cat = allCategorias.find(
-                        (x) => x.id === selectedCat,
+                        (x) =>
+                          x.id === selectedCat ||
+                          x.name.toLowerCase() === (selectedCat ?? "").toLowerCase(),
                       );
                       return (
                         <View style={s.selectedCat}>
