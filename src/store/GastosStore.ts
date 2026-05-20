@@ -10,8 +10,10 @@ export interface Gasto {
   descripcion: string;
   monto: number;
   fecha: string;
-  estado: "pendiente" | "aprobado" | "rechazado";
+  estado: "pendiente" | "aprobado" | "rechazado" | "proximo" | "vencido" | "pagado";
   created_at: string;
+  // Campos para Centro de Pendientes
+  fecha_vencimiento?: string | null;
 }
 
 interface GastosState {

@@ -10,8 +10,12 @@ export interface Ingreso {
   descripcion: string;
   monto: number;
   fecha: string;
-  estado: "pendiente" | "confirmado" | "pagado";
+  estado: "pendiente" | "confirmado" | "pagado" | "vencido" | "parcial";
   created_at: string;
+  // Campos para Centro de Pendientes
+  fecha_vencimiento?: string | null;
+  monto_pagado?: number | null;
+  cliente?: string | null;
 }
 
 interface IngresosState {
