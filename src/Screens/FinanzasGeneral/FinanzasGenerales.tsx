@@ -335,11 +335,57 @@ export default function FinanzasGenerales() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
+  const [exportModal, setExportModal] = useState(false);
   const [view, setView] = useState<ViewType>("meses");
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">(
-    "inicio",
-  );
+  const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">("inicio");
+  const [calendarTarget, setCalendarTarget] = useState<"main" | "export">("main");
+
+  // Estado del modal de exportación
+  type PeriodoRapido = "semana" | "mes" | "mes_anterior" | "trimestre" | "año" | "personalizado";
+  const [periodoRapido, setPeriodoRapido] = useState<PeriodoRapido>("mes");
+  const [exportRango, setExportRango] = useState<{ inicio: string; fin: string }>(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    return { inicio: `${y}-${m}-01`, fin: `${y}-${m}-${String(new Date(y, now.getMonth()+1, 0).getDate()).padStart(2,"0")}` };
+  });
+
+  const calcularRangoPeriodo = (p: PeriodoRapido): { inicio: string; fin: string } => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    if (p === "semana") {
+      const lunes = new Date(now); lunes.setDate(now.getDate() - ((now.getDay()+6)%7));
+      const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6);
+      return { inicio: iso(lunes), fin: iso(domingo) };
+    }
+    if (p === "mes") {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      return { inicio: iso(first), fin: iso(last) };
+    }
+    if (p === "mes_anterior") {
+      const first = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const last = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { inicio: iso(first), fin: iso(last) };
+    }
+    if (p === "trimestre") {
+      const firstMonth = Math.floor(now.getMonth()/3)*3;
+      const first = new Date(now.getFullYear(), firstMonth, 1);
+      const last = new Date(now.getFullYear(), firstMonth+3, 0);
+      return { inicio: iso(first), fin: iso(last) };
+    }
+    if (p === "año") {
+      return { inicio: `${now.getFullYear()}-01-01`, fin: `${now.getFullYear()}-12-31` };
+    }
+    return exportRango; // personalizado — mantener lo que ya tiene
+  };
+
+  const seleccionarPeriodo = (p: PeriodoRapido) => {
+    setPeriodoRapido(p);
+    if (p !== "personalizado") setExportRango(calcularRangoPeriodo(p));
+  };
 
   const [placasDisponibles, setPlacasDisponibles] = useState<string[]>([]);
   const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(
@@ -571,41 +617,58 @@ export default function FinanzasGenerales() {
     return date.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
   };
 
-  const openCalendar = (type: "inicio" | "fin") => {
+  const openCalendar = (type: "inicio" | "fin", target: "main" | "export" = "main") => {
     setSelectingDate(type);
+    setCalendarTarget(target);
     setCalendarVisible(true);
   };
 
   const shadow = getShadow(isDark, "sm");
 
-  const exportar = async () => {
+  const generarPDF = async () => {
     if (exportando) return;
+    const r = exportRango;
     const gastosDetalle = gastosPorPlaca.filter(
-      (g) => (!rango.inicio || g.fecha >= rango.inicio) && (!rango.fin || g.fecha <= rango.fin),
+      (g) => g.fecha >= r.inicio && g.fecha <= r.fin,
     );
     const ingresosDetalle = ingresosPorPlaca.filter(
-      (i) => (!rango.inicio || i.fecha >= rango.inicio) && (!rango.fin || i.fecha <= rango.fin),
+      (i) => i.fecha >= r.inicio && i.fecha <= r.fin,
     );
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
       Alert.alert("Sin datos", "No hay transacciones en el período seleccionado.");
       return;
     }
+
+    // Recalcular datos agrupados para el período del informe
+    const gFilt = gastosDetalle.map((g) => ({ fecha: g.fecha, value: g.monto }));
+    const iFilt = ingresosDetalle.map((i) => ({ fecha: i.fecha, value: i.monto }));
+    const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, 7));
+    const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, 7));
+    const keys = Array.from(new Set([...Object.keys(gGrp), ...Object.keys(iGrp)])).sort();
+    const ingPeriodo = keys.map((k) => Number(iGrp[k]) || 0);
+    const gasPeriodo = keys.map((k) => Number(gGrp[k]) || 0);
+    const totIng = ingPeriodo.reduce((a, b) => a + b, 0);
+    const totGas = gasPeriodo.reduce((a, b) => a + b, 0);
+    const bal = totIng - totGas;
+    const rent = totIng === 0 ? "0" : ((bal / totIng) * 100).toFixed(1);
+
     setExportando(true);
+    setExportModal(false);
     try {
       const html = generarReporteHTML({
         placas: placasActivas,
-        rangoInicio: rango.inicio,
-        rangoFin: rango.fin,
-        totalIngresos,
-        totalGastos,
-        balance,
-        rentabilidad: String(rentabilidad),
-        periodos: allKeys,
-        ingresosPorPeriodo: chartIngresosData,
-        gastosPorPeriodo: chartGastosData,
+        rangoInicio: r.inicio,
+        rangoFin: r.fin,
+        totalIngresos: totIng,
+        totalGastos: totGas,
+        balance: bal,
+        rentabilidad: rent,
+        periodos: keys,
+        ingresosPorPeriodo: ingPeriodo,
+        gastosPorPeriodo: gasPeriodo,
         gastosDetalle,
         ingresosDetalle,
-        view,
+        view: "meses",
       });
       const { uri } = await Print.printToFileAsync({ html, base64: false });
       await Sharing.shareAsync(uri, {
@@ -703,33 +766,21 @@ export default function FinanzasGenerales() {
                 Análisis financiero
               </Text>
             </View>
-            <View style={styles.headerRight}>
-              {!esMultiVehiculo && (
-                <View
-                  style={[
-                    styles.placaBadge,
-                    {
-                      backgroundColor: c.plateYellow,
-                      borderColor: c.plateBorder,
-                      borderWidth: 1,
-                    },
-                  ]}>
-                  <Text style={[styles.placaText, { color: c.plateText }]}>
-                    {placaActual}
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity
-                style={[styles.exportBtn, { backgroundColor: c.cardBg, borderColor: c.border }]}
-                onPress={exportar}
-                disabled={exportando}
-                activeOpacity={0.7}>
-                {exportando
-                  ? <ActivityIndicator size="small" color={c.textSecondary} />
-                  : <Ionicons name="share-outline" size={18} color={c.text} />
-                }
-              </TouchableOpacity>
-            </View>
+            {!esMultiVehiculo && (
+              <View
+                style={[
+                  styles.placaBadge,
+                  {
+                    backgroundColor: c.plateYellow,
+                    borderColor: c.plateBorder,
+                    borderWidth: 1,
+                  },
+                ]}>
+                <Text style={[styles.placaText, { color: c.plateText }]}>
+                  {placaActual}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* FILTRO MULTI-VEHÍCULO */}
@@ -1095,9 +1146,111 @@ export default function FinanzasGenerales() {
                 </Text>
               </View>
             </View>
+
+            {/* BOTÓN EXPORTAR */}
+            <TouchableOpacity
+              style={[styles.exportarBtn, { backgroundColor: c.accent }]}
+              onPress={() => { seleccionarPeriodo("mes"); setExportModal(true); }}
+              disabled={exportando}
+              activeOpacity={0.8}>
+              {exportando ? (
+                <ActivityIndicator size="small" color={c.accentText} />
+              ) : (
+                <>
+                  <Ionicons name="document-text-outline" size={20} color={c.accentText} />
+                  <Text style={[styles.exportarBtnText, { color: c.accentText }]}>Exportar informe</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* MODAL EXPORTAR */}
+      <Modal
+        visible={exportModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setExportModal(false)}>
+        <TouchableOpacity
+          style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
+          activeOpacity={1}
+          onPress={() => setExportModal(false)}>
+          <TouchableOpacity activeOpacity={1}>
+            <View style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
+              <View style={[styles.modalHandle, { backgroundColor: c.textMuted }]} />
+              <View style={styles.exportModalHeader}>
+                <Text style={[styles.modalTitle, { color: c.text }]}>Exportar informe</Text>
+                <TouchableOpacity onPress={() => setExportModal(false)}>
+                  <Ionicons name="close" size={22} color={c.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* OPCIONES RÁPIDAS */}
+              <Text style={[styles.exportSectionLabel, { color: c.textMuted }]}>Período</Text>
+              <View style={styles.periodosGrid}>
+                {([
+                  { key: "semana",       label: "Esta semana" },
+                  { key: "mes",          label: "Este mes" },
+                  { key: "mes_anterior", label: "Mes anterior" },
+                  { key: "trimestre",    label: "Trimestre" },
+                  { key: "año",          label: "Este año" },
+                  { key: "personalizado",label: "Personalizado" },
+                ] as { key: PeriodoRapido; label: string }[]).map(({ key, label }) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.periodoChip,
+                      { borderColor: c.border, backgroundColor: c.cardBg },
+                      periodoRapido === key && { backgroundColor: c.accent, borderColor: c.accent },
+                    ]}
+                    onPress={() => seleccionarPeriodo(key)}
+                    activeOpacity={0.7}>
+                    <Text style={[
+                      styles.periodoChipText,
+                      { color: c.textSecondary },
+                      periodoRapido === key && { color: c.accentText },
+                    ]}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* RANGO PERSONALIZADO */}
+              <View style={[styles.exportRangeRow, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+                <TouchableOpacity
+                  style={styles.exportDateBtn}
+                  onPress={() => openCalendar("inicio", "export")}
+                  activeOpacity={0.7}>
+                  <Text style={[styles.exportDateLabel, { color: c.textMuted }]}>Desde</Text>
+                  <Text style={[styles.exportDateValue, { color: c.text }]}>
+                    {new Date(exportRango.inicio + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                  </Text>
+                </TouchableOpacity>
+                <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
+                <TouchableOpacity
+                  style={styles.exportDateBtn}
+                  onPress={() => openCalendar("fin", "export")}
+                  activeOpacity={0.7}>
+                  <Text style={[styles.exportDateLabel, { color: c.textMuted }]}>Hasta</Text>
+                  <Text style={[styles.exportDateValue, { color: c.text }]}>
+                    {new Date(exportRango.fin + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* BOTÓN GENERAR */}
+              <TouchableOpacity
+                style={[styles.exportGenerarBtn, { backgroundColor: c.accent }]}
+                onPress={generarPDF}
+                activeOpacity={0.85}>
+                <Ionicons name="document-text-outline" size={18} color={c.accentText} />
+                <Text style={[styles.exportGenerarText, { color: c.accentText }]}>Generar PDF</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* MODAL CALENDARIO */}
       <Modal
@@ -1117,23 +1270,24 @@ export default function FinanzasGenerales() {
               fecha {selectingDate === "inicio" ? "inicial" : "final"}
             </Text>
             <Calendar
-              current={selectingDate === "inicio" ? rango.inicio : rango.fin}
+              current={calendarTarget === "export"
+                ? (selectingDate === "inicio" ? exportRango.inicio : exportRango.fin)
+                : (selectingDate === "inicio" ? rango.inicio : rango.fin)}
               onDayPress={(day: any) => {
-                setRango((prev) => ({
-                  ...prev,
-                  [selectingDate]: day.dateString,
-                }));
+                if (calendarTarget === "export") {
+                  setExportRango((prev) => ({ ...prev, [selectingDate]: day.dateString }));
+                  setPeriodoRapido("personalizado");
+                } else {
+                  setRango((prev) => ({ ...prev, [selectingDate]: day.dateString }));
+                }
                 setCalendarVisible(false);
               }}
-              markedDates={{
-                [rango.inicio]: {
-                  selected: selectingDate === "inicio",
-                  selectedColor: c.accent,
-                },
-                [rango.fin]: {
-                  selected: selectingDate === "fin",
-                  selectedColor: c.accent,
-                },
+              markedDates={calendarTarget === "export" ? {
+                [exportRango.inicio]: { selected: selectingDate === "inicio", selectedColor: c.accent },
+                [exportRango.fin]: { selected: selectingDate === "fin", selectedColor: c.accent },
+              } : {
+                [rango.inicio]: { selected: selectingDate === "inicio", selectedColor: c.accent },
+                [rango.fin]: { selected: selectingDate === "fin", selectedColor: c.accent },
               }}
               theme={{
                 backgroundColor: c.modalBg,
@@ -1170,17 +1324,19 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
   headerSubtitle: { fontSize: 14, marginTop: 2 },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
-  exportBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    borderWidth: 1,
+  exportarBtn: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 10,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginTop: 16,
   },
+  exportarBtnText: { fontSize: 15, fontWeight: "600" },
 
   // FILTER CHIPS
   filterScroll: { marginBottom: 4 },
@@ -1338,7 +1494,65 @@ const styles = StyleSheet.create({
   detailLabel: { fontSize: 13 },
   detailValue: { fontSize: 14, fontWeight: "600" },
 
-  // MODAL
+  // MODAL EXPORTAR
+  exportModalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 10,
+    paddingBottom: 36,
+    paddingHorizontal: 20,
+  },
+  exportModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  exportSectionLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  periodosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  periodoChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  periodoChipText: { fontSize: 13, fontWeight: "600" },
+  exportRangeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
+  exportDateBtn: { flex: 1, alignItems: "center" },
+  exportDateLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 0.3, marginBottom: 3 },
+  exportDateValue: { fontSize: 14, fontWeight: "600" },
+  exportGenerarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 15,
+  },
+  exportGenerarText: { fontSize: 16, fontWeight: "700" },
+
+  // MODAL CALENDARIO
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   calendarModal: {
     borderTopLeftRadius: 24,

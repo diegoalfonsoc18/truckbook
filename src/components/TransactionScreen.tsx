@@ -163,7 +163,7 @@ function CatCard({
         <ItemIcon name={cat.iconName} size={cat.size} />
       </View>
       <Text style={[s.catLabel, { color: textColor }]} numberOfLines={1}>
-        {cat.name}
+        {cat.name.charAt(0).toUpperCase() + cat.name.slice(1).toLowerCase()}
       </Text>
     </AnimatedPressable>
   );
@@ -811,9 +811,11 @@ export default function TransactionScreen({
 
             {filtered.length === 0 ? (
               <View style={[s.emptyList, card, { padding: 36 }]}>
-                <Text style={{ fontSize: 36, marginBottom: 12 }}>
-                  {emptyIcon}
-                </Text>
+                <Image
+                  source={require("../assets/icons/sinRegistrosIngresos.webp")}
+                  style={{ width: 80, height: 80, marginBottom: 12 }}
+                  resizeMode="contain"
+                />
                 <Text style={[s.emptyListTitle, { color: c.text }]}>
                   Sin registros
                 </Text>
@@ -952,7 +954,7 @@ export default function TransactionScreen({
                         <ItemIcon name={sub.iconName} size={sub.size} />
                       </View>
                       <Text style={[s.subName, { color: c.text }]}>
-                        {sub.name}
+                        {sub.name.charAt(0).toUpperCase() + sub.name.slice(1).toLowerCase()}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -1468,10 +1470,9 @@ const s = StyleSheet.create({
 
   // SECTION
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase" as const,
-    letterSpacing: 1.2,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0,
     marginBottom: 12,
   },
 

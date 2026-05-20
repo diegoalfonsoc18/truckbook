@@ -27,7 +27,7 @@ import Reanimated, {
   Easing,
   useReducedMotion,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -78,7 +78,6 @@ interface Vehiculo {
   rol?: string;
   conductorNombre?: string;
 }
-
 
 const ICON_MAP: Record<TipoCamion, IconName> = {
   estacas: "estacas",
@@ -239,13 +238,11 @@ function WidgetClima({ isDark }: WProps) {
             <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>
               {temperatura}°
             </Text>
-            <View style={{ marginRight: 8, marginTop: 8 }}>
-              {React.createElement(ClimaIconMap[icono], {
-                width: 40,
-                height: 40,
-                color: INK(isDark),
-              })}
-            </View>
+            {React.createElement(ClimaIconMap[icono], {
+              width: 44,
+              height: 44,
+              color: INK(isDark),
+            })}
           </View>
 
           {/* Condición */}
@@ -446,13 +443,13 @@ function WidgetClientes({ isDark }: WProps) {
     return (
       <View style={[s.clientesCard, { backgroundColor: WBG(isDark) }]}>
         <View style={s.clientesHeader}>
-          <Ionicons name="people-outline" size={18} color={MUTED(isDark)} />
+          <Ionicons name="people-outline" size={18} color={c.accent} />
           <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
             Clientes
           </Text>
         </View>
         <View style={s.clientesEmpty}>
-          <Ionicons name="person-add-outline" size={28} color={MUTED(isDark)} />
+          <Ionicons name="person-add-outline" size={28} color={c.accent} />
           <Text style={[s.clientesEmptyText, { color: MUTED(isDark) }]}>
             Registra fletes para ver{"\n"}tus clientes frecuentes
           </Text>
@@ -469,7 +466,7 @@ function WidgetClientes({ isDark }: WProps) {
         {/* Columna izquierda — Top clientes */}
         <View style={s.clientesCol}>
           <View style={s.clientesColHeader}>
-            <Ionicons name="people-outline" size={16} color={MUTED(isDark)} />
+            <Ionicons name="people-outline" size={16} color={c.accent} />
             <Text style={[s.clientesTitle, { color: INK(isDark) }]}>
               Top clientes
             </Text>
@@ -528,7 +525,7 @@ function WidgetClientes({ isDark }: WProps) {
         {/* Columna derecha — Carga frecuente */}
         <View style={s.clientesCol}>
           <View style={s.clientesColHeader}>
-            <Ionicons name="cube-outline" size={16} color={MUTED(isDark)} />
+            <Ionicons name="cube-outline" size={16} color={c.accent} />
             <Text style={[s.clientesTitle, { color: INK(isDark) }]}>Carga</Text>
           </View>
           <ScrollView
@@ -939,6 +936,7 @@ export default function HomeBaseAdapted({
 }: HomeBaseAdaptedProps) {
   const navigation = useNavigation<any>();
   const { colors: c, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const vcShadow = getShadow(isDark, "md");
   const {
     placa: placaActual,
@@ -1306,7 +1304,7 @@ export default function HomeBaseAdapted({
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={s.gridContainer}>
+            contentContainerStyle={[s.gridContainer, { paddingBottom: insets.bottom + 100 }]}>
             {/* WIDGETS — fila centrada a ancho completo, sin scroll */}
             <View style={s.widgetRow}>
               <WidgetClima isDark={isDark} />
@@ -1898,13 +1896,14 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
     marginTop: 4,
+    paddingRight: 4,
   },
   sectionLabel: {
     fontSize: 22,
     fontWeight: "700",
-    letterSpacing: -0.4,
+    letterSpacing: Platform.OS === "android" ? 0 : -0.4,
   },
-  gridContainer: { paddingBottom: 100 },
+  gridContainer: { paddingBottom: 0 },
 
   // Apple Support — lista vertical de filas
   listSection: {
