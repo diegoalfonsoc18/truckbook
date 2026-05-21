@@ -1,7 +1,12 @@
 // src/hooks/useMultas.ts
+//
+// autoCargar:
+//   - true  → consulta automática (solo si nunca se ha consultado esta placa)
+//   - false → no hace nada al montar; la pantalla llama recargar() manualmente
 
 import { useState, useEffect, useCallback } from "react";
 import { simitService } from "../services/simitService";
+import { useDocumentosVigenciaStore } from "../store/DocumentosVigenciaStore";
 import type { RespuestaMultas } from "../assets/types/simit.types";
 
 interface UseMultasReturn {
@@ -20,6 +25,9 @@ export function useMultas(
   const [multas, setMultas] = useState<RespuestaMultas | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { necesitaFetchMultas, registrarFetchMultas } =
+    useDocumentosVigenciaStore();
 
   const cargarMultas = useCallback(
     async (forzarRecarga: boolean = false) => {
@@ -41,6 +49,8 @@ export function useMultas(
         if (resultado.exito) {
           setMultas(resultado);
           setError(null);
+          // Registrar que ya se hizo al menos una consulta para esta placa
+          registrarFetchMultas(placa);
         } else {
           setMultas(null);
           setError(resultado.error || "Error al consultar");
@@ -52,14 +62,15 @@ export function useMultas(
         setCargando(false);
       }
     },
-    [placa]
+    [placa, registrarFetchMultas]
   );
 
   useEffect(() => {
-    if (autoCargar && placa) {
+    // Solo auto-carga si está habilitado Y es la primera vez (nunca se ha consultado)
+    if (autoCargar && placa && necesitaFetchMultas(placa)) {
       cargarMultas(false);
     }
-  }, [placa, autoCargar, cargarMultas]);
+  }, [placa, autoCargar]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const recargar = useCallback(async () => {
     await cargarMultas(true);
