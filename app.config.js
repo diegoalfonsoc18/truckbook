@@ -28,6 +28,8 @@ export default {
           "TruckBook necesita acceso a la cámara para escanear facturas y recibos.",
         NSPhotoLibraryUsageDescription:
           "TruckBook necesita acceso a tus fotos para seleccionar facturas y recibos.",
+        NSContactsUsageDescription:
+          "TruckBook necesita acceso a tus contactos para agregar clientes a los registros de flete.",
       },
     },
     android: {
@@ -36,7 +38,7 @@ export default {
         backgroundColor: "#393E46",
       },
       package: "com.truckbook.app",
-      permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "READ_CONTACTS"],
     },
     web: {
       favicon: "./assets/favicon.png",

@@ -22,6 +22,11 @@ const FLETE_CAMPOS = [
   { key: "destino",   label: "Destino",    placeholder: "Ciudad de entrega" },
 ];
 
+const OTRO_CAMPOS = [
+  { key: "cliente",   label: "Cliente",   placeholder: "Nombre del cliente o empresa" },
+  { key: "mercancia", label: "Mercancía", placeholder: "Ej: Cemento, Electrodomésticos" },
+];
+
 const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "flete",        name: "Flete",          iconName: "freight"  as IconName, color: "#00D9A5", size: 60 },
   { id: "anticipo",     name: "Anticipo",       iconName: "advance"  as IconName, color: "#74B9FF", size: 60 },
@@ -86,7 +91,7 @@ export default function Ingresos() {
       const fechaResult = validarFecha(fecha);
       if (!fechaResult.valido) return { success: false, error: fechaResult.error };
 
-      // Build descripcion — for flete, compose a rich summary from extra fields
+      // Build descripcion — compose from extra fields depending on category
       let desc = cat.name;
       if (catId === "flete" && extras) {
         const partes: string[] = [];
@@ -94,6 +99,11 @@ export default function Ingresos() {
         if (extras.origen && extras.destino) partes.push(`${extras.origen} → ${extras.destino}`);
         else if (extras.origen)  partes.push(extras.origen);
         else if (extras.destino) partes.push(extras.destino);
+        if (extras.mercancia) partes.push(extras.mercancia);
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if (catId === "otro" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente)   partes.push(extras.cliente);
         if (extras.mercancia) partes.push(extras.mercancia);
         if (partes.length > 0) desc = partes.join(" · ");
       }
@@ -184,7 +194,7 @@ export default function Ingresos() {
       accentColor={c.income}
       accentColorLight={c.incomeLight}
       emptyIcon="💸"
-      camposExtra={{ flete: FLETE_CAMPOS }}
+      camposExtra={{ flete: FLETE_CAMPOS, otro: OTRO_CAMPOS }}
       onAdd={onAdd}
       onUpdate={onUpdate}
       onDelete={onDelete}
