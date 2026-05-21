@@ -931,33 +931,19 @@ function ModalPendientes({
                         </Text>
                       </TouchableOpacity>
 
-                      {/* WhatsApp — directo al chat del número */}
+                      {/* WhatsApp — directo al chat si hay número, si no al inicio de WA */}
                       <TouchableOpacity
                         onPress={() => {
                           const msg = encodeURIComponent(
                             mensajeCobroWA(cliente, item.monto ?? 0, dias),
                           );
-                          const abrirWA = (numero: string) => {
-                            const tel = formatearTel(numero);
-                            const url = tel
-                              ? `https://wa.me/${tel}?text=${msg}`
-                              : `https://wa.me/?text=${msg}`;
-                            Linking.openURL(url).catch(() =>
-                              Alert.alert("Error", "No se pudo abrir WhatsApp."),
-                            );
-                          };
-                          if (telContacto) {
-                            abrirWA(telContacto);
-                          } else {
-                            Alert.prompt(
-                              "Número de WhatsApp",
-                              `¿Cuál es el número de ${cliente}?`,
-                              (numero) => { if (numero) abrirWA(numero); },
-                              "plain-text",
-                              "",
-                              "phone-pad",
-                            );
-                          }
+                          const tel = telContacto ? formatearTel(telContacto) : "";
+                          const url = tel
+                            ? `https://wa.me/${tel}?text=${msg}`
+                            : `https://wa.me/?text=${msg}`;
+                          Linking.openURL(url).catch(() =>
+                            Alert.alert("Error", "No se pudo abrir WhatsApp."),
+                          );
                         }}
                         style={{
                           flex: 1,
