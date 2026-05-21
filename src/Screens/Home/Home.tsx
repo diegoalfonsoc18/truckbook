@@ -19,7 +19,17 @@ import {
   Pressable,
   Linking,
 } from "react-native";
-import Svg, { Path, Circle, Line, G, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Rect } from "react-native-svg";
+import Svg, {
+  Path,
+  Circle,
+  Line,
+  G,
+  Defs,
+  LinearGradient as SvgGradient,
+  Stop,
+  Text as SvgText,
+  Rect,
+} from "react-native-svg";
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -29,7 +39,10 @@ import Reanimated, {
   Easing,
   useReducedMotion,
 } from "react-native-reanimated";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -206,8 +219,6 @@ const WBG = (d: boolean) => (d ? "#1C1C1E" : "#f7f7f7");
 const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
 const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
-
-
 // ─── Gauge estilo "Threat Level" ─────────────────────────────────────────────
 // Arco amplio ~220°, gradiente rojo→amarillo→verde, ticks, dot brillante.
 // Fondo siempre oscuro (dashboard feel).
@@ -227,17 +238,17 @@ function GaugeBalance({
   totalG: number;
   balSem: number;
 }) {
-  const W  = WIDGET_SIZE;
-  const H  = WIDGET_HEIGHT;
+  const W = WIDGET_SIZE;
+  const H = WIDGET_HEIGHT;
   const CX = W / 2;
 
   // Geometría: R calibrado para que el arco vaya de borde a borde,
   // pico en y≈25, extremos en y≈108.
-  const R   = 62;
-  const CY  = 87;
+  const R = 62;
+  const CY = 87;
 
-  const START  = 160;
-  const SPAN   = 220;
+  const START = 160;
+  const SPAN = 220;
   const FILL_W = 8;
 
   const deg2rad = (d: number) => (d * Math.PI) / 180;
@@ -256,9 +267,9 @@ function GaugeBalance({
   };
 
   const clamp = (v: number) => Math.max(0.005, Math.min(0.995, v));
-  const filled    = clamp(ratio) * SPAN;
+  const filled = clamp(ratio) * SPAN;
   const fillEndDeg = START + filled;
-  const dotPt     = pt(fillEndDeg);
+  const dotPt = pt(fillEndDeg);
 
   // Gradiente: extremo izquierdo → extremo derecho del arco
   const gradLX = pt(START).x;
@@ -266,25 +277,23 @@ function GaugeBalance({
 
   // Color del dot según zona
   const dotColor =
-    ratio < 0.38 ? "#EF4444"
-    : ratio < 0.62 ? "#FFB800"
-    : "#22C55E";
+    ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#FFB800" : "#22C55E";
 
   // Estado del balance
   const statusLabel =
-    ratio < 0.38 ? "Negativo"
-    : ratio < 0.62 ? "Equilibrio"
-    : "Positivo";
+    ratio < 0.38 ? "Negativo" : ratio < 0.62 ? "Equilibrio" : "Positivo";
   const statusColor =
-    ratio < 0.38 ? "#F87171"
-    : ratio < 0.62 ? "#FBBF24"
-    : "#4ADE80";
+    ratio < 0.38 ? "#F87171" : ratio < 0.62 ? "#FBBF24" : "#4ADE80";
 
   // Ticks a lo largo del arco completo (fuera del arco, más cortos)
-  const ticks: Array<{ o: {x:number;y:number}; i: {x:number;y:number}; major: boolean }> = [];
+  const ticks: Array<{
+    o: { x: number; y: number };
+    i: { x: number; y: number };
+    major: boolean;
+  }> = [];
   for (let i = 0; i <= SPAN; i += 5) {
-    const deg    = START + i;
-    const major  = i % 20 === 0;
+    const deg = START + i;
+    const major = i % 20 === 0;
     const outerR = R + 3;
     const innerR = major ? R + 3 - 9 : R + 3 - 5;
     ticks.push({ o: pt(deg, outerR), i: pt(deg, innerR), major });
@@ -292,38 +301,52 @@ function GaugeBalance({
 
   // Formato compacto
   const fmt = (n: number) => {
-    const abs  = Math.abs(n);
+    const abs = Math.abs(n);
     const sign = n < 0 ? "-" : "";
     if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000)     return `${sign}${Math.round(abs / 1_000)}K`;
+    if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}K`;
     return `${sign}${abs}`;
   };
 
   // Posiciones de las etiquetas de extremo del arco
-  const leftLbl  = pt(START, R + 18);
+  const leftLbl = pt(START, R + 18);
   const rightLbl = pt(START + SPAN, R + 18);
 
   // Fondo adaptivo — igual que el card financiero anterior
   const cardBg =
     balance >= 0
-      ? isDark ? "#0D2E1A" : "#EDFAF3"
-      : isDark ? "#2E0D0D" : "#FAEAEA";
+      ? isDark
+        ? "#0D2E1A"
+        : "#EDFAF3"
+      : isDark
+        ? "#2E0D0D"
+        : "#FAEAEA";
 
   // Textos: blanco sobre fondo oscuro, colores fuertes sobre fondo claro
-  const balTextColor = isDark ? "#FFFFFF" : (balance >= 0 ? "#059669" : "#DC2626");
-  const mutedClr     = isDark ? "#4B5268" : "#6B7280";
-  const ingClr       = isDark ? "#4ADE80" : "#059669";
-  const gasClr       = isDark ? "#F87171" : "#DC2626";
-  const tickClr      = isDark ? "#1A3826" : (balance >= 0 ? "#C5DDD0" : "#DEC5C5");
-  const tickMajClr   = isDark ? "#2A4A38" : (balance >= 0 ? "#A3C4B0" : "#C4A3A3");
+  const balTextColor = isDark
+    ? "#FFFFFF"
+    : balance >= 0
+      ? "#059669"
+      : "#DC2626";
+  const mutedClr = isDark ? "#4B5268" : "#6B7280";
+  const ingClr = isDark ? "#4ADE80" : "#059669";
+  const gasClr = isDark ? "#F87171" : "#DC2626";
+  const tickClr = isDark ? "#1A3826" : balance >= 0 ? "#C5DDD0" : "#DEC5C5";
+  const tickMajClr = isDark ? "#2A4A38" : balance >= 0 ? "#A3C4B0" : "#C4A3A3";
 
   return (
     <Svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0 }}>
       <Defs>
-        <SvgGradient id="gfill" x1={gradLX} y1={0} x2={gradRX} y2={0} gradientUnits="userSpaceOnUse">
-          <Stop offset="0"    stopColor="#EF4444" />
+        <SvgGradient
+          id="gfill"
+          x1={gradLX}
+          y1={0}
+          x2={gradRX}
+          y2={0}
+          gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor="#EF4444" />
           <Stop offset="0.42" stopColor="#FFB800" />
-          <Stop offset="1"    stopColor="#22C55E" />
+          <Stop offset="1" stopColor="#22C55E" />
         </SvgGradient>
       </Defs>
 
@@ -332,8 +355,12 @@ function GaugeBalance({
 
       {/* ── Ticks del arco completo ── */}
       {ticks.map((t, idx) => (
-        <Line key={idx}
-          x1={t.o.x} y1={t.o.y} x2={t.i.x} y2={t.i.y}
+        <Line
+          key={idx}
+          x1={t.o.x}
+          y1={t.o.y}
+          x2={t.i.x}
+          y2={t.i.y}
           stroke={t.major ? tickMajClr : tickClr}
           strokeWidth={t.major ? 1.6 : 0.9}
           strokeLinecap="round"
@@ -351,39 +378,61 @@ function GaugeBalance({
 
       {/* ── Dot brillante en la punta ── */}
       <Circle cx={dotPt.x} cy={dotPt.y} r={13} fill={dotColor} opacity={0.15} />
-      <Circle cx={dotPt.x} cy={dotPt.y} r={7}  fill={dotColor} opacity={0.40} />
-      <Circle cx={dotPt.x} cy={dotPt.y} r={4}  fill={dotColor} />
-      <Circle cx={dotPt.x} cy={dotPt.y} r={2}  fill="#FFFFFF"  opacity={0.9} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={7} fill={dotColor} opacity={0.4} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={4} fill={dotColor} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={2} fill="#FFFFFF" opacity={0.9} />
 
       {/* ── Balance — número grande ── */}
       <SvgText
-        x={CX} y={CY + 8}
-        fontSize={26} fontWeight="800"
-        fill={balTextColor} textAnchor="middle" letterSpacing={-1}>
+        x={CX}
+        y={CY + 8}
+        fontSize={26}
+        fontWeight="800"
+        fill={balTextColor}
+        textAnchor="middle"
+        letterSpacing={-1}>
         {fmt(balance)}
       </SvgText>
 
       {/* ── Estado ── */}
       <SvgText
-        x={CX} y={CY + 23}
-        fontSize={10} fontWeight="700"
-        fill={statusColor} textAnchor="middle">
+        x={CX}
+        y={CY + 23}
+        fontSize={10}
+        fontWeight="700"
+        fill={statusColor}
+        textAnchor="middle">
         {statusLabel}
       </SvgText>
 
       {/* ── Ingresos (izq) y Gastos (der) ── */}
-      <SvgText x={14} y={H - 28} fontSize={9} fontWeight="600"
-        fill={ingClr} textAnchor="start">
+      <SvgText
+        x={14}
+        y={H - 28}
+        fontSize={9}
+        fontWeight="600"
+        fill={ingClr}
+        textAnchor="start">
         {`↑ ${fmt(totalI)}`}
       </SvgText>
-      <SvgText x={W - 14} y={H - 28} fontSize={9} fontWeight="600"
-        fill={gasClr} textAnchor="end">
+      <SvgText
+        x={W - 14}
+        y={H - 28}
+        fontSize={9}
+        fontWeight="600"
+        fill={gasClr}
+        textAnchor="end">
         {`↓ ${fmt(totalG)}`}
       </SvgText>
 
       {/* ── Semana ── */}
-      <SvgText x={CX} y={H - 14} fontSize={8} fontWeight="500"
-        fill={mutedClr} textAnchor="middle">
+      <SvgText
+        x={CX}
+        y={H - 14}
+        fontSize={8}
+        fontWeight="500"
+        fill={mutedClr}
+        textAnchor="middle">
         {`Sem. ${fmt(balSem)}`}
       </SvgText>
     </Svg>
@@ -392,12 +441,16 @@ function GaugeBalance({
 
 // ─── Widget: Resumen del día ──────────────────────────────────────────────────
 function WidgetResumen({ isDark }: WProps) {
-  const gastos   = useGastosStore((s) => s.gastos);
+  const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy = fechaLocalHoy();
 
-  const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
-  const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
+  const gastosHoy = gastos.filter((g) =>
+    (g.fecha ?? g.created_at ?? "").startsWith(hoy),
+  );
+  const ingresosHoy = ingresos.filter((i) =>
+    (i.fecha ?? i.created_at ?? "").startsWith(hoy),
+  );
   const totalG = gastosHoy.reduce((a, g) => a + (g.monto ?? 0), 0);
   const totalI = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0), 0);
   const balance = totalI - totalG;
@@ -405,11 +458,15 @@ function WidgetResumen({ isDark }: WProps) {
   const hace7 = new Date();
   hace7.setDate(hace7.getDate() - 6);
   const hace7Str = `${hace7.getFullYear()}-${String(hace7.getMonth() + 1).padStart(2, "0")}-${String(hace7.getDate()).padStart(2, "0")}`;
-  const totalGSem = gastos.filter((g) => (g.fecha ?? g.created_at ?? "") >= hace7Str).reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalISem = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str).reduce((a, i) => a + (i.monto ?? 0), 0);
+  const totalGSem = gastos
+    .filter((g) => (g.fecha ?? g.created_at ?? "") >= hace7Str)
+    .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalISem = ingresos
+    .filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str)
+    .reduce((a, i) => a + (i.monto ?? 0), 0);
   const balSem = totalISem - totalGSem;
 
-  const total  = totalI + totalG;
+  const total = totalI + totalG;
   const ratioI = total > 0 ? totalI / total : 0.5;
 
   return (
@@ -442,29 +499,41 @@ function WidgetResumen({ isDark }: WProps) {
 function fmtI(n: number): string {
   const a = Math.abs(n);
   if (a >= 1_000_000) return `$${(a / 1_000_000).toFixed(1)}M`;
-  if (a >= 1_000)     return `$${(a / 1_000).toFixed(0)}K`;
+  if (a >= 1_000) return `$${(a / 1_000).toFixed(0)}K`;
   return `$${a.toFixed(0)}`;
 }
 
 /** Cuántos días han pasado desde una fecha YYYY-MM-DD */
 function diasDesde(fecha: string): number {
-  const d    = new Date(fecha + "T00:00:00");
-  const hoy  = new Date(); hoy.setHours(0, 0, 0, 0);
+  const d = new Date(fecha + "T00:00:00");
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
   return Math.floor((hoy.getTime() - d.getTime()) / 86_400_000);
 }
 
 function labelDias(dias: number): string {
   if (dias === 0) return "Hoy";
   if (dias === 1) return "Ayer";
-  if (dias < 7)   return `Hace ${dias} días`;
-  if (dias < 30)  return `Hace ${Math.floor(dias / 7)} sem.`;
+  if (dias < 7) return `Hace ${dias} días`;
+  if (dias < 30) return `Hace ${Math.floor(dias / 7)} sem.`;
   return `Hace ${Math.floor(dias / 30)} mes${Math.floor(dias / 30) > 1 ? "es" : ""}`;
 }
 
 // Paleta de avatares — determinista por índice
-const AVATAR_COLORS = ["#6366F1","#0EA5E9","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#14B8A6"];
+const AVATAR_COLORS = [
+  "#6366F1",
+  "#0EA5E9",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+];
 
-function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+function avatarColor(i: number) {
+  return AVATAR_COLORS[i % AVATAR_COLORS.length];
+}
 
 function initials(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
@@ -476,11 +545,11 @@ function initials(nombre: string): string {
 const CACHE_PEND_IA = "@truckbook_pend_modal_ia_v1";
 
 interface ContactTarget {
-  id:      string;
+  id: string;
   cliente: string;
-  monto:   number;
-  dias:    number;
-  tel:     string | null; // número del contacto (si se guardó al registrar)
+  monto: number;
+  dias: number;
+  tel: string | null; // número del contacto (si se guardó al registrar)
 }
 
 /**
@@ -496,8 +565,10 @@ function extraerTelDesc(desc: string): { desc: string; tel: string | null } {
 /** Mensaje de cobro por WhatsApp — plantilla sin IA para respuesta instantánea */
 function mensajeCobroWA(cliente: string, monto: number, dias: number): string {
   const m = fmtI(monto);
-  if (dias === 0) return `Hola ${cliente}, le saludo. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
-  if (dias === 1) return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
+  if (dias === 0)
+    return `Hola ${cliente}, le saludo. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
+  if (dias === 1)
+    return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
   return `Hola ${cliente}, le saludo. Quería recordarle el flete por ${m} registrado hace ${dias} días que quedó pendiente de pago. ¿Cuándo podemos cuadrar? ¡Gracias!`;
 }
 
@@ -509,78 +580,114 @@ function formatearTel(raw: string): string {
 }
 
 function ModalPendientes({
-  visible, onClose, pendientes, isDark,
+  visible,
+  onClose,
+  pendientes,
+  isDark,
 }: {
-  visible:    boolean;
-  onClose:    () => void;
+  visible: boolean;
+  onClose: () => void;
   pendientes: ReturnType<typeof useIngresosStore.getState>["ingresos"];
-  isDark:     boolean;
+  isDark: boolean;
 }) {
   const { placa } = useVehiculoStore();
-  const [geminiMsg, setGeminiMsg]       = useState<string | null>(null);
-  const [loadingGem, setLoadingGem]     = useState(false);
-  const [cobrando, setCobrando]         = useState<string | null>(null);
-  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
-  const [phoneInput, setPhoneInput]     = useState("");
+  const [geminiMsg, setGeminiMsg] = useState<string | null>(null);
+  const [loadingGem, setLoadingGem] = useState(false);
+  const [cobrando, setCobrando] = useState<string | null>(null);
+  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(
+    null,
+  );
+  const [phoneInput, setPhoneInput] = useState("");
 
-  const AMBER    = "#FBBF24";
-  const GREEN    = "#22C55E";
+  const AMBER = "#FBBF24";
+  const GREEN = "#22C55E";
   const WA_GREEN = "#25D366";
-  const ink      = isDark ? "#F1F5F9" : "#111827";
-  const muted    = isDark ? "#64748B" : "#9CA3AF";
-  const divClr   = isDark ? "#2A1800" : "#F0E6CC";
-  const modalBg  = isDark ? "#160E00" : "#FFFBF0";
-  const cardBg   = isDark ? "#2A1800" : "#FFF8E7";
-  const inputBg  = isDark ? "#1E1200" : "#FFF3DC";
+  const ink = isDark ? "#F1F5F9" : "#111827";
+  const muted = isDark ? "#64748B" : "#9CA3AF";
+  const divClr = isDark ? "#2A1800" : "#F0E6CC";
+  const modalBg = isDark ? "#160E00" : "#FFFBF0";
+  const cardBg = isDark ? "#2A1800" : "#FFF8E7";
+  const inputBg = isDark ? "#1E1200" : "#FFF3DC";
   const inputBdr = isDark ? "#3D2600" : "#E8C97A";
-  const panelBg  = isDark ? "#1A0F00" : "#FFFAEE";
+  const panelBg = isDark ? "#1A0F00" : "#FFFAEE";
 
   // ── Cerrar el panel de contacto al cerrar el modal ─────────────────────────
   useEffect(() => {
-    if (!visible) { setContactTarget(null); setPhoneInput(""); }
+    if (!visible) {
+      setContactTarget(null);
+      setPhoneInput("");
+    }
   }, [visible]);
 
   // ── Gemini: consejo al abrir el modal ──────────────────────────────────────
   useEffect(() => {
-    if (!visible || pendientes.length === 0) { setGeminiMsg(null); return; }
+    if (!visible || pendientes.length === 0) {
+      setGeminiMsg(null);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(CACHE_PEND_IA);
         if (raw) {
           const { ts, msg } = JSON.parse(raw);
-          if (Date.now() - ts < 6 * 3_600_000 && msg) { if (!cancelled) setGeminiMsg(msg); return; }
+          if (Date.now() - ts < 6 * 3_600_000 && msg) {
+            if (!cancelled) setGeminiMsg(msg);
+            return;
+          }
         }
       } catch {}
       if (!GEMINI_API_KEY) return;
       if (!cancelled) setLoadingGem(true);
-      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-      const lines = pendientes.slice(0, 4).map((p) => {
-        const cl   = (p.descripcion ?? "Flete").split(" · ")[0].trim();
-        const dias = p.fecha ? Math.floor((hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) / 86_400_000) : 0;
-        return `${cl}: ${fmtI(p.monto ?? 0)} (hace ${dias}d)`;
-      }).join(", ");
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const lines = pendientes
+        .slice(0, 4)
+        .map((p) => {
+          const cl = (p.descripcion ?? "Flete").split(" · ")[0].trim();
+          const dias = p.fecha
+            ? Math.floor(
+                (hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) /
+                  86_400_000,
+              )
+            : 0;
+          return `${cl}: ${fmtI(p.monto ?? 0)} (hace ${dias}d)`;
+        })
+        .join(", ");
       const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
       const prompt =
         `Eres asistente de un camionero colombiano. Tiene ${pendientes.length} cuenta(s) por cobrar: ${lines}. Total: ${fmtI(total)}.\n` +
         `Genera UN consejo corto (máximo 80 caracteres) para motivarlo a cobrar hoy. Español colombiano informal. Sin emojis. Solo el texto.`;
       try {
         const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 60 } }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 60 },
+          }),
         });
         if (res.ok) {
           const json = await res.json();
-          const msg  = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim().replace(/^["'`]+|["'`]+$/g, "");
+          const msg = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "")
+            .trim()
+            .replace(/^["'`]+|["'`]+$/g, "");
           if (!cancelled && msg) {
             setGeminiMsg(msg);
-            try { await AsyncStorage.setItem(CACHE_PEND_IA, JSON.stringify({ ts: Date.now(), msg })); } catch {}
+            try {
+              await AsyncStorage.setItem(
+                CACHE_PEND_IA,
+                JSON.stringify({ ts: Date.now(), msg }),
+              );
+            } catch {}
           }
         }
       } catch {}
       if (!cancelled) setLoadingGem(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [visible, pendientes.length]);
 
   // ── Marcar como cobrado (con confirmación previa vía Alert) ────────────────
@@ -599,11 +706,12 @@ function ModalPendientes({
               .from("conductor_ingresos")
               .update({ estado: "pagado" })
               .eq("id", id);
-            if (!error && placa) useIngresosStore.getState().cargarIngresosDelDB(placa);
+            if (!error && placa)
+              useIngresosStore.getState().cargarIngresosDelDB(placa);
             setCobrando(null);
           },
         },
-      ]
+      ],
     );
   };
 
@@ -613,64 +721,136 @@ function ModalPendientes({
     // Prioridad: teléfono del contacto guardado → lo que escribió el usuario en el input
     const tel = formatearTel(contactTarget.tel ?? phoneInput);
     if (!tel) {
-      Alert.alert("Número requerido", "Ingresa el número del cliente para llamar.");
+      Alert.alert(
+        "Número requerido",
+        "Ingresa el número del cliente para llamar.",
+      );
       return;
     }
     Linking.openURL(`tel:${tel}`).catch(() =>
-      Alert.alert("Error", "No se pudo abrir el marcador telefónico.")
+      Alert.alert("Error", "No se pudo abrir el marcador telefónico."),
     );
   };
 
   const handleWhatsApp = () => {
     if (!contactTarget) return;
-    const msg = encodeURIComponent(mensajeCobroWA(contactTarget.cliente, contactTarget.monto, contactTarget.dias));
+    const msg = encodeURIComponent(
+      mensajeCobroWA(
+        contactTarget.cliente,
+        contactTarget.monto,
+        contactTarget.dias,
+      ),
+    );
     // Si hay teléfono guardado del contacto, va directo al chat; si no, el usuario elige contacto en WA
     const tel = formatearTel(contactTarget.tel ?? phoneInput);
-    const url = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    const url = tel
+      ? `https://wa.me/${tel}?text=${msg}`
+      : `https://wa.me/?text=${msg}`;
     Linking.openURL(url).catch(() =>
-      Alert.alert("Error", "No se pudo abrir WhatsApp.")
+      Alert.alert("Error", "No se pudo abrir WhatsApp."),
     );
   };
 
-  const cerrarPanel = () => { setContactTarget(null); setPhoneInput(""); };
+  const cerrarPanel = () => {
+    setContactTarget(null);
+    setPhoneInput("");
+  };
 
   const totalPend = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000088" }}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "flex-end",
+          backgroundColor: "#00000088",
+        }}>
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={{ flex: 1 }} />
         </TouchableWithoutFeedback>
 
         {/* ── Bottom sheet principal ── */}
-        <View style={{ backgroundColor: modalBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "82%" }}>
+        <View
+          style={{
+            backgroundColor: modalBg,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            maxHeight: "82%",
+          }}>
           {/* Handle */}
-          <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 2 }}>
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? "#3A2800" : "#E0C98A" }} />
+          <View
+            style={{ alignItems: "center", paddingTop: 10, paddingBottom: 2 }}>
+            <View
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: isDark ? "#3A2800" : "#E0C98A",
+              }}
+            />
           </View>
 
           {/* Header */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+              paddingTop: 10,
+              paddingBottom: 4,
+            }}>
             <View>
-              <Text style={{ fontSize: 19, fontWeight: "700", color: ink }}>Por cobrar</Text>
-              <Text style={{ fontSize: 13, color: AMBER, fontWeight: "600", marginTop: 1 }}>
-                {fmtI(totalPend)} · {pendientes.length} flete{pendientes.length !== 1 ? "s" : ""}
+              <Text style={{ fontSize: 19, fontWeight: "700", color: ink }}>
+                Por cobrar
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: AMBER,
+                  fontWeight: "600",
+                  marginTop: 1,
+                }}>
+                {fmtI(totalPend)} · {pendientes.length} flete
+                {pendientes.length !== 1 ? "s" : ""}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={22} color={muted} />
             </TouchableOpacity>
           </View>
 
           {/* Gemini card */}
           {(loadingGem || geminiMsg) && (
-            <View style={{ marginHorizontal: 20, marginTop: 10, marginBottom: 2, backgroundColor: cardBg, borderRadius: 12, borderLeftWidth: 3, borderLeftColor: AMBER, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
-              {loadingGem
-                ? <ActivityIndicator size="small" color={AMBER} />
-                : <Text style={{ fontSize: 14 }}>✨</Text>
-              }
-              <Text style={{ flex: 1, fontSize: 12.5, color: ink, lineHeight: 18 }}>
+            <View
+              style={{
+                marginHorizontal: 20,
+                marginTop: 10,
+                marginBottom: 2,
+                backgroundColor: cardBg,
+                borderRadius: 12,
+                borderLeftWidth: 3,
+                borderLeftColor: AMBER,
+                padding: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+              }}>
+              {loadingGem ? (
+                <ActivityIndicator size="small" color={AMBER} />
+              ) : (
+                <Text style={{ fontSize: 14 }}>✨</Text>
+              )}
+              <Text
+                style={{ flex: 1, fontSize: 12.5, color: ink, lineHeight: 18 }}>
                 {loadingGem ? "Analizando tus pendientes..." : geminiMsg}
               </Text>
             </View>
@@ -680,78 +860,215 @@ function ModalPendientes({
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}>
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 10,
+              paddingBottom: 32,
+            }}>
             {pendientes.map((item, i) => {
               // Extraer teléfono y descripción limpia (sin [TEL:...])
-              const { desc: descLimpia, tel: telContacto } = extraerTelDesc(item.descripcion ?? "");
-              const rawDesc   = descLimpia || item.tipo_ingreso || "Flete";
-              const cliente   = rawDesc.split(" · ")[0].trim();
-              const partes    = rawDesc.split(" · ");
-              const subtitulo = partes.length > 1 ? partes.slice(1).join(" · ") : null;
-              const dias      = item.fecha ? diasDesde(item.fecha) : 0;
-              const color     = avatarColor(i);
-              const cargando  = cobrando === item.id;
+              const { desc: descLimpia, tel: telContacto } = extraerTelDesc(
+                item.descripcion ?? "",
+              );
+              const rawDesc = descLimpia || item.tipo_ingreso || "Flete";
+              const cliente = rawDesc.split(" · ")[0].trim();
+              const partes = rawDesc.split(" · ");
+              const subtitulo =
+                partes.length > 1 ? partes.slice(1).join(" · ") : null;
+              const dias = item.fecha ? diasDesde(item.fecha) : 0;
+              const color = avatarColor(i);
+              const cargando = cobrando === item.id;
 
               return (
                 <View key={item.id}>
                   <View style={{ paddingVertical: 13 }}>
                     {/* Fila principal: avatar + info + monto */}
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 12,
+                        marginBottom: 10,
+                      }}>
                       {/* Avatar */}
-                      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: color + "25", borderWidth: 1.5, borderColor: color + "55", alignItems: "center", justifyContent: "center" }}>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color }}>{initials(cliente)}</Text>
+                      <View
+                        style={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 21,
+                          backgroundColor: color + "25",
+                          borderWidth: 1.5,
+                          borderColor: color + "55",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                        <Text
+                          style={{ fontSize: 13, fontWeight: "700", color }}>
+                          {initials(cliente)}
+                        </Text>
                       </View>
 
                       {/* Info */}
                       <View style={{ flex: 1 }}>
-                        <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: "700", color: ink }}>{cliente}</Text>
-                        {subtitulo && <Text numberOfLines={1} style={{ fontSize: 11, color: muted, marginTop: 1 }}>{subtitulo}</Text>}
-                        <Text style={{ fontSize: 11, color: muted, marginTop: 1 }}>{labelDias(dias)}</Text>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "700",
+                            color: ink,
+                          }}>
+                          {cliente}
+                        </Text>
+                        {subtitulo && (
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              fontSize: 11,
+                              color: muted,
+                              marginTop: 1,
+                            }}>
+                            {subtitulo}
+                          </Text>
+                        )}
+                        <Text
+                          style={{ fontSize: 11, color: muted, marginTop: 1 }}>
+                          {labelDias(dias)}
+                        </Text>
                       </View>
 
                       {/* Monto */}
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: AMBER }}>{fmtI(item.monto ?? 0)}</Text>
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: "700",
+                          color: AMBER,
+                        }}>
+                        {fmtI(item.monto ?? 0)}
+                      </Text>
                     </View>
 
                     {/* Fila de acciones */}
-                    <View style={{ flexDirection: "row", gap: 8, marginLeft: 54 }}>
+                    <View
+                      style={{ flexDirection: "row", gap: 8, marginLeft: 54 }}>
                       {/* Llamar — abre panel para ingresar número */}
                       <TouchableOpacity
-                        onPress={() => { setContactTarget({ id: item.id, cliente, monto: item.monto ?? 0, dias, tel: telContacto }); setPhoneInput(""); }}
-                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: isDark ? "#0D2E1A" : "#E8FFF1", borderWidth: 1, borderColor: GREEN + "55", borderRadius: 10, paddingVertical: 7 }}>
+                        onPress={() => {
+                          setContactTarget({
+                            id: item.id,
+                            cliente,
+                            monto: item.monto ?? 0,
+                            dias,
+                            tel: telContacto,
+                          });
+                          setPhoneInput("");
+                        }}
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          backgroundColor: isDark ? "#0D2E1A" : "#E8FFF1",
+                          borderWidth: 1,
+                          borderColor: GREEN + "55",
+                          borderRadius: 10,
+                          paddingVertical: 7,
+                        }}>
                         <Feather name="phone" size={13} color={GREEN} />
-                        <Text style={{ fontSize: 12, fontWeight: "600", color: GREEN }}>Llamar</Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: GREEN,
+                          }}>
+                          Llamar
+                        </Text>
                       </TouchableOpacity>
 
                       {/* WhatsApp — directo al número si existe, si no el usuario elige contacto en WA */}
                       <TouchableOpacity
                         onPress={() => {
-                          const msg = encodeURIComponent(mensajeCobroWA(cliente, item.monto ?? 0, dias));
-                          const tel = telContacto ? formatearTel(telContacto) : "";
-                          const url = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+                          const msg = encodeURIComponent(
+                            mensajeCobroWA(cliente, item.monto ?? 0, dias),
+                          );
+                          const tel = telContacto
+                            ? formatearTel(telContacto)
+                            : "";
+                          const url = tel
+                            ? `https://wa.me/${tel}?text=${msg}`
+                            : `https://wa.me/?text=${msg}`;
                           Linking.openURL(url).catch(() =>
-                            Alert.alert("Error", "No se pudo abrir WhatsApp.")
+                            Alert.alert("Error", "No se pudo abrir WhatsApp."),
                           );
                         }}
-                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: isDark ? "#052E16" : "#E8FFF4", borderWidth: 1, borderColor: WA_GREEN + "55", borderRadius: 10, paddingVertical: 7 }}>
-                        <MaterialCommunityIcons name="whatsapp" size={14} color={WA_GREEN} />
-                        <Text style={{ fontSize: 12, fontWeight: "600", color: WA_GREEN }}>WhatsApp</Text>
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          backgroundColor: isDark ? "#052E16" : "#E8FFF4",
+                          borderWidth: 1,
+                          borderColor: WA_GREEN + "55",
+                          borderRadius: 10,
+                          paddingVertical: 7,
+                        }}>
+                        <MaterialCommunityIcons
+                          name="whatsapp"
+                          size={14}
+                          color={WA_GREEN}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: WA_GREEN,
+                          }}>
+                          WhatsApp
+                        </Text>
                       </TouchableOpacity>
 
                       {/* Cobrado — pide confirmación */}
                       <TouchableOpacity
-                        onPress={() => confirmarCobro(item.id, cliente, item.monto ?? 0)}
-                        disabled={!!cobrando}
-                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#22C55E1A", borderWidth: 1, borderColor: "#22C55E55", borderRadius: 10, paddingVertical: 7 }}>
-                        {cargando
-                          ? <ActivityIndicator size="small" color={GREEN} style={{ width: 13, height: 13 }} />
-                          : <Feather name="check" size={13} color={GREEN} />
+                        onPress={() =>
+                          confirmarCobro(item.id, cliente, item.monto ?? 0)
                         }
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: GREEN }}>Cobrado</Text>
+                        disabled={!!cobrando}
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 4,
+                          backgroundColor: "#22C55E1A",
+                          borderWidth: 1,
+                          borderColor: "#22C55E55",
+                          borderRadius: 10,
+                          paddingVertical: 7,
+                        }}>
+                        {cargando ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={GREEN}
+                            style={{ width: 13, height: 13 }}
+                          />
+                        ) : (
+                          <Feather name="check" size={13} color={GREEN} />
+                        )}
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "700",
+                            color: GREEN,
+                          }}>
+                          Cobrado
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
-                  {i < pendientes.length - 1 && <View style={{ height: 0.5, backgroundColor: divClr }} />}
+                  {i < pendientes.length - 1 && (
+                    <View style={{ height: 0.5, backgroundColor: divClr }} />
+                  )}
                 </View>
               );
             })}
@@ -766,54 +1083,123 @@ function ModalPendientes({
               <View style={{ flex: 1 }} />
             </TouchableWithoutFeedback>
 
-
             {/* Panel card */}
-            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
-              <View style={{ backgroundColor: panelBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12, paddingHorizontal: 20, paddingBottom: 36, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 20 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}>
+              <View
+                style={{
+                  backgroundColor: panelBg,
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  paddingTop: 12,
+                  paddingHorizontal: 20,
+                  paddingBottom: 36,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.25,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: -4 },
+                  elevation: 20,
+                }}>
                 {/* Handle + close */}
                 <View style={{ alignItems: "center", marginBottom: 14 }}>
-                  <View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: inputBdr }} />
+                  <View
+                    style={{
+                      width: 32,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: inputBdr,
+                    }}
+                  />
                 </View>
 
-                <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    marginBottom: 6,
+                  }}>
                   <View>
-                    <Text style={{ fontSize: 16, fontWeight: "700", color: ink }}>Contactar cliente</Text>
-                    <Text style={{ fontSize: 13, color: AMBER, fontWeight: "600", marginTop: 2 }}>
+                    <Text
+                      style={{ fontSize: 16, fontWeight: "700", color: ink }}>
+                      Contactar cliente
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: AMBER,
+                        fontWeight: "600",
+                        marginTop: 2,
+                      }}>
                       {contactTarget.cliente} · {fmtI(contactTarget.monto)}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={cerrarPanel} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <TouchableOpacity
+                    onPress={cerrarPanel}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Feather name="x" size={20} color={muted} />
                   </TouchableOpacity>
                 </View>
 
                 {/* Phone input */}
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: inputBg, borderWidth: 1, borderColor: inputBdr, borderRadius: 12, paddingHorizontal: 14, height: 48, marginTop: 14, marginBottom: 14 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    backgroundColor: inputBg,
+                    borderWidth: 1,
+                    borderColor: inputBdr,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    height: 48,
+                    marginTop: 14,
+                    marginBottom: 14,
+                  }}>
                   <Feather name="phone" size={16} color={muted} />
                   <TextInput
                     value={phoneInput}
                     onChangeText={setPhoneInput}
                     keyboardType="phone-pad"
-                    placeholder={contactTarget?.tel ? contactTarget.tel : "Número del cliente (opcional)"}
+                    placeholder={
+                      contactTarget?.tel
+                        ? contactTarget.tel
+                        : "Número del cliente (opcional)"
+                    }
                     placeholderTextColor={contactTarget?.tel ? ink : muted}
                     style={{ flex: 1, fontSize: 15, color: ink }}
                     returnKeyType="done"
                     onSubmitEditing={Keyboard.dismiss}
                   />
                   {phoneInput.length > 0 && (
-                    <TouchableOpacity onPress={() => setPhoneInput("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => setPhoneInput("")}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Feather name="x-circle" size={16} color={muted} />
                     </TouchableOpacity>
                   )}
                 </View>
 
                 {contactTarget?.tel ? (
-                  <Text style={{ fontSize: 11, color: GREEN, marginBottom: 16, lineHeight: 15 }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: GREEN,
+                      marginBottom: 16,
+                      lineHeight: 15,
+                    }}>
                     ✓ Número guardado del contacto — llama o escribe directo.
                   </Text>
                 ) : (
-                  <Text style={{ fontSize: 11, color: muted, marginBottom: 16, lineHeight: 15 }}>
-                    Si no ingresas número, WhatsApp te pedirá elegir el contacto. Para llamar el número es obligatorio.
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: muted,
+                      marginBottom: 16,
+                      lineHeight: 15,
+                    }}>
+                    Si no ingresas número, WhatsApp te pedirá elegir el
+                    contacto. Para llamar el número es obligatorio.
                   </Text>
                 )}
 
@@ -821,16 +1207,52 @@ function ModalPendientes({
                 <View style={{ flexDirection: "row", gap: 12 }}>
                   <TouchableOpacity
                     onPress={handleLlamar}
-                    style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: GREEN + "18", borderWidth: 1.5, borderColor: GREEN + "55", borderRadius: 14, paddingVertical: 14 }}>
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      backgroundColor: GREEN + "18",
+                      borderWidth: 1.5,
+                      borderColor: GREEN + "55",
+                      borderRadius: 14,
+                      paddingVertical: 14,
+                    }}>
                     <Feather name="phone-call" size={18} color={GREEN} />
-                    <Text style={{ fontSize: 15, fontWeight: "700", color: GREEN }}>Llamar</Text>
+                    <Text
+                      style={{ fontSize: 15, fontWeight: "700", color: GREEN }}>
+                      Llamar
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={handleWhatsApp}
-                    style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: WA_GREEN + "18", borderWidth: 1.5, borderColor: WA_GREEN + "55", borderRadius: 14, paddingVertical: 14 }}>
-                    <MaterialCommunityIcons name="whatsapp" size={20} color={WA_GREEN} />
-                    <Text style={{ fontSize: 15, fontWeight: "700", color: WA_GREEN }}>WhatsApp</Text>
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      backgroundColor: WA_GREEN + "18",
+                      borderWidth: 1.5,
+                      borderColor: WA_GREEN + "55",
+                      borderRadius: 14,
+                      paddingVertical: 14,
+                    }}>
+                    <MaterialCommunityIcons
+                      name="whatsapp"
+                      size={20}
+                      color={WA_GREEN}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "700",
+                        color: WA_GREEN,
+                      }}>
+                      WhatsApp
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -847,8 +1269,11 @@ function WidgetInsightIA({ isDark }: WProps) {
   const ingresos = useIngresosStore((s) => s.ingresos);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const pendientes = React.useMemo(() =>
-    ingresos.filter((i) => i.estado === "pendiente").sort((a, b) => ((b.fecha ?? "") > (a.fecha ?? "") ? 1 : -1)),
+  const pendientes = React.useMemo(
+    () =>
+      ingresos
+        .filter((i) => i.estado === "pendiente")
+        .sort((a, b) => ((b.fecha ?? "") > (a.fecha ?? "") ? 1 : -1)),
     [ingresos],
   );
 
@@ -859,12 +1284,12 @@ function WidgetInsightIA({ isDark }: WProps) {
 
   const totalPend = pendientes.reduce((a, i) => a + (i.monto ?? 0), 0);
   const mostrados = pendientes.slice(0, 3);
-  const resto     = pendientes.length - 3;
+  const resto = pendientes.length - 3;
 
-  const AMBER  = "#FBBF24";
-  const cardBg = isDark ? "#2A1500" : "#FFF3E0";
-  const ink    = isDark ? "#F1F5F9" : "#111827";
-  const muted  = isDark ? "#3D536E" : "#9CA3AF";
+  const AMBER = "#FBBF24";
+  const cardBg = isDark ? "#2A1500" : "#fff2ec";
+  const ink = isDark ? "#F1F5F9" : "#111827";
+  const muted = isDark ? "#3D536E" : "#9CA3AF";
   const divClr = isDark ? "#3A1F00" : "#F5E6CC";
 
   return (
@@ -872,50 +1297,136 @@ function WidgetInsightIA({ isDark }: WProps) {
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={() => pendientes.length > 0 && setModalVisible(true)}
-        style={[s.wCard, { backgroundColor: cardBg, paddingHorizontal: 13, paddingVertical: 12, gap: 0 }]}>
-
+        style={[
+          s.wCard,
+          {
+            backgroundColor: cardBg,
+            paddingHorizontal: 13,
+            paddingVertical: 12,
+            gap: 0,
+          },
+        ]}>
         {/* Header */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: AMBER }} />
-          <Text style={{ fontSize: 8.5, fontWeight: "600", color: muted }}>Pendientes · Por cobrar</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 5,
+            marginBottom: 2,
+          }}>
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: AMBER,
+            }}
+          />
+          <Text style={{ fontSize: 8.5, fontWeight: "600", color: muted }}>
+            Pendientes · Por cobrar
+          </Text>
         </View>
 
         {/* Total */}
-        <Text style={{ fontSize: 22, fontWeight: "700", color: pendientes.length > 0 ? AMBER : "#22C55E", letterSpacing: -0.6, lineHeight: 28, marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: "700",
+            color: pendientes.length > 0 ? AMBER : "#22C55E",
+            letterSpacing: -0.6,
+            lineHeight: 28,
+            marginBottom: 8,
+          }}>
           {pendientes.length > 0 ? fmtI(totalPend) : "Al día ✓"}
         </Text>
 
         {/* Lista mini o vacío */}
         {pendientes.length === 0 ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ fontSize: 22, marginBottom: 4 }}>🎉</Text>
-            <Text style={{ fontSize: 10, color: muted, textAlign: "center" }}>Sin cuentas pendientes</Text>
+            <Text style={{ fontSize: 10, color: muted, textAlign: "center" }}>
+              Sin cuentas pendientes
+            </Text>
           </View>
         ) : (
           <View style={{ flex: 1 }}>
             {mostrados.map((item, i) => {
-              const cliente = (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim();
-              const dias    = item.fecha ? diasDesde(item.fecha) : 0;
-              const color   = avatarColor(i);
-              const isLast  = i === mostrados.length - 1 && resto <= 0;
+              const cliente = (item.descripcion ?? item.tipo_ingreso ?? "Flete")
+                .split(" · ")[0]
+                .trim();
+              const dias = item.fecha ? diasDesde(item.fecha) : 0;
+              const color = avatarColor(i);
+              const isLast = i === mostrados.length - 1 && resto <= 0;
               return (
                 <View key={item.id}>
-                  <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 5, gap: 8 }}>
-                    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color + "30", borderWidth: 1, borderColor: color + "60", alignItems: "center", justifyContent: "center" }}>
-                      <Text style={{ fontSize: 8.5, fontWeight: "700", color }}>{initials(cliente)}</Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 5,
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 13,
+                        backgroundColor: color + "30",
+                        borderWidth: 1,
+                        borderColor: color + "60",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>
+                      <Text style={{ fontSize: 8.5, fontWeight: "700", color }}>
+                        {initials(cliente)}
+                      </Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 10.5, fontWeight: "600", color: ink }}>{cliente}</Text>
-                      <Text style={{ fontSize: 8, color: muted, marginTop: 0.5 }}>{labelDias(dias)}</Text>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: "600",
+                          color: ink,
+                        }}>
+                        {cliente}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 8, color: muted, marginTop: 0.5 }}>
+                        {labelDias(dias)}
+                      </Text>
                     </View>
-                    <Text style={{ fontSize: 10.5, fontWeight: "700", color: AMBER }}>{fmtI(item.monto ?? 0)}</Text>
+                    <Text
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: "700",
+                        color: AMBER,
+                      }}>
+                      {fmtI(item.monto ?? 0)}
+                    </Text>
                   </View>
-                  {!isLast && <View style={{ height: 0.5, backgroundColor: divClr, marginLeft: 34 }} />}
+                  {!isLast && (
+                    <View
+                      style={{
+                        height: 0.5,
+                        backgroundColor: divClr,
+                        marginLeft: 34,
+                      }}
+                    />
+                  )}
                 </View>
               );
             })}
             {resto > 0 && (
-              <Text style={{ fontSize: 9, color: AMBER, marginTop: 4, textAlign: "center", fontWeight: "600" }}>
+              <Text
+                style={{
+                  fontSize: 9,
+                  color: AMBER,
+                  marginTop: 4,
+                  textAlign: "center",
+                  fontWeight: "600",
+                }}>
                 +{resto} más → ver todos
               </Text>
             )}
@@ -990,7 +1501,10 @@ function WidgetClientes({ isDark }: WProps) {
   // Se dispara solo cuando cambia la lista de mercancías brutas
   const rawFingerprint = rawMercancias.join("|");
   useEffect(() => {
-    if (rawMercancias.length === 0) { setTopCarga([]); return; }
+    if (rawMercancias.length === 0) {
+      setTopCarga([]);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -1017,13 +1531,15 @@ function WidgetClientes({ isDark }: WProps) {
         }
         if (!cancelled) {
           setTopCarga(
-            [...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)
+            [...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3),
           );
         }
       }
     })();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawFingerprint]);
 
   if (clienteData.length === 0) {
@@ -1238,11 +1754,14 @@ function WidgetCentroPendientes({
   const [montoInput, setMontoInput] = useState("");
   const [actualizando, setActualizando] = useState(false);
 
-  const porCobrar = React.useMemo(() => calcularPorCobrar(ingresos), [ingresos]);
+  const porCobrar = React.useMemo(
+    () => calcularPorCobrar(ingresos),
+    [ingresos],
+  );
   const porPagar = React.useMemo(() => calcularPorPagar(gastos), [gastos]);
   const resumen = React.useMemo(
     () => resumirPendientes(porCobrar, porPagar),
-    [porCobrar, porPagar]
+    [porCobrar, porPagar],
   );
 
   // Programa notificaciones cuando el resumen cambia
@@ -1273,10 +1792,9 @@ function WidgetCentroPendientes({
     setActualizando(true);
     const nuevoMontoPagado = Math.min(
       (item.montoPagado ?? 0) + monto,
-      item.monto
+      item.monto,
     );
-    const nuevoEstado =
-      nuevoMontoPagado >= item.monto ? "pagado" : "parcial";
+    const nuevoEstado = nuevoMontoPagado >= item.monto ? "pagado" : "parcial";
     const { error } = await supabase
       .from("conductor_ingresos")
       .update({ monto_pagado: nuevoMontoPagado, estado: nuevoEstado })
@@ -1307,7 +1825,7 @@ function WidgetCentroPendientes({
             if (error) Alert.alert("Error", "No se pudo actualizar.");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -1321,7 +1839,7 @@ function WidgetCentroPendientes({
         text: "WhatsApp",
         onPress: () => {
           Linking.openURL(
-            `https://wa.me/?text=${encodeURIComponent(msg)}`
+            `https://wa.me/?text=${encodeURIComponent(msg)}`,
           ).catch(() => Alert.alert("Error", "No se pudo abrir WhatsApp"));
         },
       },
@@ -1352,7 +1870,12 @@ function WidgetCentroPendientes({
             </Text>
           </View>
 
-          <View style={[wp.divider, { backgroundColor: isDark ? "#333" : "#E5E7EB" }]} />
+          <View
+            style={[
+              wp.divider,
+              { backgroundColor: isDark ? "#333" : "#E5E7EB" },
+            ]}
+          />
 
           <View style={wp.totalCol}>
             <Text style={[wp.totalLabel, { color: MUTED(isDark) }]}>
@@ -1400,7 +1923,9 @@ function WidgetCentroPendientes({
                   wp.sheet,
                   {
                     backgroundColor: c.modalBg,
-                    ...(isDark ? { borderWidth: 1, borderColor: c.border } : {}),
+                    ...(isDark
+                      ? { borderWidth: 1, borderColor: c.border }
+                      : {}),
                   },
                 ]}>
                 <View style={[wp.handle, { backgroundColor: c.border }]} />
@@ -1418,7 +1943,6 @@ function WidgetCentroPendientes({
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={wp.sheetScroll}>
-
                   {/* Tabs */}
                   <View style={wp.tabs}>
                     {(["cobrar", "pagar"] as PendientesTab[]).map((t) => (
@@ -1427,7 +1951,10 @@ function WidgetCentroPendientes({
                         style={[
                           wp.tabBtn,
                           tab === t
-                            ? { backgroundColor: c.accent, borderColor: c.accent }
+                            ? {
+                                backgroundColor: c.accent,
+                                borderColor: c.accent,
+                              }
                             : { borderColor: c.border },
                         ]}
                         onPress={() => setTab(t)}
@@ -1436,8 +1963,7 @@ function WidgetCentroPendientes({
                           style={[
                             wp.tabText,
                             {
-                              color:
-                                tab === t ? c.accentText : c.textSecondary,
+                              color: tab === t ? c.accentText : c.textSecondary,
                             },
                           ]}>
                           {t === "cobrar"
@@ -1462,7 +1988,8 @@ function WidgetCentroPendientes({
                             size={36}
                             color="#22C55E"
                           />
-                          <Text style={[wp.emptyText, { color: MUTED(isDark) }]}>
+                          <Text
+                            style={[wp.emptyText, { color: MUTED(isDark) }]}>
                             Sin cuentas pendientes por cobrar
                           </Text>
                         </View>
@@ -1476,8 +2003,9 @@ function WidgetCentroPendientes({
                               style={[
                                 wp.itemCard,
                                 {
-                                  backgroundColor:
-                                    isDark ? "#1C1C1E" : "#F7F7F7",
+                                  backgroundColor: isDark
+                                    ? "#1C1C1E"
+                                    : "#F7F7F7",
                                 },
                               ]}>
                               <View style={wp.itemBody}>
@@ -1495,11 +2023,7 @@ function WidgetCentroPendientes({
                                       wp.itemBadge,
                                       { backgroundColor: color + "20" },
                                     ]}>
-                                    <Text
-                                      style={[
-                                        wp.itemBadgeText,
-                                        { color },
-                                      ]}>
+                                    <Text style={[wp.itemBadgeText, { color }]}>
                                       {label}
                                     </Text>
                                   </View>
@@ -1620,7 +2144,7 @@ function WidgetCentroPendientes({
                                         style={wp.pagoCompletoBtn}
                                         onPress={() =>
                                           setMontoInput(
-                                            String(item.montoRestante)
+                                            String(item.montoRestante),
                                           )
                                         }>
                                         <Text style={wp.pagoCompletoBtnText}>
@@ -1669,7 +2193,8 @@ function WidgetCentroPendientes({
                             size={36}
                             color="#22C55E"
                           />
-                          <Text style={[wp.emptyText, { color: MUTED(isDark) }]}>
+                          <Text
+                            style={[wp.emptyText, { color: MUTED(isDark) }]}>
                             Sin gastos pendientes de pago
                           </Text>
                         </View>
@@ -1683,8 +2208,9 @@ function WidgetCentroPendientes({
                               style={[
                                 wp.itemCard,
                                 {
-                                  backgroundColor:
-                                    isDark ? "#1C1C1E" : "#F7F7F7",
+                                  backgroundColor: isDark
+                                    ? "#1C1C1E"
+                                    : "#F7F7F7",
                                 },
                               ]}>
                               <View style={wp.itemBody}>
@@ -1702,8 +2228,7 @@ function WidgetCentroPendientes({
                                       wp.itemBadge,
                                       { backgroundColor: color + "20" },
                                     ]}>
-                                    <Text
-                                      style={[wp.itemBadgeText, { color }]}>
+                                    <Text style={[wp.itemBadgeText, { color }]}>
                                       {label}
                                     </Text>
                                   </View>
@@ -1746,10 +2271,7 @@ function WidgetCentroPendientes({
                                     { borderColor: "#22C55E60" },
                                   ]}
                                   onPress={() =>
-                                    marcarGastoPagado(
-                                      item.id,
-                                      item.descripcion
-                                    )
+                                    marcarGastoPagado(item.id, item.descripcion)
                                   }
                                   activeOpacity={0.7}>
                                   <Ionicons
@@ -1811,7 +2333,11 @@ const wp = StyleSheet.create({
   urgentBadgeText: { fontSize: 11, fontWeight: "700", color: "#fff" },
   totalesRow: { flexDirection: "row", alignItems: "center" },
   totalCol: { flex: 1, gap: 2 },
-  divider: { width: StyleSheet.hairlineWidth, height: 44, marginHorizontal: 14 },
+  divider: {
+    width: StyleSheet.hairlineWidth,
+    height: 44,
+    marginHorizontal: 14,
+  },
   totalLabel: { fontSize: 10, fontWeight: "500" },
   totalMonto: { fontSize: 16, fontWeight: "700", letterSpacing: -0.5 },
   totalSub: { fontSize: 10 },
@@ -2620,7 +3146,10 @@ export default function HomeBaseAdapted({
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[s.gridContainer, { paddingBottom: insets.bottom + 100 }]}>
+            contentContainerStyle={[
+              s.gridContainer,
+              { paddingBottom: insets.bottom + 100 },
+            ]}>
             {/* WIDGETS — fila de dos columnas */}
             <View style={s.widgetRow}>
               <WidgetResumen isDark={isDark} />
