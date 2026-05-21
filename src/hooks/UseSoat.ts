@@ -13,7 +13,6 @@ interface UseSOATReturn {
   error: string | null;
   recargar: () => Promise<void>;
   esSOATVigente: boolean;
-  esRTMVigente: boolean;
   diasParaVencerSOAT: number;
 }
 
@@ -105,7 +104,6 @@ export function useSOAT(
 
   const esSOATVigente = soatService.isSOATVigente(soat?.soat?.fechaVencimiento);
   const diasParaVencerSOAT = soatService.diasParaVencer(soat?.soat?.fechaVencimiento);
-  const esRTMVigente = soat?.rtm?.esVigente || false;
 
   return {
     soat,
@@ -114,7 +112,6 @@ export function useSOAT(
     error,
     recargar,
     esSOATVigente,
-    esRTMVigente,
     diasParaVencerSOAT,
   };
 }
