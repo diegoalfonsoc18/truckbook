@@ -1072,7 +1072,7 @@ export default function TransactionScreen({
                           contactsDebounceRef.current = setTimeout(async () => {
                             try {
                               const { data } = await Contacts.getContactsAsync({
-                                fields: [Contacts.Fields.Name],
+                                fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
                                 name: query, // filtro nativo en iOS/Android
                               });
                               setContactsList(data.filter((ct) => !!ct.name));
@@ -1128,7 +1128,13 @@ export default function TransactionScreen({
                             key={(ct as any).id ?? `${i}`}
                             style={[s.contactRow, { borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}
                             onPress={() => {
-                              setExtraValues((prev) => ({ ...prev, cliente: ct.name ?? "" }));
+                              const rawTel = ct.phoneNumbers?.[0]?.number ?? "";
+                              const tel = rawTel.replace(/[\s\-().]/g, "");
+                              setExtraValues((prev) => ({
+                                ...prev,
+                                cliente: ct.name ?? "",
+                                ...(tel ? { telefono: tel } : {}),
+                              }));
                               if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
                               setContactsVisible(false);
                               setContactsList([]);

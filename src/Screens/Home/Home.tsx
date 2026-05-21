@@ -480,6 +480,17 @@ interface ContactTarget {
   cliente: string;
   monto:   number;
   dias:    number;
+  tel:     string | null; // número del contacto (si se guardó al registrar)
+}
+
+/**
+ * Extrae el teléfono incrustado en la descripción ([TEL:...])
+ * y devuelve la descripción limpia + el número.
+ */
+function extraerTelDesc(desc: string): { desc: string; tel: string | null } {
+  const match = desc.match(/\[TEL:([^\]]+)\]$/);
+  if (!match) return { desc, tel: null };
+  return { desc: desc.replace(/\[TEL:[^\]]+\]$/, ""), tel: match[1] };
 }
 
 /** Mensaje de cobro por WhatsApp — plantilla sin IA para respuesta instantánea */
@@ -599,7 +610,8 @@ function ModalPendientes({
   // ── Acciones de contacto ───────────────────────────────────────────────────
   const handleLlamar = () => {
     if (!contactTarget) return;
-    const tel = formatearTel(phoneInput);
+    // Prioridad: teléfono del contacto guardado → lo que escribió el usuario en el input
+    const tel = formatearTel(contactTarget.tel ?? phoneInput);
     if (!tel) {
       Alert.alert("Número requerido", "Ingresa el número del cliente para llamar.");
       return;
@@ -611,9 +623,10 @@ function ModalPendientes({
 
   const handleWhatsApp = () => {
     if (!contactTarget) return;
-    const msg  = encodeURIComponent(mensajeCobroWA(contactTarget.cliente, contactTarget.monto, contactTarget.dias));
-    const tel  = formatearTel(phoneInput);
-    const url  = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    const msg = encodeURIComponent(mensajeCobroWA(contactTarget.cliente, contactTarget.monto, contactTarget.dias));
+    // Si hay teléfono guardado del contacto, va directo al chat; si no, el usuario elige contacto en WA
+    const tel = formatearTel(contactTarget.tel ?? phoneInput);
+    const url = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
     Linking.openURL(url).catch(() =>
       Alert.alert("Error", "No se pudo abrir WhatsApp.")
     );
@@ -669,8 +682,11 @@ function ModalPendientes({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}>
             {pendientes.map((item, i) => {
-              const cliente   = (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim();
-              const partes    = (item.descripcion ?? "").split(" · ");
+              // Extraer teléfono y descripción limpia (sin [TEL:...])
+              const { desc: descLimpia, tel: telContacto } = extraerTelDesc(item.descripcion ?? "");
+              const rawDesc   = descLimpia || item.tipo_ingreso || "Flete";
+              const cliente   = rawDesc.split(" · ")[0].trim();
+              const partes    = rawDesc.split(" · ");
               const subtitulo = partes.length > 1 ? partes.slice(1).join(" · ") : null;
               const dias      = item.fecha ? diasDesde(item.fecha) : 0;
               const color     = avatarColor(i);
@@ -701,17 +717,19 @@ function ModalPendientes({
                     <View style={{ flexDirection: "row", gap: 8, marginLeft: 54 }}>
                       {/* Llamar — abre panel para ingresar número */}
                       <TouchableOpacity
-                        onPress={() => { setContactTarget({ id: item.id, cliente, monto: item.monto ?? 0, dias }); setPhoneInput(""); }}
+                        onPress={() => { setContactTarget({ id: item.id, cliente, monto: item.monto ?? 0, dias, tel: telContacto }); setPhoneInput(""); }}
                         style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: isDark ? "#0D2E1A" : "#E8FFF1", borderWidth: 1, borderColor: GREEN + "55", borderRadius: 10, paddingVertical: 7 }}>
                         <Feather name="phone" size={13} color={GREEN} />
                         <Text style={{ fontSize: 12, fontWeight: "600", color: GREEN }}>Llamar</Text>
                       </TouchableOpacity>
 
-                      {/* WhatsApp — abre directo, sin panel (número opcional en wa.me) */}
+                      {/* WhatsApp — directo al número si existe, si no el usuario elige contacto en WA */}
                       <TouchableOpacity
                         onPress={() => {
                           const msg = encodeURIComponent(mensajeCobroWA(cliente, item.monto ?? 0, dias));
-                          Linking.openURL(`https://wa.me/?text=${msg}`).catch(() =>
+                          const tel = telContacto ? formatearTel(telContacto) : "";
+                          const url = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+                          Linking.openURL(url).catch(() =>
                             Alert.alert("Error", "No se pudo abrir WhatsApp.")
                           );
                         }}
@@ -748,6 +766,7 @@ function ModalPendientes({
               <View style={{ flex: 1 }} />
             </TouchableWithoutFeedback>
 
+
             {/* Panel card */}
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
               <View style={{ backgroundColor: panelBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12, paddingHorizontal: 20, paddingBottom: 36, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 20 }}>
@@ -775,8 +794,8 @@ function ModalPendientes({
                     value={phoneInput}
                     onChangeText={setPhoneInput}
                     keyboardType="phone-pad"
-                    placeholder="Número del cliente (opcional)"
-                    placeholderTextColor={muted}
+                    placeholder={contactTarget?.tel ? contactTarget.tel : "Número del cliente (opcional)"}
+                    placeholderTextColor={contactTarget?.tel ? ink : muted}
                     style={{ flex: 1, fontSize: 15, color: ink }}
                     returnKeyType="done"
                     onSubmitEditing={Keyboard.dismiss}
@@ -788,9 +807,15 @@ function ModalPendientes({
                   )}
                 </View>
 
-                <Text style={{ fontSize: 11, color: muted, marginBottom: 16, lineHeight: 15 }}>
-                  Si no ingresas número, WhatsApp te pedirá elegir el contacto. Para llamar el número es obligatorio.
-                </Text>
+                {contactTarget?.tel ? (
+                  <Text style={{ fontSize: 11, color: GREEN, marginBottom: 16, lineHeight: 15 }}>
+                    ✓ Número guardado del contacto — llama o escribe directo.
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: 11, color: muted, marginBottom: 16, lineHeight: 15 }}>
+                    Si no ingresas número, WhatsApp te pedirá elegir el contacto. Para llamar el número es obligatorio.
+                  </Text>
+                )}
 
                 {/* Action buttons */}
                 <View style={{ flexDirection: "row", gap: 12 }}>

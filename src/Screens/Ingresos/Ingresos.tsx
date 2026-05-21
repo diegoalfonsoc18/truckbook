@@ -107,6 +107,8 @@ export default function Ingresos() {
         if (extras.mercancia) partes.push(extras.mercancia);
         if (partes.length > 0) desc = partes.join(" · ");
       }
+      // Adjuntar teléfono del contacto al final (parseable, invisible en display)
+      if (extras?.telefono) desc = `${desc}[TEL:${extras.telefono}]`;
 
       // El estado lo elige el usuario en el modal; por defecto "pagado"
       const estadoInicial = (estado === "pendiente" ? "pendiente" : "pagado") as "pendiente" | "pagado";
