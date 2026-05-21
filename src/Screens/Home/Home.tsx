@@ -931,21 +931,33 @@ function ModalPendientes({
                         </Text>
                       </TouchableOpacity>
 
-                      {/* WhatsApp — directo al número si existe, si no el usuario elige contacto en WA */}
+                      {/* WhatsApp — directo al chat del número */}
                       <TouchableOpacity
                         onPress={() => {
                           const msg = encodeURIComponent(
                             mensajeCobroWA(cliente, item.monto ?? 0, dias),
                           );
-                          const tel = telContacto
-                            ? formatearTel(telContacto)
-                            : "";
-                          const url = tel
-                            ? `https://wa.me/${tel}?text=${msg}`
-                            : `https://wa.me/?text=${msg}`;
-                          Linking.openURL(url).catch(() =>
-                            Alert.alert("Error", "No se pudo abrir WhatsApp."),
-                          );
+                          const abrirWA = (numero: string) => {
+                            const tel = formatearTel(numero);
+                            const url = tel
+                              ? `https://wa.me/${tel}?text=${msg}`
+                              : `https://wa.me/?text=${msg}`;
+                            Linking.openURL(url).catch(() =>
+                              Alert.alert("Error", "No se pudo abrir WhatsApp."),
+                            );
+                          };
+                          if (telContacto) {
+                            abrirWA(telContacto);
+                          } else {
+                            Alert.prompt(
+                              "Número de WhatsApp",
+                              `¿Cuál es el número de ${cliente}?`,
+                              (numero) => { if (numero) abrirWA(numero); },
+                              "plain-text",
+                              "",
+                              "phone-pad",
+                            );
+                          }
                         }}
                         style={{
                           flex: 1,
