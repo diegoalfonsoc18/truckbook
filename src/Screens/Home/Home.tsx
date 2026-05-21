@@ -600,10 +600,6 @@ function ModalPendientes({
   const [geminiMsg, setGeminiMsg] = useState<string | null>(null);
   const [loadingGem, setLoadingGem] = useState(false);
   const [cobrando, setCobrando] = useState<string | null>(null);
-  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(
-    null,
-  );
-  const [phoneInput, setPhoneInput] = useState("");
 
   const AMBER = "#FBBF24";
   const GREEN = "#22C55E";
@@ -613,17 +609,6 @@ function ModalPendientes({
   const divClr = isDark ? "#2A1800" : "#F0E6CC";
   const modalBg = isDark ? "#160E00" : "#FFFBF0";
   const cardBg = isDark ? "#2A1800" : "#FFF8E7";
-  const inputBg = isDark ? "#1E1200" : "#FFF3DC";
-  const inputBdr = isDark ? "#3D2600" : "#E8C97A";
-  const panelBg = isDark ? "#1A0F00" : "#FFFAEE";
-
-  // ── Cerrar el panel de contacto al cerrar el modal ─────────────────────────
-  useEffect(() => {
-    if (!visible) {
-      setContactTarget(null);
-      setPhoneInput("");
-    }
-  }, [visible]);
 
   // ── Gemini: consejo al abrir el modal ──────────────────────────────────────
   useEffect(() => {
@@ -719,47 +704,6 @@ function ModalPendientes({
         },
       ],
     );
-  };
-
-  // ── Acciones de contacto ───────────────────────────────────────────────────
-  const handleLlamar = () => {
-    if (!contactTarget) return;
-    // Prioridad: teléfono del contacto guardado → lo que escribió el usuario en el input
-    const tel = formatearTel(contactTarget.tel ?? phoneInput);
-    if (!tel) {
-      Alert.alert(
-        "Número requerido",
-        "Ingresa el número del cliente para llamar.",
-      );
-      return;
-    }
-    Linking.openURL(`tel:${tel}`).catch(() =>
-      Alert.alert("Error", "No se pudo abrir el marcador telefónico."),
-    );
-  };
-
-  const handleWhatsApp = () => {
-    if (!contactTarget) return;
-    const msg = encodeURIComponent(
-      mensajeCobroWA(
-        contactTarget.cliente,
-        contactTarget.monto,
-        contactTarget.dias,
-      ),
-    );
-    // Si hay teléfono guardado del contacto, va directo al chat; si no, el usuario elige contacto en WA
-    const tel = formatearTel(contactTarget.tel ?? phoneInput);
-    const url = tel
-      ? `https://wa.me/${tel}?text=${msg}`
-      : `https://wa.me/?text=${msg}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert("Error", "No se pudo abrir WhatsApp."),
-    );
-  };
-
-  const cerrarPanel = () => {
-    setContactTarget(null);
-    setPhoneInput("");
   };
 
   const totalPend = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
@@ -956,17 +900,13 @@ function ModalPendientes({
                     {/* Fila de acciones */}
                     <View
                       style={{ flexDirection: "row", gap: 8, marginLeft: 54 }}>
-                      {/* Llamar — abre panel para ingresar número */}
+                      {/* Llamar — abre marcador del dispositivo directo */}
                       <TouchableOpacity
                         onPress={() => {
-                          setContactTarget({
-                            id: item.id,
-                            cliente,
-                            monto: item.monto ?? 0,
-                            dias,
-                            tel: telContacto,
-                          });
-                          setPhoneInput("");
+                          const tel = telContacto ? formatearTel(telContacto) : "";
+                          Linking.openURL(`tel:${tel}`).catch(() =>
+                            Alert.alert("Error", "No se pudo abrir el marcador telefónico."),
+                          );
                         }}
                         style={{
                           flex: 1,
@@ -1081,190 +1021,6 @@ function ModalPendientes({
           </ScrollView>
         </View>
 
-        {/* ── Panel de contacto (overlay sobre el bottom sheet) ── */}
-        {contactTarget && (
-          <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
-            {/* Dim tap-to-close */}
-            <TouchableWithoutFeedback onPress={cerrarPanel}>
-              <View style={{ flex: 1 }} />
-            </TouchableWithoutFeedback>
-
-            {/* Panel card */}
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}>
-              <View
-                style={{
-                  backgroundColor: panelBg,
-                  borderTopLeftRadius: 20,
-                  borderTopRightRadius: 20,
-                  paddingTop: 12,
-                  paddingHorizontal: 20,
-                  paddingBottom: 36,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.25,
-                  shadowRadius: 12,
-                  shadowOffset: { width: 0, height: -4 },
-                  elevation: 20,
-                }}>
-                {/* Handle + close */}
-                <View style={{ alignItems: "center", marginBottom: 14 }}>
-                  <View
-                    style={{
-                      width: 32,
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: inputBdr,
-                    }}
-                  />
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    marginBottom: 6,
-                  }}>
-                  <View>
-                    <Text
-                      style={{ fontSize: 16, fontWeight: "700", color: ink }}>
-                      Contactar cliente
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: AMBER,
-                        fontWeight: "600",
-                        marginTop: 2,
-                      }}>
-                      {contactTarget.cliente} · {fmtI(contactTarget.monto)}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={cerrarPanel}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Feather name="x" size={20} color={muted} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Phone input */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 10,
-                    backgroundColor: inputBg,
-                    borderWidth: 1,
-                    borderColor: inputBdr,
-                    borderRadius: 12,
-                    paddingHorizontal: 14,
-                    height: 48,
-                    marginTop: 14,
-                    marginBottom: 14,
-                  }}>
-                  <Feather name="phone" size={16} color={muted} />
-                  <TextInput
-                    value={phoneInput}
-                    onChangeText={setPhoneInput}
-                    keyboardType="phone-pad"
-                    placeholder={
-                      contactTarget?.tel
-                        ? contactTarget.tel
-                        : "Número del cliente (opcional)"
-                    }
-                    placeholderTextColor={contactTarget?.tel ? ink : muted}
-                    style={{ flex: 1, fontSize: 15, color: ink }}
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                  />
-                  {phoneInput.length > 0 && (
-                    <TouchableOpacity
-                      onPress={() => setPhoneInput("")}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                      <Feather name="x-circle" size={16} color={muted} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {contactTarget?.tel ? (
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: GREEN,
-                      marginBottom: 16,
-                      lineHeight: 15,
-                    }}>
-                    ✓ Número guardado del contacto — llama o escribe directo.
-                  </Text>
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: muted,
-                      marginBottom: 16,
-                      lineHeight: 15,
-                    }}>
-                    Si no ingresas número, WhatsApp te pedirá elegir el
-                    contacto. Para llamar el número es obligatorio.
-                  </Text>
-                )}
-
-                {/* Action buttons */}
-                <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
-                    onPress={handleLlamar}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      backgroundColor: GREEN + "18",
-                      borderWidth: 1.5,
-                      borderColor: GREEN + "55",
-                      borderRadius: 14,
-                      paddingVertical: 14,
-                    }}>
-                    <Feather name="phone-call" size={18} color={GREEN} />
-                    <Text
-                      style={{ fontSize: 15, fontWeight: "700", color: GREEN }}>
-                      Llamar
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleWhatsApp}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      backgroundColor: WA_GREEN + "18",
-                      borderWidth: 1.5,
-                      borderColor: WA_GREEN + "55",
-                      borderRadius: 14,
-                      paddingVertical: 14,
-                    }}>
-                    <MaterialCommunityIcons
-                      name="whatsapp"
-                      size={20}
-                      color={WA_GREEN}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: "700",
-                        color: WA_GREEN,
-                      }}>
-                      WhatsApp
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        )}
       </View>
     </Modal>
   );
@@ -3308,7 +3064,7 @@ export default function HomeBaseAdapted({
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Testigos
+                    Panel de control
                   </Text>
                 </View>
                 <DashboardControlPanel
