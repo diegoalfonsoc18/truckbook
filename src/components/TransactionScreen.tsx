@@ -474,8 +474,10 @@ export default function TransactionScreen({
   const [editEstado, setEditEstado] = useState("pagado");
   const [loading, setLoading] = useState(false);
   const [contactsVisible, setContactsVisible] = useState(false);
+  const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsList, setContactsList] = useState<Contacts.Contact[]>([]);
   const [contactsSearch, setContactsSearch] = useState("");
+  const contactsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-10)).current;
@@ -1017,7 +1019,12 @@ export default function TransactionScreen({
                     {/* Header con botón atrás */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 8 }}>
                       <TouchableOpacity
-                        onPress={() => setContactsVisible(false)}
+                        onPress={() => {
+                          if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                          setContactsVisible(false);
+                          setContactsList([]);
+                          setContactsSearch("");
+                        }}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={{ padding: 4 }}>
                         <Ionicons name="arrow-back" size={22} color={c.text} />
@@ -1025,6 +1032,7 @@ export default function TransactionScreen({
                       <Text style={[s.sheetTitle, { color: c.text, marginBottom: 0, flex: 1, textAlign: "left" }]}>
                         Seleccionar cliente
                       </Text>
+                      {contactsLoading && <ActivityIndicator size="small" color={accentColor} />}
                     </View>
 
                     {/* Buscador */}
@@ -1033,55 +1041,107 @@ export default function TransactionScreen({
                         s.inputRow,
                         {
                           backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface,
-                          borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+                          borderColor: contactsSearch.length >= 2
+                            ? accentColor + "80"
+                            : isDark ? "rgba(255,255,255,0.1)" : c.border,
                           marginBottom: 12,
                         },
                       ]}>
-                      <Ionicons name="search-outline" size={16} color={c.textMuted} style={{ marginRight: 8 }} />
+                      <Ionicons name="search-outline" size={16} color={contactsSearch.length >= 2 ? accentColor : c.textMuted} style={{ marginRight: 8 }} />
                       <TextInput
                         keyboardAppearance="light"
                         style={[s.textInput, { color: c.text }]}
-                        placeholder="Buscar contacto..."
+                        placeholder="Escribe el nombre del cliente..."
                         placeholderTextColor={c.textMuted}
                         value={contactsSearch}
-                        onChangeText={setContactsSearch}
                         autoFocus
+                        onChangeText={(query) => {
+                          setContactsSearch(query);
+
+                          // Cancelar búsqueda anterior
+                          if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+
+                          if (query.length < 2) {
+                            setContactsList([]);
+                            setContactsLoading(false);
+                            return;
+                          }
+
+                          // Debounce 280ms — espera a que el usuario deje de escribir
+                          setContactsLoading(true);
+                          contactsDebounceRef.current = setTimeout(async () => {
+                            try {
+                              const { data } = await Contacts.getContactsAsync({
+                                fields: [Contacts.Fields.Name],
+                                name: query, // filtro nativo en iOS/Android
+                              });
+                              setContactsList(data.filter((ct) => !!ct.name));
+                            } catch {
+                              setContactsList([]);
+                            } finally {
+                              setContactsLoading(false);
+                            }
+                          }, 280);
+                        }}
                       />
                       {contactsSearch.length > 0 && (
-                        <TouchableOpacity onPress={() => setContactsSearch("")}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                            setContactsSearch("");
+                            setContactsList([]);
+                            setContactsLoading(false);
+                          }}>
                           <Ionicons name="close-circle" size={16} color={c.textMuted} />
                         </TouchableOpacity>
                       )}
                     </View>
 
-                    {/* Lista filtrada */}
+                    {/* Resultados */}
                     <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                      {contactsList.length === 0 ? (
-                        <View style={{ alignItems: "center", paddingVertical: 32 }}>
-                          <Ionicons name="people-outline" size={40} color={c.textMuted} />
+                      {contactsSearch.length < 2 ? (
+                        // Estado inicial — instrucción
+                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
+                          <Ionicons name="search-outline" size={38} color={c.textMuted} />
+                          <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14, textAlign: "center" }}>
+                            Escribe mínimo 2 letras{"\n"}para buscar en tus contactos
+                          </Text>
+                        </View>
+                      ) : contactsLoading ? (
+                        // Buscando...
+                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
+                          <ActivityIndicator size="large" color={accentColor} />
+                          <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14 }}>Buscando...</Text>
+                        </View>
+                      ) : contactsList.length === 0 ? (
+                        // Sin resultados
+                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
+                          <Ionicons name="person-outline" size={38} color={c.textMuted} />
                           <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14 }}>
-                            No se encontraron contactos
+                            Sin resultados para "{contactsSearch}"
                           </Text>
                         </View>
                       ) : (
-                        contactsList
-                          .filter((ct) => (ct.name ?? "").toLowerCase().includes(contactsSearch.toLowerCase()))
-                          .map((ct, i) => (
-                            <TouchableOpacity
-                              key={(ct as any).id ?? `${i}`}
-                              style={[s.contactRow, { borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}
-                              onPress={() => {
-                                setExtraValues((prev) => ({ ...prev, cliente: ct.name ?? "" }));
-                                setContactsVisible(false);
-                              }}>
-                              <View style={[s.contactAvatar, { backgroundColor: accentColor + "22" }]}>
-                                <Text style={[s.contactAvatarText, { color: accentColor }]}>
-                                  {(ct.name ?? "?").charAt(0).toUpperCase()}
-                                </Text>
-                              </View>
-                              <Text style={[s.contactName, { color: c.text }]}>{ct.name}</Text>
-                            </TouchableOpacity>
-                          ))
+                        // Lista de resultados
+                        contactsList.map((ct, i) => (
+                          <TouchableOpacity
+                            key={(ct as any).id ?? `${i}`}
+                            style={[s.contactRow, { borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}
+                            onPress={() => {
+                              setExtraValues((prev) => ({ ...prev, cliente: ct.name ?? "" }));
+                              if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                              setContactsVisible(false);
+                              setContactsList([]);
+                              setContactsSearch("");
+                            }}>
+                            <View style={[s.contactAvatar, { backgroundColor: accentColor + "22" }]}>
+                              <Text style={[s.contactAvatarText, { color: accentColor }]}>
+                                {(ct.name ?? "?").charAt(0).toUpperCase()}
+                              </Text>
+                            </View>
+                            <Text style={[s.contactName, { color: c.text }]}>{ct.name}</Text>
+                          </TouchableOpacity>
+                        ))
                       )}
                       <View style={{ height: 20 }} />
                     </ScrollView>
@@ -1171,16 +1231,12 @@ export default function TransactionScreen({
                                         );
                                         return;
                                       }
-                                      const { data } = await Contacts.getContactsAsync({
-                                        fields: [Contacts.Fields.Name],
-                                        sort: Contacts.SortTypes.FirstName,
-                                      });
-                                      const lista = data.filter((ct) => !!ct.name);
-                                      setContactsList(lista);
+                                      // Abre la vista de inmediato — sin cargar nada todavía
+                                      setContactsList([]);
                                       setContactsSearch("");
                                       setContactsVisible(true);
                                     } catch {
-                                      Alert.alert("Error", "No se pudieron cargar los contactos.");
+                                      Alert.alert("Error", "No se pudo acceder a los contactos.");
                                     }
                                   }}>
                                   <Ionicons name="people-outline" size={22} color={accentColor} />
