@@ -5,6 +5,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import HomeBaseAdapted from "../Home/Home";
 import { items as baseItems, Item } from "../Home/Items";
 import { useMultas } from "../../hooks/useMultas";
+import { useSOAT } from "../../hooks/UseSoat";
+import { useRTM } from "../../hooks/usesRtm";
+import { useLicencia } from "../../hooks/useLicencia";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../constants/Themecontext";
@@ -16,6 +19,19 @@ type ConductorNavProp = NativeStackNavigationProp<
   "ConductorHome"
 >;
 
+// ─── Colores de estado ────────────────────────────────────────────────────────
+const COLOR_OK      = "#22C55E"; // verde  — vigente y >30 días
+const COLOR_WARNING = "#FBBF24"; // ámbar  — próximo a vencer (≤30 días)
+const COLOR_DANGER  = "#EF4444"; // rojo   — vencido o con multas
+const COLOR_UNKNOWN = "#6B7280"; // gris   — sin datos aún
+
+function statusColor(vigente: boolean, dias: number, sinDatos: boolean): string {
+  if (sinDatos) return COLOR_UNKNOWN;
+  if (!vigente) return COLOR_DANGER;
+  if (dias <= 30) return COLOR_WARNING;
+  return COLOR_OK;
+}
+
 export default function ConductorHome() {
   const navigation = useNavigation<ConductorNavProp>();
   const { colors: c } = useTheme();
@@ -23,21 +39,63 @@ export default function ConductorHome() {
   const { user } = useAuth();
   const [refrescando, setRefrescando] = useState(false);
 
-  const { tieneMultasPendientes, cantidadPendientes, cargando, recargar } =
+  // ─── Hooks de estado ──────────────────────────────────────────────────────
+  const { tieneMultasPendientes, cantidadPendientes, cargando: cargandoMultas, recargar } =
     useMultas(placaActual, !!placaActual);
+
+  const { esSOATVigente, diasParaVencerSOAT, cargando: cargandoSOAT } =
+    useSOAT(placaActual, !!placaActual);
+
+  const { esRTMVigente, diasParaVencerRTM, cargando: cargandoRTM } =
+    useRTM(placaActual, !!placaActual);
+
+  // Documento del conductor — pendiente de conectar con perfil de usuario
+  const documentoConductor = (user as any)?.user_metadata?.documento ?? null;
+  const { esLicenciaVigente, diasParaVencerLicencia, cargando: cargandoLicencia } =
+    useLicencia(documentoConductor, !!documentoConductor);
 
   // Registrar push token y validar acceso al vehículo
   useEffect(() => {
     if (!user?.id) return;
     registrarPushToken(user.id);
-    // Si el vehículo fue desvinculado mientras la app estaba cerrada, limpiar el vehículo activo
     validarPlacaParaUsuario(user.id);
   }, [user?.id]);
 
-  // Items del conductor con invitaciones
-  const conductorItems: Item[] = [
-    ...baseItems,
-  ];
+  // ─── Items con colores dinámicos de estado ────────────────────────────────
+  const conductorItems: Item[] = baseItems.map((item) => {
+    switch (item.id) {
+      case "tecnicomecanica":
+        return {
+          ...item,
+          color: statusColor(esRTMVigente, diasParaVencerRTM, cargandoRTM || !placaActual),
+        };
+      case "soat":
+        return {
+          ...item,
+          color: statusColor(esSOATVigente, diasParaVencerSOAT, cargandoSOAT || !placaActual),
+        };
+      case "multas":
+        return {
+          ...item,
+          color: !placaActual || cargandoMultas
+            ? COLOR_UNKNOWN
+            : tieneMultasPendientes
+            ? COLOR_DANGER
+            : COLOR_OK,
+        };
+      case "licencia":
+        return {
+          ...item,
+          color: statusColor(
+            esLicenciaVigente,
+            diasParaVencerLicencia,
+            cargandoLicencia || !documentoConductor,
+          ),
+        };
+      default:
+        return item;
+    }
+  });
 
   const handleItemPress = (item: Item) => {
     if (!placaActual) {
@@ -56,7 +114,7 @@ export default function ConductorHome() {
         navigation.navigate("RTM" as any, { placa: placaActual });
         break;
       case "licencia":
-        navigation.navigate("Licencia" as any, { documento: "1234567890" });
+        navigation.navigate("Licencia" as any, { documento: documentoConductor ?? "1234567890" });
         break;
       case "mantenimiento":
         Alert.alert("Mantenimiento", "Funcionalidad en desarrollo");
@@ -75,7 +133,7 @@ export default function ConductorHome() {
       borderRadius: 10, zIndex: 10,
     };
 
-    if (cargando || refrescando) {
+    if (cargandoMultas || refrescando) {
       return (
         <View style={[badge, { backgroundColor: c.surface }]}>
           <Text style={{ color: c.textSecondary, fontSize: 10, fontWeight: "700" }}>…</Text>

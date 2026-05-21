@@ -245,7 +245,11 @@ export const renderHome = ({ color, size, focused }: TabIconProps) => {
       {focused ? (
         <StopIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
       ) : (
-        <StopIconOutline width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <StopIconOutline
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       )}
     </View>
   );
@@ -257,9 +261,17 @@ export const renderGastos = ({ color, size, focused }: TabIconProps) => {
   return (
     <View style={iconBox}>
       {focused ? (
-        <GasStationIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <GasStationIcon
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       ) : (
-        <GasStationIconOutline width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <GasStationIconOutline
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       )}
     </View>
   );
@@ -273,7 +285,11 @@ export const renderIngresos = ({ color, size, focused }: TabIconProps) => {
       {focused ? (
         <DollarIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
       ) : (
-        <DollarIconOutline width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <DollarIconOutline
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       )}
     </View>
   );
@@ -287,7 +303,11 @@ export const renderFinanzas = ({ color, size, focused }: TabIconProps) => {
       {focused ? (
         <FinancesIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
       ) : (
-        <FinancesIconOutline width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <FinancesIconOutline
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       )}
     </View>
   );
@@ -301,7 +321,11 @@ export const renderCuenta = ({ color, size, focused }: TabIconProps) => {
       {focused ? (
         <CuentaIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
       ) : (
-        <CuentaIconOutline width={ICON_SIZE} height={ICON_SIZE} color={iconColor} />
+        <CuentaIconOutline
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={iconColor}
+        />
       )}
     </View>
   );
@@ -463,39 +487,51 @@ export const ClimaIconMap: Record<ClimaIconType, React.FC<WeatherIconProps>> = {
 };
 
 // ============================================
-//                 ICONOS HOME
+//                 ICONOS PANEL DE CONTROL
 // ============================================
-
-// Versión FILLED (con relleno)
-export const GasStation = ({
+export const MotorIcon = ({
   width = 24,
   height = 24,
   color = "#0F172A",
-  ...props
-}) => {
-  return (
-    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
-      <Path d="M91.5 95.6H67.1v-5H9.6v5.1H7.9c-.6 0-1 .4-1 1s.4 1 1 1h83.6c.6 0 1-.4 1-1 0-.7-.5-1.1-1-1.1zM3.6 95.6H2c-.6 0-1 .4-1 1s.4 1 1 1h1.6c.6 0 1-.4 1-1s-.4-1-1-1zM98 95.6h-2.6c-.6 0-1 .4-1 1s.4 1 1 1H98c.6 0 1-.4 1-1s-.5-1-1-1zM69.1 43.7c1.3 0 2.4-1.1 2.4-2.4V5.9c0-1.3-1.1-2.4-2.4-2.4H7.7c-1.3 0-2.4 1.1-2.4 2.4v35.4c0 1.3 1.1 2.4 2.4 2.4zM9.2 7.4h58.2v32.3H9.2zM91.5 18.2H89V12c0-1.1-.4-2.3-1.1-3.2l-4.4-5.7c-.7-.9-1.9-1-2.8-.4-.9.7-1 1.9-.4 2.8l4.4 5.7c.2.2.2.4.2.7v6.2h-2.2c-1 0-1.8.8-1.8 1.8v21.3c0 .5.2 1.1.7 1.4l5.1 4.3h6.7v-27c0-.9-.9-1.7-1.9-1.7zm-3.3 22h-3.8v-7.9h3.8zM86.7 50.2c0 .9.6 1.7 1.3 2v25.4c0 2.1-.8 4-2.3 5.5s-3.4 2.3-5.5 2.3h-.3c-4.3 0-7.8-3.5-7.8-7.8V56.7c0-2.5-2.1-4.6-4.6-4.6h-3.4l.4-6.4H12.1c.7 11 2 32.1 2.6 42.8h47.1l2-32.4h3.7c.3 0 .6.3.6.6v20.9c0 6.5 5.3 11.8 11.8 11.8h.3c3.2 0 6.1-1.2 8.3-3.5 2.2-2.2 3.5-5.2 3.5-8.3V52.2c.8-.3 1.3-1.1 1.3-2V49h-6.7zM38.3 82.8c-5.2 0-9.4-4.2-9.4-9.4s8.8-20 8.8-20 10 14.8 10 20-4.2 9.4-9.4 9.4z" />
-      <Path d="M17.5 36.7h6.1c.2-3.3 1.4-6.4 3.6-8.9l-4.3-4.3c-3.3 3.6-5.2 8.2-5.4 13.2zM52.2 22c-3.8-3.5-8.7-5.4-14-5.4-5.2 0-10.1 1.9-14 5.4l4.3 4.3c2.7-2.4 6.1-3.6 9.7-3.6s7 1.3 9.7 3.7l2.1-2.1z" />
-      <Path d="M38.7 30.9h-.5l-2.5-5.1c-.2-.5-.8-.7-1.3-.5s-.7.8-.5 1.3l2.5 5.1c-.6.6-1 1.5-1 2.4 0 1.9 1.5 3.4 3.3 3.4 1.9 0 3.4-1.5 3.4-3.4 0-1.7-1.5-3.2-3.4-3.2zM51.4 25.6l-2.1 2.1c2.2 2.5 3.4 5.6 3.6 9H59c-.2-4.9-2-9.6-5.4-13.3z" />
-    </Svg>
-  );
-};
+}: WeatherIconProps) => (
+  <Svg width={width} height={height} viewBox="0 8 62 40">
+    <G fill={color}>
+      <Path d="M55 28h-2a3 3 0 00-3 3v1h-2v-5a3 3 0 00-3-3h-3a1 1 0 01-1-1v-2a3 3 0 00-3-3h-4v-3h5a3 3 0 000-6H19a3 3 0 000 6h5v3h-5a3 3 0 00-3 3 1 1 0 01-1 1h-3a3 3 0 00-3 3v4H6v-4a3 3 0 00-6 0v16a3 3 0 006 0v-4h3v5a3 3 0 003 3h4.172a1 1 0 01.707.293l4.828 4.828a2.978 2.978 0 002.121.879H45a3 3 0 003-3v-4h2v1a3 3 0 003 3h2a5.006 5.006 0 005-5V33a5.006 5.006 0 00-5-5zM18 12a1 1 0 011-1h20a1 1 0 010 2H19a1 1 0 01-1-1zm8 3h6v3h-6zM4 41a1 1 0 01-2 0V25a1 1 0 012 0zm2-6v-4h3v4zm40 13a1 1 0 01-1 1H23.828a1 1 0 01-.707-.293l-4.828-4.828A2.982 2.982 0 0016.172 43H12a1 1 0 01-1-1V25a1 1 0 011-1h3a3 3 0 003-3 1 1 0 011-1h19a1 1 0 011 1v2a3 3 0 003 3h3a1 1 0 011 1zm2-6v-8h2v8zm10 1a3 3 0 01-3 3h-2a1 1 0 01-1-1V31a1 1 0 011-1h2a3 3 0 013 3z" />
+    </G>
+  </Svg>
+);
 
-// Versión OUTFILLED (sin relleno completo)
-export const GasStationOutFilled = ({
+export const LicenciaIcon = ({
   width = 24,
   height = 24,
   color = "#0F172A",
-  ...props
-}) => {
-  return (
-    <Svg width={width} height={height} viewBox="0 0 512 512" {...props}>
-      <G fill={color}>
-        <Path d="m301.007812 60.996094h-179.992187v119.996094h179.992187zm-29.996093 89.996094h-119.996094v-59.996094h119.996094zm0 0" />
-        <Path d="m447.609375 5.394531-21.210937 21.210938 45.28125 45.28125-49.675782 24.839843v114.265626h59.996094v164.992187c0 8.269531-6.726562 15-15 15-8.269531 0-14.996094-6.730469-14.996094-15v-59.996094c0-24.8125-20.1875-45-45-45h-45.996094v-270.988281h-299.988281v420.984375h-25.21875l-35.800781 90.996094h422.023438l-35.800782-90.996094h-25.214844v-119.996094h45.996094c8.269532 0 15 6.726563 15 15v59.996094c0 24.8125 20.1875 45 44.996094 45 24.8125 0 45-20.1875 45-45v-306.199219zm-116.601563 24.605469v180.992188h-239.992187v-180.992188zm46.976563 451.980469h-333.945313l12.199219-31h309.550781zm-286.96875-60.996094v-179.996094h239.992187v179.996094zm360.988281-239.992187v-65.726563l29.996094-15v80.726563zm0 0" />
-        <Path d="m249.996094 323.503906-38.984375-67.507812-38.984375 67.507812c-3.933594 6.816406-6.011719 14.585938-6.011719 22.480469 0 24.8125 20.183594 45 44.996094 45s45-20.1875 45-45c0-7.894531-2.082031-15.664063-6.015625-22.480469zm-38.984375 37.480469c-8.269531 0-15-6.726563-15-15 0-2.671875.671875-5.1875 1.996093-7.476563l13.003907-22.527343 13.007812 22.523437c1.320313 2.292969 1.992188 4.808594 1.992188 7.480469 0 8.273437-6.730469 15-15 15zm0 0" />
-      </G>
-    </Svg>
-  );
-};
+}: WeatherIconProps) => (
+  <Svg width={width} height={height} viewBox="0 0 512 512">
+    <G fill={color}>
+      <Path d="M254 154.5c0-11.046 8.954-20 20-20h139c11.046 0 20 8.954 20 20s-8.954 20-20 20H274c-11.046 0-20-8.954-20-20zm20 101h139c11.046 0 20-8.954 20-20s-8.954-20-20-20H274c-11.046 0-20 8.954-20 20s8.954 20 20 20zm139 82h-99c-11.046 0-20 8.954-20 20s8.954 20 20 20h99c11.046 0 20-8.954 20-20s-8.954-20-20-20zm-314.489-57h82.978c10.223 0 18.511-8.256 18.511-18.44v-1.79c0-27.404-18.616-50.543-43.907-57.569C167.894 196.792 176 184.596 176 170.5c0-19.882-16.118-36-36-36s-36 16.118-36 36c0 14.106 8.117 26.309 19.932 32.214C98.48 209.883 80 233.641 80 261.225v.834c0 10.185 8.288 18.441 18.511 18.441zm1.489 97h134c11.046 0 20-8.954 20-20s-8.954-20-20-20H100c-11.046 0-20 8.954-20 20s8.954 20 20 20zm412-303v363c0 11.046-8.954 20-20 20H20c-11.046 0-20-8.954-20-20v-363c0-11.046 8.954-20 20-20h472c11.046 0 20 8.954 20 20zm-40 20H40v323h432z" />
+    </G>
+  </Svg>
+);
+
+export const MultasIcon = ({
+  width = 24,
+  height = 24,
+  color = "#0F172A",
+}: WeatherIconProps) => (
+  <Svg width={width} height={height} viewBox="0 0 512 512">
+    <G fill={color}>
+      <Path d="M254 154.5c0-11.046 8.954-20 20-20h139c11.046 0 20 8.954 20 20s-8.954 20-20 20H274c-11.046 0-20-8.954-20-20zm20 101h139c11.046 0 20-8.954 20-20s-8.954-20-20-20H274c-11.046 0-20 8.954-20 20s8.954 20 20 20zm139 82h-99c-11.046 0-20 8.954-20 20s8.954 20 20 20h99c11.046 0 20-8.954 20-20s-8.954-20-20-20zM140 110L82 134L82 226C82 268 140 296 140 296C140 296 198 268 198 226L198 134ZM100 377h134c11.046 0 20-8.954 20-20s-8.954-20-20-20H100c-11.046 0-20 8.954-20 20s8.954 20 20 20zM512 74v363c0 11.046-8.954 20-20 20H20c-11.046 0-20-8.954-20-20V74c0-11.046 8.954-20 20-20h472c11.046 0 20 8.954 20 20zM472 94H40v323h432z" />
+    </G>
+  </Svg>
+);
+export const SoatIcon = ({
+  width = 24,
+  height = 24,
+  color = "#0F172A",
+}: WeatherIconProps) => (
+  <Svg width={width} height={height} viewBox="2 0 28 32">
+    <G fill={color}>
+      <Path d="M15.629 1.074L4.852 5.377c-.302.121-.662.264-1.02.562-.357.299-.686.856-.686 1.446 0 9.313 2.209 14.705 4.938 18.006s5.956 4.506 7.358 5.439a1 1 0 001.107 0c1.402-.934 4.631-2.139 7.358-5.439 2.729-3.301 4.946-8.693 4.946-18.006 0-.59-.336-1.146-.694-1.445-.356-.299-.71-.441-1.011-.563L16.372 1.074c-.235-.107-.545-.082-.743 0zm.369 2l10.408 4.164c.232.094.385.172.442.213-.011 8.943-2.097 13.779-4.48 16.662-2.199 2.66-4.564 3.557-6.371 4.648-1.805-1.094-4.171-1.988-6.369-4.648C7.244 21.23 5.16 16.396 5.147 7.459c.055-.039.206-.127.443-.221z" />
+    </G>
+  </Svg>
+);

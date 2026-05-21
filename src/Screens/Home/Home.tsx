@@ -58,6 +58,12 @@ import {
 } from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
+import {
+  MotorIcon,
+  LicenciaIcon,
+  MultasIcon,
+  SoatIcon,
+} from "../../assets/icons/icons";
 import { HOME_COLORS } from "./HomeConstants";
 import { usePicoYPlaca } from "../../hooks/usePicoYPlaca";
 import { useGastosStore } from "../../store/GastosStore";
@@ -2735,7 +2741,31 @@ function ListRow({
       accessibilityHint={item.subtitle || undefined}>
       {/* Icono — sin fondo */}
       <View style={s.listRowIcon}>
-        {item.iconName ? (
+        {item.id === "tecnicomecanica" ? (
+          <MotorIcon
+            width={Platform.OS === "android" ? 40 : 54}
+            height={Platform.OS === "android" ? 40 : 54}
+            color={accent}
+          />
+        ) : item.id === "licencia" ? (
+          <LicenciaIcon
+            width={Platform.OS === "android" ? 40 : 54}
+            height={Platform.OS === "android" ? 40 : 54}
+            color={accent}
+          />
+        ) : item.id === "soat" ? (
+          <SoatIcon
+            width={Platform.OS === "android" ? 40 : 54}
+            height={Platform.OS === "android" ? 40 : 54}
+            color={accent}
+          />
+        ) : item.id === "multas" || item.id === "comparendos" ? (
+          <MultasIcon
+            width={Platform.OS === "android" ? 40 : 54}
+            height={Platform.OS === "android" ? 40 : 54}
+            color={accent}
+          />
+        ) : item.iconName ? (
           <ItemIcon
             name={item.iconName}
             size={Platform.OS === "android" ? 40 : 54}
@@ -2767,6 +2797,123 @@ function ListRow({
     </AnimatedPressable>
   );
 }
+// ─── Dashboard Control Panel ──────────────────────────────────────────────────
+function DashboardControlItem({
+  item,
+  onPress,
+  isDark,
+}: {
+  item: Item;
+  onPress: () => void;
+  isDark: boolean;
+}) {
+  const accent = item.color || "#6B7280";
+  const base = Platform.OS === "android" ? 44 : 52;
+
+  // Tamaños personalizados por ícono (width × height)
+  const ICON_SIZES: Record<string, { w: number; h: number }> = {
+    tecnicomecanica: { w: base * 1, h: base * 0.85 }, // MotorIcon: viewBox ancho (62×40)
+    licencia: { w: base * 1.4, h: base * 0.85 }, // LicenciaIcon: viewBox muy ancho (23×18)
+    soat: { w: base * 0.8, h: base * 0.8 }, // SoatIcon: casi cuadrado
+    multas: { w: base * 1.4, h: base * 0.85 }, // MultasIcon: cuadrado 512×512
+  };
+
+  const sz = ICON_SIZES[item.id] ?? { w: base, h: base };
+
+  const renderIcon = () => {
+    if (item.id === "tecnicomecanica" || item.id === "tecnomecanica")
+      return <MotorIcon width={sz.w} height={sz.h} color={accent} />;
+    if (item.id === "soat")
+      return <SoatIcon width={sz.w} height={sz.h} color={accent} />;
+    if (item.id === "multas" || item.id === "comparendos")
+      return <MultasIcon width={sz.w} height={sz.h} color={accent} />;
+    if (item.id === "licencia")
+      return <LicenciaIcon width={sz.w} height={sz.h} color={accent} />;
+    if (item.iconName) return <ItemIcon name={item.iconName} size={base} />;
+    return null;
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      style={{
+        alignItems: "center",
+        flex: 1,
+        paddingVertical: 18,
+        paddingHorizontal: 8,
+      }}>
+      {renderIcon()}
+      {/* Label */}
+      <Text
+        numberOfLines={2}
+        style={{
+          color: accent,
+          fontSize: 10,
+          fontWeight: "600",
+          marginTop: 8,
+          textAlign: "center",
+          opacity: 0.9,
+        }}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function DashboardControlPanel({
+  items,
+  onItemPress,
+  isDark,
+  colors: c,
+  renderBadge,
+}: {
+  items: Item[];
+  onItemPress: (item: Item) => void;
+  isDark: boolean;
+  colors: ReturnType<typeof useTheme>["colors"];
+  renderBadge?: (item: Item) => React.ReactNode;
+}) {
+  // Agrupar en filas de 2 — grid 2×2
+  const COLS = 2;
+  const rows = items.reduce<Item[][]>((acc, item, i) => {
+    if (i % COLS === 0) acc.push([item]);
+    else acc[acc.length - 1].push(item);
+    return acc;
+  }, []);
+
+  return (
+    <View
+      style={{
+        backgroundColor: c.accent,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: c.accentLight,
+        overflow: "hidden",
+        paddingVertical: 4,
+        marginBottom: 12,
+      }}>
+      {rows.map((row, rowIdx) => (
+        <View key={rowIdx} style={{ flexDirection: "row" }}>
+          {row.map((item) => (
+            <View key={item.id} style={{ flex: 1 }}>
+              <DashboardControlItem
+                item={item}
+                onPress={() => onItemPress(item)}
+                isDark={isDark}
+              />
+            </View>
+          ))}
+          {/* Relleno si la fila está incompleta */}
+          {Array.from({ length: COLS - row.length }).map((_, i) => (
+            <View key={`empty-${i}`} style={{ flex: 1 }} />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function HomeBaseAdapted({
@@ -3156,6 +3303,24 @@ export default function HomeBaseAdapted({
               <WidgetInsightIA isDark={isDark} />
             </View>
 
+            {/* PANEL DE CONTROL — tablero de testigos */}
+            {items.length > 0 && (
+              <>
+                <View style={s.sectionHeader}>
+                  <Text style={[s.sectionLabel, { color: c.text }]}>
+                    Testigos
+                  </Text>
+                </View>
+                <DashboardControlPanel
+                  items={items}
+                  onItemPress={onItemPress ?? (() => {})}
+                  isDark={isDark}
+                  colors={c}
+                  renderBadge={renderBadge}
+                />
+              </>
+            )}
+
             {/* CLIENTES FRECUENTES */}
             <WidgetClientes isDark={isDark} />
 
@@ -3166,45 +3331,6 @@ export default function HomeBaseAdapted({
               </Text>
             </View>
             <WidgetCentroPendientes isDark={isDark} colors={c} />
-
-            {/* PUBLICIDAD — carrusel horizontal (próxima actualización) */}
-            {/* <AdCarousel isDark={isDark} /> */}
-
-            {/* PANEL DE CONTROL — todos los items en grid 2 columnas */}
-            {items.length > 0 && (
-              <>
-                <View style={s.sectionHeader}>
-                  <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Control
-                  </Text>
-                </View>
-                <View style={s.listSection}>
-                  {items
-                    .reduce<Item[][]>((rows, item, i) => {
-                      if (i % 2 === 0) rows.push([item]);
-                      else rows[rows.length - 1].push(item);
-                      return rows;
-                    }, [])
-                    .map((row, rowIdx) => (
-                      <View key={rowIdx} style={s.listGridRow}>
-                        {row.map((item, colIdx) => (
-                          <View key={item.id} style={s.listGridCell}>
-                            <ListRow
-                              item={item}
-                              index={rowIdx * 2 + colIdx + 1}
-                              card={card}
-                              colors={c}
-                              onPress={onItemPress ?? (() => {})}
-                              renderBadge={renderBadge}
-                            />
-                          </View>
-                        ))}
-                        {row.length === 1 && <View style={s.listGridCell} />}
-                      </View>
-                    ))}
-                </View>
-              </>
-            )}
           </ScrollView>
         </Animated.View>
       </SafeAreaView>
