@@ -46,12 +46,12 @@ import {
 import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import { HOME_COLORS } from "./HomeConstants";
-import { useClima } from "../../hooks/useClima";
-import { ClimaIconMap, TermometroIcon } from "../../assets/icons/icons";
 import { usePicoYPlaca } from "../../hooks/usePicoYPlaca";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../../config/aiConfig";
 import {
   calcularPorCobrar,
   calcularPorPagar,
@@ -68,7 +68,11 @@ import {
   generarInsights,
   InsightsPendientes,
 } from "../../services/insightsService";
-import { programarRecordatoriosPendientes } from "../../services/pendientesNotificacionService";
+import {
+  programarRecordatoriosPendientes,
+  programarRecordatorioIACobros,
+} from "../../services/pendientesNotificacionService";
+import { normalizarMercancias } from "../../services/mercanciaService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -202,109 +206,7 @@ const WBG = (d: boolean) => (d ? "#1C1C1E" : "#f7f7f7");
 const MUTED = (d: boolean) => (d ? "#94A3B8" : "#6B7280");
 const INK = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
-const CLIMA_BG: Record<string, { light: string; dark: string }> = {
-  soleado: { light: "#FFF3C4", dark: "#3D2E00" },
-  nubeYSol: { light: "#FFF9E6", dark: "#2E2A1A" },
-  nube: { light: "#E8EDF2", dark: "#1E2530" },
-  lluvioso: { light: "#DCE9F7", dark: "#0D1E33" },
-  tormenta: { light: "#DDD8F0", dark: "#1A1530" },
-  copoDeNieve: { light: "#E8F4FB", dark: "#0D1E2E" },
-  termometro: { light: "#F2F2F2", dark: "#1C1C1E" },
-};
 
-function getClimaBg(icono: string, isDark: boolean): string {
-  const entry = CLIMA_BG[icono] ?? CLIMA_BG["termometro"];
-  return isDark ? entry.dark : entry.light;
-}
-
-// ─── Widget: Clima ────────────────────────────────────────────────────────────
-function WidgetClima({ isDark }: WProps) {
-  const {
-    temperatura,
-    icono,
-    condicion,
-    ciudad,
-    manana,
-    tarde,
-    noche,
-    cargando,
-    error,
-    sinPermiso,
-  } = useClima();
-  const { colors: c } = useTheme();
-
-  const bg =
-    sinPermiso || error || cargando ? WBG(isDark) : getClimaBg(icono, isDark);
-
-  return (
-    <View style={[s.wCard, { backgroundColor: bg }]}>
-      {cargando ? (
-        <ActivityIndicator size="small" color={c.accent} />
-      ) : sinPermiso || error ? (
-        <>
-          {sinPermiso ? (
-            <Ionicons name="location-outline" size={32} color={INK(isDark)} />
-          ) : (
-            <TermometroIcon width={32} height={32} color={INK(isDark)} />
-          )}
-          <Text style={[s.wCardSub, { color: MUTED(isDark) }]}>
-            {sinPermiso ? "Ubicación\ndenegada" : "Sin señal"}
-          </Text>
-        </>
-      ) : (
-        <>
-          <View style={s.wCardTopRow}>
-            <Text style={[s.wCardTempBig, { color: INK(isDark) }]}>
-              {temperatura}°
-            </Text>
-            {React.createElement(ClimaIconMap[icono], {
-              width: 44,
-              height: 44,
-              color: INK(isDark),
-            })}
-          </View>
-
-          {/* Condición */}
-          <Text
-            style={[s.wCardCondicion, { color: INK(isDark) }]}
-            numberOfLines={1}>
-            {condicion}
-          </Text>
-
-          {/* Ciudad */}
-          <Text
-            style={[s.wCardLabel, { color: MUTED(isDark) }]}
-            numberOfLines={1}>
-            {ciudad}
-          </Text>
-
-          {/* Pronóstico mañana / tarde / noche */}
-          <View style={s.wCardForecastRow}>
-            {[
-              { label: "Mañana", periodo: manana },
-              { label: "Tarde", periodo: tarde },
-              { label: "Noche", periodo: noche },
-            ].map(({ label, periodo }) => (
-              <View key={label} style={s.wCardForecastItem}>
-                <Text style={[s.wCardForecastLabel, { color: MUTED(isDark) }]}>
-                  {label}
-                </Text>
-                {React.createElement(ClimaIconMap[periodo.icono], {
-                  width: 14,
-                  height: 14,
-                  color: INK(isDark),
-                })}
-                <Text style={[s.wCardForecastTemp, { color: INK(isDark) }]}>
-                  {periodo.temp}°
-                </Text>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
-    </View>
-  );
-}
 
 // ─── Gauge estilo "Threat Level" ─────────────────────────────────────────────
 // Arco amplio ~220°, gradiente rojo→amarillo→verde, ticks, dot brillante.
@@ -330,13 +232,13 @@ function GaugeBalance({
   const CX = W / 2;
 
   // Geometría: R calibrado para que el arco vaya de borde a borde,
-  // pico en y≈22, extremos en y≈108.
+  // pico en y≈25, extremos en y≈108.
   const R   = 62;
-  const CY  = 87;   // pico en y = CY - R = 25 ✓; extremos en y ≈ CY + R*sin(20°) = 108 ✓
+  const CY  = 87;
 
-  const START = 160; // grado inicio (izq-abajo)
-  const SPAN  = 220; // barrido total clockwise → fin en 380°=20° (der-abajo)
-  const FILL_W = 8;  // grosor arco gradiente
+  const START  = 160;
+  const SPAN   = 220;
+  const FILL_W = 8;
 
   const deg2rad = (d: number) => (d * Math.PI) / 180;
   const pt = (deg: number, r = R) => ({
@@ -401,10 +303,23 @@ function GaugeBalance({
   const leftLbl  = pt(START, R + 18);
   const rightLbl = pt(START + SPAN, R + 18);
 
+  // Fondo adaptivo — igual que el card financiero anterior
+  const cardBg =
+    balance >= 0
+      ? isDark ? "#0D2E1A" : "#EDFAF3"
+      : isDark ? "#2E0D0D" : "#FAEAEA";
+
+  // Textos: blanco sobre fondo oscuro, colores fuertes sobre fondo claro
+  const balTextColor = isDark ? "#FFFFFF" : (balance >= 0 ? "#059669" : "#DC2626");
+  const mutedClr     = isDark ? "#4B5268" : "#6B7280";
+  const ingClr       = isDark ? "#4ADE80" : "#059669";
+  const gasClr       = isDark ? "#F87171" : "#DC2626";
+  const tickClr      = isDark ? "#1A3826" : (balance >= 0 ? "#C5DDD0" : "#DEC5C5");
+  const tickMajClr   = isDark ? "#2A4A38" : (balance >= 0 ? "#A3C4B0" : "#C4A3A3");
+
   return (
     <Svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0 }}>
       <Defs>
-        {/* Gradiente horizontal — el arco va de izq (rojo) a der (verde) */}
         <SvgGradient id="gfill" x1={gradLX} y1={0} x2={gradRX} y2={0} gradientUnits="userSpaceOnUse">
           <Stop offset="0"    stopColor="#EF4444" />
           <Stop offset="0.42" stopColor="#FFB800" />
@@ -412,14 +327,14 @@ function GaugeBalance({
         </SvgGradient>
       </Defs>
 
-      {/* ── Fondo oscuro ── */}
-      <Rect width={W} height={H} fill="#111318" rx={16} />
+      {/* ── Fondo adaptivo ── */}
+      <Rect width={W} height={H} fill={cardBg} rx={16} />
 
       {/* ── Ticks del arco completo ── */}
       {ticks.map((t, idx) => (
         <Line key={idx}
           x1={t.o.x} y1={t.o.y} x2={t.i.x} y2={t.i.y}
-          stroke={t.major ? "#3D4258" : "#272B3A"}
+          stroke={t.major ? tickMajClr : tickClr}
           strokeWidth={t.major ? 1.6 : 0.9}
           strokeLinecap="round"
         />
@@ -434,21 +349,21 @@ function GaugeBalance({
         strokeLinecap="round"
       />
 
-      {/* ── Dot brillante en la punta del arco ── */}
-      <Circle cx={dotPt.x} cy={dotPt.y} r={13} fill={dotColor} opacity={0.12} />
-      <Circle cx={dotPt.x} cy={dotPt.y} r={7}  fill={dotColor} opacity={0.35} />
+      {/* ── Dot brillante en la punta ── */}
+      <Circle cx={dotPt.x} cy={dotPt.y} r={13} fill={dotColor} opacity={0.15} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={7}  fill={dotColor} opacity={0.40} />
       <Circle cx={dotPt.x} cy={dotPt.y} r={4}  fill={dotColor} />
-      <Circle cx={dotPt.x} cy={dotPt.y} r={2}  fill="#FFFFFF"  opacity={0.85} />
+      <Circle cx={dotPt.x} cy={dotPt.y} r={2}  fill="#FFFFFF"  opacity={0.9} />
 
-      {/* ── Balance — número grande en el centro del dial ── */}
+      {/* ── Balance — número grande ── */}
       <SvgText
         x={CX} y={CY + 8}
         fontSize={26} fontWeight="800"
-        fill="#FFFFFF" textAnchor="middle" letterSpacing={-1}>
+        fill={balTextColor} textAnchor="middle" letterSpacing={-1}>
         {fmt(balance)}
       </SvgText>
 
-      {/* ── Estado (Positivo / Equilibrio / Negativo) ── */}
+      {/* ── Estado ── */}
       <SvgText
         x={CX} y={CY + 23}
         fontSize={10} fontWeight="700"
@@ -456,25 +371,19 @@ function GaugeBalance({
         {statusLabel}
       </SvgText>
 
-      {/* ── Zona debajo del arco: Ingresos (izq) y Gastos (der) ── */}
-      <SvgText
-        x={14} y={H - 28}
-        fontSize={9} fontWeight="600"
-        fill="#4ADE80" textAnchor="start">
+      {/* ── Ingresos (izq) y Gastos (der) ── */}
+      <SvgText x={14} y={H - 28} fontSize={9} fontWeight="600"
+        fill={ingClr} textAnchor="start">
         {`↑ ${fmt(totalI)}`}
       </SvgText>
-      <SvgText
-        x={W - 14} y={H - 28}
-        fontSize={9} fontWeight="600"
-        fill="#F87171" textAnchor="end">
+      <SvgText x={W - 14} y={H - 28} fontSize={9} fontWeight="600"
+        fill={gasClr} textAnchor="end">
         {`↓ ${fmt(totalG)}`}
       </SvgText>
 
-      {/* ── Semana — centrado en la base ── */}
-      <SvgText
-        x={CX} y={H - 14}
-        fontSize={8} fontWeight="500"
-        fill="#4B5268" textAnchor="middle">
+      {/* ── Semana ── */}
+      <SvgText x={CX} y={H - 14} fontSize={8} fontWeight="500"
+        fill={mutedClr} textAnchor="middle">
         {`Sem. ${fmt(balSem)}`}
       </SvgText>
     </Svg>
@@ -518,17 +427,503 @@ function WidgetResumen({ isDark }: WProps) {
   );
 }
 
+// ─── Widget: Insight IA ───────────────────────────────────────────────────────
+// ─── Widget: Pendientes por cobrar ───────────────────────────────────────────
+//
+//  ● Pendientes · Por cobrar
+//  $1.2M                          ← total pendiente
+//  ─────────────────────────────
+//  [AR] Arena           $450K     ← avatar + cliente + monto
+//  [CO] Construmart     $180K
+//  [+2 más…]                      ← overflow si hay más de 3
+//
+
+/** Formateador compacto COP */
+function fmtI(n: number): string {
+  const a = Math.abs(n);
+  if (a >= 1_000_000) return `$${(a / 1_000_000).toFixed(1)}M`;
+  if (a >= 1_000)     return `$${(a / 1_000).toFixed(0)}K`;
+  return `$${a.toFixed(0)}`;
+}
+
+/** Cuántos días han pasado desde una fecha YYYY-MM-DD */
+function diasDesde(fecha: string): number {
+  const d    = new Date(fecha + "T00:00:00");
+  const hoy  = new Date(); hoy.setHours(0, 0, 0, 0);
+  return Math.floor((hoy.getTime() - d.getTime()) / 86_400_000);
+}
+
+function labelDias(dias: number): string {
+  if (dias === 0) return "Hoy";
+  if (dias === 1) return "Ayer";
+  if (dias < 7)   return `Hace ${dias} días`;
+  if (dias < 30)  return `Hace ${Math.floor(dias / 7)} sem.`;
+  return `Hace ${Math.floor(dias / 30)} mes${Math.floor(dias / 30) > 1 ? "es" : ""}`;
+}
+
+// Paleta de avatares — determinista por índice
+const AVATAR_COLORS = ["#6366F1","#0EA5E9","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#14B8A6"];
+
+function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+
+function initials(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/);
+  if (partes.length >= 2) return (partes[0][0] + partes[1][0]).toUpperCase();
+  return nombre.substring(0, 2).toUpperCase();
+}
+
+// ─── Modal detalle de pendientes ─────────────────────────────────────────────
+const CACHE_PEND_IA = "@truckbook_pend_modal_ia_v1";
+
+interface ContactTarget {
+  id:      string;
+  cliente: string;
+  monto:   number;
+  dias:    number;
+}
+
+/** Mensaje de cobro por WhatsApp — plantilla sin IA para respuesta instantánea */
+function mensajeCobroWA(cliente: string, monto: number, dias: number): string {
+  const m = fmtI(monto);
+  if (dias === 0) return `Hola ${cliente}, le saludo. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
+  if (dias === 1) return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
+  return `Hola ${cliente}, le saludo. Quería recordarle el flete por ${m} registrado hace ${dias} días que quedó pendiente de pago. ¿Cuándo podemos cuadrar? ¡Gracias!`;
+}
+
+/** Limpia y formatea un número colombiano para wa.me / tel: */
+function formatearTel(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10 && digits.startsWith("3")) return "57" + digits;
+  return digits;
+}
+
+function ModalPendientes({
+  visible, onClose, pendientes, isDark,
+}: {
+  visible:    boolean;
+  onClose:    () => void;
+  pendientes: ReturnType<typeof useIngresosStore.getState>["ingresos"];
+  isDark:     boolean;
+}) {
+  const { placa } = useVehiculoStore();
+  const [geminiMsg, setGeminiMsg]       = useState<string | null>(null);
+  const [loadingGem, setLoadingGem]     = useState(false);
+  const [cobrando, setCobrando]         = useState<string | null>(null);
+  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
+  const [phoneInput, setPhoneInput]     = useState("");
+
+  const AMBER    = "#FBBF24";
+  const GREEN    = "#22C55E";
+  const WA_GREEN = "#25D366";
+  const ink      = isDark ? "#F1F5F9" : "#111827";
+  const muted    = isDark ? "#64748B" : "#9CA3AF";
+  const divClr   = isDark ? "#2A1800" : "#F0E6CC";
+  const modalBg  = isDark ? "#160E00" : "#FFFBF0";
+  const cardBg   = isDark ? "#2A1800" : "#FFF8E7";
+  const inputBg  = isDark ? "#1E1200" : "#FFF3DC";
+  const inputBdr = isDark ? "#3D2600" : "#E8C97A";
+  const panelBg  = isDark ? "#1A0F00" : "#FFFAEE";
+
+  // ── Cerrar el panel de contacto al cerrar el modal ─────────────────────────
+  useEffect(() => {
+    if (!visible) { setContactTarget(null); setPhoneInput(""); }
+  }, [visible]);
+
+  // ── Gemini: consejo al abrir el modal ──────────────────────────────────────
+  useEffect(() => {
+    if (!visible || pendientes.length === 0) { setGeminiMsg(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(CACHE_PEND_IA);
+        if (raw) {
+          const { ts, msg } = JSON.parse(raw);
+          if (Date.now() - ts < 6 * 3_600_000 && msg) { if (!cancelled) setGeminiMsg(msg); return; }
+        }
+      } catch {}
+      if (!GEMINI_API_KEY) return;
+      if (!cancelled) setLoadingGem(true);
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const lines = pendientes.slice(0, 4).map((p) => {
+        const cl   = (p.descripcion ?? "Flete").split(" · ")[0].trim();
+        const dias = p.fecha ? Math.floor((hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) / 86_400_000) : 0;
+        return `${cl}: ${fmtI(p.monto ?? 0)} (hace ${dias}d)`;
+      }).join(", ");
+      const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+      const prompt =
+        `Eres asistente de un camionero colombiano. Tiene ${pendientes.length} cuenta(s) por cobrar: ${lines}. Total: ${fmtI(total)}.\n` +
+        `Genera UN consejo corto (máximo 80 caracteres) para motivarlo a cobrar hoy. Español colombiano informal. Sin emojis. Solo el texto.`;
+      try {
+        const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 60 } }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const msg  = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim().replace(/^["'`]+|["'`]+$/g, "");
+          if (!cancelled && msg) {
+            setGeminiMsg(msg);
+            try { await AsyncStorage.setItem(CACHE_PEND_IA, JSON.stringify({ ts: Date.now(), msg })); } catch {}
+          }
+        }
+      } catch {}
+      if (!cancelled) setLoadingGem(false);
+    })();
+    return () => { cancelled = true; };
+  }, [visible, pendientes.length]);
+
+  // ── Marcar como cobrado (con confirmación previa vía Alert) ────────────────
+  const confirmarCobro = (id: string, cliente: string, monto: number) => {
+    Alert.alert(
+      "¿Confirmar cobro?",
+      `¿Marcar el flete de ${cliente} por ${fmtI(monto)} como pagado?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Sí, cobrado",
+          style: "default",
+          onPress: async () => {
+            setCobrando(id);
+            const { error } = await supabase
+              .from("conductor_ingresos")
+              .update({ estado: "pagado" })
+              .eq("id", id);
+            if (!error && placa) useIngresosStore.getState().cargarIngresosDelDB(placa);
+            setCobrando(null);
+          },
+        },
+      ]
+    );
+  };
+
+  // ── Acciones de contacto ───────────────────────────────────────────────────
+  const handleLlamar = () => {
+    if (!contactTarget) return;
+    const tel = formatearTel(phoneInput);
+    if (!tel) {
+      Alert.alert("Número requerido", "Ingresa el número del cliente para llamar.");
+      return;
+    }
+    Linking.openURL(`tel:${tel}`).catch(() =>
+      Alert.alert("Error", "No se pudo abrir el marcador telefónico.")
+    );
+  };
+
+  const handleWhatsApp = () => {
+    if (!contactTarget) return;
+    const msg  = encodeURIComponent(mensajeCobroWA(contactTarget.cliente, contactTarget.monto, contactTarget.dias));
+    const tel  = formatearTel(phoneInput);
+    const url  = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "No se pudo abrir WhatsApp.")
+    );
+  };
+
+  const cerrarPanel = () => { setContactTarget(null); setPhoneInput(""); };
+
+  const totalPend = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000088" }}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={{ flex: 1 }} />
+        </TouchableWithoutFeedback>
+
+        {/* ── Bottom sheet principal ── */}
+        <View style={{ backgroundColor: modalBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "82%" }}>
+          {/* Handle */}
+          <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 2 }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? "#3A2800" : "#E0C98A" }} />
+          </View>
+
+          {/* Header */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
+            <View>
+              <Text style={{ fontSize: 19, fontWeight: "700", color: ink }}>Por cobrar</Text>
+              <Text style={{ fontSize: 13, color: AMBER, fontWeight: "600", marginTop: 1 }}>
+                {fmtI(totalPend)} · {pendientes.length} flete{pendientes.length !== 1 ? "s" : ""}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Feather name="x" size={22} color={muted} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Gemini card */}
+          {(loadingGem || geminiMsg) && (
+            <View style={{ marginHorizontal: 20, marginTop: 10, marginBottom: 2, backgroundColor: cardBg, borderRadius: 12, borderLeftWidth: 3, borderLeftColor: AMBER, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {loadingGem
+                ? <ActivityIndicator size="small" color={AMBER} />
+                : <Text style={{ fontSize: 14 }}>✨</Text>
+              }
+              <Text style={{ flex: 1, fontSize: 12.5, color: ink, lineHeight: 18 }}>
+                {loadingGem ? "Analizando tus pendientes..." : geminiMsg}
+              </Text>
+            </View>
+          )}
+
+          {/* Lista de pendientes */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}>
+            {pendientes.map((item, i) => {
+              const cliente   = (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim();
+              const partes    = (item.descripcion ?? "").split(" · ");
+              const subtitulo = partes.length > 1 ? partes.slice(1).join(" · ") : null;
+              const dias      = item.fecha ? diasDesde(item.fecha) : 0;
+              const color     = avatarColor(i);
+              const cargando  = cobrando === item.id;
+
+              return (
+                <View key={item.id}>
+                  <View style={{ paddingVertical: 13 }}>
+                    {/* Fila principal: avatar + info + monto */}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                      {/* Avatar */}
+                      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: color + "25", borderWidth: 1.5, borderColor: color + "55", alignItems: "center", justifyContent: "center" }}>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color }}>{initials(cliente)}</Text>
+                      </View>
+
+                      {/* Info */}
+                      <View style={{ flex: 1 }}>
+                        <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: "700", color: ink }}>{cliente}</Text>
+                        {subtitulo && <Text numberOfLines={1} style={{ fontSize: 11, color: muted, marginTop: 1 }}>{subtitulo}</Text>}
+                        <Text style={{ fontSize: 11, color: muted, marginTop: 1 }}>{labelDias(dias)}</Text>
+                      </View>
+
+                      {/* Monto */}
+                      <Text style={{ fontSize: 15, fontWeight: "700", color: AMBER }}>{fmtI(item.monto ?? 0)}</Text>
+                    </View>
+
+                    {/* Fila de acciones */}
+                    <View style={{ flexDirection: "row", gap: 8, marginLeft: 54 }}>
+                      {/* Llamar — abre panel para ingresar número */}
+                      <TouchableOpacity
+                        onPress={() => { setContactTarget({ id: item.id, cliente, monto: item.monto ?? 0, dias }); setPhoneInput(""); }}
+                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: isDark ? "#0D2E1A" : "#E8FFF1", borderWidth: 1, borderColor: GREEN + "55", borderRadius: 10, paddingVertical: 7 }}>
+                        <Feather name="phone" size={13} color={GREEN} />
+                        <Text style={{ fontSize: 12, fontWeight: "600", color: GREEN }}>Llamar</Text>
+                      </TouchableOpacity>
+
+                      {/* WhatsApp — abre directo, sin panel (número opcional en wa.me) */}
+                      <TouchableOpacity
+                        onPress={() => {
+                          const msg = encodeURIComponent(mensajeCobroWA(cliente, item.monto ?? 0, dias));
+                          Linking.openURL(`https://wa.me/?text=${msg}`).catch(() =>
+                            Alert.alert("Error", "No se pudo abrir WhatsApp.")
+                          );
+                        }}
+                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: isDark ? "#052E16" : "#E8FFF4", borderWidth: 1, borderColor: WA_GREEN + "55", borderRadius: 10, paddingVertical: 7 }}>
+                        <MaterialCommunityIcons name="whatsapp" size={14} color={WA_GREEN} />
+                        <Text style={{ fontSize: 12, fontWeight: "600", color: WA_GREEN }}>WhatsApp</Text>
+                      </TouchableOpacity>
+
+                      {/* Cobrado — pide confirmación */}
+                      <TouchableOpacity
+                        onPress={() => confirmarCobro(item.id, cliente, item.monto ?? 0)}
+                        disabled={!!cobrando}
+                        style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#22C55E1A", borderWidth: 1, borderColor: "#22C55E55", borderRadius: 10, paddingVertical: 7 }}>
+                        {cargando
+                          ? <ActivityIndicator size="small" color={GREEN} style={{ width: 13, height: 13 }} />
+                          : <Feather name="check" size={13} color={GREEN} />
+                        }
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: GREEN }}>Cobrado</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  {i < pendientes.length - 1 && <View style={{ height: 0.5, backgroundColor: divClr }} />}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Panel de contacto (overlay sobre el bottom sheet) ── */}
+        {contactTarget && (
+          <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+            {/* Dim tap-to-close */}
+            <TouchableWithoutFeedback onPress={cerrarPanel}>
+              <View style={{ flex: 1 }} />
+            </TouchableWithoutFeedback>
+
+            {/* Panel card */}
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+              <View style={{ backgroundColor: panelBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12, paddingHorizontal: 20, paddingBottom: 36, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 20 }}>
+                {/* Handle + close */}
+                <View style={{ alignItems: "center", marginBottom: 14 }}>
+                  <View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: inputBdr }} />
+                </View>
+
+                <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: "700", color: ink }}>Contactar cliente</Text>
+                    <Text style={{ fontSize: 13, color: AMBER, fontWeight: "600", marginTop: 2 }}>
+                      {contactTarget.cliente} · {fmtI(contactTarget.monto)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={cerrarPanel} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Feather name="x" size={20} color={muted} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Phone input */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: inputBg, borderWidth: 1, borderColor: inputBdr, borderRadius: 12, paddingHorizontal: 14, height: 48, marginTop: 14, marginBottom: 14 }}>
+                  <Feather name="phone" size={16} color={muted} />
+                  <TextInput
+                    value={phoneInput}
+                    onChangeText={setPhoneInput}
+                    keyboardType="phone-pad"
+                    placeholder="Número del cliente (opcional)"
+                    placeholderTextColor={muted}
+                    style={{ flex: 1, fontSize: 15, color: ink }}
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
+                  {phoneInput.length > 0 && (
+                    <TouchableOpacity onPress={() => setPhoneInput("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Feather name="x-circle" size={16} color={muted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <Text style={{ fontSize: 11, color: muted, marginBottom: 16, lineHeight: 15 }}>
+                  Si no ingresas número, WhatsApp te pedirá elegir el contacto. Para llamar el número es obligatorio.
+                </Text>
+
+                {/* Action buttons */}
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <TouchableOpacity
+                    onPress={handleLlamar}
+                    style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: GREEN + "18", borderWidth: 1.5, borderColor: GREEN + "55", borderRadius: 14, paddingVertical: 14 }}>
+                    <Feather name="phone-call" size={18} color={GREEN} />
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: GREEN }}>Llamar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleWhatsApp}
+                    style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: WA_GREEN + "18", borderWidth: 1.5, borderColor: WA_GREEN + "55", borderRadius: 14, paddingVertical: 14 }}>
+                    <MaterialCommunityIcons name="whatsapp" size={20} color={WA_GREEN} />
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: WA_GREEN }}>WhatsApp</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Widget: Pendientes (miniatura) ──────────────────────────────────────────
+function WidgetInsightIA({ isDark }: WProps) {
+  const ingresos = useIngresosStore((s) => s.ingresos);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const pendientes = React.useMemo(() =>
+    ingresos.filter((i) => i.estado === "pendiente").sort((a, b) => ((b.fecha ?? "") > (a.fecha ?? "") ? 1 : -1)),
+    [ingresos],
+  );
+
+  // Recordatorio IA: se reprograma cada vez que cambia la lista de pendientes
+  useEffect(() => {
+    programarRecordatorioIACobros(pendientes).catch(() => {});
+  }, [pendientes.length]);
+
+  const totalPend = pendientes.reduce((a, i) => a + (i.monto ?? 0), 0);
+  const mostrados = pendientes.slice(0, 3);
+  const resto     = pendientes.length - 3;
+
+  const AMBER  = "#FBBF24";
+  const cardBg = isDark ? "#2A1500" : "#FFF3E0";
+  const ink    = isDark ? "#F1F5F9" : "#111827";
+  const muted  = isDark ? "#3D536E" : "#9CA3AF";
+  const divClr = isDark ? "#3A1F00" : "#F5E6CC";
+
+  return (
+    <>
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={() => pendientes.length > 0 && setModalVisible(true)}
+        style={[s.wCard, { backgroundColor: cardBg, paddingHorizontal: 13, paddingVertical: 12, gap: 0 }]}>
+
+        {/* Header */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: AMBER }} />
+          <Text style={{ fontSize: 8.5, fontWeight: "600", color: muted }}>Pendientes · Por cobrar</Text>
+        </View>
+
+        {/* Total */}
+        <Text style={{ fontSize: 22, fontWeight: "700", color: pendientes.length > 0 ? AMBER : "#22C55E", letterSpacing: -0.6, lineHeight: 28, marginBottom: 8 }}>
+          {pendientes.length > 0 ? fmtI(totalPend) : "Al día ✓"}
+        </Text>
+
+        {/* Lista mini o vacío */}
+        {pendientes.length === 0 ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ fontSize: 22, marginBottom: 4 }}>🎉</Text>
+            <Text style={{ fontSize: 10, color: muted, textAlign: "center" }}>Sin cuentas pendientes</Text>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            {mostrados.map((item, i) => {
+              const cliente = (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim();
+              const dias    = item.fecha ? diasDesde(item.fecha) : 0;
+              const color   = avatarColor(i);
+              const isLast  = i === mostrados.length - 1 && resto <= 0;
+              return (
+                <View key={item.id}>
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 5, gap: 8 }}>
+                    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color + "30", borderWidth: 1, borderColor: color + "60", alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontSize: 8.5, fontWeight: "700", color }}>{initials(cliente)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={{ fontSize: 10.5, fontWeight: "600", color: ink }}>{cliente}</Text>
+                      <Text style={{ fontSize: 8, color: muted, marginTop: 0.5 }}>{labelDias(dias)}</Text>
+                    </View>
+                    <Text style={{ fontSize: 10.5, fontWeight: "700", color: AMBER }}>{fmtI(item.monto ?? 0)}</Text>
+                  </View>
+                  {!isLast && <View style={{ height: 0.5, backgroundColor: divClr, marginLeft: 34 }} />}
+                </View>
+              );
+            })}
+            {resto > 0 && (
+              <Text style={{ fontSize: 9, color: AMBER, marginTop: 4, textAlign: "center", fontWeight: "600" }}>
+                +{resto} más → ver todos
+              </Text>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Modal detalle */}
+      <ModalPendientes
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        pendientes={pendientes}
+        isDark={isDark}
+      />
+    </>
+  );
+}
+
 // ─── Widget: Clientes frecuentes ─────────────────────────────────────────────
 function WidgetClientes({ isDark }: WProps) {
   const ingresos = useIngresosStore((s) => s.ingresos);
   const { colors: c } = useTheme();
 
-  const { clienteData, topCarga } = React.useMemo(() => {
+  // Estado normalizado (asíncrono vía Gemini)
+  const [topCarga, setTopCarga] = useState<Array<[string, number]>>([]);
+
+  // ── Paso 1: extracción sync de clientes y mercancías brutas ──────────────
+  const { clienteData, rawMercancias } = React.useMemo(() => {
     const clienteMap = new Map<
       string,
       { viajes: number; total: number; ultimaFecha: string }
     >();
-    const cargaMap = new Map<string, number>();
+    const rawList: string[] = [];
 
     for (const ing of ingresos) {
       if (ing.tipo_ingreso !== "Flete" || !ing.descripcion) continue;
@@ -547,7 +942,7 @@ function WidgetClientes({ isDark }: WProps) {
       if (fecha > prev.ultimaFecha) prev.ultimaFecha = fecha;
       clienteMap.set(nombre, prev);
 
-      // Mercancía: último segmento (si hay ruta con →, mercancía es el 3ro; si no, el 2do)
+      // Mercancía: último segmento (si hay ruta con →, es el penúltimo; si no, el 2do)
       const mercancia =
         partes.length >= 3
           ? partes[partes.length - 1]?.trim()
@@ -555,7 +950,7 @@ function WidgetClientes({ isDark }: WProps) {
             ? partes[1]?.trim()
             : null;
       if (mercancia && !mercancia.includes("→")) {
-        cargaMap.set(mercancia, (cargaMap.get(mercancia) ?? 0) + 1);
+        rawList.push(mercancia);
       }
     }
 
@@ -563,12 +958,48 @@ function WidgetClientes({ isDark }: WProps) {
       .sort((a, b) => b[1].viajes - a[1].viajes)
       .slice(0, 3);
 
-    const cargas = [...cargaMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
-
-    return { clienteData: clientes, topCarga: cargas };
+    return { clienteData: clientes, rawMercancias: rawList };
   }, [ingresos]);
+
+  // ── Paso 2: normalización async y re-agrupación por nombre canónico ──────
+  // Se dispara solo cuando cambia la lista de mercancías brutas
+  const rawFingerprint = rawMercancias.join("|");
+  useEffect(() => {
+    if (rawMercancias.length === 0) { setTopCarga([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const normMap = await normalizarMercancias(rawMercancias);
+        if (cancelled) return;
+
+        // Re-agrupar por nombre canónico (fusiona variantes)
+        const cargaMap = new Map<string, number>();
+        for (const raw of rawMercancias) {
+          const canonical = normMap.get(raw) ?? raw;
+          cargaMap.set(canonical, (cargaMap.get(canonical) ?? 0) + 1);
+        }
+
+        const sorted = [...cargaMap.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+
+        setTopCarga(sorted);
+      } catch {
+        // Fallback: usar nombres raw si Gemini falla
+        const cargaMap = new Map<string, number>();
+        for (const raw of rawMercancias) {
+          cargaMap.set(raw, (cargaMap.get(raw) ?? 0) + 1);
+        }
+        if (!cancelled) {
+          setTopCarga(
+            [...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)
+          );
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawFingerprint]);
 
   if (clienteData.length === 0) {
     return (
@@ -2165,10 +2596,10 @@ export default function HomeBaseAdapted({
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[s.gridContainer, { paddingBottom: insets.bottom + 100 }]}>
-            {/* WIDGETS — fila centrada a ancho completo, sin scroll */}
+            {/* WIDGETS — fila de dos columnas */}
             <View style={s.widgetRow}>
-              <WidgetClima isDark={isDark} />
               <WidgetResumen isDark={isDark} />
+              <WidgetInsightIA isDark={isDark} />
             </View>
 
             {/* CLIENTES FRECUENTES */}

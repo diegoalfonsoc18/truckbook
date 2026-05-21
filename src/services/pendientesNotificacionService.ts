@@ -1,6 +1,119 @@
 // src/services/pendientesNotificacionService.ts
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResumenPendientes, formatCOP } from "./pendientesService";
+import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../config/aiConfig";
+
+// ─── Tipos mínimos del ingreso que necesitamos aquí ─────────────────────────
+interface PendienteResumido {
+  id: string;
+  descripcion?: string | null;
+  monto?: number | null;
+  fecha?: string | null;
+}
+
+const ID_IA_COBRO   = "pendientes_ia_cobro_diario";
+const CACHE_IA_NOTIF = "@truckbook_pend_ia_notif_v1";
+const TTL_IA_NOTIF   = 20 * 3_600_000; // 20 horas
+
+/** Formatea un número como COP compacto (sin signo) */
+function fmtCompact(n: number): string {
+  const a = Math.abs(n);
+  if (a >= 1_000_000) return `$${(a / 1_000_000).toFixed(1)}M`;
+  if (a >= 1_000)     return `$${(a / 1_000).toFixed(0)}K`;
+  return `$${a.toFixed(0)}`;
+}
+
+/**
+ * Genera (o recupera del caché) un mensaje personalizado vía Gemini
+ * y programa una notificación diaria a las 10 am recordando los cobros pendientes.
+ *
+ * @param pendientes - lista de ingresos con estado "pendiente"
+ */
+export async function programarRecordatorioIACobros(
+  pendientes: PendienteResumido[]
+): Promise<void> {
+  try {
+    // Si no hay nada pendiente, cancelar y salir
+    await Notifications.cancelScheduledNotificationAsync(ID_IA_COBRO).catch(() => {});
+    if (pendientes.length === 0) return;
+
+    const ok = await pedirPermiso();
+    if (!ok) return;
+
+    // ── 1. Intentar usar caché ──────────────────────────────────────────────
+    let mensaje: string | null = null;
+    try {
+      const raw = await AsyncStorage.getItem(CACHE_IA_NOTIF);
+      if (raw) {
+        const { ts, msg } = JSON.parse(raw);
+        if (Date.now() - ts < TTL_IA_NOTIF && msg) mensaje = msg as string;
+      }
+    } catch {}
+
+    // ── 2. Si no hay caché válido, llamar a Gemini ─────────────────────────
+    if (!mensaje && GEMINI_API_KEY) {
+      const hoy  = new Date(); hoy.setHours(0, 0, 0, 0);
+      const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+      const lines = pendientes.slice(0, 4).map((p) => {
+        const cl   = (p.descripcion ?? "Flete").split(" · ")[0].trim();
+        const dias = p.fecha
+          ? Math.floor((hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) / 86_400_000)
+          : 0;
+        return `${cl}: ${fmtCompact(p.monto ?? 0)} (hace ${dias}d)`;
+      }).join(", ");
+
+      const prompt =
+        `Eres asistente de un camionero colombiano. Tiene ${pendientes.length} flete(s) por cobrar: ${lines}. Total: ${fmtCompact(total)}.\n` +
+        `Genera UNA frase corta (máx 90 caracteres) de recordatorio amistoso para cobrar hoy. ` +
+        `Español colombiano, informal, sin emojis, sin comillas. Solo el texto.`;
+
+      try {
+        const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents:         [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 70 },
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const raw  = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim()
+            .replace(/^["'`«»]+|["'`«»]+$/g, "");
+          if (raw) {
+            mensaje = raw;
+            await AsyncStorage.setItem(CACHE_IA_NOTIF, JSON.stringify({ ts: Date.now(), msg: raw })).catch(() => {});
+          }
+        }
+      } catch {}
+    }
+
+    // ── 3. Mensaje de respaldo si Gemini no respondió ──────────────────────
+    if (!mensaje) {
+      const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+      mensaje = `Tienes ${pendientes.length} cobro${pendientes.length !== 1 ? "s" : ""} pendiente${pendientes.length !== 1 ? "s" : ""} — ${fmtCompact(total)} sin recibir.`;
+    }
+
+    // ── 4. Programar notificación diaria a las 10 am ───────────────────────
+    await Notifications.scheduleNotificationAsync({
+      identifier: ID_IA_COBRO,
+      content: {
+        title: "💰 Cobros pendientes",
+        body:  mensaje,
+        sound: true,
+        data:  { type: "pendientes_cobro_ia" },
+      },
+      trigger: {
+        hour:    10,
+        minute:  0,
+        repeats: true,
+      } as any,
+    });
+  } catch {
+    // Silencioso — no bloquear UI
+  }
+}
 
 const ID_COBRO = "pendientes_cobro_diario";
 const ID_PAGO = "pendientes_pago_proximo";
