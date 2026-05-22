@@ -71,9 +71,7 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../../config/aiConfig";
-import {
-  programarRecordatorioIACobros,
-} from "../../services/pendientesNotificacionService";
+import { programarRecordatorioIACobros } from "../../services/pendientesNotificacionService";
 import { normalizarMercancias } from "../../services/mercanciaService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
@@ -1259,7 +1257,10 @@ function WidgetClientes({ isDark }: WProps) {
     let cancelled = false;
     (async () => {
       try {
-        const normMap = await normalizarMercancias(rawMercancias, tipoCamionKey);
+        const normMap = await normalizarMercancias(
+          rawMercancias,
+          tipoCamionKey,
+        );
         if (cancelled) return;
 
         // Re-agrupar por nombre canónico (fusiona variantes del mismo tipo)
@@ -1287,7 +1288,9 @@ function WidgetClientes({ isDark }: WProps) {
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawFingerprint]);
 
@@ -1319,7 +1322,6 @@ function WidgetClientes({ isDark }: WProps) {
   // ── Widget principal ──────────────────────────────────────────────────────
   return (
     <View style={[s.clientesCard, { backgroundColor: cardBg, height: "auto" }]}>
-
       {/* ── Sección: Top Clientes ── */}
       <View style={s.clientesHeader}>
         <Ionicons name="people-outline" size={15} color={c.accent} />
@@ -1329,24 +1331,41 @@ function WidgetClientes({ isDark }: WProps) {
       {clienteData.map(([nombre, info], idx) => {
         const medalColor = MEDAL[idx] ?? c.accent;
         const ini = nombre.trim().split(/\s+/);
-        const av = ini.length >= 2
-          ? (ini[0][0] + ini[1][0]).toUpperCase()
-          : nombre.substring(0, 2).toUpperCase();
+        const av =
+          ini.length >= 2
+            ? (ini[0][0] + ini[1][0]).toUpperCase()
+            : nombre.substring(0, 2).toUpperCase();
         const isLast = idx === clienteData.length - 1;
 
         return (
           <View key={nombre}>
             <View style={s.clienteRow}>
               {/* Avatar con iniciales */}
-              <View style={[s.clienteAvatar, { backgroundColor: medalColor + "22", borderColor: medalColor + "55" }]}>
-                <Text style={[s.clienteAvatarText, { color: medalColor }]}>{av}</Text>
+              <View
+                style={[
+                  s.clienteAvatar,
+                  {
+                    backgroundColor: medalColor + "22",
+                    borderColor: medalColor + "55",
+                  },
+                ]}>
+                <Text style={[s.clienteAvatarText, { color: medalColor }]}>
+                  {av}
+                </Text>
               </View>
 
               {/* Info */}
               <View style={s.clienteInfo}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 5,
+                  }}>
                   <Text style={{ fontSize: 10 }}>{MEDAL_EMOJI[idx]}</Text>
-                  <Text style={[s.clienteNombre, { color: ink }]} numberOfLines={1}>
+                  <Text
+                    style={[s.clienteNombre, { color: ink }]}
+                    numberOfLines={1}>
                     {nombre}
                   </Text>
                 </View>
@@ -1371,12 +1390,19 @@ function WidgetClientes({ isDark }: WProps) {
       {/* ── Separador entre secciones ── */}
       {topCarga.length > 0 && (
         <>
-          <View style={[s.clientesDividerH, { backgroundColor: divClr, marginVertical: 12 }]} />
+          <View
+            style={[
+              s.clientesDividerH,
+              { backgroundColor: divClr, marginVertical: 12 },
+            ]}
+          />
 
           {/* ── Sección: Carga frecuente ── */}
           <View style={[s.clientesHeader, { marginBottom: 8 }]}>
             <Ionicons name="cube-outline" size={15} color={c.accent} />
-            <Text style={[s.clientesTitle, { color: ink }]}>Carga frecuente</Text>
+            <Text style={[s.clientesTitle, { color: ink }]}>
+              Carga frecuente
+            </Text>
           </View>
 
           <View style={s.cargaRow}>
@@ -1385,12 +1411,26 @@ function WidgetClientes({ isDark }: WProps) {
               return (
                 <View
                   key={tipo}
-                  style={[s.cargaChip, { backgroundColor: chipColor + "18", borderColor: chipColor + "40" }]}>
-                  <Text style={[s.cargaChipText, { color: chipColor }]} numberOfLines={1}>
+                  style={[
+                    s.cargaChip,
+                    {
+                      backgroundColor: chipColor + "18",
+                      borderColor: chipColor + "40",
+                    },
+                  ]}>
+                  <Text
+                    style={[s.cargaChipText, { color: chipColor }]}
+                    numberOfLines={1}>
                     {tipo}
                   </Text>
-                  <View style={[s.cargaChipBadge, { backgroundColor: chipColor + "30" }]}>
-                    <Text style={[s.cargaChipCount, { color: chipColor }]}>{count}x</Text>
+                  <View
+                    style={[
+                      s.cargaChipBadge,
+                      { backgroundColor: chipColor + "30" },
+                    ]}>
+                    <Text style={[s.cargaChipCount, { color: chipColor }]}>
+                      {count}x
+                    </Text>
                   </View>
                 </View>
               );
@@ -1398,174 +1438,6 @@ function WidgetClientes({ isDark }: WProps) {
           </View>
         </>
       )}
-    </View>
-  );
-}
-
-// ─── Widget: Pico y Placa ─────────────────────────────────────────────────────
-function WidgetPicoYPlaca({ isDark }: WProps) {
-  const {
-    restringido,
-    ultimoDigito,
-    ciudad,
-    hastaHora,
-    cargando,
-    sinPlaca,
-    sinCobertura,
-  } = usePicoYPlaca();
-  const { colors: c } = useTheme();
-
-  const libre = isDark ? "#34D399" : "#059669";
-  const bloq = isDark ? "#F87171" : "#DC2626";
-
-  return (
-    <View style={[s.wCircle, { backgroundColor: WBG(isDark) }]}>
-      {cargando ? (
-        <ActivityIndicator size="small" color={c.accent} />
-      ) : sinPlaca ? (
-        <>
-          <Ionicons name="car-outline" size={30} color={INK(isDark)} />
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-            Sin{"\n"}vehículo
-          </Text>
-        </>
-      ) : sinCobertura ? (
-        <>
-          <Ionicons name="car-outline" size={30} color={INK(isDark)} />
-          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>
-            Pico y placa
-          </Text>
-          <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-            {ciudad ? `Sin datos\n${ciudad}` : "Ubic.\nno disponible"}
-          </Text>
-        </>
-      ) : (
-        <>
-          <Ionicons
-            name="car-outline"
-            size={30}
-            color={restringido ? bloq : libre}
-          />
-          <Text
-            style={[
-              s.wCircleBig,
-              {
-                color: restringido ? bloq : libre,
-                fontSize: 13,
-                fontWeight: "700",
-              },
-            ]}>
-            {restringido ? "Restringido" : "Puede\ncircular"}
-          </Text>
-          {restringido && hastaHora && (
-            <Text style={[s.wCircleSub, { color: MUTED(isDark) }]}>
-              hasta {hastaHora}
-            </Text>
-          )}
-          <Text style={[s.wCircleLabel, { color: MUTED(isDark) }]}>
-            Placa …{ultimoDigito}
-          </Text>
-        </>
-      )}
-    </View>
-  );
-}
-
-
-// ─── Publicidad ───────────────────────────────────────────────────────────────
-interface Ad {
-  id: string;
-  categoria: "taller" | "repuestos" | "eds";
-  nombre: string;
-  descripcion: string;
-  emoji: string;
-  color: string;
-  cta: string;
-}
-
-const ADS: Ad[] = [
-  {
-    id: "1",
-    categoria: "taller",
-    nombre: "Taller El Camionero",
-    descripcion:
-      "Frenos, suspensión y motor. Servicio 24h para vehículos de carga.",
-    emoji: "🔧",
-    color: "#3B82F6",
-    cta: "Ver taller",
-  },
-  {
-    id: "2",
-    categoria: "repuestos",
-    nombre: "Repuestos La Vía",
-    descripcion:
-      "Filtros, llantas y repuestos originales para todas las marcas.",
-    emoji: "⚙️",
-    color: "#F59E0B",
-    cta: "Ver catálogo",
-  },
-  {
-    id: "3",
-    categoria: "eds",
-    nombre: "EDS Ruta Norte",
-    descripcion: "ACPM, GNV y lubricantes. Parqueadero para tractomulas.",
-    emoji: "⛽",
-    color: "#10B981",
-    cta: "Ver ubicación",
-  },
-  {
-    id: "4",
-    categoria: "taller",
-    nombre: "Tecni-Diesel Centro",
-    descripcion: "Especialistas en motores diésel y sistemas eléctricos.",
-    emoji: "🛠️",
-    color: "#8B5CF6",
-    cta: "Llamar ahora",
-  },
-];
-
-function AdCarousel({ isDark }: WProps) {
-  const bg = isDark ? "#1C1C1E" : "#FFFFFF";
-  return (
-    <View style={s.adWrap}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.adScroll}
-        decelerationRate="fast"
-        snapToInterval={width - H_PAD * 2 + 12}
-        snapToAlignment="start">
-        {ADS.map((ad) => (
-          <View key={ad.id} style={[s.adCard, { backgroundColor: bg }]}>
-            <View
-              style={[s.adIconCircle, { backgroundColor: ad.color + "22" }]}>
-              <Text style={s.adEmoji}>{ad.emoji}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.adCategoria, { color: ad.color }]}>
-                {ad.categoria === "taller"
-                  ? "TALLER"
-                  : ad.categoria === "repuestos"
-                    ? "REPUESTOS"
-                    : "EDS"}
-              </Text>
-              <Text
-                style={[s.adNombre, { color: isDark ? "#FFFFFF" : "#111827" }]}
-                numberOfLines={1}>
-                {ad.nombre}
-              </Text>
-              <Text
-                style={[s.adDesc, { color: isDark ? "#94A3B8" : "#6B7280" }]}
-                numberOfLines={2}>
-                {ad.descripcion}
-              </Text>
-            </View>
-            <TouchableOpacity style={[s.adCta, { backgroundColor: ad.color }]}>
-              <Text style={s.adCtaText}>{ad.cta}</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
     </View>
   );
 }
@@ -1854,6 +1726,182 @@ function DashboardControlItem({
   );
 }
 
+// ─── Dial vertical de balance mensual ────────────────────────────────────────
+// Barra lateral estilo speedometer analógico: ticks a lo largo de la barra,
+// aguja que apunta a la posición del ratio, zona roja abajo y verde arriba.
+function DialBalanceMensual({ isDark }: { isDark: boolean }) {
+  const gastos   = useGastosStore((s) => s.gastos);
+  const ingresos = useIngresosStore((s) => s.ingresos);
+
+  // Mes actual
+  const hoy  = new Date();
+  const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+
+  const totalG = gastos
+    .filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(mesStr))
+    .reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalI = ingresos
+    .filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(mesStr))
+    .reduce((a, i) => a + (i.monto ?? 0), 0);
+  const balance = totalI - totalG;
+  const total   = totalI + totalG;
+  // ratio: 0 = todo gastos (rojo), 1 = todo ingresos (verde), 0.5 = equilibrio
+  const ratio   = total > 0 ? Math.max(0.02, Math.min(0.98, totalI / total)) : 0.5;
+
+  // Geometría del dial vertical
+  const DW  = 44;   // ancho total del componente
+  const DH  = 130;  // alto total
+  const BAR_X   = 20;  // centro horizontal de la barra
+  const BAR_TOP = 10;
+  const BAR_BOT = DH - 28;
+  const BAR_LEN = BAR_BOT - BAR_TOP;
+  const BAR_W   = 5;
+
+  // Posición de la aguja (0 = top=rojo, 1 = bottom=verde → invertido)
+  // ratio alto = positivo → needle sube
+  const needleY = BAR_TOP + (1 - ratio) * BAR_LEN;
+
+  // Ticks
+  const TICK_COUNT = 9;
+  const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
+    const t   = i / (TICK_COUNT - 1);
+    const y   = BAR_TOP + t * BAR_LEN;
+    const maj = i % 2 === 0;
+    return { y, maj };
+  });
+
+  // Gradiente: top=rojo (gastos) → centro=amarillo → bottom=verde (ingresos)
+  const gradId = "dbm_grad";
+
+  // Color del dot según posición
+  const dotColor = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#F59E0B" : "#22C55E";
+
+  // Formato compacto
+  const fmt = (n: number) => {
+    const abs = Math.abs(n);
+    const sign = n < 0 ? "-" : "+";
+    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000)     return `${sign}${Math.round(abs / 1_000)}K`;
+    return `${sign}${abs}`;
+  };
+
+  const trackClr  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const tickClr   = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)";
+  const tickMajClr= isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.25)";
+  const labelClr  = isDark ? "rgba(255,255,255,0.5)"  : "rgba(0,0,0,0.4)";
+
+  return (
+    <View style={{ width: DW, alignItems: "center", justifyContent: "center" }}>
+      {/* Label top: Ingresos */}
+      <Svg width={DW} height={DH}>
+        <Defs>
+          <SvgGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0"    stopColor="#22C55E" />
+            <Stop offset="0.45" stopColor="#F59E0B" />
+            <Stop offset="1"    stopColor="#EF4444" />
+          </SvgGradient>
+        </Defs>
+
+        {/* ── Track (barra vacía) ── */}
+        <Rect
+          x={BAR_X - BAR_W / 2}
+          y={BAR_TOP}
+          width={BAR_W}
+          height={BAR_LEN}
+          rx={BAR_W / 2}
+          fill={trackClr}
+        />
+
+        {/* ── Barra activa (gradiente desde abajo hasta needle) ── */}
+        <Rect
+          x={BAR_X - BAR_W / 2}
+          y={needleY}
+          width={BAR_W}
+          height={BAR_BOT - needleY}
+          rx={BAR_W / 2}
+          fill={`url(#${gradId})`}
+          opacity={0.35}
+        />
+
+        {/* ── Ticks ── */}
+        {ticks.map((t, idx) => (
+          <Line
+            key={idx}
+            x1={BAR_X + BAR_W / 2 + 2}
+            y1={t.y}
+            x2={BAR_X + BAR_W / 2 + (t.maj ? 8 : 5)}
+            y2={t.y}
+            stroke={t.maj ? tickMajClr : tickClr}
+            strokeWidth={t.maj ? 1.2 : 0.8}
+            strokeLinecap="round"
+          />
+        ))}
+
+        {/* ── Aguja — línea horizontal + dot ── */}
+        <Line
+          x1={BAR_X - BAR_W / 2 - 10}
+          y1={needleY}
+          x2={BAR_X + BAR_W / 2 + 10}
+          y2={needleY}
+          stroke={dotColor}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+        {/* Halo externo */}
+        <Circle cx={BAR_X} cy={needleY} r={6}  fill={dotColor} opacity={0.18} />
+        {/* Dot principal */}
+        <Circle cx={BAR_X} cy={needleY} r={3.5} fill={dotColor} />
+        {/* Brillo central */}
+        <Circle cx={BAR_X} cy={needleY} r={1.5} fill="#FFFFFF" opacity={0.9} />
+
+        {/* ── Label: ↑ (ingresos) arriba ── */}
+        <SvgText
+          x={BAR_X}
+          y={BAR_TOP - 2}
+          fontSize={7}
+          fontWeight="600"
+          fill="#22C55E"
+          textAnchor="middle">
+          ↑
+        </SvgText>
+
+        {/* ── Label: ↓ (gastos) abajo ── */}
+        <SvgText
+          x={BAR_X}
+          y={BAR_BOT + 10}
+          fontSize={7}
+          fontWeight="600"
+          fill="#EF4444"
+          textAnchor="middle">
+          ↓
+        </SvgText>
+
+        {/* ── Balance mensual — número compacto ── */}
+        <SvgText
+          x={BAR_X}
+          y={DH - 6}
+          fontSize={8}
+          fontWeight="700"
+          fill={dotColor}
+          textAnchor="middle">
+          {fmt(balance)}
+        </SvgText>
+
+        {/* ── Etiqueta "mes" ── */}
+        <SvgText
+          x={BAR_X}
+          y={DH - 14}
+          fontSize={6.5}
+          fontWeight="500"
+          fill={labelClr}
+          textAnchor="middle">
+          MES
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
 function DashboardControlPanel({
   items,
   onItemPress,
@@ -1885,24 +1933,40 @@ function DashboardControlPanel({
         overflow: "hidden",
         paddingVertical: 4,
         marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "stretch",
       }}>
-      {rows.map((row, rowIdx) => (
-        <View key={rowIdx} style={{ flexDirection: "row" }}>
-          {row.map((item) => (
-            <View key={item.id} style={{ flex: 1 }}>
-              <DashboardControlItem
-                item={item}
-                onPress={() => onItemPress(item)}
-                isDark={isDark}
-              />
-            </View>
-          ))}
-          {/* Relleno si la fila está incompleta */}
-          {Array.from({ length: COLS - row.length }).map((_, i) => (
-            <View key={`empty-${i}`} style={{ flex: 1 }} />
-          ))}
-        </View>
-      ))}
+      {/* ── Grid de items (izquierda) ── */}
+      <View style={{ flex: 1 }}>
+        {rows.map((row, rowIdx) => (
+          <View key={rowIdx} style={{ flexDirection: "row" }}>
+            {row.map((item) => (
+              <View key={item.id} style={{ flex: 1 }}>
+                <DashboardControlItem
+                  item={item}
+                  onPress={() => onItemPress(item)}
+                  isDark={isDark}
+                />
+              </View>
+            ))}
+            {Array.from({ length: COLS - row.length }).map((_, i) => (
+              <View key={`empty-${i}`} style={{ flex: 1 }} />
+            ))}
+          </View>
+        ))}
+      </View>
+
+      {/* ── Separador vertical ── */}
+      <View style={{
+        width: 1,
+        backgroundColor: c.accentLight,
+        marginVertical: 12,
+      }} />
+
+      {/* ── Dial lateral: balance mensual (derecha) ── */}
+      <View style={{ justifyContent: "center", paddingHorizontal: 4 }}>
+        <DialBalanceMensual isDark={isDark} />
+      </View>
     </View>
   );
 }
@@ -2316,7 +2380,6 @@ export default function HomeBaseAdapted({
 
             {/* CLIENTES FRECUENTES */}
             <WidgetClientes isDark={isDark} />
-
           </ScrollView>
         </Animated.View>
       </SafeAreaView>
