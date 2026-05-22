@@ -24,7 +24,7 @@ export const items: Item[] = [
     id: "tecnicomecanica",
     iconName: "motor",
     iconSize: 80,
-    name: "Técnico\nmecánica",
+    name: "Tecno",
     subtitle: "Estado",
     color: "#c70808",
   },

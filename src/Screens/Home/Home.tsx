@@ -1673,14 +1673,14 @@ function DashboardControlItem({
   isDark: boolean;
 }) {
   const accent = item.color || "#6B7280";
-  const base = Platform.OS === "android" ? 44 : 52;
+  const base = Platform.OS === "android" ? 30 : 34;
 
   // Tamaños personalizados por ícono (width × height)
   const ICON_SIZES: Record<string, { w: number; h: number }> = {
-    tecnicomecanica: { w: base * 1, h: base * 0.85 }, // MotorIcon: viewBox ancho (62×40)
-    licencia: { w: base * 1.4, h: base * 0.85 }, // LicenciaIcon: viewBox muy ancho (23×18)
-    soat: { w: base * 0.8, h: base * 0.8 }, // SoatIcon: casi cuadrado
-    multas: { w: base * 1.4, h: base * 0.85 }, // MultasIcon: cuadrado 512×512
+    tecnicomecanica: { w: base * 1, h: base * 0.85 },
+    licencia: { w: base * 1.4, h: base * 0.85 },
+    soat: { w: base * 0.8, h: base * 0.8 },
+    multas: { w: base * 1.4, h: base * 0.85 },
   };
 
   const sz = ICON_SIZES[item.id] ?? { w: base, h: base };
@@ -1704,9 +1704,7 @@ function DashboardControlItem({
       activeOpacity={0.75}
       style={{
         alignItems: "center",
-        flex: 1,
-        paddingVertical: 18,
-        paddingHorizontal: 8,
+        paddingVertical: 2,
       }}>
       {renderIcon()}
       {/* Label */}
@@ -1714,9 +1712,9 @@ function DashboardControlItem({
         numberOfLines={2}
         style={{
           color: accent,
-          fontSize: 10,
+          fontSize: 8,
           fontWeight: "600",
-          marginTop: 8,
+          marginTop: 3,
           textAlign: "center",
           opacity: 0.9,
         }}>
@@ -1726,180 +1724,367 @@ function DashboardControlItem({
   );
 }
 
-// ─── Dial vertical de balance mensual ────────────────────────────────────────
-// Barra lateral estilo speedometer analógico: ticks a lo largo de la barra,
-// aguja que apunta a la posición del ratio, zona roja abajo y verde arriba.
-function DialBalanceMensual({ isDark }: { isDark: boolean }) {
-  const gastos   = useGastosStore((s) => s.gastos);
-  const ingresos = useIngresosStore((s) => s.ingresos);
+// ─── Lateral Speedometer Dial ─────────────────────────────────────────────────
+// Semicírculo lateral — colores del sistema de diseño de la app.
+// side="left"  → pivot izquierdo, arco abre hacia la derecha
+// side="right" → pivot derecho,  arco abre hacia la izquierda
+// ratio 0 = bottom (peligro) → 1 = top (óptimo)
+function LateralDial({
+  ratio,
+  value,
+  label,
+  side,
+  height = 220,
+  colors: c,
+  isDark,
+}: {
+  ratio: number;
+  value: string;
+  label: string;
+  side: "left" | "right";
+  height?: number;
+  colors: ReturnType<typeof useTheme>["colors"];
+  isDark: boolean;
+}) {
+  const isLeft = side === "left";
 
-  // Mes actual
-  const hoy  = new Date();
-  const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const H  = height;
+  const R  = H / 2 - 4;
+  const W  = R + 44;
+  const CY = H / 2;
+  const CX = isLeft ? 0 : W;
 
-  const totalG = gastos
-    .filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(mesStr))
-    .reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalI = ingresos
-    .filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(mesStr))
-    .reduce((a, i) => a + (i.monto ?? 0), 0);
-  const balance = totalI - totalG;
-  const total   = totalI + totalG;
-  // ratio: 0 = todo gastos (rojo), 1 = todo ingresos (verde), 0.5 = equilibrio
-  const ratio   = total > 0 ? Math.max(0.02, Math.min(0.98, totalI / total)) : 0.5;
-
-  // Geometría del dial vertical
-  const DW  = 44;   // ancho total del componente
-  const DH  = 130;  // alto total
-  const BAR_X   = 20;  // centro horizontal de la barra
-  const BAR_TOP = 10;
-  const BAR_BOT = DH - 28;
-  const BAR_LEN = BAR_BOT - BAR_TOP;
-  const BAR_W   = 5;
-
-  // Posición de la aguja (0 = top=rojo, 1 = bottom=verde → invertido)
-  // ratio alto = positivo → needle sube
-  const needleY = BAR_TOP + (1 - ratio) * BAR_LEN;
-
-  // Ticks
-  const TICK_COUNT = 9;
-  const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
-    const t   = i / (TICK_COUNT - 1);
-    const y   = BAR_TOP + t * BAR_LEN;
-    const maj = i % 2 === 0;
-    return { y, maj };
+  const deg2rad = (d: number) => (d * Math.PI) / 180;
+  const pt = (deg: number, r = R) => ({
+    x: CX + r * Math.cos(deg2rad(deg)),
+    y: CY + r * Math.sin(deg2rad(deg)),
   });
 
-  // Gradiente: top=rojo (gastos) → centro=amarillo → bottom=verde (ingresos)
-  const gradId = "dbm_grad";
+  const arcPathFull = (): string => {
+    const top = pt(270);
+    const bot = pt(90);
+    return `M ${top.x.toFixed(2)} ${top.y.toFixed(2)} A ${R} ${R} 0 1 ${isLeft ? 1 : 0} ${bot.x.toFixed(2)} ${bot.y.toFixed(2)}`;
+  };
 
-  // Color del dot según posición
-  const dotColor = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#F59E0B" : "#22C55E";
+  const clamp = (v: number) => Math.max(0.005, Math.min(0.995, v));
+  const rC = clamp(ratio);
+  const needleDeg = isLeft ? 90 - rC * 180 : 90 + rC * 180;
+  const needlePt  = pt(needleDeg);
 
-  // Formato compacto
+  const arcPathActive = (): string => {
+    const bot   = pt(90);
+    const end   = needlePt;
+    const sweep = rC * 180;
+    if (sweep < 0.5) return "";
+    const large = sweep > 180 ? 1 : 0;
+    return isLeft
+      ? `M ${bot.x.toFixed(2)} ${bot.y.toFixed(2)} A ${R} ${R} 0 ${large} 0 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
+      : `M ${bot.x.toFixed(2)} ${bot.y.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+  };
+
+  // Zonas: rojo 0–33%, ámbar 33–66%, verde 66–100%
+  const ZONE_WARN   = 0.33;
+  const ZONE_OK     = 0.66;
+  const zoneColor =
+    ratio < ZONE_WARN ? "#FF453A" :
+    ratio < ZONE_OK   ? "#FFB800" :
+                        "#2ECC71";
+
+  // Zona de peligro estática (franja roja baja del track)
+  const DFRAC    = 0.25;
+  const dangerEnd = pt(isLeft ? 90 - DFRAC * 180 : 90 + DFRAC * 180);
+  const arcPathDanger = (): string => {
+    const bot = pt(90);
+    return isLeft
+      ? `M ${bot.x.toFixed(2)} ${bot.y.toFixed(2)} A ${R} ${R} 0 0 0 ${dangerEnd.x.toFixed(2)} ${dangerEnd.y.toFixed(2)}`
+      : `M ${bot.x.toFixed(2)} ${bot.y.toFixed(2)} A ${R} ${R} 0 0 1 ${dangerEnd.x.toFixed(2)} ${dangerEnd.y.toFixed(2)}`;
+  };
+
+  // El panel siempre tiene fondo oscuro → colores claros para visibilidad.
+  const trackColor  = "rgba(255,255,255,0.09)";
+  const tickMinor   = "rgba(255,255,255,0.18)";
+  const tickMajor   = "rgba(255,255,255,0.50)";
+  const needleColor = zoneColor;
+  const pivotBg     = "rgba(10,12,20,0.85)";
+  const mutedColor  = "rgba(255,255,255,0.38)";
+
+  // Ticks
+  const TICK_N = 9;
+  const ticks = Array.from({ length: TICK_N }, (_, i) => {
+    const frac  = i / (TICK_N - 1);
+    const deg   = isLeft ? 270 + frac * 180 : 270 - frac * 180;
+    const major = i % 2 === 0;
+    const outerR = R + 2;
+    const innerR = major ? outerR - 10 : outerR - 6;
+    return { o: pt(deg, outerR), i: pt(deg, innerR), major, danger: frac > 0.75 };
+  });
+
+  const textX      = isLeft ? W - 6 : 6;
+  const textAnchor = isLeft ? "end" : "start";
+
+  return (
+    <Svg width={W} height={H}>
+      {/* ── Track ── */}
+      <Path d={arcPathFull()} stroke={trackColor} strokeWidth={10} fill="none" strokeLinecap="round" />
+
+      {/* ── Zona peligro (franja estática roja baja) ── */}
+      <Path d={arcPathDanger()} stroke="rgba(255,69,58,0.22)" strokeWidth={10} fill="none" strokeLinecap="round" />
+
+      {/* ── Arco activo: glow (color según zona) ── */}
+      <Path d={arcPathActive()} stroke={`${zoneColor}30`} strokeWidth={22} fill="none" strokeLinecap="round" />
+      {/* ── Arco activo: línea principal ── */}
+      <Path d={arcPathActive()} stroke={zoneColor} strokeWidth={7} fill="none" strokeLinecap="round" opacity={0.95} />
+
+      {/* ── Ticks ── */}
+      {ticks.map((t, idx) => (
+        <Line key={idx}
+          x1={t.o.x} y1={t.o.y} x2={t.i.x} y2={t.i.y}
+          stroke={t.danger ? "#FF453A" : t.major ? tickMajor : tickMinor}
+          strokeWidth={t.major ? 2.5 : 1.2}
+          strokeLinecap="round"
+          opacity={t.danger ? 0.8 : 1}
+        />
+      ))}
+
+      {/* ── Aguja ── */}
+      <Line x1={CX} y1={CY} x2={needlePt.x} y2={needlePt.y}
+        stroke={needleColor} strokeWidth={2.8} strokeLinecap="round" />
+
+      {/* ── Pivot ── */}
+      <Circle cx={CX} cy={CY} r={9}   fill={needleColor} opacity={0.12} />
+      <Circle cx={CX} cy={CY} r={5}   fill={pivotBg} />
+      <Circle cx={CX} cy={CY} r={3}   fill={needleColor} />
+      <Circle cx={CX} cy={CY} r={1.2} fill="#FFFFFF" opacity={0.6} />
+
+      {/* ── Valor ── */}
+      <SvgText x={textX} y={CY - 5} fontSize={9} fontWeight="700" fill={needleColor} textAnchor={textAnchor}>
+        {value}
+      </SvgText>
+
+      {/* ── Label ── */}
+      <SvgText x={textX} y={CY + 8} fontSize={6.5} fontWeight="500" fill={mutedColor} textAnchor={textAnchor}>
+        {label}
+      </SvgText>
+    </Svg>
+  );
+}
+
+// ─── (reemplazado por LateralDial) ───────────────────────────────────────────
+function MiniGaugeDial({
+  ratio,
+  label,
+  value,
+  dangerOnRight,
+}: {
+  ratio: number; // 0–1
+  label: string; // texto debajo del valor ("MES" / "COMB.")
+  value: string; // valor central formateado
+  dangerOnRight: boolean; // true → zona roja en extremo derecho
+}) {
+  const W = 68,
+    H = 66;
+  const CX = W / 2; // 34
+  const CY = 56; // centro del arco (near bottom)
+  const R = 30;
+
+  // Arco: 160° → 380° (220° de span, clockwise)
+  const START = 160;
+  const SPAN = 220;
+  const DANGER_FRAC = 0.22; // último 22% = zona roja
+
+  const deg2rad = (d: number) => (d * Math.PI) / 180;
+  const pt = (deg: number, r = R) => ({
+    x: CX + r * Math.cos(deg2rad(deg)),
+    y: CY + r * Math.sin(deg2rad(deg)),
+  });
+
+  const arcPath = (fromDeg: number, sweep: number, r = R): string => {
+    if (sweep < 0.5) return "";
+    const s = pt(fromDeg, r);
+    const e = pt(fromDeg + sweep, r);
+    return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`;
+  };
+
+  const clamp = (v: number) => Math.max(0.01, Math.min(0.99, v));
+  const filled = clamp(ratio) * SPAN;
+  const needleDeg = START + filled;
+  const dotPt = pt(needleDeg);
+
+  // Zona de peligro: últimos DANGER_FRAC del arco
+  const dangerStartFrac = dangerOnRight ? 1 - DANGER_FRAC : 0;
+  const dangerDeg = dangerOnRight ? START + (1 - DANGER_FRAC) * SPAN : START;
+  const dangerSweep = DANGER_FRAC * SPAN;
+
+  // ¿Está la aguja en zona peligrosa?
+  const inDanger = dangerOnRight
+    ? ratio > 1 - DANGER_FRAC
+    : ratio < DANGER_FRAC;
+  const needleColor = inDanger ? "#FF5252" : "#4FC3F7";
+  const glowColor = inDanger ? "rgba(255,82,82,0.35)" : "rgba(0,188,212,0.35)";
+
+  // Ticks: 11 a lo largo del arco completo
+  const TICK_N = 11;
+  const ticks = Array.from({ length: TICK_N }, (_, i) => {
+    const frac = i / (TICK_N - 1);
+    const deg = START + frac * SPAN;
+    const major = i % 2 === 0;
+    const outerR = R + 3;
+    const innerR = major ? R + 3 - 8 : R + 3 - 5;
+    const isDanger = dangerOnRight
+      ? frac > 1 - DANGER_FRAC - 0.02
+      : frac < DANGER_FRAC + 0.02;
+    return {
+      o: pt(deg, outerR),
+      i: pt(deg, innerR),
+      major,
+      isDanger,
+    };
+  });
+
+  return (
+    <Svg width={W} height={H}>
+      {/* ── Fondo oscuro del dial ── */}
+      <Rect width={W} height={H} fill="#080C14" rx={10} />
+
+      {/* ── Track oscuro (arco completo) ── */}
+      <Path
+        d={arcPath(START, SPAN)}
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth={6}
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* ── Zona de peligro (ticks rojos, arco rojo tenue) ── */}
+      <Path
+        d={arcPath(dangerDeg, dangerSweep)}
+        stroke="rgba(255,82,82,0.18)"
+        strokeWidth={6}
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* ── Arco activo: glow exterior ── */}
+      {filled > 1 && (
+        <Path
+          d={arcPath(START, filled)}
+          stroke={glowColor}
+          strokeWidth={10}
+          fill="none"
+          strokeLinecap="round"
+        />
+      )}
+      {/* ── Arco activo: línea principal ── */}
+      {filled > 1 && (
+        <Path
+          d={arcPath(START, filled)}
+          stroke={needleColor}
+          strokeWidth={3.5}
+          fill="none"
+          strokeLinecap="round"
+          opacity={0.9}
+        />
+      )}
+
+      {/* ── Ticks ── */}
+      {ticks.map((t, idx) => (
+        <Line
+          key={idx}
+          x1={t.o.x}
+          y1={t.o.y}
+          x2={t.i.x}
+          y2={t.i.y}
+          stroke={
+            t.isDanger
+              ? "#FF5252"
+              : t.major
+                ? "rgba(255,255,255,0.85)"
+                : "rgba(255,255,255,0.3)"
+          }
+          strokeWidth={t.major ? 1.4 : 0.8}
+          strokeLinecap="round"
+        />
+      ))}
+
+      {/* ── Aguja (línea desde pivot hasta arc) ── */}
+      <Line
+        x1={CX}
+        y1={CY}
+        x2={dotPt.x}
+        y2={dotPt.y}
+        stroke={needleColor}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        opacity={0.92}
+      />
+
+      {/* ── Pivot: halo + dot ── */}
+      <Circle cx={CX} cy={CY} r={7} fill={needleColor} opacity={0.12} />
+      <Circle cx={CX} cy={CY} r={4} fill="#1A2035" />
+      <Circle cx={CX} cy={CY} r={2.5} fill={needleColor} />
+      <Circle cx={CX} cy={CY} r={1} fill="#FFFFFF" opacity={0.9} />
+
+      {/* ── Valor central ── */}
+      <SvgText
+        x={CX}
+        y={CY - 10}
+        fontSize={9}
+        fontWeight="700"
+        fill={needleColor}
+        textAnchor="middle">
+        {value}
+      </SvgText>
+
+      {/* ── Label abajo ── */}
+      <SvgText
+        x={CX}
+        y={H - 4}
+        fontSize={6}
+        fontWeight="600"
+        fill="rgba(255,255,255,0.4)"
+        textAnchor="middle">
+        {label}
+      </SvgText>
+    </Svg>
+  );
+}
+
+// ─── Dial: balance mensual (lado izquierdo, pivot en borde izq) ──────────────
+function DialBalanceMensual({ height, colors: c, isDark }: { height?: number; colors: ReturnType<typeof useTheme>["colors"]; isDark: boolean }) {
+  const gastos   = useGastosStore((s) => s.gastos);
+  const ingresos = useIngresosStore((s) => s.ingresos);
+  const hoy      = new Date();
+  const mesStr   = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+
+  const totalG = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(mesStr)).reduce((a, g) => a + (g.monto ?? 0), 0);
+  const totalI = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(mesStr)).reduce((a, i) => a + (i.monto ?? 0), 0);
+  const balance = totalI - totalG;
+  const total   = totalI + totalG;
+  const ratio   = total > 0 ? Math.max(0.01, Math.min(0.99, totalI / total)) : 0.5;
+
   const fmt = (n: number) => {
-    const abs = Math.abs(n);
-    const sign = n < 0 ? "-" : "+";
+    const abs = Math.abs(n), sign = n < 0 ? "-" : "+";
     if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
     if (abs >= 1_000)     return `${sign}${Math.round(abs / 1_000)}K`;
     return `${sign}${abs}`;
   };
 
-  const trackClr  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
-  const tickClr   = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)";
-  const tickMajClr= isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.25)";
-  const labelClr  = isDark ? "rgba(255,255,255,0.5)"  : "rgba(0,0,0,0.4)";
+  return <LateralDial ratio={ratio} value={fmt(balance)} label="MES" side="left" height={height} colors={c} isDark={isDark} />;
+}
 
-  return (
-    <View style={{ width: DW, alignItems: "center", justifyContent: "center" }}>
-      {/* Label top: Ingresos */}
-      <Svg width={DW} height={DH}>
-        <Defs>
-          <SvgGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0"    stopColor="#22C55E" />
-            <Stop offset="0.45" stopColor="#F59E0B" />
-            <Stop offset="1"    stopColor="#EF4444" />
-          </SvgGradient>
-        </Defs>
+function DialCombustible({ height, colors: c, isDark }: { height?: number; colors: ReturnType<typeof useTheme>["colors"]; isDark: boolean }) {
+  const gastos = useGastosStore((s) => s.gastos);
+  const hoy    = new Date();
+  const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
 
-        {/* ── Track (barra vacía) ── */}
-        <Rect
-          x={BAR_X - BAR_W / 2}
-          y={BAR_TOP}
-          width={BAR_W}
-          height={BAR_LEN}
-          rx={BAR_W / 2}
-          fill={trackClr}
-        />
+  const gasMes      = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(mesStr));
+  const totalMes    = gasMes.reduce((a, g) => a + (g.monto ?? 0), 0);
+  const combustible = gasMes.filter((g) => g.tipo_gasto?.toLowerCase().includes("combustible")).reduce((a, g) => a + (g.monto ?? 0), 0);
+  const rawRatio    = totalMes > 0 ? combustible / totalMes : 0;
+  const ratio       = Math.max(0.01, Math.min(0.99, 1 - rawRatio));
+  const pct         = Math.round(rawRatio * 100);
 
-        {/* ── Barra activa (gradiente desde abajo hasta needle) ── */}
-        <Rect
-          x={BAR_X - BAR_W / 2}
-          y={needleY}
-          width={BAR_W}
-          height={BAR_BOT - needleY}
-          rx={BAR_W / 2}
-          fill={`url(#${gradId})`}
-          opacity={0.35}
-        />
-
-        {/* ── Ticks ── */}
-        {ticks.map((t, idx) => (
-          <Line
-            key={idx}
-            x1={BAR_X + BAR_W / 2 + 2}
-            y1={t.y}
-            x2={BAR_X + BAR_W / 2 + (t.maj ? 8 : 5)}
-            y2={t.y}
-            stroke={t.maj ? tickMajClr : tickClr}
-            strokeWidth={t.maj ? 1.2 : 0.8}
-            strokeLinecap="round"
-          />
-        ))}
-
-        {/* ── Aguja — línea horizontal + dot ── */}
-        <Line
-          x1={BAR_X - BAR_W / 2 - 10}
-          y1={needleY}
-          x2={BAR_X + BAR_W / 2 + 10}
-          y2={needleY}
-          stroke={dotColor}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
-        {/* Halo externo */}
-        <Circle cx={BAR_X} cy={needleY} r={6}  fill={dotColor} opacity={0.18} />
-        {/* Dot principal */}
-        <Circle cx={BAR_X} cy={needleY} r={3.5} fill={dotColor} />
-        {/* Brillo central */}
-        <Circle cx={BAR_X} cy={needleY} r={1.5} fill="#FFFFFF" opacity={0.9} />
-
-        {/* ── Label: ↑ (ingresos) arriba ── */}
-        <SvgText
-          x={BAR_X}
-          y={BAR_TOP - 2}
-          fontSize={7}
-          fontWeight="600"
-          fill="#22C55E"
-          textAnchor="middle">
-          ↑
-        </SvgText>
-
-        {/* ── Label: ↓ (gastos) abajo ── */}
-        <SvgText
-          x={BAR_X}
-          y={BAR_BOT + 10}
-          fontSize={7}
-          fontWeight="600"
-          fill="#EF4444"
-          textAnchor="middle">
-          ↓
-        </SvgText>
-
-        {/* ── Balance mensual — número compacto ── */}
-        <SvgText
-          x={BAR_X}
-          y={DH - 6}
-          fontSize={8}
-          fontWeight="700"
-          fill={dotColor}
-          textAnchor="middle">
-          {fmt(balance)}
-        </SvgText>
-
-        {/* ── Etiqueta "mes" ── */}
-        <SvgText
-          x={BAR_X}
-          y={DH - 14}
-          fontSize={6.5}
-          fontWeight="500"
-          fill={labelClr}
-          textAnchor="middle">
-          MES
-        </SvgText>
-      </Svg>
-    </View>
-  );
+  return <LateralDial ratio={ratio} value={`${pct}%`} label="COMB." side="right" height={height} colors={c} isDark={isDark} />;
 }
 
 function DashboardControlPanel({
@@ -1915,7 +2100,8 @@ function DashboardControlPanel({
   colors: ReturnType<typeof useTheme>["colors"];
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
-  // Agrupar en filas de 2 — grid 2×2
+  const panelH = 220;
+
   const COLS = 2;
   const rows = items.reduce<Item[][]>((acc, item, i) => {
     if (i % COLS === 0) acc.push([item]);
@@ -1926,22 +2112,32 @@ function DashboardControlPanel({
   return (
     <View
       style={{
-        backgroundColor: c.accent,
+        backgroundColor: isDark ? "#111418" : "#0D1117",
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: c.accentLight,
-        overflow: "hidden",
-        paddingVertical: 4,
+        borderColor: "rgba(255,255,255,0.07)",
         marginBottom: 12,
         flexDirection: "row",
         alignItems: "stretch",
+        overflow: "hidden",
+        height: 220,
       }}>
-      {/* ── Grid de items (izquierda) ── */}
+
+      {/* ── Dial izquierdo: balance mensual (pivot en borde izq) ── */}
+      {panelH > 0 && <DialBalanceMensual height={panelH} colors={c} isDark={isDark} />}
+
+      {/* ── Grid central de items ── */}
       <View style={{ flex: 1 }}>
         {rows.map((row, rowIdx) => (
-          <View key={rowIdx} style={{ flexDirection: "row" }}>
+          <View
+            key={rowIdx}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+            }}>
             {row.map((item) => (
-              <View key={item.id} style={{ flex: 1 }}>
+              <View key={item.id} style={{ flex: 1, alignItems: "center" }}>
                 <DashboardControlItem
                   item={item}
                   onPress={() => onItemPress(item)}
@@ -1956,17 +2152,8 @@ function DashboardControlPanel({
         ))}
       </View>
 
-      {/* ── Separador vertical ── */}
-      <View style={{
-        width: 1,
-        backgroundColor: c.accentLight,
-        marginVertical: 12,
-      }} />
-
-      {/* ── Dial lateral: balance mensual (derecha) ── */}
-      <View style={{ justifyContent: "center", paddingHorizontal: 4 }}>
-        <DialBalanceMensual isDark={isDark} />
-      </View>
+      {/* ── Dial derecho: % combustible (pivot en borde der) ── */}
+      {panelH > 0 && <DialCombustible height={panelH} colors={c} isDark={isDark} />}
     </View>
   );
 }
