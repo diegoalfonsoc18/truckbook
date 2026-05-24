@@ -61,37 +61,59 @@ export default function ConductorHome() {
     validarPlacaParaUsuario(user.id);
   }, [user?.id]);
 
+  // ─── Helpers de score y sublabel ─────────────────────────────────────────
+  const scoreFromDias = (vigente: boolean, dias: number, sinDatos: boolean): number => {
+    if (sinDatos) return 0;
+    if (!vigente) return 0;
+    return Math.min(100, Math.round((dias / 365) * 100));
+  };
+  const sublabelFromDias = (vigente: boolean, dias: number, sinDatos: boolean): string => {
+    if (sinDatos) return "Consultando...";
+    if (!vigente) return "Vencido";
+    if (dias === 0) return "Vence hoy";
+    return `${dias} día${dias === 1 ? "" : "s"}`;
+  };
+
   // ─── Items con colores dinámicos de estado ────────────────────────────────
   const conductorItems: Item[] = baseItems.map((item) => {
     switch (item.id) {
-      case "tecnicomecanica":
+      case "tecnicomecanica": {
+        const sinDatos = cargandoRTM || !placaActual;
         return {
           ...item,
-          color: statusColor(esRTMVigente, diasParaVencerRTM, cargandoRTM || !placaActual),
+          color:    statusColor(esRTMVigente, diasParaVencerRTM, sinDatos),
+          score:    scoreFromDias(esRTMVigente, diasParaVencerRTM, sinDatos),
+          sublabel: sublabelFromDias(esRTMVigente, diasParaVencerRTM, sinDatos),
         };
-      case "soat":
+      }
+      case "soat": {
+        const sinDatos = cargandoSOAT || !placaActual;
         return {
           ...item,
-          color: statusColor(esSOATVigente, diasParaVencerSOAT, cargandoSOAT || !placaActual),
+          color:    statusColor(esSOATVigente, diasParaVencerSOAT, sinDatos),
+          score:    scoreFromDias(esSOATVigente, diasParaVencerSOAT, sinDatos),
+          sublabel: sublabelFromDias(esSOATVigente, diasParaVencerSOAT, sinDatos),
         };
-      case "multas":
+      }
+      case "multas": {
+        const sinDatos = !placaActual || cargandoMultas;
+        const score    = sinDatos ? 0 : tieneMultasPendientes ? Math.max(5, 100 - cantidadPendientes * 25) : 100;
         return {
           ...item,
-          color: !placaActual || cargandoMultas
-            ? COLOR_UNKNOWN
-            : tieneMultasPendientes
-            ? COLOR_DANGER
-            : COLOR_OK,
+          color:    sinDatos ? COLOR_UNKNOWN : tieneMultasPendientes ? COLOR_DANGER : COLOR_OK,
+          score,
+          sublabel: sinDatos ? "Consultando..." : cantidadPendientes === 0 ? "Sin multas" : `${cantidadPendientes} multa${cantidadPendientes === 1 ? "" : "s"}`,
         };
-      case "licencia":
+      }
+      case "licencia": {
+        const sinDatos = cargandoLicencia || !documentoConductor;
         return {
           ...item,
-          color: statusColor(
-            esLicenciaVigente,
-            diasParaVencerLicencia,
-            cargandoLicencia || !documentoConductor,
-          ),
+          color:    statusColor(esLicenciaVigente, diasParaVencerLicencia, sinDatos),
+          score:    scoreFromDias(esLicenciaVigente, diasParaVencerLicencia, sinDatos),
+          sublabel: sublabelFromDias(esLicenciaVigente, diasParaVencerLicencia, sinDatos),
         };
+      }
       default:
         return item;
     }

@@ -16,6 +16,9 @@ export interface Item {
   backgroundColor?: string;
   mostrarBadge?: boolean;
   badgeCount?: number;
+  // Para el widget de gráfica de estado
+  score?: number;   // 0-100: salud del ítem
+  sublabel?: string; // texto descriptivo: "324 días", "2 multas", etc.
 }
 
 export const items: Item[] = [
