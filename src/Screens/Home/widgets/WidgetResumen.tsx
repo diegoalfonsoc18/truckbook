@@ -129,7 +129,7 @@ export default function WidgetResumen({ isDark }: WProps) {
   const ratioI    = total > 0 ? totalI / total : 0.5;
 
   return (
-    <View style={{ padding: 0, overflow: "hidden" }}>
+    <View style={{ width: WIDGET_SIZE, height: WIDGET_HEIGHT, borderRadius: 16, padding: 0, overflow: "hidden" }}>
       <GaugeBalance
         ratio={ratioI} isDark={isDark} balance={balance}
         balColor="" totalI={totalI} totalG={totalG} balSem={balSem}
