@@ -2,7 +2,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, Platform, Image } from "react-native";
 import Svg, { Path, Circle, Line, Rect, Text as SvgText } from "react-native-svg";
-import { useTheme } from "../../../constants/Themecontext";
+import { useTheme, getShadow } from "../../../constants/Themecontext";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import ItemIcon from "../../../components/ItemIcon";
@@ -303,9 +303,10 @@ export default function DashboardControlPanel({
   colors: ReturnType<typeof useTheme>["colors"];
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
-  const cardBg   = isDark ? c.cardBg : "#FFFFFF";
+  const cardBg   = isDark ? `${c.accent}14` : c.cardBg;
   const textMain = isDark ? "#FFFFFF" : c.text;
   const trackBg  = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)";
+  const cardShadow = getShadow(isDark, "md");
 
   const ICON_MAP_WEBP: Record<string, any> = {
     tecnicomecanica: require("../../../assets/icons/motor.webp"),
@@ -330,20 +331,18 @@ export default function DashboardControlPanel({
             key={item.id}
             onPress={() => onItemPress(item)}
             activeOpacity={0.75}
-            style={{
-              width: 110,
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 14,
-              borderWidth: 1,
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)",
-              shadowColor: "#000",
-              shadowOpacity: 0.06,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 2,
-              alignItems: "center",
-            }}>
+            style={[
+              {
+                width: 110,
+                backgroundColor: cardBg,
+                borderRadius: 22,
+                padding: 14,
+                alignItems: "center",
+              },
+              isDark
+                ? { borderWidth: 1, borderColor: `${c.accent}33` }
+                : cardShadow,
+            ]}>
             <View style={{ width: 58, height: 58, borderRadius: 16, backgroundColor: `${color}18`, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
               {iconSrc ? (
                 <Image source={iconSrc} style={{ width: 38, height: 38 }} resizeMode="contain" />
