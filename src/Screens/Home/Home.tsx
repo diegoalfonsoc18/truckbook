@@ -3,17 +3,10 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Modal,
-  TextInput,
-  Alert,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
   StyleSheet,
   Animated,
   Dimensions,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   Image,
   Pressable,
@@ -32,18 +25,9 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
-import { useAuth } from "../../hooks/useAuth";
-import supabase from "../../config/SupaBaseConfig";
-import {
-  cargarVehiculosConEstado,
-  registrarVehiculoPropietario,
-  removerConductorDeVehiculo,
-  type EstadoAutorizacion,
-} from "../../services/vehiculoAutorizacionService";
 import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import {
@@ -53,11 +37,12 @@ import {
   SoatIcon,
 } from "../../assets/icons/icons";
 import { HOME_COLORS } from "./HomeConstants";
+import { ICON_MAP, TIPOS_CAMION } from "./vehicleConstants";
 import WidgetResumen from "./widgets/WidgetResumen";
 import WidgetInsightIA from "./widgets/WidgetInsightIA";
 import WidgetClientes from "./widgets/WidgetClientes";
 import DashboardControlPanel from "./components/DashboardControlPanel";
-import logger from "../../utils/logger";
+import ModalVehiculos from "./components/ModalVehiculos";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -78,78 +63,6 @@ interface HomeBaseAdaptedProps {
   onItemPress?: (item: Item) => void;
 }
 
-interface Vehiculo {
-  id: string;
-  placa: string;
-  tipo_camion: TipoCamion;
-  estado?: EstadoAutorizacion;
-  rol?: string;
-  conductorNombre?: string;
-}
-
-const ICON_MAP: Record<TipoCamion, IconName> = {
-  estacas: "estacas",
-  volqueta: "volqueta2",
-  furgon: "furgon",
-  grua: "grua",
-  cisterna: "cisterna",
-  planchon: "planchon",
-  portacontenedor: "portaContenedor",
-};
-
-const VALID_TIPOS = new Set<string>(Object.keys(ICON_MAP));
-
-/** Normaliza el valor que llega del DB a un TipoCamion válido */
-function normalizarTipo(raw: string | null | undefined): TipoCamion {
-  if (!raw) return "estacas";
-  const lower = raw.toLowerCase().trim();
-  return VALID_TIPOS.has(lower) ? (lower as TipoCamion) : "estacas";
-}
-
-const TIPOS_CAMION = [
-  {
-    id: "estacas" as TipoCamion,
-    label: "Estacas",
-    iconName: "estacas" as IconName,
-    color: HOME_COLORS.trucks.estacas,
-  },
-  {
-    id: "volqueta" as TipoCamion,
-    label: "Volqueta",
-    iconName: "volqueta2" as IconName,
-    color: HOME_COLORS.trucks.volqueta,
-  },
-  {
-    id: "furgon" as TipoCamion,
-    label: "Furgón",
-    iconName: "furgon" as IconName,
-    color: HOME_COLORS.trucks.furgon,
-  },
-  {
-    id: "grua" as TipoCamion,
-    label: "Grúa",
-    iconName: "grua" as IconName,
-    color: HOME_COLORS.trucks.grua,
-  },
-  {
-    id: "cisterna" as TipoCamion,
-    label: "Cisterna",
-    iconName: "cisterna" as IconName,
-    color: HOME_COLORS.trucks.cisterna,
-  },
-  {
-    id: "planchon" as TipoCamion,
-    label: "Planchón",
-    iconName: "planchon" as IconName,
-    color: HOME_COLORS.trucks.planchon,
-  },
-  {
-    id: "portacontenedor" as TipoCamion,
-    label: "Porta cont.",
-    iconName: "portaContenedor" as IconName,
-    color: HOME_COLORS.trucks.portacontenedor,
-  },
-];
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
 const ICON_BG = Platform.OS === "android" ? 62 : 70;
@@ -393,23 +306,8 @@ export default function HomeBaseAdapted({
     setPlaca,
     setTipoCamion,
   } = useVehiculoStore();
-  const { user } = useAuth();
-
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
-  const [cargando, setCargando] = useState(false);
   const [conductorActual, setConductorActual] = useState<string | undefined>();
-  const [placaInput, setPlacaInput] = useState("");
-  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
-    null,
-  );
-  const [guardando, setGuardando] = useState(false);
-  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(
-    null,
-  );
-  const [placaEditInput, setPlacaEditInput] = useState("");
-  const [tipoCamionEditInput, setTipoCamionEditInput] =
-    useState<TipoCamion | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-8)).current;
@@ -421,7 +319,6 @@ export default function HomeBaseAdapted({
   }));
 
   useEffect(() => {
-    if (user?.id) cargarVehiculos();
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -435,193 +332,9 @@ export default function HomeBaseAdapted({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [user?.id]);
+  }, []);
 
-  const cargarVehiculos = async () => {
-    if (!user?.id) return;
-    setCargando(true);
-    try {
-      const { data, error } = await cargarVehiculosConEstado(user.id);
-      if (error) throw error;
-
-      const vehiculosConConductor = await Promise.all(
-        (data || []).map(async (v) => {
-          let conductorNombre: string | undefined;
-          const { data: relaciones } = await supabase
-            .from("vehiculo_conductores")
-            .select("conductor_id")
-            .eq("vehiculo_placa", v.placa)
-            .eq("rol", "conductor")
-            .eq("estado", "autorizado")
-            .limit(1);
-
-          if (relaciones && relaciones.length > 0) {
-            const { data: usuario } = await supabase
-              .from("usuarios")
-              .select("nombre")
-              .eq("user_id", relaciones[0].conductor_id)
-              .maybeSingle();
-            conductorNombre = usuario?.nombre;
-          }
-
-          return {
-            id: v.relacion_id,
-            placa: v.placa,
-            tipo_camion: normalizarTipo(v.tipo_camion),
-            estado: v.estado,
-            rol: v.rol,
-            conductorNombre,
-          };
-        }),
-      );
-
-      setVehiculos(vehiculosConConductor);
-      if (placaActual) {
-        const actual = vehiculosConConductor.find(
-          (v) => v.placa === placaActual,
-        );
-        if (actual) setConductorActual(actual.conductorNombre);
-      }
-    } catch (err) {
-      logger.error("Error cargando vehículos:", err);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const getTipoCamionData = (tipo: TipoCamion | null) =>
-    TIPOS_CAMION.find((t) => t.id === tipo);
-
-  const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
-    if (vehiculo.estado === "pendiente") {
-      Alert.alert(
-        "Esperando autorización",
-        "El propietario aún no ha autorizado tu acceso.",
-      );
-      return;
-    }
-    if (vehiculo.estado === "rechazado") {
-      Alert.alert("Acceso denegado", "El propietario rechazó tu solicitud.");
-      return;
-    }
-    // Si ya está activo, deseleccionar
-    if (placaActual === vehiculo.placa) {
-      useVehiculoStore.getState().clearVehiculo();
-      setConductorActual(undefined);
-      return;
-    }
-    setPlaca(vehiculo.placa);
-    setTipoCamion(vehiculo.tipo_camion);
-    setConductorActual(vehiculo.conductorNombre);
-  };
-
-  const cerrarModal = () => {
-    setModalVehiculosVisible(false);
-    setPlacaInput("");
-    setTipoCamionInput(null);
-    setVehiculoEditando(null);
-    setPlacaEditInput("");
-    setTipoCamionEditInput(null);
-  };
-
-  const abrirEdicion = (v: Vehiculo) => {
-    setVehiculoEditando(v);
-    setPlacaEditInput(v.placa);
-    setTipoCamionEditInput(v.tipo_camion);
-  };
-
-  const handleGuardarEdicion = async () => {
-    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput)
-      return;
-    setGuardando(true);
-    const placaNueva = placaEditInput.trim().toUpperCase();
-    try {
-      // Actualizar tipo_camion en la relación del usuario (no en vehiculos global)
-      await supabase
-        .from("vehiculo_conductores")
-        .update({ tipo_camion: tipoCamionEditInput })
-        .eq("id", vehiculoEditando.id);
-
-      // Si cambió la placa, renombrar el registro
-      if (placaNueva !== vehiculoEditando.placa) {
-        // Asegurar que exista el vehiculo con la nueva placa
-        const { data: existeNueva } = await supabase
-          .from("vehiculos")
-          .select("placa")
-          .eq("placa", placaNueva)
-          .maybeSingle();
-        if (!existeNueva) {
-          await supabase.from("vehiculos").insert([{ placa: placaNueva }]);
-        }
-        await supabase
-          .from("vehiculo_conductores")
-          .update({ vehiculo_placa: placaNueva })
-          .eq("vehiculo_placa", vehiculoEditando.placa);
-        if (placaActual === vehiculoEditando.placa) {
-          setPlaca(placaNueva);
-          setTipoCamion(tipoCamionEditInput);
-        }
-      } else if (
-        tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
-        placaActual === vehiculoEditando.placa
-      ) {
-        setTipoCamion(tipoCamionEditInput);
-      }
-
-      setVehiculoEditando(null);
-      setPlacaEditInput("");
-      setTipoCamionEditInput(null);
-      await cargarVehiculos();
-    } catch {
-      Alert.alert("Error", "No se pudo actualizar el vehículo");
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const handleEliminarVehiculo = (v: Vehiculo) => {
-    Alert.alert("Quitar vehículo", `¿Quitar ${v.placa} de tu lista?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Quitar",
-        style: "destructive",
-        onPress: async () => {
-          const result = await removerConductorDeVehiculo(v.id);
-          if (!result.success) {
-            Alert.alert(
-              "Error",
-              result.error || "No se pudo quitar el vehículo",
-            );
-            return;
-          }
-          if (placaActual === v.placa) setPlaca("");
-          await cargarVehiculos();
-        },
-      },
-    ]);
-  };
-
-  const handleAgregarVehiculo = async () => {
-    if (!user?.id || !placaInput.trim() || !tipoCamionInput) return;
-    setGuardando(true);
-    const placa = placaInput.trim().toUpperCase();
-    const result = await registrarVehiculoPropietario(
-      user.id,
-      placa,
-      tipoCamionInput,
-    );
-    if (!result.success) {
-      setGuardando(false);
-      Alert.alert("Error", result.error || "No se pudo registrar el vehículo");
-      return;
-    }
-    setGuardando(false);
-    await cargarVehiculos();
-    setPlacaInput("");
-    setTipoCamionInput(null);
-  };
-
-  const tipoCamionData = getTipoCamionData(tipoCamion);
+  const tipoCamionData = TIPOS_CAMION.find((t) => t.id === tipoCamion);
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
     : "conductor";
@@ -635,11 +348,6 @@ export default function HomeBaseAdapted({
   const card = {
     ...cardBase,
     backgroundColor: isDark ? "#1C1C1E" : HOME_COLORS.listRowBg,
-  };
-
-  const sheet = {
-    backgroundColor: c.modalBg,
-    ...(isDark ? { borderWidth: 1, borderColor: c.border } : {}),
   };
 
   return (
@@ -788,353 +496,11 @@ export default function HomeBaseAdapted({
       </SafeAreaView>
 
       {/* MODAL: LISTA DE VEHÍCULOS */}
-      <Modal
+      <ModalVehiculos
         visible={modalVehiculosVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={cerrarModal}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <TouchableWithoutFeedback onPress={cerrarModal}>
-            <View style={[s.overlay, { backgroundColor: c.overlay }]}>
-              <TouchableWithoutFeedback>
-                <View style={[s.sheetBase, sheet]}>
-                  <View style={[s.handle, { backgroundColor: c.border }]} />
-
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={{ paddingBottom: 8 }}>
-                    {/* ── Título ── */}
-                    <Text
-                      style={[
-                        s.sheetTitle,
-                        { color: c.text, marginBottom: 20 },
-                      ]}>
-                      Mis Vehículos
-                    </Text>
-
-                    {/* ── Lista de vehículos ── */}
-                    {cargando ? (
-                      <View style={s.loadingBox}>
-                        <ActivityIndicator size="large" color={c.accent} />
-                      </View>
-                    ) : vehiculos.length > 0 ? (
-                      <>
-                        {vehiculos.map((v) => {
-                          const tipo = getTipoCamionData(v.tipo_camion);
-                          const isActive = placaActual === v.placa;
-                          const vIconName: IconName = tipo
-                            ? ICON_MAP[tipo.id]
-                            : "conductor";
-                          return (
-                            <Swipeable
-                              key={v.id}
-                              overshootRight={false}
-                              renderRightActions={() => (
-                                <View style={s.swipeActions}>
-                                  <TouchableOpacity
-                                    style={[
-                                      s.swipeActionBtn,
-                                      { backgroundColor: "#3B82F6" },
-                                    ]}
-                                    onPress={() => abrirEdicion(v)}>
-                                    <Ionicons
-                                      name="pencil-outline"
-                                      size={20}
-                                      color="#fff"
-                                    />
-                                  </TouchableOpacity>
-                                  <TouchableOpacity
-                                    style={[
-                                      s.swipeActionBtn,
-                                      { backgroundColor: "#EF4444" },
-                                    ]}
-                                    onPress={() => handleEliminarVehiculo(v)}>
-                                    <Ionicons
-                                      name="trash-outline"
-                                      size={20}
-                                      color="#fff"
-                                    />
-                                  </TouchableOpacity>
-                                </View>
-                              )}>
-                              <TouchableOpacity
-                                style={[
-                                  s.vehicleOption,
-                                  {
-                                    backgroundColor: isDark
-                                      ? "#1C1C1E"
-                                      : "#F2F2F7",
-                                  },
-                                  isActive && {
-                                    borderWidth: 1.5,
-                                    borderColor: c.accent,
-                                  },
-                                ]}
-                                onPress={() => handleSeleccionarVehiculo(v)}
-                                activeOpacity={0.7}>
-                                <View
-                                  style={[
-                                    s.vehicleOptionIcon,
-                                    {
-                                      backgroundColor: tipo?.color || c.accent,
-                                    },
-                                  ]}>
-                                  <ItemIcon name={vIconName} size={28} />
-                                </View>
-                                <View style={s.vehicleOptionInfo}>
-                                  <Text
-                                    style={[
-                                      s.vehicleOptionPlaca,
-                                      { color: c.text },
-                                    ]}>
-                                    {v.placa}
-                                  </Text>
-                                  <Text
-                                    style={[
-                                      s.vehicleOptionType,
-                                      { color: c.textSecondary },
-                                    ]}>
-                                    {tipo?.label || "Vehículo"}
-                                  </Text>
-                                </View>
-                                {isActive && (
-                                  <View
-                                    style={[
-                                      s.statusBadge,
-                                      { backgroundColor: c.accent },
-                                    ]}>
-                                    <Ionicons
-                                      name="checkmark"
-                                      size={14}
-                                      color={c.accentText}
-                                    />
-                                  </View>
-                                )}
-                              </TouchableOpacity>
-                            </Swipeable>
-                          );
-                        })}
-                      </>
-                    ) : null}
-
-                    {/* ── Formulario edición ── */}
-                    {vehiculoEditando && (
-                      <View
-                        style={[s.addSection, { borderTopColor: c.divider }]}>
-                        <View style={s.editSectionHeader}>
-                          <Text
-                            style={[
-                              s.selectorLabel,
-                              { color: c.text, marginBottom: 0 },
-                            ]}>
-                            Editar — {vehiculoEditando.placa}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => setVehiculoEditando(null)}>
-                            <Ionicons
-                              name="close"
-                              size={20}
-                              color={c.textMuted}
-                            />
-                          </TouchableOpacity>
-                        </View>
-
-                        <TextInput
-                          style={[
-                            s.placaInputField,
-                            {
-                              backgroundColor: c.surface,
-                              color: c.text,
-                              borderColor: c.accent,
-                              marginTop: 12,
-                            },
-                          ]}
-                          placeholder="Placa"
-                          placeholderTextColor={c.textMuted}
-                          value={placaEditInput}
-                          onChangeText={(t) =>
-                            setPlacaEditInput(t.toUpperCase())
-                          }
-                          autoCapitalize="characters"
-                          maxLength={7}
-                          returnKeyType="done"
-                          onSubmitEditing={Keyboard.dismiss}
-                        />
-
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          keyboardShouldPersistTaps="handled"
-                          style={s.tipoScroll}>
-                          {TIPOS_CAMION.map((tipo) => {
-                            const selected = tipoCamionEditInput === tipo.id;
-                            return (
-                              <TouchableOpacity
-                                key={tipo.id}
-                                style={[
-                                  s.tipoChip,
-                                  {
-                                    backgroundColor: c.surface,
-                                    borderColor: c.border,
-                                  },
-                                  selected && {
-                                    backgroundColor: tipo.color + "22",
-                                    borderColor: tipo.color,
-                                  },
-                                ]}
-                                onPress={() => setTipoCamionEditInput(tipo.id)}>
-                                <ItemIcon name={tipo.iconName} size={32} />
-                                <Text
-                                  style={[
-                                    s.tipoChipLabel,
-                                    {
-                                      color: selected
-                                        ? tipo.color
-                                        : c.textSecondary,
-                                    },
-                                  ]}>
-                                  {tipo.label}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </ScrollView>
-
-                        <TouchableOpacity
-                          style={[
-                            s.confirmBtn,
-                            { backgroundColor: "#3B82F6" },
-                            (!placaEditInput.trim() ||
-                              !tipoCamionEditInput) && { opacity: 0.4 },
-                          ]}
-                          onPress={handleGuardarEdicion}
-                          disabled={
-                            !placaEditInput.trim() ||
-                            !tipoCamionEditInput ||
-                            guardando
-                          }>
-                          {guardando ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                          ) : (
-                            <Text style={[s.confirmBtnText, { color: "#fff" }]}>
-                              Guardar cambios
-                            </Text>
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                    {/* ── Separador + sección agregar ── */}
-                    <View style={[s.addSection, { borderTopColor: c.divider }]}>
-                      <Text
-                        style={[
-                          s.selectorLabel,
-                          { color: c.textSecondary, marginBottom: 12 },
-                        ]}>
-                        Agregar vehículo
-                      </Text>
-
-                      <TextInput
-                        style={[
-                          s.placaInputField,
-                          {
-                            backgroundColor: c.surface,
-                            color: c.text,
-                            borderColor: c.border,
-                          },
-                        ]}
-                        placeholder="Placa — Ej: EKA854"
-                        placeholderTextColor={c.textMuted}
-                        value={placaInput}
-                        onChangeText={(t) => setPlacaInput(t.toUpperCase())}
-                        autoCapitalize="characters"
-                        maxLength={7}
-                        returnKeyType="done"
-                        onSubmitEditing={Keyboard.dismiss}
-                      />
-
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                        style={s.tipoScroll}>
-                        {TIPOS_CAMION.map((tipo) => {
-                          const selected = tipoCamionInput === tipo.id;
-                          return (
-                            <TouchableOpacity
-                              key={tipo.id}
-                              style={[
-                                s.tipoChip,
-                                {
-                                  backgroundColor: c.surface,
-                                  borderColor: c.border,
-                                },
-                                selected && {
-                                  backgroundColor: tipo.color + "22",
-                                  borderColor: tipo.color,
-                                },
-                              ]}
-                              onPress={() => setTipoCamionInput(tipo.id)}>
-                              <ItemIcon name={tipo.iconName} size={32} />
-                              <Text
-                                style={[
-                                  s.tipoChipLabel,
-                                  {
-                                    color: selected
-                                      ? tipo.color
-                                      : c.textSecondary,
-                                  },
-                                ]}>
-                                {tipo.label}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </ScrollView>
-
-                      <TouchableOpacity
-                        style={[
-                          s.confirmBtn,
-                          { backgroundColor: c.accent },
-                          (!placaInput.trim() || !tipoCamionInput) && {
-                            opacity: 0.4,
-                          },
-                        ]}
-                        onPress={handleAgregarVehiculo}
-                        disabled={
-                          !placaInput.trim() || !tipoCamionInput || guardando
-                        }>
-                        {guardando ? (
-                          <ActivityIndicator
-                            size="small"
-                            color={c.accentText}
-                          />
-                        ) : (
-                          <Text
-                            style={[s.confirmBtnText, { color: c.accentText }]}>
-                            Registrar vehículo
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity
-                      style={s.cancelTouchable}
-                      onPress={cerrarModal}>
-                      <Text style={[s.cancelText, { color: c.textSecondary }]}>
-                        Cerrar
-                      </Text>
-                    </TouchableOpacity>
-                  </ScrollView>
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
+        onClose={() => setModalVehiculosVisible(false)}
+        onConductorChange={setConductorActual}
+      />
     </View>
   );
 }
