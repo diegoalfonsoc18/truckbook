@@ -5,6 +5,7 @@ import { useIngresosStore } from "../../../store/IngresosStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 import { fmtI, diasDesde, labelDias, avatarColor, initials, WProps } from "../homeUtils";
 import { ModalPendientes } from "../components/ModalPendientes";
+import { useTheme, getShadow } from "../../../constants/Themecontext";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
@@ -32,11 +33,16 @@ export default function WidgetInsightIA({ isDark }: WProps) {
   const mostrados = pendientes.slice(0, 3);
   const resto = pendientes.length - 3;
 
+  const { colors: c } = useTheme();
+  const shadow = getShadow(isDark, "md");
   const AMBER = "#FBBF24";
-  const cardBg = isDark ? "#2A1500" : "#fff2ec";
+  const cardBg = isDark ? `${c.accent}14` : c.cardBg;
+  const cardBorder = isDark
+    ? { borderWidth: 1, borderColor: `${c.accent}33` }
+    : { ...shadow };
   const ink = isDark ? "#F1F5F9" : "#111827";
   const muted = isDark ? "#3D536E" : "#9CA3AF";
-  const divClr = isDark ? "#3A1F00" : "#F5E6CC";
+  const divClr = c.border;
 
   return (
     <>
@@ -52,6 +58,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
           backgroundColor: cardBg,
           gap: 0,
           overflow: "hidden",
+          ...cardBorder,
         }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
