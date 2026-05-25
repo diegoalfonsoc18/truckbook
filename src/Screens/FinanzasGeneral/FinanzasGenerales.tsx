@@ -760,10 +760,7 @@ export default function FinanzasGenerales() {
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.headerTitle, { color: c.text }]}>
-                finanzas
-              </Text>
-              <Text style={[styles.headerSubtitle, { color: c.textSecondary }]}>
-                Análisis financiero
+                Finanzas
               </Text>
             </View>
             {!esMultiVehiculo && (
