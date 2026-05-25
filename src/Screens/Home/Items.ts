@@ -1,6 +1,4 @@
 // src/screens/Home/Items.ts
-
-// Definir el tipo Item
 import { IconName } from "../../components/ItemIcon";
 
 export interface Item {
@@ -16,46 +14,40 @@ export interface Item {
   backgroundColor?: string;
   mostrarBadge?: boolean;
   badgeCount?: number;
-  // Para el widget de gráfica de estado
-  score?: number;   // 0-100: salud del ítem
-  sublabel?: string; // texto descriptivo: "324 días", "2 multas", etc.
+  // Estado numérico (0-100) para la barra de progreso
+  score?: number;
+  // Línea principal de datos: "$420K", "3 pagos", etc.
+  sublabel?: string;
+  // Tendencia: "↑ 8% vs sem. ant.", "Todo en orden ✓"
+  trend?: string;
+  // true = verde (buena señal), false = rojo/ámbar
+  trendPositive?: boolean;
+  // Línea secundaria: "Últ: $180K", "Últ: Reparación"
+  secondarylabel?: string;
+  // Tercera línea: "Hace 2 días", "Hoy"
+  tertiaryLabel?: string;
 }
 
+// ─── Items base del panel de control del conductor ────────────────────────────
+// Los campos dinámicos (score, sublabel, trend, secondarylabel, tertiaryLabel)
+// se calculan en ConductorHome.tsx a partir de GastosStore.
 export const items: Item[] = [
-  // ── Hero cards (índice 0 y 1) ──────────────────────────────────────────────
   {
-    id: "tecnicomecanica",
-    iconName: "motor",
-    iconSize: 80,
-    name: "Tecno",
-    subtitle: "Estado",
-    color: "#c70808",
-  },
-  {
-    id: "soat",
-    iconName: "shield",
-    iconSize: 80,
-    name: "SOAT",
-    subtitle: "Verificar SOAT",
-    color: "#0c0c0c",
-  },
-  // ── List rows (índice 2 en adelante) ──────────────────────────────────────
-  {
-    id: "multas",
-    iconName: "factura",
-    iconSize: 80,
-    name: "Multas",
-    subtitle: "Consultar multas",
-    color: "#E94560",
-    mostrarBadge: true,
-  },
-
-  {
-    id: "licencia",
-    iconName: "licencia",
-    iconSize: 80,
-    name: "Licencia",
-    subtitle: "Vigente",
+    id: "combustible",
+    name: "Combustible",
+    iconName: "fuel",
     color: "#FFB800",
+  },
+  {
+    id: "peajes",
+    name: "Peajes",
+    iconName: "toll",
+    color: "#00D9A5",
+  },
+  {
+    id: "mantenimiento",
+    name: "Manten.",
+    iconName: "tool",
+    color: "#74B9FF",
   },
 ];

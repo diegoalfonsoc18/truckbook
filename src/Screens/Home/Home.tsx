@@ -42,6 +42,7 @@ import WidgetResumen from "./widgets/WidgetResumen";
 import WidgetInsightIA from "./widgets/WidgetInsightIA";
 import WidgetClientes from "./widgets/WidgetClientes";
 import DashboardControlPanel from "./components/DashboardControlPanel";
+import WidgetConsejIA from "./widgets/WidgetConsejIA";
 import ModalVehiculos from "./components/ModalVehiculos";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
@@ -488,6 +489,9 @@ export default function HomeBaseAdapted({
                 />
               </>
             )}
+
+            {/* ANÁLISIS IA */}
+            <WidgetConsejIA isDark={isDark} />
 
             {/* CLIENTES FRECUENTES */}
             <WidgetClientes isDark={isDark} />
