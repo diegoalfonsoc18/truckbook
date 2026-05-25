@@ -737,10 +737,10 @@ export default function FinanzasGenerales() {
               />
             </View>
             <Text style={[styles.emptyTitle, { color: c.text }]}>
-              sin vehículo seleccionado
+              Sin vehículo seleccionado
             </Text>
             <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
-              selecciona una placa para ver las finanzas
+              Ve a Cuenta y selecciona una placa para ver tus finanzas
             </Text>
           </View>
         </SafeAreaView>

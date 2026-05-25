@@ -703,6 +703,9 @@ export default function TransactionScreen({
             <Text style={[s.emptyTitle, { color: c.text }]}>
               Sin vehículo seleccionado
             </Text>
+            <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
+              Ve a Cuenta y vincula un vehículo para registrar {title.toLowerCase()}
+            </Text>
           </View>
         </SafeAreaView>
       </View>
@@ -853,7 +856,7 @@ export default function TransactionScreen({
                   Sin registros
                 </Text>
                 <Text style={[s.emptyListText, { color: c.textSecondary }]}>
-                  No hay {title.toLowerCase()} registrados hoy
+                  No hay {title.toLowerCase()} en este período
                 </Text>
               </View>
             ) : (

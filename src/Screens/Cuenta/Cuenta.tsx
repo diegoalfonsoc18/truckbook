@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -116,7 +117,7 @@ Nos reservamos el derecho de modificar estos términos en cualquier momento. Los
 8. LEY APLICABLE
 Estos términos se rigen por las leyes de la República de Colombia. Para cualquier controversia, las partes se someten a los jueces y tribunales de la ciudad de Bogotá D.C.
 
-Contacto: soporte@truckbook.com.co`,
+Contacto: truckbookco@gmail.com`,
   },
   privacy: {
     title: "Política de privacidad",
@@ -156,7 +157,7 @@ Implementamos medidas técnicas y administrativas para proteger los datos contra
 Los datos no serán vendidos ni compartidos con terceros, salvo obligación legal o cuando sea necesario para la prestación del servicio (ej. proveedor de infraestructura en la nube).
 
 8. CONTACTO
-Para ejercer sus derechos o consultas: soporte@truckbook.com.co`,
+Para ejercer sus derechos o consultas: truckbookco@gmail.com`,
   },
   dataauth: {
     title: "Autorización de datos personales",
@@ -182,12 +183,12 @@ DATOS AUTORIZADOS PARA TRATAMIENTO:
 • Token de notificaciones del dispositivo móvil.
 
 DERECHOS QUE ME ASISTEN:
-Como titular tengo derecho a conocer, actualizar, rectificar y suprimir mis datos, así como a revocar esta autorización en cualquier momento, enviando una solicitud a soporte@truckbook.com.co.
+Como titular tengo derecho a conocer, actualizar, rectificar y suprimir mis datos, así como a revocar esta autorización en cualquier momento, enviando una solicitud a truckbookco@gmail.com.
 
 Esta autorización fue otorgada al momento de crear mi cuenta en TruckBook y constituye mi consentimiento expreso conforme a la normativa colombiana de protección de datos personales.
 
 Responsable del tratamiento: TruckBook
-Contacto del responsable: soporte@truckbook.com.co
+Contacto del responsable: truckbookco@gmail.com
 Superintendencia de Industria y Comercio: www.sic.gov.co`,
   },
 };
@@ -494,7 +495,12 @@ export default function Cuenta() {
     if (id === "security") return openSecurity();
     if (id === "terms" || id === "privacy" || id === "dataauth")
       return openLegal(id as LegalDoc);
-    Alert.alert("En desarrollo", "Disponible próximamente.");
+    if (id === "help") {
+      Linking.openURL("mailto:truckbookco@gmail.com?subject=Ayuda%20TruckBook").catch(() =>
+        Alert.alert("Soporte", "Escríbenos a truckbookco@gmail.com")
+      );
+      return;
+    }
   };
 
   // ─── Derived display values ───────────────────────────────────────────────
