@@ -429,8 +429,8 @@ export default function Cuenta() {
       return;
     }
     Alert.alert(
-      "⚠️ Reiniciar datos del vehículo",
-      `Se eliminarán TODOS los registros de gastos e ingresos del vehículo ${placa}.\n\nEsta acción es permanente y no se puede deshacer.`,
+      "⚠️ Reiniciar mis datos del vehículo",
+      `Se eliminarán TODOS tus registros de gastos e ingresos en el vehículo ${placa}.\n\nLos datos de otros conductores del mismo vehículo no serán afectados.\n\nEsta acción es permanente y no se puede deshacer.`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -448,15 +448,19 @@ export default function Cuenta() {
                   onPress: async () => {
                     setResetLoading(true);
                     try {
+                      const userId = user?.id;
+                      if (!userId) throw new Error("Sin sesión");
                       const [gastosRes, ingresosRes] = await Promise.all([
                         supabase
                           .from("conductor_gastos")
                           .delete()
-                          .eq("placa", placa),
+                          .eq("placa", placa)
+                          .eq("conductor_id", userId),
                         supabase
                           .from("conductor_ingresos")
                           .delete()
-                          .eq("placa", placa),
+                          .eq("placa", placa)
+                          .eq("conductor_id", userId),
                       ]);
                       if (gastosRes.error) throw gastosRes.error;
                       if (ingresosRes.error) throw ingresosRes.error;
