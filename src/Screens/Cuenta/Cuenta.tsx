@@ -26,6 +26,9 @@ import Reanimated, {
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { useRoleStore } from "../../store/RoleStore";
+import { useVehiculoStore } from "../../store/VehiculoStore";
+import { useGastosStore } from "../../store/GastosStore";
+import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
 
 const H_PAD = 20;
@@ -193,8 +196,12 @@ export default function Cuenta() {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
   const role = useRoleStore((s) => s.role);
+  const placa = useVehiculoStore((s) => s.placa);
+  const limpiarGastos = useGastosStore((s) => s.limpiarGastos);
+  const limpiarIngresos = useIngresosStore((s) => s.limpiarIngresos);
 
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   // ─── Profile data ────────────────────────────────────────────────────────
@@ -416,6 +423,68 @@ export default function Cuenta() {
     setLegalVisible(true);
   };
 
+  const handleResetDatos = () => {
+    if (!placa) {
+      Alert.alert("Sin vehículo", "No hay un vehículo seleccionado.");
+      return;
+    }
+    Alert.alert(
+      "⚠️ Reiniciar datos del vehículo",
+      `Se eliminarán TODOS los registros de gastos e ingresos del vehículo ${placa}.\n\nEsta acción es permanente y no se puede deshacer.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar todo",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "¿Estás seguro?",
+              "Confirma que deseas borrar permanentemente todos los datos de este vehículo.",
+              [
+                { text: "No, cancelar", style: "cancel" },
+                {
+                  text: "Sí, borrar todo",
+                  style: "destructive",
+                  onPress: async () => {
+                    setResetLoading(true);
+                    try {
+                      const [gastosRes, ingresosRes] = await Promise.all([
+                        supabase
+                          .from("conductor_gastos")
+                          .delete()
+                          .eq("placa", placa),
+                        supabase
+                          .from("conductor_ingresos")
+                          .delete()
+                          .eq("placa", placa),
+                      ]);
+                      if (gastosRes.error) throw gastosRes.error;
+                      if (ingresosRes.error) throw ingresosRes.error;
+                      limpiarGastos();
+                      limpiarIngresos();
+                      Alert.alert(
+                        "Listo",
+                        `Todos los registros del vehículo ${placa} fueron eliminados.`,
+                      );
+                    } catch (e: any) {
+                      logger.error("❌ Error al reiniciar datos:", e?.message ?? e);
+                      Alert.alert(
+                        "Error",
+                        "No se pudieron eliminar los datos. Intenta de nuevo.",
+                      );
+                    } finally {
+                      setResetLoading(false);
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   const handleItemPress = (id: string) => {
     if (id === "profile") return openProfile();
     if (id === "security") return openSecurity();
@@ -567,6 +636,59 @@ export default function Cuenta() {
                 />
               </TouchableOpacity>
             ))}
+
+            {/* ZONA DE PELIGRO */}
+            {placa ? (
+              <>
+                <Text
+                  style={[
+                    s.sectionLabel,
+                    { color: c.textSecondary, marginTop: 8 },
+                  ]}>
+                  Zona de peligro
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    s.menuRow,
+                    card,
+                    {
+                      borderColor: `${c.danger}30`,
+                      borderWidth: 1,
+                      backgroundColor: isDark
+                        ? `${c.danger}12`
+                        : `${c.danger}08`,
+                    },
+                  ]}
+                  onPress={handleResetDatos}
+                  disabled={resetLoading}
+                  activeOpacity={0.7}>
+                  <View
+                    style={[
+                      s.menuIconWrap,
+                      { backgroundColor: `${c.danger}18` },
+                    ]}>
+                    {resetLoading ? (
+                      <ActivityIndicator size="small" color={c.danger} />
+                    ) : (
+                      <Ionicons name="trash-outline" size={18} color={c.danger} />
+                    )}
+                  </View>
+                  <View style={s.menuInfo}>
+                    <Text style={[s.menuLabel, { color: c.danger }]}>
+                      Reiniciar datos del vehículo
+                    </Text>
+                    <Text style={[s.menuSub, { color: c.textMuted }]}>
+                      Elimina todos los gastos e ingresos de {placa}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={`${c.danger}60`}
+                  />
+                </TouchableOpacity>
+              </>
+            ) : null}
 
             {/* LOGOUT */}
             <TouchableOpacity
