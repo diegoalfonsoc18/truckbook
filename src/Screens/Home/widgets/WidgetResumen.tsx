@@ -102,7 +102,7 @@ function GaugeBalance({
       <SvgText x={CX} y={CY + 23} fontSize={10} fontWeight="700" fill={statusColor}  textAnchor="middle">{statusLabel}</SvgText>
       <SvgText x={14}     y={H - 28} fontSize={9} fontWeight="600" fill={ingClr}  textAnchor="start">{`↑ ${fmt(totalI)}`}</SvgText>
       <SvgText x={W - 14} y={H - 28} fontSize={9} fontWeight="600" fill={gasClr}  textAnchor="end">{`↓ ${fmt(totalG)}`}</SvgText>
-      <SvgText x={CX}     y={H - 14} fontSize={8} fontWeight="500" fill={mutedClr} textAnchor="middle">{`Sem. ${fmt(balSem)}`}</SvgText>
+      <SvgText x={CX}     y={H - 14} fontSize={8} fontWeight="500" fill={mutedClr} textAnchor="middle">{`Semana ${fmt(balSem)}`}</SvgText>
     </Svg>
   );
 }

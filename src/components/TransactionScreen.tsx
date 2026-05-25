@@ -176,31 +176,45 @@ function CatCard({
   );
 }
 
-// ─── Swipe delete action ──────────────────────────────────────────────────────
-function SwipeDeleteAction({
+// ─── Swipe actions (edit + delete) ───────────────────────────────────────────
+function SwipeRowActions({
   drag,
+  onEdit,
   onDelete,
 }: {
   drag: SharedValue<number>;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: drag.value + 72 }],
+    transform: [{ translateX: drag.value + 152 }],
   }));
   return (
-    <Reanimated.View style={animStyle}>
+    <Reanimated.View style={[animStyle, { flexDirection: "row", gap: 8 }]}>
       <TouchableOpacity
-        onPress={onDelete}
+        onPress={onEdit}
         style={{
-          width: 72,
+          width: 68,
           height: "100%",
-          backgroundColor: "#EF4444",
+          backgroundColor: "#3B82F6",
           justifyContent: "center",
           alignItems: "center",
           borderRadius: 16,
           marginLeft: 8,
         }}>
-        <Ionicons name="trash-outline" size={22} color="#fff" />
+        <Ionicons name="pencil-outline" size={20} color="#fff" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onDelete}
+        style={{
+          width: 68,
+          height: "100%",
+          backgroundColor: "#EF4444",
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: 16,
+        }}>
+        <Ionicons name="trash-outline" size={20} color="#fff" />
       </TouchableOpacity>
     </Reanimated.View>
   );
@@ -222,7 +236,7 @@ function TransactionRow({
   formatCurrency,
   formatDate,
   onPress,
-  onLongPress,
+  onDelete,
   onToggleEstado,
 }: {
   item: Transaction;
@@ -239,7 +253,7 @@ function TransactionRow({
   formatCurrency: (v: number) => string;
   formatDate: (d: string) => string;
   onPress: (id: string) => void;
-  onLongPress: (id: string) => void;
+  onDelete: (id: string) => void;
   onToggleEstado?: (id: string, estadoActual: string) => void;
 }) {
   const scale = useSharedValue(1);
@@ -274,7 +288,7 @@ function TransactionRow({
     <ReanimatedSwipeable
       friction={2}
       overshootRight={false}
-      rightThreshold={50}
+      rightThreshold={80}
       onSwipeableWillOpen={() => {
         swipeOpenRef.current = true;
       }}
@@ -285,7 +299,11 @@ function TransactionRow({
         }, 150);
       }}
       renderRightActions={(_, drag) => (
-        <SwipeDeleteAction drag={drag} onDelete={() => onLongPress(item.id)} />
+        <SwipeRowActions
+          drag={drag}
+          onEdit={() => onPress(item.id)}
+          onDelete={() => onDelete(item.id)}
+        />
       )}
       containerStyle={{ marginBottom: 6, paddingVertical: 4 }}>
       <AnimatedPressable
@@ -296,10 +314,7 @@ function TransactionRow({
         onPressOut={() => {
           scale.value = withSpring(1, { damping: 15, stiffness: 300 });
         }}
-        onPress={() => {
-          if (!swipeOpenRef.current) onPress(item.id);
-        }}
-        onLongPress={() => onLongPress(item.id)}>
+>
         <View
           style={[
             s.rowIconWrap,
@@ -863,7 +878,7 @@ export default function TransactionScreen({
                     formatCurrency={formatCurrency}
                     formatDate={formatDate}
                     onPress={openEdit}
-                    onLongPress={handleDelete}
+                    onDelete={handleDelete}
                     onToggleEstado={
                       onToggleEstado
                         ? (id, estado) => onToggleEstado(id, estado)

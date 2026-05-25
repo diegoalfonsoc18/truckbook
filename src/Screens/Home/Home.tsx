@@ -64,7 +64,6 @@ interface HomeBaseAdaptedProps {
   onItemPress?: (item: Item) => void;
 }
 
-
 // ─── Sizes ────────────────────────────────────────────────────────────────────
 const ICON_BG = Platform.OS === "android" ? 62 : 70;
 const ICON_CORE = Platform.OS === "android" ? 46 : 52;
@@ -462,7 +461,9 @@ export default function HomeBaseAdapted({
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            style={Platform.OS === "ios" ? { marginHorizontal: -H_PAD } : undefined}
+            style={
+              Platform.OS === "ios" ? { marginHorizontal: -H_PAD } : undefined
+            }
             contentContainerStyle={[
               s.gridContainer,
               {
@@ -481,7 +482,7 @@ export default function HomeBaseAdapted({
               <>
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Panel de control
+                    Actividad semanal
                   </Text>
                 </View>
                 <DashboardControlPanel

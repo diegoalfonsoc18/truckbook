@@ -14,6 +14,8 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
+import { setupCalendarLocale } from "./src/utils/calendarLocale";
+setupCalendarLocale();
 import type { Session } from "@supabase/supabase-js";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { DataProvider } from "./src/context/DataProvider";

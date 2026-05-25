@@ -48,7 +48,7 @@ export default function WidgetClientes({ isDark }: WProps) {
     // Ordenar por total de ganancias (mayor primero)
     const clientes = [...clienteMap.entries()]
       .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, 3);
+      .slice(0, 7);
 
     return { clienteData: clientes, rawMercancias: rawList };
   }, [ingresos]);
@@ -69,11 +69,11 @@ export default function WidgetClientes({ isDark }: WProps) {
           const canonical = normMap.get(raw) ?? raw;
           cargaMap.set(canonical, (cargaMap.get(canonical) ?? 0) + 1);
         }
-        setTopCarga([...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3));
+        setTopCarga([...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 7));
       } catch {
         const cargaMap = new Map<string, number>();
         for (const raw of rawMercancias) cargaMap.set(raw, (cargaMap.get(raw) ?? 0) + 1);
-        if (!cancelled) setTopCarga([...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3));
+        if (!cancelled) setTopCarga([...cargaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 7));
       }
     })();
     return () => { cancelled = true; };
@@ -123,7 +123,6 @@ export default function WidgetClientes({ isDark }: WProps) {
       <View style={s.header}>
         <Ionicons name="people-outline" size={15} color={c.accent} />
         <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
-        <Text style={[s.headerSub, { color: muted }]}>por ganancias</Text>
       </View>
 
       {clienteData.map(([nombre, info], idx) => {
@@ -171,19 +170,16 @@ export default function WidgetClientes({ isDark }: WProps) {
           </View>
 
           <View style={s.chipRow}>
-            {topCarga.map(([tipo, count], idx) => {
-              const chipColor = [c.accent, "#10B981", "#F59E0B"][idx % 3];
-              return (
-                <View
-                  key={tipo}
-                  style={[s.chip, { backgroundColor: chipColor + "18", borderColor: chipColor + "40" }]}>
-                  <Text style={[s.chipText, { color: chipColor }]} numberOfLines={1}>{tipo}</Text>
-                  <View style={[s.chipBadge, { backgroundColor: chipColor + "30" }]}>
-                    <Text style={[s.chipCount, { color: chipColor }]}>{count}x</Text>
-                  </View>
+            {topCarga.map(([tipo, count]) => (
+              <View
+                key={tipo}
+                style={[s.chip, { backgroundColor: `${c.accent}12`, borderColor: `${c.accent}30` }]}>
+                <Text style={[s.chipText, { color: ink }]} numberOfLines={1}>{tipo}</Text>
+                <View style={[s.chipBadge, { backgroundColor: `${c.accent}20` }]}>
+                  <Text style={[s.chipCount, { color: ink }]}>{count}x</Text>
                 </View>
-              );
-            })}
+              </View>
+            ))}
           </View>
         </>
       )}
