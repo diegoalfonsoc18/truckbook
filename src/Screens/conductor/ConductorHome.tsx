@@ -34,11 +34,31 @@ function dateStr(offset = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Lunes de la semana actual */
+function startOfCurrentWeek(): string {
+  const d = new Date();
+  const day = d.getDay(); // 0=Dom, 1=Lun, ...
+  const diff = day === 0 ? 6 : day - 1; // días desde el lunes
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Lunes de la semana anterior */
+function startOfPrevWeek(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff - 7);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
 // ─── Cálculo de stats ──────────────────────────────────────────────────────────
 function useGastosStats(gastos: Gasto[], ingresos: Ingreso[]) {
   return useMemo(() => {
-    const hace7  = dateStr(6);   // últimos 7 días (incluye hoy)
-    const hace14 = dateStr(13);  // 7 días anteriores
+    const hace7  = startOfCurrentWeek(); // lunes de la semana actual
+    const hace14 = startOfPrevWeek();   // lunes de la semana anterior
     const mesStr = dateStr(0).slice(0, 7) + "-01"; // primer día del mes
 
     const fechaGasto = (g: Gasto) => (g.fecha ?? g.created_at ?? "").slice(0, 10);
