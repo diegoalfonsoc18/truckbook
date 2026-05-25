@@ -3,6 +3,7 @@ import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
 import { useVehiculoStore } from "../store/VehiculoStore";
+import logger from "../utils/logger";
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const { placa } = useVehiculoStore();
@@ -20,14 +21,20 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     if (!placa) return;
 
     const cargar = async () => {
-      const { data } = await supabase
-        .from("conductor_gastos")
-        .select("*")
-        .eq("placa", placa)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("conductor_gastos")
+          .select("*")
+          .eq("placa", placa)
+          .order("created_at", { ascending: false });
 
-      if (data) {
-        setGastosPorPlaca(placa, data);
+        if (error) {
+          logger.warn("⚠️ DataProvider: sin conexión para gastos, usando caché:", error.message);
+          return;
+        }
+        if (data) setGastosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error cargando gastos:", err?.message ?? err);
       }
     };
 
@@ -39,14 +46,20 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     if (!placa) return;
 
     const cargar = async () => {
-      const { data } = await supabase
-        .from("conductor_ingresos")
-        .select("*")
-        .eq("placa", placa)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("conductor_ingresos")
+          .select("*")
+          .eq("placa", placa)
+          .order("created_at", { ascending: false });
 
-      if (data) {
-        setIngresosPorPlaca(placa, data);
+        if (error) {
+          logger.warn("⚠️ DataProvider: sin conexión para ingresos, usando caché:", error.message);
+          return;
+        }
+        if (data) setIngresosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error cargando ingresos:", err?.message ?? err);
       }
     };
 

@@ -74,18 +74,30 @@ export const useVehiculoStore = create<VehiculoStore>()(
         const placa = get().placa;
         if (!placa) return; // nada que validar
 
-        // Comprueba si el usuario tiene una asignación activa en ese vehículo
-        const { data } = await supabase
-          .from("vehiculo_conductores")
-          .select("vehiculo_placa")
-          .eq("conductor_id", userId)
-          .eq("vehiculo_placa", placa)
-          .eq("estado", "autorizado")
-          .maybeSingle();
+        try {
+          // Comprueba si el usuario tiene una asignación activa en ese vehículo
+          const { data, error } = await supabase
+            .from("vehiculo_conductores")
+            .select("vehiculo_placa")
+            .eq("conductor_id", userId)
+            .eq("vehiculo_placa", placa)
+            .eq("estado", "autorizado")
+            .maybeSingle();
 
-        if (!data) {
-          // La placa guardada no pertenece a este usuario → limpiar
-          set({ placa: null, tipoCamion: null });
+          // Si hay error de red o timeout → conservar placa, reintentar en próxima apertura
+          if (error) {
+            logger.warn("⚠️ validarPlaca: sin conexión, conservando placa en caché:", error.message);
+            return;
+          }
+
+          // Solo limpiar si la consulta fue exitosa y no hay relación válida
+          if (!data) {
+            logger.log("🚫 Placa no autorizada para este usuario → limpiando");
+            set({ placa: null, tipoCamion: null });
+          }
+        } catch (err: any) {
+          // Error inesperado → conservar placa, no crashear
+          logger.warn("⚠️ validarPlaca: error inesperado, conservando placa:", err?.message ?? err);
         }
       },
     }),
