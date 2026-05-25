@@ -36,13 +36,12 @@ export default function WidgetInsightIA({ isDark }: WProps) {
   const { colors: c } = useTheme();
   const shadow = getShadow(isDark, "md");
   const AMBER = "#FBBF24";
-  const cardBg = isDark ? `${c.accent}14` : c.cardBg;
-  const cardBorder = isDark
-    ? { borderWidth: 1, borderColor: `${c.accent}33` }
-    : { ...shadow };
+  const FOOD_COLOR = "#F97316";
+  const cardBg = isDark ? `${FOOD_COLOR}18` : `${FOOD_COLOR}12`;
+  const cardBorder = isDark ? {} : { ...shadow };
   const ink = isDark ? "#F1F5F9" : "#111827";
   const muted = isDark ? "#3D536E" : "#9CA3AF";
-  const divClr = c.border;
+  const divClr = isDark ? `${FOOD_COLOR}30` : `${FOOD_COLOR}20`;
 
   return (
     <>
