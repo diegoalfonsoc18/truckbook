@@ -17,12 +17,12 @@ import {
 
 const FLETE_CAMPOS = [
   { key: "cliente",   label: "Cliente",    placeholder: "Nombre del cliente o empresa" },
-  { key: "mercancia", label: "Mercancía",  placeholder: "Ej: Cemento, Arena, Ganado" },
+  { key: "mercancia", label: "Mercancía",  placeholder: "Cemento, Arena, Ganado" },
 ];
 
 const OTRO_CAMPOS = [
   { key: "cliente",   label: "Cliente",   placeholder: "Nombre del cliente o empresa" },
-  { key: "mercancia", label: "Mercancía", placeholder: "Ej: Cemento, Arena, Ganado" },
+  { key: "mercancia", label: "Mercancía", placeholder: "Cemento, Arena, Ganado" },
 ];
 
 const INGRESOS_CATEGORIAS: Categoria[] = [
