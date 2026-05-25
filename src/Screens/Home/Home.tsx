@@ -477,29 +477,58 @@ export default function HomeBaseAdapted({
               <WidgetInsightIA isDark={isDark} />
             </View>
 
-            {/* PANEL DE CONTROL — tablero de testigos */}
-            {items.length > 0 && (
-              <>
-                <View style={s.sectionHeader}>
-                  <Text style={[s.sectionLabel, { color: c.text }]}>
-                    Actividad semanal
-                  </Text>
+            {!placaActual ? (
+              /* ONBOARDING — sin vehículo */
+              <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={() => setModalVehiculosVisible(true)}
+                style={[
+                  s.onboardingCard,
+                  {
+                    backgroundColor: isDark ? `${c.accent}14` : c.cardBg,
+                    borderWidth: 1.5,
+                    borderColor: isDark ? `${c.accent}40` : `${c.accent}30`,
+                    borderStyle: "dashed",
+                  },
+                ]}>
+                <Text style={{ fontSize: 36, marginBottom: 10 }}>🚛</Text>
+                <Text style={{ fontSize: 16, fontWeight: "700", color: c.text, marginBottom: 6, letterSpacing: -0.3 }}>
+                  Vincula tu vehículo
+                </Text>
+                <Text style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", textAlign: "center", lineHeight: 19, paddingHorizontal: 16 }}>
+                  Para registrar gastos, ingresos y ver tu actividad semanal, primero selecciona un vehículo.
+                </Text>
+                <View style={[s.onboardingBtn, { backgroundColor: c.accent, marginTop: 18 }]}>
+                  <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>Seleccionar vehículo</Text>
                 </View>
-                <DashboardControlPanel
-                  items={items}
-                  onItemPress={onItemPress ?? (() => {})}
-                  isDark={isDark}
-                  colors={c}
-                  renderBadge={renderBadge}
-                />
+              </TouchableOpacity>
+            ) : (
+              <>
+                {/* PANEL DE CONTROL — tablero de testigos */}
+                {items.length > 0 && (
+                  <>
+                    <View style={s.sectionHeader}>
+                      <Text style={[s.sectionLabel, { color: c.text }]}>
+                        Actividad semanal
+                      </Text>
+                    </View>
+                    <DashboardControlPanel
+                      items={items}
+                      onItemPress={onItemPress ?? (() => {})}
+                      isDark={isDark}
+                      colors={c}
+                      renderBadge={renderBadge}
+                    />
+                  </>
+                )}
+
+                {/* ANÁLISIS IA */}
+                <WidgetConsejIA isDark={isDark} />
+
+                {/* CLIENTES FRECUENTES */}
+                <WidgetClientes isDark={isDark} />
               </>
             )}
-
-            {/* ANÁLISIS IA */}
-            <WidgetConsejIA isDark={isDark} />
-
-            {/* CLIENTES FRECUENTES */}
-            <WidgetClientes isDark={isDark} />
           </ScrollView>
         </Animated.View>
       </SafeAreaView>
@@ -1019,6 +1048,19 @@ const s = StyleSheet.create({
     alignSelf: "center",
   },
   adCtaText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+
+  onboardingCard: {
+    borderRadius: 22,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  onboardingBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 13,
+    borderRadius: 99,
+  },
 
   widgetRow: {
     flexDirection: "row",
