@@ -482,15 +482,15 @@ export default function FinanzasGenerales() {
         setLoading(true);
         setError(null);
         if (esMultiVehiculo) {
-          // Cargar datos de todas las placas disponibles
+          // Cargar datos de todas las placas del conductor
           await Promise.all([
-            useGastosStore.getState().cargarGastosDelDB(),
-            useIngresosStore.getState().cargarIngresosDelDB(),
+            useGastosStore.getState().cargarGastosDelDB(null, user?.id),
+            useIngresosStore.getState().cargarIngresosDelDB(null, user?.id),
           ]);
         } else {
           await Promise.all([
-            useGastosStore.getState().cargarGastosDelDB(placaActual),
-            useIngresosStore.getState().cargarIngresosDelDB(placaActual),
+            useGastosStore.getState().cargarGastosDelDB(placaActual, user?.id),
+            useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id),
           ]);
         }
       } catch (err) {

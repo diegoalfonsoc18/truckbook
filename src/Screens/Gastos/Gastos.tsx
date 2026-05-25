@@ -40,9 +40,9 @@ export default function Gastos() {
 
   useEffect(() => {
     if (placaActual) {
-      useGastosStore.getState().cargarGastosDelDB(placaActual);
+      useGastosStore.getState().cargarGastosDelDB(placaActual, user?.id);
     }
-  }, [placaActual]);
+  }, [placaActual, user?.id]);
 
   // Normalise to the shared Transaction shape
   const transactions = gastos.map((g) => ({
@@ -126,7 +126,7 @@ export default function Gastos() {
         .update({ estado: nuevoEstado })
         .eq("id", id);
       if (error) return { success: false, error: error.message };
-      useGastosStore.getState().cargarGastosDelDB(placaActual!);
+      useGastosStore.getState().cargarGastosDelDB(placaActual!, user?.id);
       return { success: true };
     },
     [placaActual],

@@ -44,7 +44,7 @@ export default function Ingresos() {
 
   useEffect(() => {
     if (placaActual) {
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual);
+      useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
     }
   }, [placaActual]);
 
@@ -124,7 +124,7 @@ export default function Ingresos() {
       }]);
 
       if (error) return { success: false, error: error.message };
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual);
+      useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
       return { success: true };
     },
     [placaActual, user?.id],

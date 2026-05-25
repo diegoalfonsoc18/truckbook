@@ -127,8 +127,10 @@ export function ModalPendientes({
               .from("conductor_ingresos")
               .update({ estado: "pagado" })
               .eq("id", id);
-            if (!error && placa)
-              useIngresosStore.getState().cargarIngresosDelDB(placa);
+            if (!error && placa) {
+              const { data: { session } } = await supabase.auth.getSession();
+              useIngresosStore.getState().cargarIngresosDelDB(placa, session?.user?.id);
+            }
             setCobrando(null);
           },
         },

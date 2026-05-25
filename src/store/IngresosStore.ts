@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
 
@@ -26,59 +28,70 @@ interface IngresosState {
   editarIngreso: (id: string, updates: Partial<Ingreso>) => void;
   eliminarIngreso: (id: string) => void;
   limpiarIngresos: () => void;
-  cargarIngresosDelDB: (placaActual?: string | null) => Promise<void>;
+  cargarIngresosDelDB: (placaActual?: string | null, conductorId?: string | null) => Promise<void>;
 }
 
-export const useIngresosStore = create<IngresosState>((set) => ({
-  ingresos: [],
+export const useIngresosStore = create<IngresosState>()(
+  persist(
+    (set) => ({
+      ingresos: [],
 
-  setIngresos: (ingresos) => set({ ingresos }),
+      setIngresos: (ingresos) => set({ ingresos }),
 
-  setIngresosPorPlaca: (placa, ingresosNuevos) =>
-    set((state) => ({
-      ingresos: [
-        ...state.ingresos.filter((i) => i.placa !== placa),
-        ...ingresosNuevos,
-      ],
-    })),
+      setIngresosPorPlaca: (placa, ingresosNuevos) =>
+        set((state) => ({
+          ingresos: [
+            ...state.ingresos.filter((i) => i.placa !== placa),
+            ...ingresosNuevos,
+          ],
+        })),
 
-  agregarIngreso: (ingreso) =>
-    set((state) => {
-      // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
-      if (state.ingresos.some((i) => i.id === ingreso.id)) return state;
-      return { ingresos: [ingreso, ...state.ingresos] };
+      agregarIngreso: (ingreso) =>
+        set((state) => {
+          // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
+          if (state.ingresos.some((i) => i.id === ingreso.id)) return state;
+          return { ingresos: [ingreso, ...state.ingresos] };
+        }),
+
+      editarIngreso: (id, updates) =>
+        set((state) => ({
+          ingresos: state.ingresos.map((i) =>
+            i.id === id ? { ...i, ...updates } : i
+          ),
+        })),
+
+      eliminarIngreso: (id) =>
+        set((state) => ({
+          ingresos: state.ingresos.filter((i) => i.id !== id),
+        })),
+
+      limpiarIngresos: () => set({ ingresos: [] }),
+
+      cargarIngresosDelDB: async (placaActual?: string | null, conductorId?: string | null) => {
+        try {
+          let query = supabase
+            .from("conductor_ingresos")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (placaActual) {
+            query = query.eq("placa", placaActual);
+          }
+          if (conductorId) {
+            query = query.eq("conductor_id", conductorId);
+          }
+
+          const { data, error } = await query;
+          if (error) throw error;
+          set({ ingresos: data || [] });
+        } catch (err) {
+          logger.error("Error loading ingresos:", err);
+        }
+      },
     }),
-
-  editarIngreso: (id, updates) =>
-    set((state) => ({
-      ingresos: state.ingresos.map((i) =>
-        i.id === id ? { ...i, ...updates } : i
-      ),
-    })),
-
-  eliminarIngreso: (id) =>
-    set((state) => ({
-      ingresos: state.ingresos.filter((i) => i.id !== id),
-    })),
-
-  limpiarIngresos: () => set({ ingresos: [] }),
-
-  cargarIngresosDelDB: async (placaActual?: string | null) => {
-    try {
-      let query = supabase
-        .from("conductor_ingresos")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (placaActual) {
-        query = query.eq("placa", placaActual);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      set({ ingresos: data || [] });
-    } catch (err) {
-      logger.error("Error loading ingresos:", err);
+    {
+      name: "ingresos-storage",
+      storage: createJSONStorage(() => AsyncStorage),
     }
-  },
-}));
+  )
+);
