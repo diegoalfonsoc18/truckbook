@@ -5,50 +5,20 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import HomeBaseAdapted from "../Home/Home";
 import { Item } from "../Home/Items";
 import { useAuth } from "../../hooks/useAuth";
-import { useVehiculoStore } from "../../store/VehiculoStore";
-import { useSOAT } from "../../hooks/UseSoat";
-import { useRTM } from "../../hooks/usesRtm";
-import { useMultas } from "../../hooks/useMultas";
 import { cargarSolicitudesPendientes } from "../../services/vehiculoAutorizacionService";
 import { registrarPushToken } from "../../services/NotificationService";
 
 type PropietarioNavigationProp = NativeStackNavigationProp<any, "PropietarioHome">;
 
-// ─── Colores de estado ────────────────────────────────────────────────────────
-const COLOR_OK      = "#22C55E";
-const COLOR_WARNING = "#FBBF24";
-const COLOR_DANGER  = "#EF4444";
-const COLOR_UNKNOWN = "#6B7280";
-
-function statusColor(vigente: boolean, dias: number, sinDatos: boolean): string {
-  if (sinDatos) return COLOR_UNKNOWN;
-  if (!vigente) return COLOR_DANGER;
-  if (dias <= 30) return COLOR_WARNING;
-  return COLOR_OK;
-}
-
 export default function PropietarioHome() {
   const navigation = useNavigation<PropietarioNavigationProp>();
   const { user } = useAuth();
-  const { placa: placaActual } = useVehiculoStore();
   const [solicitudesCount, setSolicitudesCount] = useState(0);
 
-  // ─── Hooks de estado ──────────────────────────────────────────────────────
-  const { esSOATVigente, diasParaVencerSOAT, cargando: cargandoSOAT } =
-    useSOAT(placaActual, !!placaActual);
-
-  const { esRTMVigente, diasParaVencerRTM, cargando: cargandoRTM } =
-    useRTM(placaActual, !!placaActual);
-
-  const { tieneMultasPendientes, cargando: cargandoMultas } =
-    useMultas(placaActual, !!placaActual);
-
-  // Registrar push token al entrar
   useEffect(() => {
     if (user?.id) registrarPushToken(user.id);
   }, [user?.id]);
 
-  // Recargar conteo cada vez que la pantalla gana foco
   useFocusEffect(
     useCallback(() => {
       const cargar = async () => {
@@ -80,9 +50,10 @@ export default function PropietarioHome() {
     {
       id: "solicitudes",
       name: "Solicitudes",
-      subtitle: solicitudesCount > 0
-        ? `${solicitudesCount} pendiente${solicitudesCount > 1 ? "s" : ""}`
-        : "Autorizar conductores",
+      subtitle:
+        solicitudesCount > 0
+          ? `${solicitudesCount} pendiente${solicitudesCount > 1 ? "s" : ""}`
+          : "Autorizar conductores",
       iconName: "check",
       iconSize: 80,
       color: "#00CEC9",
@@ -115,30 +86,26 @@ export default function PropietarioHome() {
     {
       id: "soat",
       name: "SOAT",
-      subtitle: "Seguro obligatorio",
+      subtitle: "Próximamente",
       iconName: "shield",
       iconSize: 80,
-      color: statusColor(esSOATVigente, diasParaVencerSOAT, cargandoSOAT || !placaActual),
+      color: "#6B7280",
     },
     {
       id: "tecnomecanica",
       name: "Tecnomecánica",
-      subtitle: "Revisión técnica",
+      subtitle: "Próximamente",
       iconName: "tool",
       iconSize: 80,
-      color: statusColor(esRTMVigente, diasParaVencerRTM, cargandoRTM || !placaActual),
+      color: "#6B7280",
     },
     {
       id: "comparendos",
       name: "Comparendos",
-      subtitle: "Multas de tránsito",
+      subtitle: "Próximamente",
       iconName: "comparendo",
       iconSize: 80,
-      color: !placaActual || cargandoMultas
-        ? COLOR_UNKNOWN
-        : tieneMultasPendientes
-        ? COLOR_DANGER
-        : COLOR_OK,
+      color: "#6B7280",
     },
   ];
 

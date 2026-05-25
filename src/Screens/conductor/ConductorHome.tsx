@@ -6,6 +6,7 @@ import { items as baseItems, Item } from "../Home/Items";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useGastosStore, Gasto } from "../../store/GastosStore";
+import { useIngresosStore, Ingreso } from "../../store/IngresosStore";
 import { registrarPushToken } from "../../services/NotificationService";
 
 // ─── Helpers de formato ────────────────────────────────────────────────────────
@@ -33,8 +34,8 @@ function dateStr(offset = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ─── Cálculo de stats de gastos ────────────────────────────────────────────────
-function useGastosStats(gastos: Gasto[]) {
+// ─── Cálculo de stats ──────────────────────────────────────────────────────────
+function useGastosStats(gastos: Gasto[], ingresos: Ingreso[]) {
   return useMemo(() => {
     const hace7  = dateStr(6);   // últimos 7 días (incluye hoy)
     const hace14 = dateStr(13);  // 7 días anteriores
@@ -76,8 +77,20 @@ function useGastosStats(gastos: Gasto[]) {
     const mantMes   = sumByTipo(mantTipos, mesStr);
     const lastMant  = lastOf(mantTipos);
 
-    return { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant };
-  }, [gastos]);
+    // ── Viajes (fletes desde IngresosStore) ────────────────────────────────────
+    const fechaIng = (i: Ingreso) => (i.fecha ?? i.created_at ?? "").slice(0, 10);
+    const fletes = ingresos.filter((i) => i.tipo_ingreso === "Flete");
+    const fletesSem = fletes.filter((i) => fechaIng(i) >= hace7);
+    const fletesAnt = fletes.filter((i) => fechaIng(i) >= hace14 && fechaIng(i) < hace7);
+    const viajesSem   = fletesSem.length;
+    const viajesAnt   = fletesAnt.length;
+    const totalFleteSem = fletesSem.reduce((a, i) => a + (i.monto ?? 0), 0);
+    const promFlete = viajesSem > 0 ? Math.round(totalFleteSem / viajesSem) : 0;
+    const viajesTrend = viajesAnt > 0 ? Math.round(((viajesSem - viajesAnt) / viajesAnt) * 100) : 0;
+    const lastViaje = [...fletes].sort((a, b) => fechaIng(b).localeCompare(fechaIng(a)))[0];
+
+    return { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesAnt, viajesTrend, promFlete, lastViaje };
+  }, [gastos, ingresos]);
 }
 
 // ─── Formateo de trend ────────────────────────────────────────────────────────
@@ -97,10 +110,11 @@ export default function ConductorHome() {
   const navigation = useNavigation<any>();
   const { placa: placaActual, validarPlacaParaUsuario } = useVehiculoStore();
   const { user } = useAuth();
-  const gastos = useGastosStore((s) => s.gastos);
+  const gastos   = useGastosStore((s) => s.gastos);
+  const ingresos = useIngresosStore((s) => s.ingresos);
 
-  const { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant } =
-    useGastosStats(gastos);
+  const { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesTrend, promFlete, lastViaje } =
+    useGastosStats(gastos, ingresos);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -144,6 +158,17 @@ export default function ConductorHome() {
           secondarylabel:  lastMant ? `Últ: ${lastMant.tipo_gasto}` : "Sin registros",
           tertiaryLabel:   lastMant ? diasAtras(lastMant.fecha ?? lastMant.created_at) : undefined,
           score:           mantMes === 0 ? 100 : Math.max(20, 100 - Math.round((mantMes / 2_000_000) * 80)),
+        };
+
+      case "viajes":
+        return {
+          ...item,
+          sublabel:       `${viajesSem} viaje${viajesSem !== 1 ? "s" : ""}`,
+          trend:          trendLabel(viajesTrend, "Sin cambio"),
+          trendPositive:  viajesTrend >= 0, // más viajes = mejor
+          secondarylabel: promFlete > 0 ? `Prom: ${fmtCOP(promFlete)}` : "Sin fletes",
+          tertiaryLabel:  lastViaje ? diasAtras(lastViaje.fecha ?? lastViaje.created_at) : undefined,
+          score:          viajesSem > 0 ? Math.min(100, 30 + viajesSem * 10) : 5,
         };
 
       default:

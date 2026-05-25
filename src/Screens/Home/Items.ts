@@ -50,4 +50,10 @@ export const items: Item[] = [
     iconName: "tool",
     color: "#74B9FF",
   },
+  {
+    id: "viajes",
+    name: "Viajes",
+    iconName: "freight",
+    color: "#6C5CE7",
+  },
 ];
