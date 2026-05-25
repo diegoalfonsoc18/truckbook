@@ -1,6 +1,6 @@
 // src/Screens/Home/widgets/WidgetInsightIA.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Dimensions, Platform } from "react-native";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 import { fmtI, diasDesde, labelDias, avatarColor, initials, WProps } from "../homeUtils";
@@ -38,7 +38,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
   const AMBER = "#FBBF24";
   const FOOD_COLOR = "#F97316";
   const cardBg = isDark ? `${FOOD_COLOR}18` : `${FOOD_COLOR}12`;
-  const cardBorder = isDark ? {} : { ...shadow };
+  const cardBorder = Platform.OS === "ios" && !isDark ? { ...shadow } : {};
   const ink = isDark ? "#F1F5F9" : "#111827";
   const muted = isDark ? "#3D536E" : "#9CA3AF";
   const divClr = isDark ? `${FOOD_COLOR}30` : `${FOOD_COLOR}20`;
