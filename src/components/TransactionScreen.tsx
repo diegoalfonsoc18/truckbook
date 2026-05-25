@@ -1624,7 +1624,7 @@ const s = StyleSheet.create({
     minHeight: 50,
   },
   inputPrefix: { fontSize: 18, fontWeight: "700", marginRight: 4 },
-  textInput: { flex: 1, fontSize: 16, fontWeight: "500", paddingVertical: 12 },
+  textInput: { flex: 1, fontSize: 16, fontWeight: "400", paddingVertical: 12, letterSpacing: 0 },
   textInputLg: { fontSize: 22, fontWeight: "700" },
 
   // ESTADO TOGGLE

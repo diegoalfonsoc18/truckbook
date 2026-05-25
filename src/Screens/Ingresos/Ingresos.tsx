@@ -18,8 +18,6 @@ import {
 const FLETE_CAMPOS = [
   { key: "cliente",   label: "Cliente",    placeholder: "Nombre del cliente o empresa" },
   { key: "mercancia", label: "Mercancía",  placeholder: "Ej: Cemento, Electrodomésticos" },
-  { key: "origen",    label: "Origen",     placeholder: "Ciudad de carga" },
-  { key: "destino",   label: "Destino",    placeholder: "Ciudad de entrega" },
 ];
 
 const OTRO_CAMPOS = [
@@ -96,9 +94,6 @@ export default function Ingresos() {
       if (catId === "flete" && extras) {
         const partes: string[] = [];
         if (extras.cliente)   partes.push(extras.cliente);
-        if (extras.origen && extras.destino) partes.push(`${extras.origen} → ${extras.destino}`);
-        else if (extras.origen)  partes.push(extras.origen);
-        else if (extras.destino) partes.push(extras.destino);
         if (extras.mercancia) partes.push(extras.mercancia);
         if (partes.length > 0) desc = partes.join(" · ");
       } else if (catId === "otro" && extras) {
