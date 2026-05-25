@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoleStore } from "../store/RoleStore";
+import { useVehiculoStore } from "../store/VehiculoStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "./IngresosNavigation";
 import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
@@ -25,18 +26,44 @@ export default function AppStack() {
   const role = useRoleStore((state) => state.role);
   const insets = useSafeAreaInsets();
 
-  // Esperar a que Zustand rehidrate desde AsyncStorage antes de montar el navigator.
-  // Así getInitialRouteName() recibe el rol real y no null.
-  const [hydrated, setHydrated] = useState(
-    () => useRoleStore.persist.hasHydrated()
-  );
+  // Esperar a que Zustand rehidrate AMBOS stores desde AsyncStorage antes de montar.
+  // RoleStore → getInitialRouteName() recibe el rol real y no null.
+  // VehiculoStore → DataProvider recibe la placa real desde el primer render,
+  //                 evitando la race condition placa=null → carga vacía → placa real.
+  const bothHydrated =
+    useRoleStore.persist.hasHydrated() &&
+    useVehiculoStore.persist.hasHydrated();
+
+  const [hydrated, setHydrated] = useState(() => bothHydrated);
 
   useEffect(() => {
     if (hydrated) return;
-    const unsub = useRoleStore.persist.onFinishHydration(() =>
-      setHydrated(true)
-    );
-    return unsub;
+
+    let roleOk = useRoleStore.persist.hasHydrated();
+    let vehiculoOk = useVehiculoStore.persist.hasHydrated();
+
+    const check = () => {
+      if (roleOk && vehiculoOk) setHydrated(true);
+    };
+
+    const unsubRole = roleOk
+      ? undefined
+      : useRoleStore.persist.onFinishHydration(() => {
+          roleOk = true;
+          check();
+        });
+
+    const unsubVehiculo = vehiculoOk
+      ? undefined
+      : useVehiculoStore.persist.onFinishHydration(() => {
+          vehiculoOk = true;
+          check();
+        });
+
+    return () => {
+      unsubRole?.();
+      unsubVehiculo?.();
+    };
   }, []);
 
   if (!hydrated) return null;
