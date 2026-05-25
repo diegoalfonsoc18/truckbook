@@ -89,7 +89,13 @@ function useGastosStats(gastos: Gasto[], ingresos: Ingreso[]) {
     const viajesTrend = viajesAnt > 0 ? Math.round(((viajesSem - viajesAnt) / viajesAnt) * 100) : 0;
     const lastViaje = [...fletes].sort((a, b) => fechaIng(b).localeCompare(fechaIng(a)))[0];
 
-    return { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesAnt, viajesTrend, promFlete, lastViaje };
+    // ── Comida ─────────────────────────────────────────────────────────────────
+    const comidaSem  = sumByTipo(["Comida"], hace7);
+    const comidaAnt  = sumByTipo(["Comida"], hace14, hace7);
+    const comidaTrend = comidaAnt > 0 ? Math.round(((comidaSem - comidaAnt) / comidaAnt) * 100) : 0;
+    const lastComida  = lastOf(["Comida"]);
+
+    return { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesAnt, viajesTrend, promFlete, lastViaje, comidaSem, comidaTrend, lastComida };
   }, [gastos, ingresos]);
 }
 
@@ -113,7 +119,7 @@ export default function ConductorHome() {
   const gastos   = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
 
-  const { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesTrend, promFlete, lastViaje } =
+  const { combSem, combTrend, lastComb, peajesSem, peajesTrend, peajesCount, lastPeaje, mantMes, lastMant, viajesSem, viajesTrend, promFlete, lastViaje, comidaSem, comidaTrend, lastComida } =
     useGastosStats(gastos, ingresos);
 
   useEffect(() => {
@@ -134,6 +140,7 @@ export default function ConductorHome() {
           secondarylabel:  lastComb ? `Últ: ${fmtCOP(lastComb.monto)}` : "Sin registros",
           tertiaryLabel:   lastComb ? diasAtras(lastComb.fecha ?? lastComb.created_at) : undefined,
           score:           combSem > 0 ? spendScore(combTrend) : 50,
+          _relevance:      combSem,
         };
 
       case "peajes":
@@ -147,6 +154,7 @@ export default function ConductorHome() {
           secondarylabel:  lastPeaje ? `Últ: ${fmtCOP(lastPeaje.monto)}` : "Sin registros",
           tertiaryLabel:   lastPeaje ? diasAtras(lastPeaje.fecha ?? lastPeaje.created_at) : undefined,
           score:           peajesSem > 0 ? spendScore(peajesTrend) : 80,
+          _relevance:      peajesSem,
         };
 
       case "mantenimiento":
@@ -158,6 +166,7 @@ export default function ConductorHome() {
           secondarylabel:  lastMant ? `Últ: ${lastMant.tipo_gasto}` : "Sin registros",
           tertiaryLabel:   lastMant ? diasAtras(lastMant.fecha ?? lastMant.created_at) : undefined,
           score:           mantMes === 0 ? 100 : Math.max(20, 100 - Math.round((mantMes / 2_000_000) * 80)),
+          _relevance:      mantMes,
         };
 
       case "viajes":
@@ -165,16 +174,29 @@ export default function ConductorHome() {
           ...item,
           sublabel:       `${viajesSem} viaje${viajesSem !== 1 ? "s" : ""}`,
           trend:          trendLabel(viajesTrend, "Sin cambio"),
-          trendPositive:  viajesTrend >= 0, // más viajes = mejor
+          trendPositive:  viajesTrend >= 0,
           secondarylabel: promFlete > 0 ? `Prom: ${fmtCOP(promFlete)}` : "Sin fletes",
           tertiaryLabel:  lastViaje ? diasAtras(lastViaje.fecha ?? lastViaje.created_at) : undefined,
           score:          viajesSem > 0 ? Math.min(100, 30 + viajesSem * 10) : 5,
+          _relevance:     viajesSem * 50_000, // equipara escala con gastos en pesos
+        };
+
+      case "comida":
+        return {
+          ...item,
+          sublabel:        fmtCOP(comidaSem),
+          trend:           trendLabel(comidaTrend, "Sin cambio"),
+          trendPositive:   comidaTrend <= 0,
+          secondarylabel:  lastComida ? `Últ: ${fmtCOP(lastComida.monto)}` : "Sin registros",
+          tertiaryLabel:   lastComida ? diasAtras(lastComida.fecha ?? lastComida.created_at) : undefined,
+          score:           comidaSem > 0 ? spendScore(comidaTrend) : 50,
+          _relevance:      comidaSem,
         };
 
       default:
         return item;
     }
-  });
+  }).sort((a, b) => (b._relevance ?? 0) - (a._relevance ?? 0));
 
   return (
     <HomeBaseAdapted

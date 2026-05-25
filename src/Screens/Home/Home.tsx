@@ -462,9 +462,13 @@ export default function HomeBaseAdapted({
           {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
+            style={Platform.OS === "ios" ? { marginHorizontal: -H_PAD } : undefined}
             contentContainerStyle={[
               s.gridContainer,
-              { paddingBottom: insets.bottom + 100 },
+              {
+                paddingBottom: insets.bottom + 100,
+                paddingHorizontal: Platform.OS === "ios" ? H_PAD : 0,
+              },
             ]}>
             {/* WIDGETS — fila de dos columnas */}
             <View style={s.widgetRow}>

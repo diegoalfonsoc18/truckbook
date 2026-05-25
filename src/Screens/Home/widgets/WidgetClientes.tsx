@@ -1,6 +1,6 @@
 // src/Screens/Home/widgets/WidgetClientes.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
@@ -33,12 +33,15 @@ export default function WidgetClientes({ isDark }: WProps) {
       if (fecha > prev.ultimaFecha) prev.ultimaFecha = fecha;
       clienteMap.set(nombre, prev);
 
-      const mercancia =
+      const rawMercancia =
         partes.length >= 3
           ? partes[partes.length - 1]?.trim()
           : partes.length === 2
             ? partes[1]?.trim()
             : null;
+      const mercancia = rawMercancia
+        ? rawMercancia.replace(/\[tel:[^\]]*\]/gi, "").trim()
+        : null;
       if (mercancia && !mercancia.includes("→")) rawList.push(mercancia);
     }
 
@@ -79,18 +82,21 @@ export default function WidgetClientes({ isDark }: WProps) {
 
   // ── Estilos compartidos ────────────────────────────────────────────────────
   const cardShadow = getShadow(isDark, "md");
+  const lightStyle = Platform.OS === "android"
+    ? { borderWidth: 1, borderColor: c.border, ...cardShadow }
+    : cardShadow;
   const cardStyle  = [
     s.card,
+    { backgroundColor: isDark ? `${c.accent}14` : c.cardBg },
     isDark
-      ? { backgroundColor: `${c.accent}14`, borderWidth: 1, borderColor: `${c.accent}33` }
-      : { backgroundColor: c.cardBg, ...cardShadow },
+      ? { borderWidth: 1, borderColor: `${c.accent}33` }
+      : lightStyle,
   ];
   const ink    = isDark ? "#FFFFFF" : c.text;
   const muted  = isDark ? "rgba(255,255,255,0.45)" : "#6B7280";
   const divClr = isDark ? `${c.accent}20` : "#E5E7EB";
 
-  const MEDAL       = ["#FFB800", "#94A3B8", "#CD7F32"];
-  const MEDAL_EMOJI = ["🥇", "🥈", "🥉"];
+  const MEDAL = ["#FFB800", "#94A3B8", "#CD7F32"];
 
   // ── Estado vacío ──────────────────────────────────────────────────────────
   if (clienteData.length === 0) {
@@ -138,10 +144,7 @@ export default function WidgetClientes({ isDark }: WProps) {
 
               {/* Info */}
               <View style={s.info}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <Text style={{ fontSize: 10 }}>{MEDAL_EMOJI[idx]}</Text>
-                  <Text style={[s.nombre, { color: ink }]} numberOfLines={1}>{nombre}</Text>
-                </View>
+                <Text style={[s.nombre, { color: ink }]} numberOfLines={1}>{nombre}</Text>
                 <Text style={[s.meta, { color: muted }]}>
                   {info.viajes} viaje{info.viajes !== 1 ? "s" : ""}
                 </Text>
@@ -190,7 +193,6 @@ export default function WidgetClientes({ isDark }: WProps) {
 
 const s = StyleSheet.create({
   card: {
-    width: "100%",
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 14,

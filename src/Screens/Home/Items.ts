@@ -26,6 +26,8 @@ export interface Item {
   secondarylabel?: string;
   // Tercera línea: "Hace 2 días", "Hoy"
   tertiaryLabel?: string;
+  // Puntuación de relevancia para orden dinámico (mayor = primero)
+  _relevance?: number;
 }
 
 // ─── Items base del panel de control del conductor ────────────────────────────
@@ -55,5 +57,11 @@ export const items: Item[] = [
     name: "Viajes",
     iconName: "freight",
     color: "#6C5CE7",
+  },
+  {
+    id: "comida",
+    name: "Comida",
+    iconName: "food",
+    color: "#F97316",
   },
 ];
