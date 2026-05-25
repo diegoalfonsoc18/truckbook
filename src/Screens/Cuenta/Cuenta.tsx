@@ -662,11 +662,14 @@ export default function Cuenta() {
                     s.menuRow,
                     card,
                     {
-                      borderColor: `${c.danger}30`,
+                      borderColor: `${c.danger}40`,
                       borderWidth: 1,
                       backgroundColor: isDark
-                        ? `${c.danger}12`
-                        : `${c.danger}08`,
+                        ? `${c.danger}18`
+                        : `${c.danger}10`,
+                      // En Android, elevation crea superficie opaca que aplana el rojo
+                      elevation: 0,
+                      shadowOpacity: 0,
                     },
                   ]}
                   onPress={handleResetDatos}
@@ -705,7 +708,13 @@ export default function Cuenta() {
               style={[
                 s.logoutBtn,
                 card,
-                { borderColor: `${c.danger}30`, borderWidth: 1, marginTop: 8 },
+                {
+                  borderColor: `${c.danger}30`,
+                  borderWidth: 1,
+                  marginTop: 8,
+                  elevation: 0,
+                  shadowOpacity: 0,
+                },
               ]}
               onPress={handleLogout}
               disabled={loading}

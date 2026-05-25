@@ -25,7 +25,7 @@ import {
   registrarVehiculoPropietario,
   removerConductorDeVehiculo,
 } from "../../../services/vehiculoAutorizacionService";
-import { useTheme, TYPOGRAPHY } from "../../../constants/Themecontext";
+import { useTheme, TYPOGRAPHY, getShadow } from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import logger from "../../../utils/logger";
 import {
@@ -48,21 +48,22 @@ export default function ModalVehiculos({
   onConductorChange,
 }: ModalVehiculosProps) {
   const { colors: c, isDark } = useTheme();
-  const {
-    placa: placaActual,
-    setPlaca,
-    setTipoCamion,
-  } = useVehiculoStore();
+  const { placa: placaActual, setPlaca, setTipoCamion } = useVehiculoStore();
   const { user } = useAuth();
 
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [cargando, setCargando] = useState(false);
   const [placaInput, setPlacaInput] = useState("");
-  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(null);
+  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
+    null,
+  );
   const [guardando, setGuardando] = useState(false);
-  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(null);
+  const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(
+    null,
+  );
   const [placaEditInput, setPlacaEditInput] = useState("");
-  const [tipoCamionEditInput, setTipoCamionEditInput] = useState<TipoCamion | null>(null);
+  const [tipoCamionEditInput, setTipoCamionEditInput] =
+    useState<TipoCamion | null>(null);
 
   // Load vehicles whenever the modal opens
   useEffect(() => {
@@ -109,7 +110,9 @@ export default function ModalVehiculos({
 
       setVehiculos(vehiculosConConductor);
       if (placaActual) {
-        const actual = vehiculosConConductor.find((v) => v.placa === placaActual);
+        const actual = vehiculosConConductor.find(
+          (v) => v.placa === placaActual,
+        );
         onConductorChange(actual?.conductorNombre);
       }
     } catch (err) {
@@ -124,7 +127,10 @@ export default function ModalVehiculos({
 
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
     if (vehiculo.estado === "pendiente") {
-      Alert.alert("Esperando autorización", "El propietario aún no ha autorizado tu acceso.");
+      Alert.alert(
+        "Esperando autorización",
+        "El propietario aún no ha autorizado tu acceso.",
+      );
       return;
     }
     if (vehiculo.estado === "rechazado") {
@@ -157,7 +163,8 @@ export default function ModalVehiculos({
   };
 
   const handleGuardarEdicion = async () => {
-    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput) return;
+    if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput)
+      return;
     setGuardando(true);
     const placaNueva = placaEditInput.trim().toUpperCase();
     try {
@@ -210,7 +217,10 @@ export default function ModalVehiculos({
         onPress: async () => {
           const result = await removerConductorDeVehiculo(v.id);
           if (!result.success) {
-            Alert.alert("Error", result.error || "No se pudo quitar el vehículo");
+            Alert.alert(
+              "Error",
+              result.error || "No se pudo quitar el vehículo",
+            );
             return;
           }
           if (placaActual === v.placa) setPlaca("");
@@ -224,7 +234,11 @@ export default function ModalVehiculos({
     if (!user?.id || !placaInput.trim() || !tipoCamionInput) return;
     setGuardando(true);
     const placa = placaInput.trim().toUpperCase();
-    const result = await registrarVehiculoPropietario(user.id, placa, tipoCamionInput);
+    const result = await registrarVehiculoPropietario(
+      user.id,
+      placa,
+      tipoCamionInput,
+    );
     if (!result.success) {
       setGuardando(false);
       Alert.alert("Error", result.error || "No se pudo registrar el vehículo");
@@ -238,6 +252,15 @@ export default function ModalVehiculos({
 
   const sheet = {
     backgroundColor: isDark ? c.surface : "#FFFFFF",
+  };
+
+  const chipCard = {
+    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
+    ...(isDark
+      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
+      : Platform.OS === "android"
+        ? { borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }
+        : getShadow(false, "sm")),
   };
 
   return (
@@ -260,7 +283,8 @@ export default function ModalVehiculos({
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={{ paddingBottom: 8 }}>
                   {/* ── Título ── */}
-                  <Text style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
+                  <Text
+                    style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
                     Mis Vehículos
                   </Text>
 
@@ -284,43 +308,79 @@ export default function ModalVehiculos({
                             renderRightActions={() => (
                               <View style={s.swipeActions}>
                                 <TouchableOpacity
-                                  style={[s.swipeActionBtn, { backgroundColor: "#3B82F6" }]}
+                                  style={[
+                                    s.swipeActionBtn,
+                                    { backgroundColor: "#3B82F6" },
+                                  ]}
                                   onPress={() => abrirEdicion(v)}>
-                                  <Ionicons name="pencil-outline" size={20} color="#fff" />
+                                  <Ionicons
+                                    name="pencil-outline"
+                                    size={20}
+                                    color="#fff"
+                                  />
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                  style={[s.swipeActionBtn, { backgroundColor: "#EF4444" }]}
+                                  style={[
+                                    s.swipeActionBtn,
+                                    { backgroundColor: "#EF4444" },
+                                  ]}
                                   onPress={() => handleEliminarVehiculo(v)}>
-                                  <Ionicons name="trash-outline" size={20} color="#fff" />
+                                  <Ionicons
+                                    name="trash-outline"
+                                    size={20}
+                                    color="#fff"
+                                  />
                                 </TouchableOpacity>
                               </View>
                             )}>
                             <TouchableOpacity
                               style={[
                                 s.vehicleOption,
-                                { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
-                                isActive && { borderWidth: 1.5, borderColor: c.accent },
+                                {
+                                  backgroundColor: isDark
+                                    ? "#1C1C1E"
+                                    : "#F2F2F7",
+                                },
+                                isActive && {
+                                  borderWidth: 1.5,
+                                  borderColor: c.accent,
+                                },
                               ]}
                               onPress={() => handleSeleccionarVehiculo(v)}
                               activeOpacity={0.7}>
-                              <View
-                                style={[
-                                  s.vehicleOptionIcon,
-                                  { backgroundColor: tipo?.color || c.accent },
-                                ]}>
-                                <ItemIcon name={vIconName} size={28} />
+                              <View style={s.vehicleOptionIcon}>
+                                <ItemIcon
+                                  name={vIconName}
+                                  size={Platform.OS === "ios" ? 52 : 52}
+                                />
                               </View>
                               <View style={s.vehicleOptionInfo}>
-                                <Text style={[s.vehicleOptionPlaca, { color: c.text }]}>
+                                <Text
+                                  style={[
+                                    s.vehicleOptionPlaca,
+                                    { color: c.text },
+                                  ]}>
                                   {v.placa}
                                 </Text>
-                                <Text style={[s.vehicleOptionType, { color: c.textSecondary }]}>
+                                <Text
+                                  style={[
+                                    s.vehicleOptionType,
+                                    { color: c.textSecondary },
+                                  ]}>
                                   {tipo?.label || "Vehículo"}
                                 </Text>
                               </View>
                               {isActive && (
-                                <View style={[s.statusBadge, { backgroundColor: c.accent }]}>
-                                  <Ionicons name="checkmark" size={14} color={c.accentText} />
+                                <View
+                                  style={[
+                                    s.statusBadge,
+                                    { backgroundColor: c.accent },
+                                  ]}>
+                                  <Ionicons
+                                    name="checkmark"
+                                    size={14}
+                                    color={c.accentText}
+                                  />
                                 </View>
                               )}
                             </TouchableOpacity>
@@ -334,11 +394,20 @@ export default function ModalVehiculos({
                   {vehiculoEditando && (
                     <View style={[s.addSection, { borderTopColor: c.divider }]}>
                       <View style={s.editSectionHeader}>
-                        <Text style={[s.selectorLabel, { color: c.text, marginBottom: 0 }]}>
+                        <Text
+                          style={[
+                            s.selectorLabel,
+                            { color: c.text, marginBottom: 0 },
+                          ]}>
                           Editar — {vehiculoEditando.placa}
                         </Text>
-                        <TouchableOpacity onPress={() => setVehiculoEditando(null)}>
-                          <Ionicons name="close" size={20} color={c.textMuted} />
+                        <TouchableOpacity
+                          onPress={() => setVehiculoEditando(null)}>
+                          <Ionicons
+                            name="close"
+                            size={20}
+                            color={c.textMuted}
+                          />
                         </TouchableOpacity>
                       </View>
 
@@ -374,18 +443,27 @@ export default function ModalVehiculos({
                               key={tipo.id}
                               style={[
                                 s.tipoChip,
-                                { backgroundColor: c.surface, borderColor: c.border },
+                                chipCard,
                                 selected && {
-                                  backgroundColor: tipo.color + "22",
-                                  borderColor: tipo.color,
+                                  borderWidth: 1.5,
+                                  borderColor: c.accent,
+                                  shadowOpacity: 0,
+                                  elevation: 0,
                                 },
                               ]}
                               onPress={() => setTipoCamionEditInput(tipo.id)}>
-                              <ItemIcon name={tipo.iconName} size={32} />
+                              <ItemIcon
+                                name={tipo.iconName}
+                                size={Platform.OS === "ios" ? 52 : 52}
+                              />
                               <Text
                                 style={[
                                   s.tipoChipLabel,
-                                  { color: selected ? tipo.color : c.textSecondary },
+                                  {
+                                    color: selected
+                                      ? tipo.color
+                                      : c.textSecondary,
+                                  },
                                 ]}>
                                 {tipo.label}
                               </Text>
@@ -398,10 +476,16 @@ export default function ModalVehiculos({
                         style={[
                           s.confirmBtn,
                           { backgroundColor: "#3B82F6" },
-                          (!placaEditInput.trim() || !tipoCamionEditInput) && { opacity: 0.4 },
+                          (!placaEditInput.trim() || !tipoCamionEditInput) && {
+                            opacity: 0.4,
+                          },
                         ]}
                         onPress={handleGuardarEdicion}
-                        disabled={!placaEditInput.trim() || !tipoCamionEditInput || guardando}>
+                        disabled={
+                          !placaEditInput.trim() ||
+                          !tipoCamionEditInput ||
+                          guardando
+                        }>
                         {guardando ? (
                           <ActivityIndicator size="small" color="#fff" />
                         ) : (
@@ -415,7 +499,11 @@ export default function ModalVehiculos({
 
                   {/* ── Separador + sección agregar ── */}
                   <View style={[s.addSection, { borderTopColor: c.divider }]}>
-                    <Text style={[s.selectorLabel, { color: c.textSecondary, marginBottom: 12 }]}>
+                    <Text
+                      style={[
+                        s.selectorLabel,
+                        { color: c.textSecondary, marginBottom: 12 },
+                      ]}>
                       Agregar vehículo
                     </Text>
 
@@ -450,19 +538,21 @@ export default function ModalVehiculos({
                             key={tipo.id}
                             style={[
                               s.tipoChip,
-                              { backgroundColor: c.surface, borderColor: c.border },
+                              chipCard,
                               selected && {
-                                backgroundColor: tipo.color + "22",
-                                borderColor: tipo.color,
+                                borderWidth: 1.5,
+                                borderColor: c.accent,
+                                shadowOpacity: 0,
+                                elevation: 0,
                               },
                             ]}
                             onPress={() => setTipoCamionInput(tipo.id)}>
-                            <ItemIcon name={tipo.iconName} size={32} />
+                            <ItemIcon
+                              name={tipo.iconName}
+                              size={Platform.OS === "ios" ? 52 : 52}
+                            />
                             <Text
-                              style={[
-                                s.tipoChipLabel,
-                                { color: selected ? tipo.color : c.textSecondary },
-                              ]}>
+                              style={[s.tipoChipLabel, { color: c.textSecondary }]}>
                               {tipo.label}
                             </Text>
                           </TouchableOpacity>
@@ -474,22 +564,31 @@ export default function ModalVehiculos({
                       style={[
                         s.confirmBtn,
                         { backgroundColor: c.accent },
-                        (!placaInput.trim() || !tipoCamionInput) && { opacity: 0.4 },
+                        (!placaInput.trim() || !tipoCamionInput) && {
+                          opacity: 0.4,
+                        },
                       ]}
                       onPress={handleAgregarVehiculo}
-                      disabled={!placaInput.trim() || !tipoCamionInput || guardando}>
+                      disabled={
+                        !placaInput.trim() || !tipoCamionInput || guardando
+                      }>
                       {guardando ? (
                         <ActivityIndicator size="small" color={c.accentText} />
                       ) : (
-                        <Text style={[s.confirmBtnText, { color: c.accentText }]}>
+                        <Text
+                          style={[s.confirmBtnText, { color: c.accentText }]}>
                           Registrar vehículo
                         </Text>
                       )}
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity style={s.cancelTouchable} onPress={cerrarModal}>
-                    <Text style={[s.cancelText, { color: c.textSecondary }]}>Cerrar</Text>
+                  <TouchableOpacity
+                    style={s.cancelTouchable}
+                    onPress={cerrarModal}>
+                    <Text style={[s.cancelText, { color: c.textSecondary }]}>
+                      Cerrar
+                    </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </View>
@@ -535,7 +634,6 @@ const s = StyleSheet.create({
   vehicleOptionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
@@ -598,7 +696,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     borderRadius: 14,
-    borderWidth: 1.5,
     padding: 12,
     marginRight: 10,
     minWidth: 72,
