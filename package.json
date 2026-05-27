@@ -69,6 +69,7 @@
     "@react-native-community/cli": "^19.1.0",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
+    "dotenv": "^17.4.2",
     "eslint": "^9.31.0",
     "prettier": "^3.6.2",
     "react-native-svg-transformer": "^1.5.1",

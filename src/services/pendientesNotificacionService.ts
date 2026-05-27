@@ -2,7 +2,7 @@
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResumenPendientes, formatCOP } from "./pendientesService";
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../config/aiConfig";
+import { callGemini } from "../config/aiConfig";
 
 // ─── Tipos mínimos del ingreso que necesitamos aquí ─────────────────────────
 interface PendienteResumido {
@@ -51,8 +51,8 @@ export async function programarRecordatorioIACobros(
       }
     } catch {}
 
-    // ── 2. Si no hay caché válido, llamar a Gemini ─────────────────────────
-    if (!mensaje && GEMINI_API_KEY) {
+    // ── 2. Si no hay caché válido, llamar a Gemini vía Edge Function ──────────
+    if (!mensaje) {
       const hoy  = new Date(); hoy.setHours(0, 0, 0, 0);
       const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
       const lines = pendientes.slice(0, 4).map((p) => {
@@ -69,22 +69,11 @@ export async function programarRecordatorioIACobros(
         `Español colombiano, informal, sin emojis, sin comillas. Solo el texto.`;
 
       try {
-        const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents:         [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 70 },
-          }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const raw  = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim()
-            .replace(/^["'`«»]+|["'`«»]+$/g, "");
-          if (raw) {
-            mensaje = raw;
-            await AsyncStorage.setItem(CACHE_IA_NOTIF, JSON.stringify({ ts: Date.now(), msg: raw })).catch(() => {});
-          }
+        const { text } = await callGemini(prompt, { maxOutputTokens: 70 });
+        const raw = (text ?? "").trim().replace(/^["'`«»]+|["'`«»]+$/g, "");
+        if (raw) {
+          mensaje = raw;
+          await AsyncStorage.setItem(CACHE_IA_NOTIF, JSON.stringify({ ts: Date.now(), msg: raw })).catch(() => {});
         }
       } catch {}
     }

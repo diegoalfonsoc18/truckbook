@@ -86,15 +86,20 @@ function AppContent() {
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         if (session?.user) {
+          // Cargar rol y datos ANTES de mostrar AppStack para que
+          // getInitialRouteName() reciba el rol correcto desde el primer render.
+          try {
+            await Promise.all([
+              asegurarUsuarioEnDB(session.user),
+              useRoleStore.getState().cargarRolDesdeDB(session.user.id),
+              useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
+            ]);
+          } catch (err) {
+            logger.error("❌ Error en sync auth:", err);
+          }
           setSession(session);
-          // Sincronizar en background — no bloquear con loading spinner
-          Promise.all([
-            asegurarUsuarioEnDB(session.user),
-            useRoleStore.getState().cargarRolDesdeDB(session.user.id),
-            useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
-          ]).catch((err) => logger.error("❌ Error en sync auth:", err));
         } else {
           // Logout: limpiar rol y vehículo
           useRoleStore.getState().clearRole();

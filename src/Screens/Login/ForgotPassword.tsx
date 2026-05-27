@@ -39,7 +39,7 @@ export default function ForgotPassword({ navigation }: Props) {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://tudominio.com/update-password",
+        redirectTo: "truckbook://auth/callback",
       });
 
       if (error) {

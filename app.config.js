@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export default {
   expo: {
     name: "TruckBook",
@@ -80,8 +82,8 @@ export default {
       ],
     ],
     extra: {
-      supabaseUrl: process.env.SUPABASE_URL ?? "https://erinesvycnvmqbsrawlk.supabase.co",
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyaW5lc3Z5Y252bXFic3Jhd2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzY5NjgsImV4cCI6MjA5Mjc1Mjk2OH0.mPMGwgcrcAfepUFs19PD75XjkPDIKRqzYWXWcAsQ0nM",
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
       geminiApiKey: process.env.GEMINI_API_KEY ?? "",
       visionApiKey: process.env.VISION_API_KEY ?? "",
       eas: {

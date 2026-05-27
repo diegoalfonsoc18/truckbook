@@ -9,7 +9,7 @@ import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import supabase from "../../../config/SupaBaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../../../config/aiConfig";
+import { callGemini } from "../../../config/aiConfig";
 import {
   fmtI, diasDesde, labelDias, avatarColor, initials,
   extraerTelDesc, mensajeCobroWA, formatearTel,
@@ -60,7 +60,6 @@ export function ModalPendientes({
           }
         }
       } catch {}
-      if (!GEMINI_API_KEY) return;
       if (!cancelled) setLoadingGem(true);
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -82,28 +81,16 @@ export function ModalPendientes({
         `Eres asistente de un camionero colombiano. Tiene ${pendientes.length} cuenta(s) por cobrar: ${lines}. Total: ${fmtI(total)}.\n` +
         `Genera UN consejo corto (máximo 80 caracteres) para motivarlo a cobrar hoy. Español colombiano informal. Sin emojis. Solo el texto.`;
       try {
-        const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 60 },
-          }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const msg = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "")
-            .trim()
-            .replace(/^["'`]+|["'`]+$/g, "");
-          if (!cancelled && msg) {
-            setGeminiMsg(msg);
-            try {
-              await AsyncStorage.setItem(
-                CACHE_PEND_IA,
-                JSON.stringify({ ts: Date.now(), msg }),
-              );
-            } catch {}
-          }
+        const { text } = await callGemini(prompt, { maxOutputTokens: 60 });
+        const msg = (text ?? "").trim().replace(/^["'`]+|["'`]+$/g, "");
+        if (!cancelled && msg) {
+          setGeminiMsg(msg);
+          try {
+            await AsyncStorage.setItem(
+              CACHE_PEND_IA,
+              JSON.stringify({ ts: Date.now(), msg }),
+            );
+          } catch {}
         }
       } catch {}
       if (!cancelled) setLoadingGem(false);

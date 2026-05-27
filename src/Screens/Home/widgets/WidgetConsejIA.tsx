@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../../../config/aiConfig";
+import { callGemini } from "../../../config/aiConfig";
 import { useGastosStore } from "../../../store/GastosStore";
 import { WProps } from "../homeUtils";
 
@@ -78,8 +78,6 @@ export default function WidgetConsejIA({ isDark }: WProps) {
 
   const fetchConsejo = useCallback(
     async (force = false) => {
-      if (!GEMINI_API_KEY) return;
-
       if (!force) {
         try {
           const raw = await AsyncStorage.getItem(CACHE_KEY);
@@ -96,19 +94,13 @@ export default function WidgetConsejIA({ isDark }: WProps) {
       setCargando(true);
       setError(false);
       try {
-        const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: buildPrompt() }] }],
-            generationConfig: { maxOutputTokens: 150, temperature: 0.7 },
-          }),
+        const { text, error: geminiError } = await callGemini(buildPrompt(), {
+          maxOutputTokens: 150,
+          temperature: 0.7,
         });
-        const json = await res.json();
-        const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
         if (text) {
-          setConsejo(text);
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ text, ts: Date.now(), fp: fingerprint }));
+          setConsejo(text.trim());
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ text: text.trim(), ts: Date.now(), fp: fingerprint }));
         } else {
           setError(true);
         }
@@ -133,7 +125,7 @@ export default function WidgetConsejIA({ isDark }: WProps) {
   const muted  = isDark ? "#64748B" : "#6B7280";
   const GREEN  = "#22C55E";
 
-  if (!GEMINI_API_KEY) return null;
+  // El widget siempre se muestra; si la Edge Function no está disponible, mostrará el error inline
 
   return (
     <View
