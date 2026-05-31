@@ -40,7 +40,7 @@ export default {
         backgroundColor: "#393E46",
       },
       package: "com.truckbook.app",
-      permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "READ_CONTACTS"],
+      // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
     },
     web: {
       favicon: "./assets/favicon.png",
