@@ -298,15 +298,22 @@ export default function LoginScreen({ navigation }: Props) {
                 </TouchableOpacity>
 
                 {Platform.OS === "ios" && (
-                  <AppleAuthentication.AppleAuthenticationButton
-                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                    buttonStyle={isDark
-                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                    cornerRadius={14}
-                    style={[s.socialBtn, s.appleBtn]}
+                  <TouchableOpacity
+                    style={[
+                      s.socialBtn,
+                      { backgroundColor: c.cardBg, borderColor: c.border },
+                      shadow,
+                    ]}
                     onPress={handleAppleLogin}
-                  />
+                    disabled={loading}
+                    activeOpacity={0.8}>
+                    <Ionicons
+                      name="logo-apple"
+                      size={19}
+                      color={c.text}
+                    />
+                    <Text style={[s.socialText, { color: c.text }]}>Apple</Text>
+                  </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
@@ -433,7 +440,6 @@ const s = StyleSheet.create({
   },
   socialIcon: { width: 19, height: 19 },
   socialText: { fontSize: 14, fontWeight: "600" },
-  appleBtn: { height: COMPACT ? 44 : 50, borderWidth: 0 },
 
   footer: {
     flexDirection: "row",
