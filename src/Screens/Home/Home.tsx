@@ -33,7 +33,6 @@ import ItemIcon, { IconName } from "../../components/ItemIcon";
 import {
   MotorIcon,
   LicenciaIcon,
-  MultasIcon,
   SoatIcon,
 } from "../../assets/icons/icons";
 import { HOME_COLORS } from "./HomeConstants";
@@ -246,12 +245,6 @@ function ListRow({
           />
         ) : item.id === "soat" ? (
           <SoatIcon
-            width={Platform.OS === "android" ? 40 : 54}
-            height={Platform.OS === "android" ? 40 : 54}
-            color={accent}
-          />
-        ) : item.id === "multas" || item.id === "comparendos" ? (
-          <MultasIcon
             width={Platform.OS === "android" ? 40 : 54}
             height={Platform.OS === "android" ? 40 : 54}
             color={accent}

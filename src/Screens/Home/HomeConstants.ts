@@ -68,7 +68,6 @@ export const HOME_COLORS = {
   heroIconSizes: {
     tecnicomecanica: 90, // hero card 1
     soat: 100, // hero card 2
-    multas: 72,
     mantenimiento: 72,
     licencia: 72,
   },

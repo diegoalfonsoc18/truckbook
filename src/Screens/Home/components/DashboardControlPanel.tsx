@@ -27,7 +27,6 @@ const ICON_MAP_WEBP: Record<string, any> = {
   // legacy
   tecnicomecanica: require("../../../assets/icons/motor.webp"),
   soat:            require("../../../assets/icons/shield.webp"),
-  multas:          require("../../../assets/icons/comparendo.webp"),
   licencia:        require("../../../assets/icons/licencia.webp"),
 };
 
