@@ -491,7 +491,13 @@ export default function Cuenta() {
   const handleItemPress = (id: string) => {
     if (id === "profile") return openProfile();
     if (id === "security") return openSecurity();
-    if (id === "terms" || id === "privacy" || id === "dataauth")
+    if (id === "privacy") {
+      Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html").catch(() =>
+        openLegal("privacy")
+      );
+      return;
+    }
+    if (id === "terms" || id === "dataauth")
       return openLegal(id as LegalDoc);
     if (id === "help") {
       Linking.openURL("mailto:truckbookco@gmail.com?subject=Ayuda%20TruckBook").catch(() =>
