@@ -1,5 +1,5 @@
 // src/services/insightsService.ts
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../config/aiConfig";
+import { callGemini } from "../config/aiConfig";
 import { ResumenPendientes, formatCOP } from "./pendientesService";
 
 export interface InsightsPendientes {
@@ -11,7 +11,6 @@ export interface InsightsPendientes {
 export async function generarInsights(
   resumen: ResumenPendientes
 ): Promise<InsightsPendientes | null> {
-  if (!GEMINI_API_KEY) return null;
 
   const {
     countPorCobrar,
@@ -48,20 +47,8 @@ Responde SOLO JSON sin markdown:
 }`;
 
   try {
-    const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 350 },
-      }),
-    });
-
-    if (!res.ok) return null;
-
-    const json = await res.json();
-    const text: string =
-      json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const { text, error } = await callGemini(prompt, { temperature: 0.4, maxOutputTokens: 350 });
+    if (error || !text) return null;
 
     const cleaned = text
       .replace(/^```json\s*/i, "")

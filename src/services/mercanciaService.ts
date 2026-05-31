@@ -9,7 +9,7 @@
 //     específico de cada vehículo mejore la normalización con el tiempo.
 //
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../config/aiConfig";
+import { callGemini } from "../config/aiConfig";
 
 const CACHE_KEY = "@truckbook_mercancias_norm_v3"; // v3: incluye tipoCamion en clave
 const TTL_MS    = 30 * 24 * 3_600_000; // 30 días por entrada
@@ -169,7 +169,7 @@ async function geminiNormalize(
   brutos: string[],
   tipoCamion: string,
 ): Promise<Record<string, string>> {
-  if (!GEMINI_API_KEY || brutos.length === 0) return {};
+  if (brutos.length === 0) return {};
 
   // Si el tipo de camión tiene contexto predefinido lo usa; si no, construye
   // un fallback dinámico que al menos incluye el nombre del tipo de camión
@@ -198,19 +198,8 @@ async function geminiNormalize(
     `Mercancías a normalizar:\n${JSON.stringify(brutos)}`;
 
   try {
-    const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents:         [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 512 },
-      }),
-    });
-
-    if (!res.ok) return {};
-
-    const json = await res.json();
-    const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const { text, error } = await callGemini(prompt, { maxOutputTokens: 512 });
+    if (error || !text) return {};
 
     const cleaned = text
       .replace(/^```json\s*/i, "")

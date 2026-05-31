@@ -1,4 +1,4 @@
-import { GEMINI_API_KEY, GEMINI_ENDPOINT } from "../config/aiConfig";
+import { callGemini } from "../config/aiConfig";
 import logger from "../utils/logger";
 
 export type TipoTransaccion = "gasto" | "ingreso";
@@ -167,59 +167,37 @@ export function componerDescripcion(data: DatosFactura): string {
 const MAX_RETRIES = 3;
 const INITIAL_DELAY_MS = 10_000;
 
-async function fetchConRetry(
-  body: string,
+async function callGeminiWithRetry(
+  prompt: string,
+  generationConfig: { temperature: number; maxOutputTokens: number },
   retries = MAX_RETRIES,
-): Promise<Response> {
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
-  if (res.status === 429 && retries > 0) {
+): Promise<{ text?: string; error?: string }> {
+  const result = await callGemini(prompt, generationConfig);
+  if (result.error && retries > 0) {
     const delay = INITIAL_DELAY_MS * (MAX_RETRIES - retries + 1);
-    logger.warn(`Gemini 429 — reintentando en ${delay / 1000}s (${retries} intentos restantes)`);
+    logger.warn(`Gemini error — reintentando en ${delay / 1000}s (${retries} intentos restantes)`);
     await new Promise((r) => setTimeout(r, delay));
-    return fetchConRetry(body, retries - 1);
+    return callGeminiWithRetry(prompt, generationConfig, retries - 1);
   }
-  return res;
+  return result;
 }
 
 export async function analizarFactura(
   textoOCR: string,
   tipo: TipoTransaccion,
 ): Promise<{ data?: DatosFactura; error?: string }> {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === "TU_API_KEY_AQUI") {
-    return {
-      error: "API key de Gemini no configurada. Edita src/config/aiConfig.ts",
-    };
-  }
-
   try {
     const prompt = buildPrompt(tipo) + "\n\n--- TEXTO OCR ---\n" + textoOCR;
-    const body = JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: prompt }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 800,
-      },
+
+    const { text, error } = await callGeminiWithRetry(prompt, {
+      temperature: 0.1,
+      maxOutputTokens: 800,
     });
 
-    const response = await fetchConRetry(body);
-
-    if (!response.ok) {
-      const txt = await response.text();
-      logger.error("Gemini API error:", response.status, txt);
-      return { error: `Error de Gemini (${response.status})` };
+    if (error) {
+      logger.error("Gemini API error:", error);
+      return { error: `Error de Gemini: ${error}` };
     }
-
-    const json = await response.json();
-    const text: string | undefined =
-      json?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
       return { error: "Gemini no devolvió texto" };
