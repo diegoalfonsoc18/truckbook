@@ -20,6 +20,7 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import * as AppleAuthentication from "expo-apple-authentication";
 import {
   useTheme,
   getShadow,
@@ -65,6 +66,34 @@ export default function LoginScreen({ navigation }: Props) {
       if (error) Alert.alert("Error", error.message);
     } catch {
       Alert.alert("Error", "No se pudo conectar. Verifica tu conexión.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    Keyboard.dismiss();
+    setLoading(true);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        Alert.alert("Error", "No se recibió token de Apple.");
+        return;
+      }
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+      });
+      if (error) Alert.alert("Error", error.message);
+    } catch (e: any) {
+      if (e.code !== "ERR_REQUEST_CANCELED") {
+        Alert.alert("Error", "No se pudo completar el inicio de sesión con Apple.");
+      }
     } finally {
       setLoading(false);
     }
@@ -267,6 +296,19 @@ export default function LoginScreen({ navigation }: Props) {
                   />
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
                 </TouchableOpacity>
+
+                {Platform.OS === "ios" && (
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                    buttonStyle={isDark
+                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                    cornerRadius={14}
+                    style={[s.socialBtn, s.appleBtn]}
+                    onPress={handleAppleLogin}
+                  />
+                )}
+
                 <TouchableOpacity
                   style={[
                     s.socialBtn,
@@ -391,6 +433,7 @@ const s = StyleSheet.create({
   },
   socialIcon: { width: 19, height: 19 },
   socialText: { fontSize: 14, fontWeight: "600" },
+  appleBtn: { height: COMPACT ? 44 : 50, borderWidth: 0 },
 
   footer: {
     flexDirection: "row",

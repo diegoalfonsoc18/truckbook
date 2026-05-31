@@ -70,6 +70,7 @@ export default {
             "TruckBook necesita acceso a tus contactos para agregar clientes a la cuenta de cobro.",
         },
       ],
+      "expo-apple-authentication",
       "expo-secure-store",
       [
         "expo-image-picker",
