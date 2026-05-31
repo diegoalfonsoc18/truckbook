@@ -7,10 +7,8 @@ import type {
   ApitudeResolucion,
 } from "../assets/types/simit.types";
 
-// API key de Apitude — se lee desde app.config.js (variable de entorno)
-// Agregar APITUDE_API_KEY al .env y a EAS Secrets, nunca hardcodear aquí
-import Constants from "expo-constants";
-const APITUDE_API_KEY: string = Constants.expoConfig?.extra?.apitudeApiKey ?? "";
+// Las consultas SIMIT van por simit-proxy Edge Function (server-side key)
+import supabase from "../config/SupaBaseConfig";
 
 class SimitService {
   // Apitude SIMIT-CO (datos en tiempo real)
@@ -63,79 +61,15 @@ class SimitService {
       if (cached) return cached;
     }
 
-    // Si no hay API key, ir directo a fallback
-    if (!APITUDE_API_KEY) {
-      return {
-        exito: false,
-        cedula: cedulaLimpia,
-        cantidad: 0,
-        multas: [],
-        multasPendientes: 0,
-        multasPagadas: 0,
-        valorTotal: 0,
-        valorPendiente: 0,
-        error: "API key de Apitude no configurada",
-        timestamp: new Date().toISOString(),
-        fuente: "apitude",
-      };
-    }
-
     try {
-      // 1. Crear solicitud
-      const postResponse = await fetch(this.APITUDE_URL, {
-        method: "POST",
-        headers: {
-          "x-api-key": APITUDE_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          document_type: "cedula",
-          document_number: cedulaLimpia,
-        }),
+      // Llamar al proxy server-side (la API key vive en Supabase Vault)
+      const { data: proxyData, error: proxyError } = await supabase.functions.invoke("simit-proxy", {
+        body: { cedula: cedulaLimpia },
       });
 
-      if (!postResponse.ok) {
-        throw new Error(`Error al crear solicitud: ${postResponse.status}`);
-      }
+      if (proxyError) throw new Error(proxyError.message);
 
-      const postData = await postResponse.json();
-      const requestId = postData.request_id;
-
-      if (!requestId) {
-        throw new Error("No se recibió request_id");
-      }
-
-      // 2. Poll para obtener resultado (max 30 segundos)
-      let resultado: ApitudeResponse | null = null;
-      const maxIntentos = 15;
-      for (let i = 0; i < maxIntentos; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-
-        const getResponse = await fetch(`${this.APITUDE_URL}${requestId}/`, {
-          method: "GET",
-          headers: {
-            "x-api-key": APITUDE_API_KEY,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (getResponse.ok) {
-          const getData: ApitudeResponse = await getResponse.json();
-          if (getData.result?.status === 200 || getData.result?.status === 404) {
-            resultado = getData;
-            break;
-          }
-          // Si status es otro, seguir esperando
-          if (getData.result?.data) {
-            resultado = getData;
-            break;
-          }
-        }
-      }
-
-      if (!resultado) {
-        throw new Error("Tiempo de espera agotado");
-      }
+      const resultado: ApitudeResponse = proxyData?.data;
 
       if (resultado.result?.status === 404) {
         const res: RespuestaMultas = {
@@ -348,8 +282,8 @@ class SimitService {
     params: { cedula?: string; placa?: string },
     usarCache: boolean = true
   ): Promise<RespuestaMultas> {
-    // Intentar Apitude primero si hay cédula y API key
-    if (params.cedula && APITUDE_API_KEY) {
+    // Intentar proxy SIMIT si hay cédula
+    if (params.cedula) {
       const resultado = await this.consultarPorCedula(
         params.cedula,
         usarCache
@@ -380,7 +314,7 @@ class SimitService {
   }
 
   tieneApiKey(): boolean {
-    return !!APITUDE_API_KEY;
+    return true; // La key vive en Supabase Vault (server-side)
   }
 }
 
