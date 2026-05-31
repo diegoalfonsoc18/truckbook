@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import supabase from "../config/SupaBaseConfig";
+import { useSyncManager } from "../hooks/useSyncManager";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
 import { useVehiculoStore } from "../store/VehiculoStore";
@@ -8,6 +9,9 @@ import logger from "../utils/logger";
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const { placa } = useVehiculoStore();
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Sincronización automática cuando vuelve internet
+  useSyncManager();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

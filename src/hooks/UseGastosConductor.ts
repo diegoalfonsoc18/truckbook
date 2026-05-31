@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
+import { useOfflineQueueStore } from "../store/OfflineQueueStore";
+import logger from "../utils/logger";
 
 export const useGastosConductor = (placa?: string | null) => {
   const {
@@ -10,6 +13,7 @@ export const useGastosConductor = (placa?: string | null) => {
     editarGasto,
     eliminarGasto,
   } = useGastosStore();
+  const { enqueue } = useOfflineQueueStore();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +22,6 @@ export const useGastosConductor = (placa?: string | null) => {
       setCargando(false);
       return;
     }
-
     cargarGastos();
   }, [placa]);
 
@@ -36,7 +39,8 @@ export const useGastosConductor = (placa?: string | null) => {
       if (err) throw err;
       setGastosPorPlaca(placa || "", data || []);
     } catch (err: any) {
-      setError(err.message);
+      // Sin conexión — usar caché del store
+      logger.warn("⚠️ Sin conexión, usando caché de gastos:", err.message);
     } finally {
       setCargando(false);
     }
@@ -45,22 +49,41 @@ export const useGastosConductor = (placa?: string | null) => {
   const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">
   ): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { data, error: err } = await supabase
-        .from("conductor_gastos")
-        .insert([gasto])
-        .select();
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected && netState.isInternetReachable;
 
-      if (err) throw err;
+    if (isOnline) {
+      // Online: guardar directo en Supabase
+      try {
+        const { data, error: err } = await supabase
+          .from("conductor_gastos")
+          .insert([gasto])
+          .select();
 
-      if (data && data[0]) {
-        agregarGasto(data[0] as Gasto);
+        if (err) throw err;
+        if (data && data[0]) agregarGasto(data[0] as Gasto);
+        return { success: true };
+      } catch (err: any) {
+        setError(err.message);
+        return { success: false, error: err.message };
       }
-
+    } else {
+      // Offline: guardar localmente con ID temporal y encolar
+      const tempId = `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const gastoLocal: Gasto = {
+        ...gasto,
+        id: tempId,
+        created_at: new Date().toISOString(),
+      };
+      agregarGasto(gastoLocal);
+      enqueue({
+        table: "conductor_gastos",
+        action: "insert",
+        recordId: tempId,
+        data: gastoLocal,
+      });
+      logger.log("📥 Gasto guardado offline, se sincronizará al reconectarse");
       return { success: true };
-    } catch (err: any) {
-      setError(err.message);
-      return { success: false, error: err.message };
     }
   };
 
@@ -68,38 +91,75 @@ export const useGastosConductor = (placa?: string | null) => {
     id: string,
     updates: Partial<Gasto>
   ): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { error: err } = await supabase
-        .from("conductor_gastos")
-        .update(updates)
-        .eq("id", id);
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected && netState.isInternetReachable;
 
-      if (err) throw err;
-
+    // Si es un ID temporal (offline), solo actualizar localmente
+    if (id.startsWith("offline_")) {
       editarGasto(id, updates);
       return { success: true };
-    } catch (err: any) {
-      setError(err.message);
-      return { success: false, error: err.message };
+    }
+
+    if (isOnline) {
+      try {
+        const { error: err } = await supabase
+          .from("conductor_gastos")
+          .update(updates)
+          .eq("id", id);
+
+        if (err) throw err;
+        editarGasto(id, updates);
+        return { success: true };
+      } catch (err: any) {
+        setError(err.message);
+        return { success: false, error: err.message };
+      }
+    } else {
+      editarGasto(id, updates);
+      enqueue({
+        table: "conductor_gastos",
+        action: "update",
+        recordId: id,
+        data: updates,
+      });
+      return { success: true };
     }
   };
 
   const eliminarGastoAsync = async (
     id: string
   ): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { error: err } = await supabase
-        .from("conductor_gastos")
-        .delete()
-        .eq("id", id);
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected && netState.isInternetReachable;
 
-      if (err) throw err;
-
+    // Si es un ID temporal, solo borrar localmente (nunca llegó a Supabase)
+    if (id.startsWith("offline_")) {
       eliminarGasto(id);
       return { success: true };
-    } catch (err: any) {
-      setError(err.message);
-      return { success: false, error: err.message };
+    }
+
+    if (isOnline) {
+      try {
+        const { error: err } = await supabase
+          .from("conductor_gastos")
+          .delete()
+          .eq("id", id);
+
+        if (err) throw err;
+        eliminarGasto(id);
+        return { success: true };
+      } catch (err: any) {
+        setError(err.message);
+        return { success: false, error: err.message };
+      }
+    } else {
+      eliminarGasto(id);
+      enqueue({
+        table: "conductor_gastos",
+        action: "delete",
+        recordId: id,
+      });
+      return { success: true };
     }
   };
 
