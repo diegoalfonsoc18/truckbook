@@ -99,7 +99,7 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "facebook") => {
+  const handleSocialLogin = async (provider: "google") => {
     Keyboard.dismiss();
     setLoading(true);
     try {
@@ -316,23 +316,6 @@ export default function LoginScreen({ navigation }: Props) {
                   </TouchableOpacity>
                 )}
 
-                <TouchableOpacity
-                  style={[
-                    s.socialBtn,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
-                    shadow,
-                  ]}
-                  onPress={() => handleSocialLogin("facebook")}
-                  disabled={loading}
-                  activeOpacity={0.8}>
-                  <Image
-                    source={require("../../assets/img/facebook.png")}
-                    style={s.socialIcon}
-                  />
-                  <Text style={[s.socialText, { color: c.text }]}>
-                    Facebook
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
