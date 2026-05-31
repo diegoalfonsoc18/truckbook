@@ -26,7 +26,6 @@ import Reanimated, {
 } from "react-native-reanimated";
 import supabase from "../../config/SupaBaseConfig";
 import { useTheme, getShadow } from "../../constants/Themecontext";
-import { useRoleStore } from "../../store/RoleStore";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -196,7 +195,6 @@ Superintendencia de Industria y Comercio: www.sic.gov.co`,
 export default function Cuenta() {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
-  const role = useRoleStore((s) => s.role);
   const placa = useVehiculoStore((s) => s.placa);
   const limpiarGastos = useGastosStore((s) => s.limpiarGastos);
   const limpiarIngresos = useIngresosStore((s) => s.limpiarIngresos);
@@ -504,7 +502,7 @@ export default function Cuenta() {
   };
 
   // ─── Derived display values ───────────────────────────────────────────────
-  const roleMeta = ROLE_META[role ?? "conductor"] ?? ROLE_META.conductor;
+  const roleMeta = ROLE_META["conductor"];
   const displayName =
     [nombre, apellido].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||

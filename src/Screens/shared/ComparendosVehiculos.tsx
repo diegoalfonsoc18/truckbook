@@ -19,7 +19,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
-import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import supabase from "../../config/SupaBaseConfig";
 import {
@@ -38,7 +37,6 @@ export default function ComparendosVehiculos() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
-  const role = useRoleStore((s) => s.role);
 
   const [vehiculos, setVehiculos] = useState<VehiculoComparendo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +60,7 @@ export default function ComparendosVehiculos() {
 
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
-    const { data } = role === "administrador"
+    const { data } = false
       ? await cargarTodosVehiculosConConductores()
       : await cargarVehiculosPropietarioConConductores(user.id);
 
@@ -84,7 +82,7 @@ export default function ComparendosVehiculos() {
     // Con comparendos primero
     resultado.sort((a, b) => b.multas_pendientes - a.multas_pendientes);
     setVehiculos(resultado);
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   useEffect(() => { setLoading(true); cargarDatos().finally(() => setLoading(false)); }, [cargarDatos]);
 

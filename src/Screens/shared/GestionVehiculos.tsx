@@ -25,7 +25,6 @@ import { Ionicons } from "@expo/vector-icons";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Reanimated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useAuth } from "../../hooks/useAuth";
-import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { TipoCamion } from "../../store/VehiculoStore";
 import supabase from "../../config/SupaBaseConfig";
@@ -159,7 +158,6 @@ export default function GestionVehiculos() {
   const shadow = getShadow(isDark, "md");
   const { user } = useAuth();
   const navigation = useNavigation();
-  const role = useRoleStore((s) => s.role);
 
   const [vehiculos, setVehiculos] = useState<VehiculoInfo[]>([]);
   const [recientes, setRecientes] = useState<VehiculoInfo[]>([]);
@@ -185,7 +183,7 @@ export default function GestionVehiculos() {
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
     const { data } =
-      role === "administrador"
+      false
         ? await cargarTodosVehiculosConConductores()
         : await cargarVehiculosPropietarioConConductores(user.id);
 
@@ -224,7 +222,7 @@ export default function GestionVehiculos() {
     } catch {
       // no-op
     }
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   useEffect(() => {
     const init = async () => {

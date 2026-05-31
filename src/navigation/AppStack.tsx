@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRoleStore } from "../store/RoleStore";
 import { useVehiculoStore } from "../store/VehiculoStore";
 import GastosNavigation from "../Screens/Gastos/Gastos";
 import IngresosNavigation from "./IngresosNavigation";
@@ -10,7 +9,6 @@ import FinanzasNavigation from "../Screens/FinanzasGeneral/FinanzasGenerales";
 import ConductorNavigation from "./ConductorNavigation";
 import Account from "../Screens/Cuenta/Cuenta";
 import { useTheme } from "../constants/Themecontext";
-// import FabEscanear from "../components/FabEscanear"; // desactivado v1
 import {
   renderHome,
   renderGastos,
@@ -23,57 +21,22 @@ const Tab = createBottomTabNavigator();
 
 export default function AppStack() {
   const { colors, isDark } = useTheme();
-  const role = useRoleStore((state) => state.role);
   const insets = useSafeAreaInsets();
 
-  // Esperar a que Zustand rehidrate AMBOS stores desde AsyncStorage antes de montar.
-  // RoleStore → getInitialRouteName() recibe el rol real y no null.
-  // VehiculoStore → DataProvider recibe la placa real desde el primer render,
-  //                 evitando la race condition placa=null → carga vacía → placa real.
-  const bothHydrated =
-    useRoleStore.persist.hasHydrated() &&
-    useVehiculoStore.persist.hasHydrated();
-
-  const [hydrated, setHydrated] = useState(() => bothHydrated);
+  // Esperar a que Zustand rehidrate VehiculoStore desde AsyncStorage
+  const vehiculoHydrated = useVehiculoStore.persist.hasHydrated();
+  const [hydrated, setHydrated] = useState(() => vehiculoHydrated);
 
   useEffect(() => {
     if (hydrated) return;
-
-    let roleOk = useRoleStore.persist.hasHydrated();
-    let vehiculoOk = useVehiculoStore.persist.hasHydrated();
-
-    const check = () => {
-      if (roleOk && vehiculoOk) setHydrated(true);
-    };
-
-    const unsubRole = roleOk
-      ? undefined
-      : useRoleStore.persist.onFinishHydration(() => {
-          roleOk = true;
-          check();
-        });
-
-    const unsubVehiculo = vehiculoOk
-      ? undefined
-      : useVehiculoStore.persist.onFinishHydration(() => {
-          vehiculoOk = true;
-          check();
-        });
-
-    return () => {
-      unsubRole?.();
-      unsubVehiculo?.();
-    };
+    const unsub = useVehiculoStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+    return () => unsub?.();
   }, []);
 
   if (!hydrated) return null;
 
-  const getInitialRouteName = (): "Home" | "Cuenta" => {
-    if (!role) return "Cuenta";
-    return "Home";
-  };
-
-  // Estilos dinámicos para el tab bar — respeta el nav bar de Android
   const tabBarStyle = {
     ...styles.tabBar,
     backgroundColor: colors.cardBg,
@@ -87,46 +50,30 @@ export default function AppStack() {
   return (
     <View style={styles.root}>
       <Tab.Navigator
-        initialRouteName={getInitialRouteName()}
+        initialRouteName="Home"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarStyle: tabBarStyle,
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textSecondary,
           tabBarLabelStyle: styles.tabBarLabel,
-
           tabBarIcon: ({ focused, color, size }) => {
             switch (route.name) {
-              case "Home":
-                return renderHome({ color, size, focused });
-              case "Gastos":
-                return renderGastos({ color, size, focused });
-              case "Ingresos":
-                return renderIngresos({ color, size, focused });
-              case "Reportes":
-                return renderFinanzas({ color, size, focused });
-              case "Cuenta":
-                return renderCuenta({ color, size, focused });
-              default:
-                return null;
+              case "Home":    return renderHome({ color, size, focused });
+              case "Gastos":  return renderGastos({ color, size, focused });
+              case "Ingresos": return renderIngresos({ color, size, focused });
+              case "Reportes": return renderFinanzas({ color, size, focused });
+              case "Cuenta":  return renderCuenta({ color, size, focused });
+              default: return null;
             }
           },
         })}>
-        {/* CONDUCTOR (único rol activo por ahora) */}
-        {role && (
-          <>
-            <Tab.Screen name="Home" component={ConductorNavigation} />
-            <Tab.Screen name="Gastos" component={GastosNavigation} />
-            <Tab.Screen name="Ingresos" component={IngresosNavigation} />
-            <Tab.Screen name="Reportes" component={FinanzasNavigation} />
-            <Tab.Screen name="Cuenta" component={Account} />
-          </>
-        )}
-
-        {/* SIN ROL */}
-        {!role && <Tab.Screen name="Cuenta" component={Account} />}
+        <Tab.Screen name="Home"     component={ConductorNavigation} />
+        <Tab.Screen name="Gastos"   component={GastosNavigation} />
+        <Tab.Screen name="Ingresos" component={IngresosNavigation} />
+        <Tab.Screen name="Reportes" component={FinanzasNavigation} />
+        <Tab.Screen name="Cuenta"   component={Account} />
       </Tab.Navigator>
-      {/* FAB desactivado v1: {role && <FabEscanear />} */}
     </View>
   );
 }

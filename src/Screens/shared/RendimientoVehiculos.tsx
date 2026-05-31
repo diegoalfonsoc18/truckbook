@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
-import { useRoleStore } from "../../store/RoleStore";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import supabase from "../../config/SupaBaseConfig";
 import {
@@ -43,7 +42,6 @@ export default function RendimientoVehiculos() {
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
-  const role = useRoleStore((s) => s.role);
 
   const [vehiculos, setVehiculos] = useState<VehiculoRendimiento[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +71,7 @@ export default function RendimientoVehiculos() {
 
     try {
       const { data: vehiculosData } =
-        role === "administrador"
+        false
           ? await cargarTodosVehiculosConConductores()
           : await cargarVehiculosPropietarioConConductores(user.id);
 
@@ -144,7 +142,7 @@ export default function RendimientoVehiculos() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id, role, getRangoFechas, ordenar]);
+  }, [user?.id, getRangoFechas, ordenar]);
 
   useEffect(() => {
     setLoading(true);

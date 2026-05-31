@@ -27,8 +27,6 @@ const DANGER  = "#E94560";
 type AuthStackParamList = {
   Register: undefined;
   Login: undefined;
-  SelectRole: undefined;
-  Home: undefined;
 };
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 type ValidationErrors = {
@@ -120,7 +118,7 @@ export default function Register({ navigation }: Props) {
       }
 
       if (data.session) {
-        navigation.replace("SelectRole");
+        // La sesión activa en App.tsx detecta automáticamente el login y muestra AppStack
       } else {
         Alert.alert("Registro exitoso", "Revisa tu correo para confirmar tu cuenta.");
         navigation.navigate("Login");

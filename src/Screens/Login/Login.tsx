@@ -124,7 +124,7 @@ export default function LoginScreen({ navigation }: Props) {
             {/* HERO */}
             <View style={s.hero}>
               <Image
-                source={require("../../assets/icons/parrilla.webp")}
+                source={require("../../../assets/TruckBook/grille.png")}
                 style={s.heroImg}
                 resizeMode="contain"
               />

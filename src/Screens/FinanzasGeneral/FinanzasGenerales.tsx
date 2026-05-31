@@ -29,7 +29,6 @@ import { LineChart } from "react-native-chart-kit";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
-import { useRoleStore } from "../../store/RoleStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
@@ -330,7 +329,6 @@ export default function FinanzasGenerales() {
   const c = colors;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
-  const role = useRoleStore((s) => s.role);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -391,7 +389,7 @@ export default function FinanzasGenerales() {
   const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(
     new Set(),
   );
-  const esMultiVehiculo = role === "administrador" || role === "propietario";
+  const esMultiVehiculo = false;
 
   const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
     const now = new Date();
@@ -439,7 +437,7 @@ export default function FinanzasGenerales() {
     if (!esMultiVehiculo || !user?.id) return;
     const cargarPlacas = async () => {
       const { data } =
-        role === "administrador"
+        false
           ? await cargarTodosVehiculosConConductores()
           : await cargarVehiculosPropietarioConConductores(user.id);
       const placas = data.map((v) => v.placa);
@@ -447,7 +445,7 @@ export default function FinanzasGenerales() {
       setPlacasSeleccionadas(new Set(placas));
     };
     cargarPlacas();
-  }, [user?.id, role, esMultiVehiculo]);
+  }, [user?.id, esMultiVehiculo]);
 
   const togglePlaca = (placa: string) => {
     setPlacasSeleccionadas((prev) => {

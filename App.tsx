@@ -23,7 +23,6 @@ import AppStack from "./src/navigation/AppStack";
 import AuthStack from "./src/navigation/AuthStack";
 import supabase from "./src/config/SupaBaseConfig";
 import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
-import { useRoleStore } from "./src/store/RoleStore";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
 import logger from "./src/utils/logger";
 
@@ -76,7 +75,6 @@ function AppContent() {
       if (session?.user) {
         Promise.all([
           asegurarUsuarioEnDB(session.user),
-          useRoleStore.getState().cargarRolDesdeDB(session.user.id),
           useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
         ]).catch((err) => logger.error("❌ Error en sync background:", err));
       }
@@ -88,12 +86,9 @@ function AppContent() {
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (session?.user) {
-          // Cargar rol y datos ANTES de mostrar AppStack para que
-          // getInitialRouteName() reciba el rol correcto desde el primer render.
           try {
             await Promise.all([
               asegurarUsuarioEnDB(session.user),
-              useRoleStore.getState().cargarRolDesdeDB(session.user.id),
               useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
             ]);
           } catch (err) {
@@ -101,8 +96,6 @@ function AppContent() {
           }
           setSession(session);
         } else {
-          // Logout: limpiar rol y vehículo
-          useRoleStore.getState().clearRole();
           useVehiculoStore.getState().clearVehiculo();
           setSession(null);
         }
