@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
@@ -7,6 +7,13 @@ import logger from "../utils/logger";
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const { placa } = useVehiculoStore();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
   const { setGastosPorPlaca, agregarGasto, editarGasto, eliminarGasto } =
     useGastosStore();
   const {
@@ -18,7 +25,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
   // ✅ CARGAR GASTOS AL MONTAR
   useEffect(() => {
-    if (!placa) return;
+    if (!placa || !userId) return;
 
     const cargar = async () => {
       try {
@@ -26,6 +33,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           .from("conductor_gastos")
           .select("*")
           .eq("placa", placa)
+          .eq("conductor_id", userId)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -39,11 +47,11 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     cargar();
-  }, [placa, setGastosPorPlaca]);
+  }, [placa, userId, setGastosPorPlaca]);
 
   // ✅ CARGAR INGRESOS AL MONTAR
   useEffect(() => {
-    if (!placa) return;
+    if (!placa || !userId) return;
 
     const cargar = async () => {
       try {
@@ -51,6 +59,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           .from("conductor_ingresos")
           .select("*")
           .eq("placa", placa)
+          .eq("conductor_id", userId)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -64,7 +73,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     cargar();
-  }, [placa, setIngresosPorPlaca]);
+  }, [placa, userId, setIngresosPorPlaca]);
 
   // ✅ SUSCRIBIRSE A GASTOS
   useEffect(() => {

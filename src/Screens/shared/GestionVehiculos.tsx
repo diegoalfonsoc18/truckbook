@@ -30,7 +30,6 @@ import { TipoCamion } from "../../store/VehiculoStore";
 import supabase from "../../config/SupaBaseConfig";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
 import {
-  cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
 

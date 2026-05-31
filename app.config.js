@@ -86,6 +86,7 @@ export default {
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
       geminiApiKey: process.env.GEMINI_API_KEY ?? "",
       visionApiKey: process.env.VISION_API_KEY ?? "",
+      apitudeApiKey: process.env.APITUDE_API_KEY ?? "",
       eas: {
         projectId: "494c025d-768e-41f8-a040-ee0dd05aaaf0",
       },

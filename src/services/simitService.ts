@@ -7,8 +7,10 @@ import type {
   ApitudeResolucion,
 } from "../assets/types/simit.types";
 
-// ⚠️ Colocar tu API key de Apitude aquí
-const APITUDE_API_KEY = ""; // TODO: agregar API key
+// API key de Apitude — se lee desde app.config.js (variable de entorno)
+// Agregar APITUDE_API_KEY al .env y a EAS Secrets, nunca hardcodear aquí
+import Constants from "expo-constants";
+const APITUDE_API_KEY: string = Constants.expoConfig?.extra?.apitudeApiKey ?? "";
 
 class SimitService {
   // Apitude SIMIT-CO (datos en tiempo real)

@@ -34,7 +34,6 @@ import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import {
-  cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
 import { Ionicons } from "@expo/vector-icons";

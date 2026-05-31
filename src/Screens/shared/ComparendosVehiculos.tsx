@@ -22,7 +22,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import supabase from "../../config/SupaBaseConfig";
 import {
-  cargarTodosVehiculosConConductores,
   cargarVehiculosPropietarioConConductores,
 } from "../../services/vehiculoAutorizacionService";
 

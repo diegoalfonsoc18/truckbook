@@ -45,11 +45,40 @@ serve(async (req) => {
       });
     }
 
-    // Obtener el push token del usuario destino (server-side, nunca expuesto al cliente)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Verificar que emisor y destinatario comparten al menos un vehículo.
+    // Esto evita que cualquier usuario autenticado pueda enviar push a cualquier otro.
+    const { data: placasEmisor } = await supabaseAdmin
+      .from("vehiculo_conductores")
+      .select("vehiculo_placa")
+      .eq("conductor_id", user.id);
+
+    const placas = (placasEmisor || []).map((r: any) => r.vehiculo_placa);
+
+    if (placas.length === 0) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: relacionCompartida } = await supabaseAdmin
+      .from("vehiculo_conductores")
+      .select("vehiculo_placa")
+      .eq("conductor_id", targetUserId)
+      .in("vehiculo_placa", placas)
+      .limit(1);
+
+    if (!relacionCompartida || relacionCompartida.length === 0) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { data: usuario } = await supabaseAdmin
       .from("usuarios")
