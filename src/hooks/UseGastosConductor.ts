@@ -5,7 +5,7 @@ import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
 import logger from "../utils/logger";
 
-export const useGastosConductor = (placa?: string | null) => {
+export const useGastosConductor = (placa?: string | null, conductorId?: string | null) => {
   const {
     gastos,
     setGastosPorPlaca,
@@ -102,11 +102,14 @@ export const useGastosConductor = (placa?: string | null) => {
 
     if (isOnline) {
       try {
-        const { error: err } = await supabase
+        let query = supabase
           .from("conductor_gastos")
           .update(updates)
           .eq("id", id);
+        // Doble filtro: id + conductor_id para prevenir modificar datos de otros
+        if (conductorId) query = query.eq("conductor_id", conductorId);
 
+        const { error: err } = await query;
         if (err) throw err;
         editarGasto(id, updates);
         return { success: true };
@@ -132,7 +135,6 @@ export const useGastosConductor = (placa?: string | null) => {
     const netState = await NetInfo.fetch();
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
-    // Si es un ID temporal, solo borrar localmente (nunca llegó a Supabase)
     if (id.startsWith("offline_")) {
       eliminarGasto(id);
       return { success: true };
@@ -140,11 +142,14 @@ export const useGastosConductor = (placa?: string | null) => {
 
     if (isOnline) {
       try {
-        const { error: err } = await supabase
+        let query = supabase
           .from("conductor_gastos")
           .delete()
           .eq("id", id);
+        // Doble filtro: id + conductor_id
+        if (conductorId) query = query.eq("conductor_id", conductorId);
 
+        const { error: err } = await query;
         if (err) throw err;
         eliminarGasto(id);
         return { success: true };

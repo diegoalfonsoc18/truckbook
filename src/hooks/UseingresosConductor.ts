@@ -23,7 +23,8 @@ interface UseIngresosConductorReturn {
 }
 
 export const useIngresosConductor = (
-  placa?: string | null
+  placa?: string | null,
+  conductorId?: string | null
 ): UseIngresosConductorReturn => {
   const {
     ingresos,
@@ -117,11 +118,13 @@ export const useIngresosConductor = (
 
     if (isOnline) {
       try {
-        const { error: err } = await supabase
+        let query = supabase
           .from("conductor_ingresos")
           .update(updates)
           .eq("id", id);
+        if (conductorId) query = query.eq("conductor_id", conductorId);
 
+        const { error: err } = await query;
         if (err) throw err;
         editarIngreso(id, updates);
         return { success: true };
@@ -154,11 +157,13 @@ export const useIngresosConductor = (
 
     if (isOnline) {
       try {
-        const { error: err } = await supabase
+        let query = supabase
           .from("conductor_ingresos")
           .delete()
           .eq("id", id);
+        if (conductorId) query = query.eq("conductor_id", conductorId);
 
+        const { error: err } = await query;
         if (err) throw err;
         eliminarIngreso(id);
         return { success: true };

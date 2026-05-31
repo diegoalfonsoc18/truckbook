@@ -6,8 +6,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_MODEL   = "gemini-2.0-flash";
+const GEMINI_MODEL    = "gemini-2.0-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+// ── Rate limiting in-memory (por usuario, por minuto) ─────────────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT   = 10; // máx llamadas por minuto por usuario
+const WINDOW_MS    = 60_000;
+
+function checkRateLimit(userId: string): boolean {
+  const now  = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,17 +55,25 @@ serve(async (req) => {
       });
     }
 
-    // ── 2. Leer payload del cliente ────────────────────────────────────────────
+    // ── 2. Rate limiting ──────────────────────────────────────────────────────
+    if (!checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── 3. Leer payload del cliente ────────────────────────────────────────────
     const { prompt, generationConfig } = await req.json();
 
-    if (!prompt || typeof prompt !== "string") {
-      return new Response(JSON.stringify({ error: "Missing prompt" }), {
+    if (!prompt || typeof prompt !== "string" || prompt.length > 50_000) {
+      return new Response(JSON.stringify({ error: "Invalid prompt" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── 3. Llamar a Gemini con la key del servidor ─────────────────────────────
+    // ── 4. Llamar a Gemini con la key del servidor ─────────────────────────────
     const geminiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiKey) {
       return new Response(JSON.stringify({ error: "Gemini not configured" }), {
