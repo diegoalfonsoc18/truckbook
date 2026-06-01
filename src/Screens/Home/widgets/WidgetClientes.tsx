@@ -189,7 +189,7 @@ export default function WidgetClientes({ isDark }: WProps) {
 
 const s = StyleSheet.create({
   card: {
-    borderRadius: 22,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 12,

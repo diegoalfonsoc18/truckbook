@@ -9,6 +9,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import ItemIcon from "../../../components/ItemIcon";
 import type { Item } from "../Items";
@@ -87,15 +88,18 @@ export default function DashboardControlPanel({
               style={[
                 {
                   width: CARD_WIDTH,
-                  backgroundColor: cardBg,
-                  borderRadius: 22,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
+                  borderRadius: 28,
+                  overflow: "hidden",
                 },
                 isDark
                   ? { borderWidth: 1, borderColor: `${c.accent}33` }
                   : cardShadow,
               ]}>
+              <LinearGradient
+                colors={isDark ? [`${c.accent}14`, `${c.accent}14`] : ["#FAFAFA", "#F2F2F2"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
 
               {/* ── Icon + name row ── */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 7 }}>
@@ -142,6 +146,7 @@ export default function DashboardControlPanel({
                 {item.tertiaryLabel ?? ""}
               </Text>
 
+              </LinearGradient>
             </TouchableOpacity>
           );
         })}
