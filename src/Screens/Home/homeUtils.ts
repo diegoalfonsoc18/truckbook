@@ -57,7 +57,7 @@ export function labelDias(dias: number): string {
 }
 
 const AVATAR_COLORS = [
-  "#6366F1", "#0EA5E9", "#10B981", "#F59E0B",
+  "#6366F1", "#0EA5E9", "#2EC98D", "#F59E0B",
   "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6",
 ];
 export const avatarColor = (i: number) => AVATAR_COLORS[i % AVATAR_COLORS.length];

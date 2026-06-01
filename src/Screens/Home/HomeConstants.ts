@@ -16,9 +16,9 @@ export const HOME_COLORS = {
   vehicleCardBorderColorDark: "rgba(255,255,255,0.10)", // dark mode
 
   // Vehicle Card — texto
-  vehicleCardText: "#000000",
-  vehicleCardTextMuted: "#373839",
-  vehicleCardChevronBg: "rgba(255,255,255,0.10)",
+  vehicleCardText: "#FFFFFF",
+  vehicleCardTextMuted: "rgba(255,255,255,0.60)",
+  vehicleCardChevronBg: "rgba(255,255,255,0.15)",
 
   // Vehicle Card — icono
   vehicleIconSize: 120,

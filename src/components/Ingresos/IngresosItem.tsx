@@ -57,7 +57,7 @@ export default function IngresosItem({
     iconContainer: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: 28,
       backgroundColor: colors.accent,
       justifyContent: "center",
       alignItems: "center",

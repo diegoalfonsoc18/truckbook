@@ -52,7 +52,7 @@ export default function GradientButton({
 
 const s = StyleSheet.create({
   wrapper: {
-    borderRadius: 16,
+    borderRadius: 28,
     overflow: "hidden",
   },
   gradient: {

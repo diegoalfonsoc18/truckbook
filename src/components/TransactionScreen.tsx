@@ -199,7 +199,7 @@ function SwipeRowActions({
           backgroundColor: "#3B82F6",
           justifyContent: "center",
           alignItems: "center",
-          borderRadius: 16,
+          borderRadius: 28,
           marginLeft: 8,
         }}>
         <Ionicons name="pencil-outline" size={20} color="#fff" />
@@ -212,7 +212,7 @@ function SwipeRowActions({
           backgroundColor: "#EF4444",
           justifyContent: "center",
           alignItems: "center",
-          borderRadius: 16,
+          borderRadius: 28,
         }}>
         <Ionicons name="trash-outline" size={20} color="#fff" />
       </TouchableOpacity>
@@ -1478,7 +1478,7 @@ const s = StyleSheet.create({
   catCircle: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
@@ -1601,7 +1601,7 @@ const s = StyleSheet.create({
   selectedCatCircle: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
   },

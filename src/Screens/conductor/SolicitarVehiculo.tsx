@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
 
   // SOLICITUD CARD
   card: {
-    borderRadius: 16,
+    borderRadius: 28,
     padding: 16,
     marginBottom: 10,
     borderWidth: 1,
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E94560",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 28,
     marginBottom: 10,
     gap: 4,
   },

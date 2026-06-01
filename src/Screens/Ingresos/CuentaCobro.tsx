@@ -859,7 +859,7 @@ const s = StyleSheet.create({
   addBtnText: { fontSize: 14, fontWeight: "600" },
 
   card: {
-    borderRadius: 16,
+    borderRadius: 28,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -941,7 +941,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 16,
     marginTop: 24,
   },

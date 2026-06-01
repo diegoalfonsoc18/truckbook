@@ -144,7 +144,7 @@ function generarReporteHTML(params: {
     const ing = params.ingresosPorPeriodo[i] || 0;
     const gas = params.gastosPorPeriodo[i] || 0;
     const bal = ing - gas;
-    const balColor = bal >= 0 ? "#10B981" : "#EF4444";
+    const balColor = bal >= 0 ? "#2EC98D" : "#EF4444";
     return `<tr>
       <td>${labelPeriodo(k)}</td>
       <td class="right green">${fmt(ing)}</td>
@@ -174,7 +174,7 @@ function generarReporteHTML(params: {
     </tr>`).join("");
 
   const rentNum = Number(params.rentabilidad);
-  const balColor = params.balance >= 0 ? "#10B981" : "#EF4444";
+  const balColor = params.balance >= 0 ? "#2EC98D" : "#EF4444";
 
   return `<!DOCTYPE html>
 <html>
@@ -189,7 +189,7 @@ function generarReporteHTML(params: {
     /* HEADER */
     .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #0F172A; padding-bottom: 16px; }
     .brand { font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
-    .brand span { color: #10B981; }
+    .brand span { color: #2EC98D; }
     .doc-info { text-align: right; font-size: 12px; color: #666; }
     .doc-info strong { color: #0F172A; display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
 
@@ -203,7 +203,7 @@ function generarReporteHTML(params: {
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
     .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #888; margin-bottom: 6px; }
     .s-value { font-size: 15px; font-weight: 800; }
-    .green { color: #10B981; }
+    .green { color: #2EC98D; }
     .red { color: #EF4444; }
 
     /* SECTION */
@@ -254,7 +254,7 @@ function generarReporteHTML(params: {
 
   <!-- RESUMEN -->
   <div class="summary">
-    <div class="s-card" style="border-color:#10B98140">
+    <div class="s-card" style="border-color:#2EC98D40">
       <div class="s-label">Ingresos</div>
       <div class="s-value green">${fmt(params.totalIngresos)}</div>
     </div>
@@ -266,9 +266,9 @@ function generarReporteHTML(params: {
       <div class="s-label">Balance</div>
       <div class="s-value" style="color:${balColor}">${fmt(params.balance)}</div>
     </div>
-    <div class="s-card" style="border-color:${rentNum >= 0 ? "#10B98140" : "#EF444440"}">
+    <div class="s-card" style="border-color:${rentNum >= 0 ? "#2EC98D40" : "#EF444440"}">
       <div class="s-label">Rentabilidad</div>
-      <div class="s-value" style="color:${rentNum >= 0 ? "#10B981" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
+      <div class="s-value" style="color:${rentNum >= 0 ? "#2EC98D" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
     </div>
   </div>
 
@@ -1077,7 +1077,7 @@ export default function FinanzasGenerales() {
                   color: (opacity = 1) =>
                     `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
                   labelColor: () => c.textSecondary,
-                  style: { borderRadius: 16 },
+                  style: { borderRadius: 28 },
                   propsForDots: {
                     r: "4",
                     strokeWidth: "2",
@@ -1325,7 +1325,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 16,
     paddingHorizontal: 20,
     marginTop: 16,
@@ -1414,7 +1414,7 @@ const styles = StyleSheet.create({
 
   // BALANCE CARD
   balanceCard: {
-    borderRadius: 16,
+    borderRadius: 28,
     padding: 16,
     marginBottom: 16,
     borderWidth: 2,
@@ -1452,7 +1452,7 @@ const styles = StyleSheet.create({
 
   // CHART
   chartContainer: {
-    borderRadius: 16,
+    borderRadius: 28,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,

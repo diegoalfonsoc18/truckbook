@@ -1,6 +1,7 @@
 // src/Screens/Home/widgets/WidgetResumen.tsx
 import React from "react";
-import { View, Dimensions } from "react-native";
+import { View, Dimensions, Platform } from "react-native";
+import { getShadow } from "../../../constants/Themecontext";
 import Svg, {
   Path, Circle, Line, Defs,
   LinearGradient as SvgGradient, Stop,
@@ -13,7 +14,7 @@ import { fechaLocalHoy, WProps } from "../homeUtils";
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
 const WIDGET_SIZE   = Math.floor((width - H_PAD * 2 - 16) / 2);
-const WIDGET_HEIGHT = 160;
+const WIDGET_HEIGHT = 180;
 
 // ─── GaugeBalance ─────────────────────────────────────────────────────────────
 function GaugeBalance({
@@ -29,7 +30,7 @@ function GaugeBalance({
   const CY = 87;
   const START = 160;
   const SPAN  = 220;
-  const FILL_W = 8;
+  const FILL_W = 12;
 
   const deg2rad = (d: number) => (d * Math.PI) / 180;
   const pt = (deg: number, r = R) => ({
@@ -50,9 +51,9 @@ function GaugeBalance({
   const gradLX     = pt(START).x;
   const gradRX     = pt(START + SPAN).x;
 
-  const dotColor    = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#FFB800" : "#22C55E";
+  const dotColor    = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#FFB800" : "#2EC98D";
   const statusLabel = ratio < 0.38 ? "Negativo"  : ratio < 0.62 ? "Equilibrio" : "Positivo";
-  const statusColor = ratio < 0.38 ? "#F87171"   : ratio < 0.62 ? "#FBBF24"    : "#4ADE80";
+  const statusColor = ratio < 0.38 ? "#F87171"   : ratio < 0.62 ? "#FBBF24"    : "#2EC98D";
 
   const ticks: Array<{ o: { x: number; y: number }; i: { x: number; y: number }; major: boolean }> = [];
   for (let i = 0; i <= SPAN; i += 5) {
@@ -70,13 +71,13 @@ function GaugeBalance({
     return `${sign}${abs}`;
   };
 
-  const cardBg      = balance >= 0 ? (isDark ? "#0D2E1A" : "#EDFAF3") : (isDark ? "#2E0D0D" : "#FAEAEA");
-  const balTextColor = isDark ? "#FFFFFF" : balance >= 0 ? "#059669" : "#DC2626";
+  const cardBg      = isDark ? "#161616" : "#FFFFFF";
+  const balTextColor = isDark ? "#FFFFFF" : balance >= 0 ? "#24A072" : "#DC2626";
   const mutedClr     = isDark ? "#4B5268" : "#6B7280";
-  const ingClr       = isDark ? "#4ADE80" : "#059669";
+  const ingClr       = isDark ? "#2EC98D" : "#24A072";
   const gasClr       = isDark ? "#F87171" : "#DC2626";
-  const tickClr      = isDark ? "#1A3826" : balance >= 0 ? "#C5DDD0" : "#DEC5C5";
-  const tickMajClr   = isDark ? "#2A4A38" : balance >= 0 ? "#A3C4B0" : "#C4A3A3";
+  const tickClr      = isDark ? "#1A3826" : balance >= 0 ? "#5A8C6A" : "#8C5A5A";
+  const tickMajClr   = isDark ? "#2A4A38" : balance >= 0 ? "#3D6B4D" : "#6B3D3D";
 
   return (
     <Svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0 }}>
@@ -84,10 +85,14 @@ function GaugeBalance({
         <SvgGradient id="gfill" x1={gradLX} y1={0} x2={gradRX} y2={0} gradientUnits="userSpaceOnUse">
           <Stop offset="0"    stopColor="#EF4444" />
           <Stop offset="0.42" stopColor="#FFB800" />
-          <Stop offset="1"    stopColor="#22C55E" />
+          <Stop offset="1"    stopColor="#2EC98D" />
+        </SvgGradient>
+        <SvgGradient id="cardBgGrad" x1="0" y1="0" x2={W} y2={H} gradientUnits="userSpaceOnUse">
+          <Stop offset="0"   stopColor={isDark ? "#161616" : "#F0FBF4"} />
+          <Stop offset="1"   stopColor={isDark ? "#161616" : "#DCF3E6"} />
         </SvgGradient>
       </Defs>
-      <Rect width={W} height={H} fill={cardBg} rx={16} />
+      <Rect width={W} height={H} fill="url(#cardBgGrad)" rx={28} />
       {ticks.map((t, idx) => (
         <Line key={idx} x1={t.o.x} y1={t.o.y} x2={t.i.x} y2={t.i.y}
           stroke={t.major ? tickMajClr : tickClr}
@@ -98,11 +103,11 @@ function GaugeBalance({
       <Circle cx={dotPt.x} cy={dotPt.y} r={7}  fill={dotColor} opacity={0.4} />
       <Circle cx={dotPt.x} cy={dotPt.y} r={4}  fill={dotColor} />
       <Circle cx={dotPt.x} cy={dotPt.y} r={2}  fill="#FFFFFF" opacity={0.9} />
-      <SvgText x={CX} y={CY + 8}  fontSize={26} fontWeight="800" fill={balTextColor} textAnchor="middle" letterSpacing={-1}>{fmt(balance)}</SvgText>
-      <SvgText x={CX} y={CY + 23} fontSize={10} fontWeight="700" fill={statusColor}  textAnchor="middle">{statusLabel}</SvgText>
-      <SvgText x={14}     y={H - 28} fontSize={9} fontWeight="600" fill={ingClr}  textAnchor="start">{`↑ ${fmt(totalI)}`}</SvgText>
-      <SvgText x={W - 14} y={H - 28} fontSize={9} fontWeight="600" fill={gasClr}  textAnchor="end">{`↓ ${fmt(totalG)}`}</SvgText>
-      <SvgText x={CX}     y={H - 14} fontSize={8} fontWeight="500" fill={mutedClr} textAnchor="middle">{`Semana ${fmt(balSem)}`}</SvgText>
+      <SvgText x={CX} y={CY + 10} fontSize={30} fontWeight="800" fill={balTextColor} textAnchor="middle" letterSpacing={-1}>{fmt(balance)}</SvgText>
+      <SvgText x={CX} y={CY + 26} fontSize={12} fontWeight="700" fill={statusColor}  textAnchor="middle">{statusLabel}</SvgText>
+      <SvgText x={14}     y={H - 26} fontSize={11} fontWeight="600" fill={ingClr}  textAnchor="start">{`↑ ${fmt(totalI)}`}</SvgText>
+      <SvgText x={W - 14} y={H - 26} fontSize={11} fontWeight="600" fill={gasClr}  textAnchor="end">{`↓ ${fmt(totalG)}`}</SvgText>
+      <SvgText x={CX}     y={H - 12} fontSize={10} fontWeight="500" fill={mutedClr} textAnchor="middle">{`Semana ${fmt(balSem)}`}</SvgText>
     </Svg>
   );
 }
@@ -128,12 +133,20 @@ export default function WidgetResumen({ isDark }: WProps) {
   const total     = totalI + totalG;
   const ratioI    = total > 0 ? totalI / total : 0.5;
 
+  const shadow = getShadow(isDark, "md");
+  const lightShadow = Platform.OS === "android"
+    ? { borderWidth: 1, borderColor: "#E0E0E0", ...shadow }
+    : shadow;
+  const cardShadow = isDark ? {} : lightShadow;
+
   return (
-    <View style={{ width: WIDGET_SIZE, height: WIDGET_HEIGHT, borderRadius: 16, padding: 0, overflow: "hidden" }}>
-      <GaugeBalance
-        ratio={ratioI} isDark={isDark} balance={balance}
-        balColor="" totalI={totalI} totalG={totalG} balSem={balSem}
-      />
+    <View style={{ width: WIDGET_SIZE, height: WIDGET_HEIGHT, borderRadius: 28, ...cardShadow }}>
+      <View style={{ flex: 1, borderRadius: 28, overflow: "hidden" }}>
+        <GaugeBalance
+          ratio={ratioI} isDark={isDark} balance={balance}
+          balColor="" totalI={totalI} totalG={totalG} balSem={balSem}
+        />
+      </View>
     </View>
   );
 }

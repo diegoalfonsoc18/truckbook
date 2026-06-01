@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
 
   // CARD
   invitacionCard: {
-    borderRadius: 16,
+    borderRadius: 28,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,

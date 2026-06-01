@@ -288,7 +288,7 @@ overlay: {
   },
   tipoCard: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: 28,
     borderWidth: 1.5,
     padding: 18,
     alignItems: "center",

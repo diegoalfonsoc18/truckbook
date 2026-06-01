@@ -626,7 +626,7 @@ const s = StyleSheet.create({
   vehicleOption: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 13,
     paddingHorizontal: 14,
     marginBottom: 8,

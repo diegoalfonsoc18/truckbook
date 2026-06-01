@@ -418,7 +418,7 @@ const s = StyleSheet.create({
 
   // CTA
   cta: {
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 18,
     alignItems: "center",
     marginBottom: 28,

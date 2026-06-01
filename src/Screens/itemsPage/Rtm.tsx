@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRTM } from "../../hooks/usesRtm";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 
-const COLOR_OK      = "#22C55E";
+const COLOR_OK      = "#2EC98D";
 const COLOR_WARNING = "#FBBF24";
 const COLOR_DANGER  = "#EF4444";
 const COLOR_UNKNOWN = "#6B7280";
@@ -261,7 +261,7 @@ const s = StyleSheet.create({
   updateBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
   updateBtnText: { fontSize: 13, fontWeight: "700" },
 
-  detailCard: { borderRadius: 16, padding: 18, marginHorizontal: 20, marginBottom: 12 },
+  detailCard: { borderRadius: 28, padding: 18, marginHorizontal: 20, marginBottom: 12 },
   detailTitle: { fontSize: 13, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12, opacity: 0.6 },
   infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 11 },
   infoLabel: { fontSize: 14, fontWeight: "500", flex: 1 },

@@ -277,7 +277,7 @@ export default function CentroPendientes() {
               <EmptyState
                 icon="checkmark-circle-outline"
                 texto="Sin cuentas pendientes por cobrar"
-                color="#22C55E"
+                color="#2EC98D"
                 cardBg={c.cardBg}
                 textSecondary={c.textSecondary}
               />
@@ -301,7 +301,7 @@ export default function CentroPendientes() {
               <EmptyState
                 icon="checkmark-circle-outline"
                 texto="Sin gastos pendientes de pago"
-                color="#22C55E"
+                color="#2EC98D"
                 cardBg={c.cardBg}
                 textSecondary={c.textSecondary}
               />
@@ -495,7 +495,7 @@ const makeStyles = (c: any, isDark: boolean) =>
     // IA Card
     iaCard: {
       backgroundColor: c.cardBg,
-      borderRadius: 16,
+      borderRadius: 28,
       padding: 16,
       borderWidth: 1,
       borderColor: c.accent + "30",

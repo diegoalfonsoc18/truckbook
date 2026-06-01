@@ -1,16 +1,19 @@
 // src/Screens/Home/widgets/WidgetInsightIA.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, TouchableOpacity, Dimensions, Platform } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
-import { fmtI, diasDesde, labelDias, avatarColor, initials, WProps } from "../homeUtils";
+import { fmtI, diasDesde, labelDias, WProps } from "../homeUtils";
 import { ModalPendientes } from "../components/ModalPendientes";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
+import { useClientType } from "../../../hooks/useClientType";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
 const WIDGET_SIZE = Math.floor((width - H_PAD * 2 - 16) / 2);
-const WIDGET_HEIGHT = 160;
+const WIDGET_HEIGHT = 180;
 
 export default function WidgetInsightIA({ isDark }: WProps) {
   const ingresos = useIngresosStore((s) => s.ingresos);
@@ -20,7 +23,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
     () =>
       ingresos
         .filter((i) => i.estado === "pendiente")
-        .sort((a, b) => ((b.fecha ?? "") > (a.fecha ?? "") ? 1 : -1)),
+        .sort((a, b) => ((a.fecha ?? "") > (b.fecha ?? "") ? 1 : -1)),
     [ingresos],
   );
 
@@ -33,82 +36,132 @@ export default function WidgetInsightIA({ isDark }: WProps) {
   const mostrados = pendientes.slice(0, 3);
   const resto = pendientes.length - 3;
 
+  const clientNames = useMemo(
+    () => mostrados.map((item) => (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim()),
+    [mostrados],
+  );
+  const clientTypes = useClientType(clientNames);
+
+  // Días del pendiente más viejo (para la barra de urgencia)
+  const diasMax = pendientes.length > 0 && pendientes[0].fecha
+    ? diasDesde(pendientes[0].fecha)
+    : 0;
+  // Normalizar: 0 días = 0%, 30+ días = 100%
+  const urgencia = Math.min(diasMax / 30, 1);
+  const urgenciaColor = urgencia < 0.33 ? "#2EC98D" : urgencia < 0.66 ? "#F59E0B" : "#EF4444";
+
   const { colors: c } = useTheme();
   const shadow = getShadow(isDark, "md");
-  const AMBER = "#FBBF24";
-  const FOOD_COLOR = "#F97316";
-  const cardBg = isDark ? `${FOOD_COLOR}18` : `${FOOD_COLOR}12`;
-  const cardBorder = Platform.OS === "ios" && !isDark ? { ...shadow } : {};
-  const ink = isDark ? "#F1F5F9" : "#111827";
-  const muted = isDark ? "#3D536E" : "#9CA3AF";
-  const divClr = isDark ? `${FOOD_COLOR}30` : `${FOOD_COLOR}20`;
+  const wText = isDark ? "#FFFFFF" : "#3D2015";
+  const wMuted = isDark ? "rgba(255,255,255,0.55)" : "#8B5E3C";
+  const wSubtle = isDark ? "rgba(255,255,255,0.15)" : "rgba(139,94,60,0.12)";
+  const lightShadow = Platform.OS === "android"
+    ? { borderWidth: 1, borderColor: c.border, ...shadow }
+    : shadow;
+  const cardBorder = isDark
+    ? { borderWidth: 1, borderColor: c.border }
+    : lightShadow;
 
   return (
     <>
+      <View style={{ width: WIDGET_SIZE, height: WIDGET_HEIGHT, borderRadius: 28, ...cardBorder }}>
+      <LinearGradient
+        colors={isDark ? [c.cardBg, c.cardBg] : ["#FFF7F4", "#FFEDE8"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, borderRadius: 28 }}>
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={() => pendientes.length > 0 && setModalVisible(true)}
         style={{
-          width: WIDGET_SIZE,
-          height: WIDGET_HEIGHT,
-          borderRadius: 16,
+          flex: 1,
+          borderRadius: 28,
           paddingHorizontal: 13,
-          paddingVertical: 12,
-          backgroundColor: cardBg,
-          gap: 0,
+          paddingVertical: 10,
           overflow: "hidden",
-          ...cardBorder,
+          justifyContent: "space-between",
         }}>
-        {/* Header */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: AMBER }} />
-          <Text style={{ fontSize: 8.5, fontWeight: "600", color: muted }}>Pendientes · Por cobrar</Text>
+
+        {/* Header con badge */}
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ fontSize: 9, fontWeight: "700", color: wMuted, letterSpacing: 0.5 }}>
+            Por cobrar
+          </Text>
+          {pendientes.length > 0 && (
+            <View style={{
+              backgroundColor: wSubtle,
+              borderRadius: 10,
+              paddingHorizontal: 6,
+              paddingVertical: 1.5,
+            }}>
+              <Text style={{ fontSize: 8, fontWeight: "700", color: wText }}>
+                {pendientes.length}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Total */}
-        <Text style={{ fontSize: 22, fontWeight: "700", color: pendientes.length > 0 ? AMBER : "#22C55E", letterSpacing: -0.6, lineHeight: 28, marginBottom: 8 }}>
+        <Text style={{ fontSize: 22, fontWeight: "800", color: wText, letterSpacing: -0.8, lineHeight: 26 }}>
           {pendientes.length > 0 ? fmtI(totalPend) : "Al día ✓"}
         </Text>
 
+        {/* Barra de urgencia */}
+        {pendientes.length > 0 && (
+          <View>
+            <View style={{
+              height: 3,
+              backgroundColor: wSubtle,
+              borderRadius: 2,
+              overflow: "hidden",
+            }}>
+              <View style={{
+                width: `${Math.max(urgencia * 100, 8)}%`,
+                height: "100%",
+                backgroundColor: urgenciaColor,
+                borderRadius: 2,
+              }} />
+            </View>
+            <Text style={{ fontSize: 7.5, color: wMuted, marginTop: 2 }}>
+              {diasMax === 0 ? "Hoy" : `Más antiguo: ${diasMax}d`}
+            </Text>
+          </View>
+        )}
+
         {/* Lista mini o vacío */}
         {pendientes.length === 0 ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text style={{ fontSize: 22, marginBottom: 4 }}>🎉</Text>
-            <Text style={{ fontSize: 10, color: muted, textAlign: "center" }}>Sin cuentas pendientes</Text>
+          <View style={{ alignItems: "center", paddingVertical: 4 }}>
+            <Text style={{ fontSize: 22, marginBottom: 2 }}>🎉</Text>
+            <Text style={{ fontSize: 10, color: wMuted, textAlign: "center" }}>Sin pendientes</Text>
           </View>
         ) : (
-          <View style={{ flex: 1 }}>
+          <View style={{ gap: 1 }}>
             {mostrados.map((item, i) => {
               const cliente = (item.descripcion ?? item.tipo_ingreso ?? "Flete").split(" · ")[0].trim();
-              const dias = item.fecha ? diasDesde(item.fecha) : 0;
-              const color = avatarColor(i);
-              const isLast = i === mostrados.length - 1 && resto <= 0;
               return (
-                <View key={item.id}>
-                  <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 5, gap: 8 }}>
-                    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color + "30", borderWidth: 1, borderColor: color + "60", alignItems: "center", justifyContent: "center" }}>
-                      <Text style={{ fontSize: 8.5, fontWeight: "700", color }}>{initials(cliente)}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 10.5, fontWeight: "600", color: ink }}>{cliente}</Text>
-                      <Text style={{ fontSize: 8, color: muted, marginTop: 0.5 }}>{labelDias(dias)}</Text>
-                    </View>
-                    <Text style={{ fontSize: 10.5, fontWeight: "700", color: AMBER }}>{fmtI(item.monto ?? 0)}</Text>
+                <View key={item.id} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 3, gap: 6 }}>
+                  <View style={{
+                    width: 22, height: 22, borderRadius: 11,
+                    backgroundColor: wSubtle,
+                    alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Feather name={clientTypes[cliente] === "empresa" ? "briefcase" : "user"} size={10} color={wMuted} />
                   </View>
-                  {!isLast && (
-                    <View style={{ height: 0.5, backgroundColor: divClr, marginLeft: 34 }} />
-                  )}
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 10, fontWeight: "500", color: wText }}>{cliente}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: wText }}>{fmtI(item.monto ?? 0)}</Text>
                 </View>
               );
             })}
             {resto > 0 && (
-              <Text style={{ fontSize: 9, color: AMBER, marginTop: 4, textAlign: "center", fontWeight: "600" }}>
-                +{resto} más → ver todos
+              <Text style={{ fontSize: 8.5, color: wMuted, textAlign: "center", fontWeight: "600", marginTop: 2 }}>
+                +{resto} más
               </Text>
             )}
           </View>
         )}
       </TouchableOpacity>
+      </LinearGradient>
+      </View>
 
       {/* Modal detalle */}
       <ModalPendientes

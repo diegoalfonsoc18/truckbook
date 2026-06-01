@@ -1263,7 +1263,7 @@ const s = StyleSheet.create({
   divider: { height: 1, marginBottom: 16 },
 
   saveBtn: {
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 4,

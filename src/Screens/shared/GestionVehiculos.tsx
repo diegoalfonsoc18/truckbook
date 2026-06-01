@@ -697,7 +697,7 @@ const s = StyleSheet.create({
   recentScroll: { paddingHorizontal: 16, gap: 10 },
   recentCard: {
     width: 110,
-    borderRadius: 16,
+    borderRadius: 28,
     padding: 12,
     alignItems: "center",
     gap: 8,
@@ -739,7 +739,7 @@ const s = StyleSheet.create({
   // CARD
   card: { borderRadius: 20, overflow: "hidden" },
   cardHead: { flexDirection: "row", alignItems: "center", padding: 16, gap: 12 },
-  iconWrap: { width: 58, height: 58, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+  iconWrap: { width: 58, height: 58, borderRadius: 28, justifyContent: "center", alignItems: "center" },
   cardHeadInfo: { flex: 1, gap: 6 },
   plateOuter: {
     backgroundColor: "#FFE415",
@@ -816,14 +816,14 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     padding: 12,
-    borderRadius: 16,
+    borderRadius: 28,
     borderWidth: 1.5,
   },
   tipoIconWrap: { width: 44, height: 44, borderRadius: 13, justifyContent: "center", alignItems: "center" },
   tipoLabel: { fontSize: 14 },
 
   // BUTTONS
-  saveBtn: { borderRadius: 16, padding: 17, alignItems: "center", marginBottom: 10 },
+  saveBtn: { borderRadius: 28, padding: 17, alignItems: "center", marginBottom: 10 },
   saveBtnText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
   cancelBtn: { alignItems: "center", padding: 12 },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },

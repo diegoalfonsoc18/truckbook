@@ -352,7 +352,7 @@ export default function HomeBaseAdapted({
               style={[
                 s.vehicleCard,
                 {
-                  backgroundColor: isDark ? `${c.accent}14` : c.cardBg,
+                  backgroundColor: isDark ? `${c.accent}14` : "#0A0A0A",
                 },
                 isDark
                   ? { borderWidth: 1, borderColor: `${c.accent}33` }
@@ -592,7 +592,7 @@ const s = StyleSheet.create({
   },
   heroSquare: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: 28,
     padding: 12,
     minHeight: 116,
     alignItems: "center",
@@ -602,7 +602,7 @@ const s = StyleSheet.create({
   heroSquareIcon: {
     width: 68,
     height: 68,
-    borderRadius: 18,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -747,7 +747,7 @@ const s = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 14,
     gap: Platform.OS === "android" ? 14 : 18,
-    borderRadius: 16,
+    borderRadius: 28,
     width: "100%",
   },
   listRowIconShadow: {
@@ -840,7 +840,7 @@ const s = StyleSheet.create({
   sheetAddBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -851,7 +851,7 @@ const s = StyleSheet.create({
   vehicleOption: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 13,
     paddingHorizontal: 14,
     marginBottom: 8,
@@ -959,14 +959,14 @@ const s = StyleSheet.create({
   placaIconWrap: {
     width: 60,
     height: 60,
-    borderRadius: 16,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
     marginBottom: 16,
   },
   placaInput: {
-    borderRadius: 16,
+    borderRadius: 28,
     borderWidth: 2,
     padding: 18,
     fontSize: 28,
@@ -998,7 +998,7 @@ const s = StyleSheet.create({
   adScroll: { paddingHorizontal: H_PAD, gap: 12 },
   adCard: {
     width: width - H_PAD * 2,
-    borderRadius: 18,
+    borderRadius: 28,
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -1056,14 +1056,16 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+    marginTop: 6,
     marginBottom: 12,
     gap: 16,
+    zIndex: 1,
   },
 
   wCircle: {
     width: WIDGET_SIZE,
     height: WIDGET_SIZE,
-    borderRadius: 16,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
@@ -1088,7 +1090,7 @@ const s = StyleSheet.create({
   wCard: {
     width: WIDGET_SIZE,
     height: WIDGET_HEIGHT,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 5,
@@ -1160,7 +1162,7 @@ const s = StyleSheet.create({
   // ─── CLIENTES WIDGET ────────────────────────────────────────────────────────
   clientesCard: {
     width: "100%",
-    borderRadius: 18,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 12,

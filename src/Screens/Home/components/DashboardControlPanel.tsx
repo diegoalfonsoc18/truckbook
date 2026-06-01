@@ -76,7 +76,7 @@ export default function DashboardControlPanel({
           const trendColor = item.trendPositive === false
             ? "#F87171"
             : item.trendPositive === true
-            ? "#4ADE80"
+            ? "#2EC98D"
             : mutedClr;
 
           return (
