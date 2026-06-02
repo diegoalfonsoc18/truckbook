@@ -492,6 +492,7 @@ export default function Cuenta() {
     if (id === "profile") return openProfile();
     if (id === "security") return openSecurity();
     if (id === "privacy") {
+      // URL centralizada — cambiar aquí si se migra el dominio
       Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html").catch(() =>
         openLegal("privacy")
       );

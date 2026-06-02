@@ -50,6 +50,8 @@ export default function Register({ navigation }: Props) {
   const [showPwd,         setShowPwd]         = useState(false);
   const [showConfirmPwd,  setShowConfirmPwd]  = useState(false);
   const [loading,         setLoading]         = useState(false);
+  const [registerAttempts, setRegisterAttempts] = useState(0);
+  const [lockedUntil,      setLockedUntil]      = useState(0);
   const [errors,          setErrors]          = useState<ValidationErrors>({});
   const [showStrength,    setShowStrength]    = useState(false);
 
@@ -83,6 +85,20 @@ export default function Register({ navigation }: Props) {
   const register = async () => {
     Keyboard.dismiss();
     if (!validateForm()) return;
+    const now = Date.now();
+    if (lockedUntil > now) {
+      const secsLeft = Math.ceil((lockedUntil - now) / 1000);
+      Alert.alert("Demasiados intentos", `Espera ${secsLeft} segundos antes de intentar de nuevo.`);
+      return;
+    }
+    const attempts = registerAttempts + 1;
+    setRegisterAttempts(attempts);
+    if (attempts > 5) {
+      setLockedUntil(Date.now() + 60000);
+      setRegisterAttempts(0);
+      Alert.alert("Demasiados intentos", "Espera 60 segundos antes de intentar de nuevo.");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({

@@ -9,7 +9,9 @@ class RTMService {
 
   async consultarRTMporPlaca(placa: string): Promise<RespuestaTecnicomecanica> {
     try {
-      const response = await fetch(`${this.apiUrl}/rtm/${placa}`);
+      const url = `${this.apiUrl}/rtm/${encodeURIComponent(placa)}`;
+      if (!url.startsWith("https://")) throw new Error("Solo se permiten conexiones HTTPS");
+      const response = await fetch(url);
       return await response.json();
     } catch (error) {
       throw error;

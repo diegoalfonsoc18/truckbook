@@ -40,9 +40,11 @@ export function useClientType(nombres: string[]): ClientTypeMap {
         return;
       }
 
+      // Sanitizar nombres para evitar prompt injection
+      const sanitize = (s: string) => s.replace(/[`${}\\]/g, "").slice(0, 60);
       const prompt =
         `Clasifica cada nombre como "persona" o "empresa". Responde SOLO un JSON objeto donde las keys son los nombres exactos y los values son "persona" o "empresa". Sin explicación.\n\nNombres:\n` +
-        missing.map((n) => `- ${n}`).join("\n");
+        missing.map((n) => `- ${sanitize(n)}`).join("\n");
 
       try {
         const { text } = await callGemini(prompt, { maxOutputTokens: 200 });

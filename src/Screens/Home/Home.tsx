@@ -352,7 +352,7 @@ export default function HomeBaseAdapted({
               style={[
                 s.vehicleCard,
                 {
-                  backgroundColor: isDark ? `${c.accent}14` : "#0A0A0A",
+                  backgroundColor: isDark ? `${c.accent}14` : "#FFFFFF",
                 },
                 isDark
                   ? { borderWidth: 1, borderColor: `${c.accent}33` }

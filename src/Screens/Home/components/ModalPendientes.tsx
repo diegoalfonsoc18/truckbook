@@ -80,10 +80,12 @@ export function ModalPendientes({
       if (!cancelled) setLoadingGem(true);
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
+      // Sanitizar datos de usuario para evitar prompt injection
+      const sanitize = (s: string) => s.replace(/[`${}\\]/g, "").slice(0, 50);
       const lines = pendientes
         .slice(0, 4)
         .map((p) => {
-          const cl = (p.descripcion ?? "Flete").split(" · ")[0].trim();
+          const cl = sanitize((p.descripcion ?? "Flete").split(" · ")[0].trim());
           const dias = p.fecha
             ? Math.floor(
                 (hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) /
@@ -339,6 +341,10 @@ export function ModalPendientes({
                           const tel = telContacto
                             ? formatearTel(telContacto)
                             : "";
+                          if (!tel) {
+                            Alert.alert("Sin teléfono", "No hay un número de teléfono válido registrado para este cliente.");
+                            return;
+                          }
                           Linking.openURL(`tel:${tel}`).catch(() =>
                             Alert.alert(
                               "Error",

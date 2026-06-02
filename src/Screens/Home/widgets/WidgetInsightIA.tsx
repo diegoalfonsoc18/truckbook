@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 import { fmtI, diasDesde, labelDias, WProps } from "../homeUtils";
@@ -123,7 +123,23 @@ export default function WidgetInsightIA({ isDark }: WProps) {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               {pendientes.length > 0 && (
-                <Feather name="alert-circle" size={26} color={c.text} />
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 21,
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.10)"
+                      : "#FFD6C7",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                  <Ionicons
+                    name="hourglass-outline"
+                    size={18}
+                    color={isDark ? "#FFFFFF" : "#8B3A1A"}
+                  />
+                </View>
               )}
               <Text
                 style={{

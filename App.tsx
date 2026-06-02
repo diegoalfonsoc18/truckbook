@@ -66,10 +66,17 @@ function AppContent() {
       }
     };
 
-    // Leer sesión local (AsyncStorage) — instantáneo, sin red
+    // Leer sesión local (AsyncStorage) con timeout de seguridad
+    const sessionTimeout = setTimeout(() => {
+      logger.log("⚠️ Timeout en getSession, continuando sin sesión");
+      setSession(null);
+      setLoading(false);
+    }, 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(sessionTimeout);
       setSession(session);
-      setLoading(false); // mostrar app inmediatamente con datos en caché
+      setLoading(false);
 
       // Sincronizar con DB en background sin bloquear la UI
       if (session?.user) {
@@ -78,13 +85,27 @@ function AppContent() {
           useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
         ]).catch((err) => logger.error("❌ Error en sync background:", err));
       }
-    }).catch((err) => {
+    }).catch(async (err) => {
+      clearTimeout(sessionTimeout);
       logger.error("❌ Error al inicializar sesión:", err);
+      // Si el token es inválido, limpiar para ir al login
+      if (err?.message?.includes("Refresh Token")) {
+        await supabase.auth.signOut().catch(() => {});
+      }
+      setSession(null);
       setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Token inválido — limpiar sesión
+        if (_event === "TOKEN_REFRESHED" && !session) {
+          logger.log("⚠️ Token refresh falló, cerrando sesión");
+          await supabase.auth.signOut().catch(() => {});
+          useVehiculoStore.getState().clearVehiculo();
+          setSession(null);
+          return;
+        }
         if (session?.user) {
           try {
             await Promise.all([

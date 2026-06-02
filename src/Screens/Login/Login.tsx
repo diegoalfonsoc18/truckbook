@@ -50,11 +50,20 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
 
   const handleLogin = async () => {
     Keyboard.dismiss();
     if (!email || !password) {
       Alert.alert("Error", "Por favor ingresa email y contraseña");
+      return;
+    }
+    // Rate limiting: bloquear tras 5 intentos fallidos
+    const now = Date.now();
+    if (lockedUntil > now) {
+      const secsLeft = Math.ceil((lockedUntil - now) / 1000);
+      Alert.alert("Demasiados intentos", `Espera ${secsLeft} segundos antes de intentar de nuevo.`);
       return;
     }
     setLoading(true);
@@ -63,7 +72,20 @@ export default function LoginScreen({ navigation }: Props) {
         email: email.trim().toLowerCase(),
         password,
       });
-      if (error) Alert.alert("Error", error.message);
+      if (error) {
+        const attempts = loginAttempts + 1;
+        setLoginAttempts(attempts);
+        if (attempts >= 5) {
+          const lockTime = Math.min(30 * Math.pow(2, attempts - 5), 300) * 1000;
+          setLockedUntil(Date.now() + lockTime);
+          setLoginAttempts(0);
+          Alert.alert("Demasiados intentos", `Cuenta bloqueada temporalmente. Intenta en ${Math.round(lockTime / 1000)} segundos.`);
+        } else {
+          Alert.alert("Error", error.message);
+        }
+      } else {
+        setLoginAttempts(0);
+      }
     } catch {
       Alert.alert("Error", "No se pudo conectar. Verifica tu conexión.");
     } finally {

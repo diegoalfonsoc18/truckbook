@@ -9,7 +9,9 @@ class LicenciaService {
     documento: string
   ): Promise<RespuestaLicencia> {
     try {
-      const response = await fetch(`${this.apiUrl}/licencia/${documento}`);
+      const url = `${this.apiUrl}/licencia/${encodeURIComponent(documento)}`;
+      if (!url.startsWith("https://")) throw new Error("Solo se permiten conexiones HTTPS");
+      const response = await fetch(url);
       return await response.json();
     } catch (error) {
       throw error;

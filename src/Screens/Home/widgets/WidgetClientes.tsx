@@ -1,12 +1,14 @@
 // src/Screens/Home/widgets/WidgetClientes.tsx
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import { normalizarMercancias } from "../../../services/mercanciaService";
 import { formatCOP, WProps } from "../homeUtils";
+import { useClientType } from "../../../hooks/useClientType";
 
 export default function WidgetClientes({ isDark }: WProps) {
   const ingresos    = useIngresosStore((s) => s.ingresos);
@@ -17,7 +19,7 @@ export default function WidgetClientes({ isDark }: WProps) {
 
   // ── Paso 1: extracción sync — ordenar por total de ganancias ──────────────
   const { clienteData, rawMercancias } = React.useMemo(() => {
-    const clienteMap = new Map<string, { viajes: number; total: number; ultimaFecha: string }>();
+    const clienteMap = new Map<string, { viajes: number; total: number; ultimaFecha: string; cargas: Map<string, number> }>();
     const rawList: string[] = [];
 
     for (const ing of ingresos) {
@@ -26,12 +28,11 @@ export default function WidgetClientes({ isDark }: WProps) {
       const nombre = partes[0]?.trim();
       if (!nombre || nombre === "Flete") continue;
 
-      const prev = clienteMap.get(nombre) ?? { viajes: 0, total: 0, ultimaFecha: "" };
+      const prev = clienteMap.get(nombre) ?? { viajes: 0, total: 0, ultimaFecha: "", cargas: new Map() };
       prev.viajes += 1;
       prev.total  += ing.monto ?? 0;
       const fecha = ing.fecha ?? ing.created_at ?? "";
       if (fecha > prev.ultimaFecha) prev.ultimaFecha = fecha;
-      clienteMap.set(nombre, prev);
 
       const rawMercancia =
         partes.length >= 3
@@ -42,7 +43,12 @@ export default function WidgetClientes({ isDark }: WProps) {
       const mercancia = rawMercancia
         ? rawMercancia.replace(/\[tel:[^\]]*\]/gi, "").trim()
         : null;
-      if (mercancia && !mercancia.includes("→")) rawList.push(mercancia);
+      if (mercancia && !mercancia.includes("→")) {
+        rawList.push(mercancia);
+        prev.cargas.set(mercancia, (prev.cargas.get(mercancia) ?? 0) + 1);
+      }
+
+      clienteMap.set(nombre, prev);
     }
 
     // Ordenar por total de ganancias (mayor primero)
@@ -85,104 +91,101 @@ export default function WidgetClientes({ isDark }: WProps) {
   const lightStyle = Platform.OS === "android"
     ? { borderWidth: 1, borderColor: c.border, ...cardShadow }
     : cardShadow;
-  const cardStyle  = [
-    s.card,
-    { backgroundColor: isDark ? `${c.accent}14` : c.cardBg },
-    isDark
-      ? { borderWidth: 1, borderColor: `${c.accent}33` }
-      : lightStyle,
-  ];
-  const ink    = isDark ? "#FFFFFF" : c.text;
-  const muted  = isDark ? "rgba(255,255,255,0.45)" : "#6B7280";
-  const divClr = isDark ? `${c.accent}20` : "#E5E7EB";
+  const gradColors: [string, string] = isDark ? [`${c.accent}14`, `${c.accent}14`] : ["#111111", "#0A0A0A"];
+  const cardBorderStyle = isDark
+    ? { borderWidth: 1, borderColor: `${c.accent}33` }
+    : lightStyle;
+  const ink    = "#FFFFFF";
+  const muted  = "rgba(255,255,255,0.50)";
+  const divClr = "rgba(255,255,255,0.10)";
 
   const MEDAL = ["#FFB800", "#94A3B8", "#CD7F32"];
+  const clientNames = React.useMemo(() => clienteData.map(([nombre]) => nombre), [clienteData]);
+  const clientTypes = useClientType(clientNames);
 
   // ── Estado vacío ──────────────────────────────────────────────────────────
   if (clienteData.length === 0) {
     return (
-      <View style={[cardStyle, { height: 110 }]}>
-        <View style={s.header}>
-          <Ionicons name="people-outline" size={15} color={c.accent} />
-          <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
-        </View>
-        <View style={s.emptyBox}>
-          <Ionicons name="person-add-outline" size={24} color={c.accent} />
-          <Text style={[s.emptyText, { color: muted }]}>
-            Registra fletes para ver tus clientes frecuentes
-          </Text>
-        </View>
+      <View style={[s.card, cardBorderStyle, { height: 110, paddingHorizontal: 0, paddingVertical: 0 }]}>
+        <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 28, paddingHorizontal: 16, paddingVertical: 14 }}>
+          <View style={s.header}>
+            <Ionicons name="people-outline" size={15} color="#FFFFFF" />
+            <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
+          </View>
+          <View style={s.emptyBox}>
+            <Ionicons name="person-add-outline" size={24} color="#FFFFFF" />
+            <Text style={[s.emptyText, { color: muted }]}>
+              Registra fletes para ver tus clientes frecuentes
+            </Text>
+          </View>
+        </LinearGradient>
       </View>
     );
   }
 
   // ── Widget principal ──────────────────────────────────────────────────────
   return (
-    <View style={cardStyle}>
-      {/* ── Top Clientes ── */}
-      <View style={s.header}>
-        <Ionicons name="people-outline" size={15} color={c.accent} />
-        <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
+    <View style={[s.card, cardBorderStyle, { overflow: "hidden", paddingHorizontal: 0, paddingVertical: 0 }]}>
+      <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 28, paddingHorizontal: 16, paddingVertical: 14 }}>
+
+      {/* ── Column headers ── */}
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+        <Text style={{ flex: 1, fontSize: 10, fontWeight: "700", color: muted, letterSpacing: 0.8 }}>
+          Cliente
+        </Text>
+        <Text style={{ width: 55, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
+          Viajes
+        </Text>
+        <Text style={{ width: 75, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
+          Total
+        </Text>
       </View>
+      <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginBottom: 4 }} />
 
       {clienteData.map(([nombre, info], idx) => {
-        const medalColor = MEDAL[idx] ?? c.accent;
-        const ini  = nombre.trim().split(/\s+/);
-        const av   = ini.length >= 2
-          ? (ini[0][0] + ini[1][0]).toUpperCase()
-          : nombre.substring(0, 2).toUpperCase();
-        const isLast = idx === clienteData.length - 1;
+        const medalColor = MEDAL[idx] ?? "#FFFFFF";
+        const topCargaCliente = info.cargas.size > 0
+          ? [...info.cargas.entries()].sort((a, b) => b[1] - a[1])[0][0]
+          : null;
 
         return (
           <View key={nombre}>
-            <View style={s.row}>
+            <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 }}>
               {/* Avatar */}
-              <View style={[s.avatar, { backgroundColor: medalColor + "22", borderColor: medalColor + "55" }]}>
-                <Text style={[s.avatarText, { color: medalColor }]}>{av}</Text>
+              <View style={[s.avatar, { backgroundColor: medalColor + "18", borderColor: medalColor + "40" }]}>
+                {idx < 3 ? (
+                  <Text style={{ fontSize: 15, fontWeight: "900", color: medalColor }}>{idx + 1}</Text>
+                ) : (
+                  <Feather name={clientTypes[nombre] === "empresa" ? "briefcase" : "user"} size={15} color={medalColor} />
+                )}
               </View>
 
-              {/* Info */}
-              <View style={s.info}>
-                <Text style={[s.nombre, { color: ink }]} numberOfLines={1}>{nombre}</Text>
-                <Text style={[s.meta, { color: muted }]}>
-                  {info.viajes} viaje{info.viajes !== 1 ? "s" : ""}
-                </Text>
+              {/* Name + cargo */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: ink }} numberOfLines={1}>{nombre}</Text>
+                {topCargaCliente && (
+                  <Text style={{ fontSize: 10, color: muted, marginTop: 1 }} numberOfLines={1}>{topCargaCliente}</Text>
+                )}
               </View>
 
-              {/* Monto */}
-              <Text style={[s.monto, { color: medalColor }]}>
+              {/* Viajes */}
+              <Text style={{ width: 55, fontSize: 15, fontWeight: "800", color: ink, textAlign: "right" }}>
+                {info.viajes}
+              </Text>
+
+              {/* Total */}
+              <Text style={{ width: 75, fontSize: 13, fontWeight: "800", color: medalColor, textAlign: "right" }}>
                 {formatCOP(info.total)}
               </Text>
             </View>
-            {!isLast && <View style={[s.divider, { backgroundColor: divClr }]} />}
+            {idx < clienteData.length - 1 && (
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginLeft: 48 }} />
+            )}
           </View>
         );
       })}
 
-      {/* ── Carga frecuente ── */}
-      {topCarga.length > 0 && (
-        <>
-          <View style={[s.sectionDivider, { backgroundColor: divClr }]} />
-
-          <View style={[s.header, { marginBottom: 8 }]}>
-            <Ionicons name="cube-outline" size={15} color={c.accent} />
-            <Text style={[s.headerTitle, { color: ink }]}>Carga frecuente</Text>
-          </View>
-
-          <View style={s.chipRow}>
-            {topCarga.map(([tipo, count]) => (
-              <View
-                key={tipo}
-                style={[s.chip, { backgroundColor: `${c.accent}12`, borderColor: `${c.accent}30` }]}>
-                <Text style={[s.chipText, { color: ink }]} numberOfLines={1}>{tipo}</Text>
-                <View style={[s.chipBadge, { backgroundColor: `${c.accent}20` }]}>
-                  <Text style={[s.chipCount, { color: ink }]}>{count}x</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
+      </LinearGradient>
     </View>
   );
 }
@@ -193,6 +196,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 12,
+    width: "100%",
   },
   header: {
     flexDirection: "row",
@@ -200,7 +204,7 @@ const s = StyleSheet.create({
     gap: 7,
     marginBottom: 10,
   },
-  headerTitle: { fontSize: 13, fontWeight: "700", letterSpacing: 0.1 },
+  headerTitle: { fontSize: 13, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
   headerSub:   { fontSize: 11, fontWeight: "500", marginLeft: 2 },
   emptyBox:    { alignItems: "center", paddingVertical: 14, gap: 7 },
   emptyText:   { fontSize: 12, textAlign: "center", lineHeight: 17 },
