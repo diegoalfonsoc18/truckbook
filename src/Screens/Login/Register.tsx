@@ -19,6 +19,7 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useTheme, getShadow, getInputStyles } from "../../constants/Themecontext";
 
 const SUCCESS = "#00D9A5";
@@ -146,14 +147,72 @@ export default function Register({ navigation }: Props) {
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "facebook") => {
+  const handleAppleLogin = async () => {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const redirectTo = Linking.createURL("/");
-      const { data, error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        Alert.alert("Error", "No se recibió token de Apple.");
+        return;
+      }
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+      });
+      if (error) Alert.alert("Error", error.message);
+    } catch (e: any) {
+      if (e.code !== "ERR_REQUEST_CANCELED") {
+        Alert.alert("Error", "No se pudo completar el registro con Apple.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: "google") => {
+    Keyboard.dismiss();
+    setLoading(true);
+    try {
+      const redirectTo = Linking.createURL("auth/callback");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
       if (error) { Alert.alert("Error", error.message); return; }
-      if (data?.url) await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (data?.url) {
+        const handleDeepLink = async (event: { url: string }) => {
+          const codeMatch = event.url.match(/[?&#]code=([^&#]+)/);
+          if (codeMatch) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+            if (exchangeError) Alert.alert("Error", exchangeError.message);
+          }
+          WebBrowser.dismissBrowser();
+          setLoading(false);
+        };
+
+        const subscription = Linking.addEventListener("url", handleDeepLink);
+
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+        if (result.type === "success" && result.url) {
+          subscription.remove();
+          const codeMatch = result.url.match(/[?&#]code=([^&#]+)/);
+          if (codeMatch) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+            if (exchangeError) Alert.alert("Error", exchangeError.message);
+            return;
+          }
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          subscription.remove();
+        }
+      }
     } catch {
       Alert.alert("Error", "No se pudo completar el registro social.");
     } finally {
@@ -197,7 +256,7 @@ export default function Register({ navigation }: Props) {
                 <View style={s.nameRow}>
                   <View style={s.nameCol}>
                     <Field
-                      label="Nombre" placeholder="Juan Carlos"
+                      label="Nombre" placeholder="Juan"
                       value={nombre} onChangeText={(t) => { setNombre(t); if (errors.nombre) setErrors({ ...errors, nombre: undefined }); }}
                       error={errors.nombre} autoCapitalize="words" editable={!loading}
                       icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
@@ -205,7 +264,7 @@ export default function Register({ navigation }: Props) {
                   </View>
                   <View style={s.nameCol}>
                     <Field
-                      label="Apellido" placeholder="Pérez"
+                      label="Apellido" placeholder="Rodríguez"
                       value={apellido} onChangeText={(t) => { setApellido(t); if (errors.apellido) setErrors({ ...errors, apellido: undefined }); }}
                       error={errors.apellido} autoCapitalize="words" editable={!loading}
                       icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
@@ -321,19 +380,21 @@ export default function Register({ navigation }: Props) {
 
               {/* SOCIAL */}
               <View style={s.socialRow}>
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
+                    onPress={handleAppleLogin}
+                    disabled={loading} activeOpacity={0.8}>
+                    <Ionicons name="logo-apple" size={19} color={c.text} />
+                    <Text style={[s.socialText, { color: c.text }]}>Apple</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
                   onPress={() => handleSocialLogin("google")}
                   disabled={loading} activeOpacity={0.8}>
                   <Image source={require("../../assets/img/google.png")} style={s.socialIcon} />
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
-                  onPress={() => handleSocialLogin("facebook")}
-                  disabled={loading} activeOpacity={0.8}>
-                  <Image source={require("../../assets/img/facebook.png")} style={s.socialIcon} />
-                  <Text style={[s.socialText, { color: c.text }]}>Facebook</Text>
                 </TouchableOpacity>
               </View>
 

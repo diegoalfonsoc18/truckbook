@@ -1,0 +1,43 @@
+# .easignore — igual que .gitignore pero permite .env para builds de EAS
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native (CNG/Prebuild — regenerados por EAS Build)
+/ios
+/android
+*.orig.*
+*.jks
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# NO excluir .env — EAS necesita las variables para el build
+# .env
+# .env.local
+# .env*.local
+
+# typescript
+*.tsbuildinfo
+
+# Claude Code skills
+.agents/
+.claude/worktrees/

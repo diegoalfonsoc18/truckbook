@@ -128,6 +128,12 @@ export default function WidgetClientes({ isDark }: WProps) {
     <View style={[s.card, cardBorderStyle, { overflow: "hidden", paddingHorizontal: 0, paddingVertical: 0 }]}>
       <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 28, paddingHorizontal: 16, paddingVertical: 14 }}>
 
+      {/* ── Título ── */}
+      <View style={s.header}>
+        <Ionicons name="people-outline" size={15} color="#FFFFFF" />
+        <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
+      </View>
+
       {/* ── Column headers ── */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
         <Text style={{ flex: 1, fontSize: 10, fontWeight: "700", color: muted, letterSpacing: 0.8 }}>
@@ -204,7 +210,7 @@ const s = StyleSheet.create({
     gap: 7,
     marginBottom: 10,
   },
-  headerTitle: { fontSize: 13, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
+  headerTitle: { fontSize: 13, fontWeight: "700", letterSpacing: 0.8 },
   headerSub:   { fontSize: 11, fontWeight: "500", marginLeft: 2 },
   emptyBox:    { alignItems: "center", paddingVertical: 14, gap: 7 },
   emptyText:   { fontSize: 12, textAlign: "center", lineHeight: 17 },

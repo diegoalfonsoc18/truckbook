@@ -21,7 +21,7 @@ export const HOME_COLORS = {
   vehicleCardChevronBg: "rgba(0,0,0,0.06)",
 
   // Vehicle Card — icono
-  vehicleIconSize: 120,
+  vehicleIconSize: 110,
 
   // Hero Cards — fondo (cada card independiente)
   heroCard1Bg: "#FFFFFF", // fondo card 1 (izquierda)

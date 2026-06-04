@@ -20,6 +20,7 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import Constants from "expo-constants";
 import * as AppleAuthentication from "expo-apple-authentication";
 import {
   useTheme,
@@ -126,6 +127,7 @@ export default function LoginScreen({ navigation }: Props) {
     setLoading(true);
     try {
       const redirectTo = Linking.createURL("auth/callback");
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo, skipBrowserRedirect: true },
@@ -135,21 +137,39 @@ export default function LoginScreen({ navigation }: Props) {
         return;
       }
       if (data?.url) {
+        // Escuchar el deep link antes de abrir el browser
+        const handleDeepLink = async (event: { url: string }) => {
+          const url = event.url;
+          const codeMatch = url.match(/[?&#]code=([^&#]+)/);
+          if (codeMatch) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+            if (exchangeError) Alert.alert("Error", exchangeError.message);
+          }
+          WebBrowser.dismissBrowser();
+          setLoading(false);
+        };
+
+        const subscription = Linking.addEventListener("url", handleDeepLink);
+
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
           redirectTo,
         );
+
+        // Si openAuthSessionAsync captura el redirect directamente
         if (result.type === "success" && result.url) {
-          const url = new URL(result.url);
-          const params = new URLSearchParams(url.hash.substring(1));
-          const accessToken = params.get("access_token");
-          const refreshToken = params.get("refresh_token");
-          if (accessToken && refreshToken) {
-            await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+          subscription.remove();
+          const resultUrl = result.url;
+          const codeMatch = resultUrl.match(/[?&#]code=([^&#]+)/);
+          if (codeMatch) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+            if (exchangeError) Alert.alert("Error", exchangeError.message);
+            return;
           }
+        } else {
+          // Dar tiempo al deep link listener para capturar el callback
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          subscription.remove();
         }
       }
     } catch {

@@ -30,11 +30,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
-import {
-  MotorIcon,
-  LicenciaIcon,
-  SoatIcon,
-} from "../../assets/icons/icons";
+import { MotorIcon, LicenciaIcon, SoatIcon } from "../../assets/icons/icons";
 import { HOME_COLORS } from "./HomeConstants";
 import { ICON_MAP, TIPOS_CAMION } from "./vehicleConstants";
 import WidgetResumen from "./widgets/WidgetResumen";
@@ -42,6 +38,7 @@ import WidgetInsightIA from "./widgets/WidgetInsightIA";
 import WidgetClientes from "./widgets/WidgetClientes";
 import DashboardControlPanel from "./components/DashboardControlPanel";
 import ModalVehiculos from "./components/ModalVehiculos";
+import VehicleCard from "./components/VehicleCard";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -304,12 +301,6 @@ export default function HomeBaseAdapted({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-8)).current;
 
-  // Vehicle card press animation
-  const vcScale = useSharedValue(1);
-  const vcAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: vcScale.value }],
-  }));
-
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -346,111 +337,6 @@ export default function HomeBaseAdapted({
     <View style={[s.container, { backgroundColor: c.primary }]}>
       <SafeAreaView style={s.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
-          {/* VEHICLE CARD */}
-          {showCamionHeader && (
-            <AnimatedPressable
-              style={[
-                s.vehicleCard,
-                {
-                  backgroundColor: isDark ? `${c.accent}14` : "#FFFFFF",
-                },
-                isDark
-                  ? { borderWidth: 1, borderColor: `${c.accent}33` }
-                  : vcShadow,
-                vcAnimStyle,
-              ]}
-              onPressIn={() => {
-                vcScale.value = withTiming(0.98, { duration: 100 });
-              }}
-              onPressOut={() => {
-                vcScale.value = withSpring(1, { damping: 15, stiffness: 300 });
-              }}
-              onPress={() => setModalVehiculosVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel={
-                placaActual
-                  ? `Vehículo activo: ${placaActual}, ${tipoCamionData?.label || ""}`
-                  : "Seleccionar vehículo"
-              }
-              accessibilityHint="Toca para cambiar de vehículo">
-              <View style={s.vehicleCardContent}>
-                {placaActual ? (
-                  <>
-                    {/* Con vehículo — info apilada */}
-                    <View style={s.vehicleInfo}>
-                      <Text
-                        style={[
-                          s.vehicleLabel,
-                          { color: HOME_COLORS.vehicleCardTextMuted },
-                        ]}>
-                        vehículo activo
-                      </Text>
-                      <Text
-                        style={[
-                          s.vehicleType,
-                          { color: HOME_COLORS.vehicleCardText },
-                        ]}>
-                        {vehicleCardTitle || tipoCamionData?.label || ""}
-                      </Text>
-                      <View
-                        style={[
-                          s.placaBadge,
-                          {
-                            backgroundColor: c.plateYellow,
-                            borderColor: c.plateBorder,
-                            borderWidth: 1,
-                          },
-                        ]}>
-                        <Text style={[s.placaText, { color: c.plateText }]}>
-                          {placaActual}
-                        </Text>
-                      </View>
-                      {conductorActual && (
-                        <Text
-                          style={[
-                            s.vehicleConductor,
-                            { color: HOME_COLORS.vehicleCardTextMuted },
-                          ]}
-                          numberOfLines={1}>
-                          {conductorActual}
-                        </Text>
-                      )}
-                    </View>
-                    <ItemIcon
-                      name={camionIconName}
-                      size={HOME_COLORS.vehicleIconSize}
-                    />
-                  </>
-                ) : (
-                  <>
-                    {/* Sin vehículo — estado vacío */}
-                    <View style={s.vehicleInfo}>
-                      <Text
-                        style={[
-                          s.vehicleType,
-                          { color: HOME_COLORS.vehicleCardText },
-                        ]}>
-                        Sin vehículo
-                      </Text>
-                      <Text
-                        style={[
-                          s.vehicleHint,
-                          { color: HOME_COLORS.vehicleCardTextMuted },
-                        ]}>
-                        Toca para seleccionar un camión
-                      </Text>
-                    </View>
-                    <ItemIcon
-                      name="conductor"
-                      size={HOME_COLORS.vehicleIconSize}
-                    />
-                  </>
-                )}
-              </View>
-            </AnimatedPressable>
-          )}
-
-          {/* GRID */}
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={
@@ -463,6 +349,14 @@ export default function HomeBaseAdapted({
                 paddingHorizontal: Platform.OS === "ios" ? H_PAD : 0,
               },
             ]}>
+            {/* VEHICLE CARD */}
+            {showCamionHeader && (
+              <VehicleCard
+                vehicleCardTitle={vehicleCardTitle}
+                onPress={() => setModalVehiculosVisible(true)}
+              />
+            )}
+
             {/* WIDGETS — fila de dos columnas */}
             <View style={s.widgetRow}>
               <WidgetResumen isDark={isDark} />
@@ -484,14 +378,38 @@ export default function HomeBaseAdapted({
                   },
                 ]}>
                 <Text style={{ fontSize: 36, marginBottom: 10 }}>🚛</Text>
-                <Text style={{ fontSize: 16, fontWeight: "700", color: c.text, marginBottom: 6, letterSpacing: -0.3 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: c.text,
+                    marginBottom: 6,
+                    letterSpacing: -0.3,
+                  }}>
                   Vincula tu vehículo
                 </Text>
-                <Text style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", textAlign: "center", lineHeight: 19, paddingHorizontal: 16 }}>
-                  Para registrar gastos, ingresos y ver tu actividad semanal, primero selecciona un vehículo.
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: isDark
+                      ? "rgba(255,255,255,0.5)"
+                      : "rgba(0,0,0,0.45)",
+                    textAlign: "center",
+                    lineHeight: 19,
+                    paddingHorizontal: 16,
+                  }}>
+                  Para registrar gastos, ingresos y ver tu actividad semanal,
+                  primero selecciona un vehículo.
                 </Text>
-                <View style={[s.onboardingBtn, { backgroundColor: c.accent, marginTop: 18 }]}>
-                  <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>Seleccionar vehículo</Text>
+                <View
+                  style={[
+                    s.onboardingBtn,
+                    { backgroundColor: c.accent, marginTop: 18 },
+                  ]}>
+                  <Text
+                    style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
+                    Seleccionar vehículo
+                  </Text>
                 </View>
               </TouchableOpacity>
             ) : (
@@ -643,11 +561,8 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   vehicleCardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
   },
   // Circular icon — double-ring matching grid cards
   vehicleIconBg: {
@@ -677,7 +592,7 @@ const s = StyleSheet.create({
     fontSize: HOME_COLORS.vehicleTypeSize,
     fontWeight: HOME_COLORS.vehicleTypeWeight,
     letterSpacing: -0.3,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   vehicleHint: { fontSize: HOME_COLORS.vehicleHintSize },
   vehicleCtaWrap: {
@@ -692,6 +607,39 @@ const s = StyleSheet.create({
   vehicleCtaText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.1 },
   vehicleConductor: {
     fontSize: HOME_COLORS.vehicleConductorSize,
+  },
+  vcTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  vcMiddleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: -2,
+  },
+  vcBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 6,
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginTop: 10,
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statText: {
+    fontSize: 12,
+    fontWeight: "500",
   },
   placaBadge: {
     borderRadius: HOME_COLORS.vehicleBadgeBorderRadius,
