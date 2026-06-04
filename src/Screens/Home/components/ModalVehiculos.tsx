@@ -18,6 +18,7 @@ import {
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { useVehiculoStore, TipoCamion } from "../../../store/VehiculoStore";
+import { useVehiculosListStore } from "../../../store/VehiculosListStore";
 import { useAuth } from "../../../hooks/useAuth";
 import supabase from "../../../config/SupaBaseConfig";
 import {
@@ -52,8 +53,7 @@ export default function ModalVehiculos({
   const { placa: placaActual, setPlaca, setTipoCamion } = useVehiculoStore();
   const { user } = useAuth();
 
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const { vehiculos: vehiculosStore, cargando, cargar: cargarVehiculos } = useVehiculosListStore();
   const [placaInput, setPlacaInput] = useState("");
   const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
     null,
@@ -66,62 +66,30 @@ export default function ModalVehiculos({
   const [tipoCamionEditInput, setTipoCamionEditInput] =
     useState<TipoCamion | null>(null);
 
-  // Load vehicles whenever the modal opens
+  // Refrescar al abrir modal (el store ya tiene datos pre-cargados desde DataProvider)
   useEffect(() => {
-    if (visible && user?.id) cargarVehiculos();
-  }, [visible, user?.id]);
+    if (visible && user?.id) cargarVehiculos(user.id);
+  }, [visible]);
 
-  const cargarVehiculos = async () => {
-    if (!user?.id) return;
-    setCargando(true);
-    try {
-      const { data, error } = await cargarVehiculosConEstado(user.id);
-      if (error) throw error;
+  // Mapear store a tipo local con normalizarTipo
+  const vehiculos = vehiculosStore.map((v) => ({
+    id: v.id,
+    placa: v.placa,
+    tipo_camion: normalizarTipo(v.tipo_camion),
+    estado: v.estado,
+    rol: v.rol,
+    conductorNombre: v.conductorNombre,
+  })) as Vehiculo[];
 
-      const vehiculosConConductor = await Promise.all(
-        (data || []).map(async (v) => {
-          let conductorNombre: string | undefined;
-          const { data: relaciones } = await supabase
-            .from("vehiculo_conductores")
-            .select("conductor_id")
-            .eq("vehiculo_placa", v.placa)
-            .eq("rol", "conductor")
-            .eq("estado", "autorizado")
-            .limit(1);
-
-          if (relaciones && relaciones.length > 0) {
-            const { data: usuario } = await supabase
-              .from("usuarios")
-              .select("nombre")
-              .eq("user_id", relaciones[0].conductor_id)
-              .maybeSingle();
-            conductorNombre = usuario?.nombre;
-          }
-
-          return {
-            id: v.relacion_id,
-            placa: v.placa,
-            tipo_camion: normalizarTipo(v.tipo_camion),
-            estado: v.estado,
-            rol: v.rol,
-            conductorNombre,
-          };
-        }),
-      );
-
-      setVehiculos(vehiculosConConductor);
-      if (placaActual) {
-        const actual = vehiculosConConductor.find(
-          (v) => v.placa === placaActual,
-        );
-        onConductorChange(actual?.conductorNombre);
-      }
-    } catch (err) {
-      logger.error("Error cargando vehículos:", err);
-    } finally {
-      setCargando(false);
+  // Sync conductor name
+  useEffect(() => {
+    if (placaActual) {
+      const actual = vehiculos.find((v) => v.placa === placaActual);
+      onConductorChange(actual?.conductorNombre);
     }
-  };
+  }, [vehiculosStore, placaActual]);
+
+  const recargar = () => { if (user?.id) cargarVehiculos(user.id); };
 
   const getTipoCamionData = (tipo: TipoCamion | null) =>
     TIPOS_CAMION.find((t) => t.id === tipo);
@@ -206,7 +174,7 @@ export default function ModalVehiculos({
       setVehiculoEditando(null);
       setPlacaEditInput("");
       setTipoCamionEditInput(null);
-      await cargarVehiculos();
+      recargar();
     } catch {
       Alert.alert("Error", "No se pudo actualizar el vehículo");
     } finally {
@@ -230,7 +198,7 @@ export default function ModalVehiculos({
             return;
           }
           if (placaActual === v.placa) setPlaca("");
-          await cargarVehiculos();
+          recargar();
         },
       },
     ]);
@@ -256,7 +224,7 @@ export default function ModalVehiculos({
       return;
     }
     setGuardando(false);
-    await cargarVehiculos();
+    recargar();
     setPlacaInput("");
     setTipoCamionInput(null);
   };
@@ -300,7 +268,7 @@ export default function ModalVehiculos({
                   </Text>
 
                   {/* ── Lista de vehículos ── */}
-                  {cargando ? (
+                  {cargando && vehiculosStore.length === 0 ? (
                     <View style={s.loadingBox}>
                       <ActivityIndicator size="large" color={c.accent} />
                     </View>

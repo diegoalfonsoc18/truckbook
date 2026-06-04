@@ -329,7 +329,7 @@ export default function FinanzasGenerales() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
   const [exportModal, setExportModal] = useState(false);
@@ -473,141 +473,98 @@ export default function FinanzasGenerales() {
       ? [placaActual]
       : [];
 
+  // Los datos ya están en Zustand stores (cargados por DataProvider con realtime).
+  // Solo animamos la entrada — no hay que esperar queries.
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        if (esMultiVehiculo) {
-          // Cargar datos de todas las placas del conductor
-          await Promise.all([
-            useGastosStore.getState().cargarGastosDelDB(null, user?.id),
-            useIngresosStore.getState().cargarIngresosDelDB(null, user?.id),
-          ]);
-        } else {
-          await Promise.all([
-            useGastosStore.getState().cargarGastosDelDB(placaActual, user?.id),
-            useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id),
-          ]);
-        }
-      } catch (err) {
-        setError("Error al cargar datos");
-      } finally {
-        setLoading(false);
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 380,
-            useNativeDriver: true,
-          }),
-          Animated.timing(headerY, {
-            toValue: 0,
-            duration: 420,
-            easing: (t: number) => 1 - Math.pow(1 - t, 3),
-            useNativeDriver: true,
-          }),
-        ]).start();
-        // Stagger cards
-        card1Opacity.value = withDelay(
-          60,
-          withTiming(1, { duration: 300, easing: easeOut }),
-        );
-        card1Scale.value = withDelay(
-          60,
-          withTiming(1, { duration: 340, easing: easeOut }),
-        );
-        card2Opacity.value = withDelay(
-          130,
-          withTiming(1, { duration: 300, easing: easeOut }),
-        );
-        card2Scale.value = withDelay(
-          130,
-          withTiming(1, { duration: 340, easing: easeOut }),
-        );
-        balOpacity.value = withDelay(
-          200,
-          withTiming(1, { duration: 320, easing: easeOut }),
-        );
-        balScale.value = withDelay(
-          200,
-          withTiming(1, { duration: 360, easing: easeOut }),
-        );
-        chartOpacity.value = withDelay(
-          280,
-          withTiming(1, { duration: 320, easing: easeOut }),
-        );
-        chartTransY.value = withDelay(
-          280,
-          withTiming(0, { duration: 360, easing: easeOut }),
-        );
-      }
-    };
-    if (esMultiVehiculo || placaActual) cargarDatos();
+    if (!esMultiVehiculo && !placaActual) return;
+    setLoading(false);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerY, {
+        toValue: 0,
+        duration: 420,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        useNativeDriver: true,
+      }),
+    ]).start();
+    // Stagger cards
+    card1Opacity.value = withDelay(60, withTiming(1, { duration: 300, easing: easeOut }));
+    card1Scale.value = withDelay(60, withTiming(1, { duration: 340, easing: easeOut }));
+    card2Opacity.value = withDelay(130, withTiming(1, { duration: 300, easing: easeOut }));
+    card2Scale.value = withDelay(130, withTiming(1, { duration: 340, easing: easeOut }));
+    balOpacity.value = withDelay(200, withTiming(1, { duration: 320, easing: easeOut }));
+    balScale.value = withDelay(200, withTiming(1, { duration: 360, easing: easeOut }));
+    chartOpacity.value = withDelay(280, withTiming(1, { duration: 320, easing: easeOut }));
+    chartTransY.value = withDelay(280, withTiming(0, { duration: 360, easing: easeOut }));
   }, [placaActual, esMultiVehiculo]);
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
 
-  const placasSet = new Set(placasActivas);
-  const gastosPorPlaca = gastos.filter((g) => placasSet.has(g.placa));
-  const ingresosPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
+  // ── Todos los cálculos memorizados — solo se recalculan cuando cambian los datos o filtros ──
+  const {
+    gastosPorPlaca,
+    ingresosPorPlaca,
+    gastosFiltrados,
+    ingresosFiltrados,
+    allKeys,
+    chartGastosData,
+    chartIngresosData,
+    totalGastos,
+    totalIngresos,
+    balance,
+    rentabilidad,
+    formattedLabels,
+  } = React.useMemo(() => {
+    const placasSet = new Set(placasActivas);
+    const gPorPlaca = gastos.filter((g) => placasSet.has(g.placa));
+    const iPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
 
-  const gastosTransformados = gastosPorPlaca.map((g) => ({
-    fecha: g.fecha,
-    value: g.monto,
-  }));
-  const ingresosTransformados = ingresosPorPlaca.map((i) => ({
-    fecha: i.fecha,
-    value: i.monto,
-  }));
+    const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
+    const iTransf = iPorPlaca.map((i) => ({ fecha: i.fecha, value: i.monto }));
 
-  const gastosFiltrados = filtrarPorRango(
-    gastosTransformados,
-    rango.inicio,
-    rango.fin,
-  );
-  const ingresosFiltrados = filtrarPorRango(
-    ingresosTransformados,
-    rango.inicio,
-    rango.fin,
-  );
+    const gFilt = filtrarPorRango(gTransf, rango.inicio, rango.fin);
+    const iFilt = filtrarPorRango(iTransf, rango.inicio, rango.fin);
 
-  let groupedGastos: Record<string, number> = {};
-  let groupedIngresos: Record<string, number> = {};
+    const sliceLen = view === "dias" ? 10 : view === "meses" ? 7 : 4;
+    const keyFn = (item: { fecha: string }) => item.fecha?.slice(0, sliceLen);
 
-  if (view === "dias") {
-    groupedGastos = groupBy(gastosFiltrados, (g) => g.fecha);
-    groupedIngresos = groupBy(ingresosFiltrados, (i) => i.fecha);
-  } else if (view === "meses") {
-    groupedGastos = groupBy(gastosFiltrados, (g) => g.fecha?.slice(0, 7));
-    groupedIngresos = groupBy(ingresosFiltrados, (i) => i.fecha?.slice(0, 7));
-  } else if (view === "años") {
-    groupedGastos = groupBy(gastosFiltrados, (g) => g.fecha?.slice(0, 4));
-    groupedIngresos = groupBy(ingresosFiltrados, (i) => i.fecha?.slice(0, 4));
-  }
+    const groupedG = groupBy(gFilt, keyFn);
+    const groupedI = groupBy(iFilt, keyFn);
 
-  const allKeys = Array.from(
-    new Set([...Object.keys(groupedGastos), ...Object.keys(groupedIngresos)]),
-  ).sort();
-  const chartGastosData = allKeys.map((k) => {
-    const val = Number(groupedGastos[k]);
-    return isFinite(val) ? val : 0;
-  });
-  const chartIngresosData = allKeys.map((k) => {
-    const val = Number(groupedIngresos[k]);
-    return isFinite(val) ? val : 0;
-  });
+    const keys = Array.from(
+      new Set([...Object.keys(groupedG), ...Object.keys(groupedI)]),
+    ).sort();
 
-  const totalGastos = chartGastosData.reduce((a, b) => a + b, 0);
-  const totalIngresos = chartIngresosData.reduce((a, b) => a + b, 0);
-  const balance = totalIngresos - totalGastos;
-  const rentabilidad =
-    totalIngresos === 0 ? 0 : ((balance / totalIngresos) * 100).toFixed(1);
+    const chartG = keys.map((k) => { const v = Number(groupedG[k]); return isFinite(v) ? v : 0; });
+    const chartI = keys.map((k) => { const v = Number(groupedI[k]); return isFinite(v) ? v : 0; });
 
-  const formattedLabels =
-    allKeys.length > 0
-      ? allKeys.map((k) => formatLabel(k, view))
-      : ["Sin datos"];
+    const totG = chartG.reduce((a, b) => a + b, 0);
+    const totI = chartI.reduce((a, b) => a + b, 0);
+    const bal = totI - totG;
+    const rent = totI === 0 ? 0 : ((bal / totI) * 100).toFixed(1);
+
+    const labels = keys.length > 0 ? keys.map((k) => formatLabel(k, view)) : ["Sin datos"];
+
+    return {
+      gastosPorPlaca: gPorPlaca,
+      ingresosPorPlaca: iPorPlaca,
+      gastosFiltrados: gFilt,
+      ingresosFiltrados: iFilt,
+      allKeys: keys,
+      chartGastosData: chartG,
+      chartIngresosData: chartI,
+      totalGastos: totG,
+      totalIngresos: totI,
+      balance: bal,
+      rentabilidad: rent,
+      formattedLabels: labels,
+    };
+  }, [gastos, ingresos, placasActivas.join(","), rango.inicio, rango.fin, view]);
 
   const formatDateShort = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");

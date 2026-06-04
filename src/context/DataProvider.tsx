@@ -4,6 +4,7 @@ import { useSyncManager } from "../hooks/useSyncManager";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
 import { useVehiculoStore } from "../store/VehiculoStore";
+import { useVehiculosListStore } from "../store/VehiculosListStore";
 import logger from "../utils/logger";
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
@@ -26,6 +27,39 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     editarIngreso,
     eliminarIngreso,
   } = useIngresosStore();
+  const { cargar: cargarVehiculos } = useVehiculosListStore();
+
+  // ✅ CARGAR VEHÍCULOS AL MONTAR
+  useEffect(() => {
+    if (!userId) return;
+    cargarVehiculos(userId);
+  }, [userId]);
+
+  // ✅ SUSCRIBIRSE A CAMBIOS EN VEHÍCULOS (realtime)
+  useEffect(() => {
+    if (!userId) return;
+
+    const subscription = supabase
+      .channel(`vehiculos-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "vehiculo_conductores",
+          filter: `conductor_id=eq.${userId}`,
+        },
+        () => {
+          // Re-cargar toda la lista cuando hay cambios (INSERT/UPDATE/DELETE)
+          cargarVehiculos(userId);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [userId]);
 
   // ✅ CARGAR GASTOS AL MONTAR
   useEffect(() => {
