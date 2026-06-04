@@ -20,13 +20,33 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import Constants from "expo-constants";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import {
   useTheme,
   getShadow,
   getInputStyles,
 } from "../../constants/Themecontext";
+
+// Google Sign-In nativo — solo disponible en dev client / producción
+let GoogleSignin: any = null;
+let isSuccessResponse: any = null;
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+if (!isExpoGo) {
+  try {
+    const mod = require("@react-native-google-signin/google-signin");
+    GoogleSignin = mod.GoogleSignin;
+    isSuccessResponse = mod.isSuccessResponse;
+    GoogleSignin.configure({
+      webClientId:
+        "48411599186-6revsgm29tv8uav2up6nume529h1b1j0.apps.googleusercontent.com",
+      iosClientId:
+        "48411599186-o45n7euch24bvbl0e1rb5fcul8kojgso.apps.googleusercontent.com",
+    });
+  } catch {}
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -122,58 +142,60 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const handleSocialLogin = async (provider: "google") => {
+  const handleGoogleLogin = async () => {
     Keyboard.dismiss();
     setLoading(true);
-    try {
-      const redirectTo = Linking.createURL("auth/callback");
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo, skipBrowserRedirect: true },
-      });
-      if (error) {
-        Alert.alert("Error", error.message);
-        return;
-      }
-      if (data?.url) {
-        // Escuchar el deep link antes de abrir el browser
-        const handleDeepLink = async (event: { url: string }) => {
-          const url = event.url;
-          const codeMatch = url.match(/[?&#]code=([^&#]+)/);
-          if (codeMatch) {
-            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
-            if (exchangeError) Alert.alert("Error", exchangeError.message);
-          }
-          WebBrowser.dismissBrowser();
-          setLoading(false);
-        };
+    // ─── Modo nativo (dev client / producción) ───
+    if (GoogleSignin) {
+      try {
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
 
-        const subscription = Linking.addEventListener("url", handleDeepLink);
-
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectTo,
-        );
-
-        // Si openAuthSessionAsync captura el redirect directamente
-        if (result.type === "success" && result.url) {
-          subscription.remove();
-          const resultUrl = result.url;
-          const codeMatch = resultUrl.match(/[?&#]code=([^&#]+)/);
-          if (codeMatch) {
-            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
-            if (exchangeError) Alert.alert("Error", exchangeError.message);
+        if (isSuccessResponse(response)) {
+          const idToken = response.data?.idToken;
+          if (!idToken) {
+            Alert.alert("Error", "No se recibió token de Google.");
             return;
           }
-        } else {
-          // Dar tiempo al deep link listener para capturar el callback
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          subscription.remove();
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: idToken,
+          });
+          if (error) Alert.alert("Error", error.message);
+        }
+      } catch (e: any) {
+        if (e?.code === "SIGN_IN_CANCELLED") return;
+        Alert.alert("Error", e?.message ?? "No se pudo iniciar sesión con Google.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ─── Fallback Expo Go (browser OAuth) ───
+    try {
+      const redirectTo = Linking.createURL("auth/callback");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (error || !data?.url) {
+        Alert.alert("Error", error?.message ?? "No se obtuvo URL de autenticación");
+        return;
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+      if (result.type === "success" && result.url) {
+        const codeMatch = result.url.match(/[?&#]code=([^&#]+)/);
+        if (codeMatch) {
+          const { error: ex } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+          if (ex) Alert.alert("Error", ex.message);
         }
       }
-    } catch {
-      Alert.alert("Error", "No se pudo completar el inicio de sesión.");
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo iniciar sesión con Google.");
     } finally {
       setLoading(false);
     }
@@ -348,7 +370,7 @@ export default function LoginScreen({ navigation }: Props) {
                     { backgroundColor: c.cardBg, borderColor: c.border },
                     shadow,
                   ]}
-                  onPress={() => handleSocialLogin("google")}
+                  onPress={handleGoogleLogin}
                   disabled={loading}
                   activeOpacity={0.8}>
                   <Image
