@@ -33,11 +33,11 @@ if (!isExpoGo) {
     const mod = require("@react-native-google-signin/google-signin");
     GoogleSignin = mod.GoogleSignin;
     isSuccessResponse = mod.isSuccessResponse;
+    const extra = Constants.expoConfig?.extra;
     GoogleSignin.configure({
-      webClientId:
-        "48411599186-6revsgm29tv8uav2up6nume529h1b1j0.apps.googleusercontent.com",
-      iosClientId:
-        "48411599186-o45n7euch24bvbl0e1rb5fcul8kojgso.apps.googleusercontent.com",
+      webClientId: extra?.googleWebClientId ?? "",
+      iosClientId: extra?.googleIosClientId ?? "",
+      androidClientId: extra?.googleAndroidClientId ?? "",
     });
   } catch {}
 }
