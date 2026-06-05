@@ -84,7 +84,10 @@ export default function LoginScreen({ navigation }: Props) {
     const now = Date.now();
     if (lockedUntil > now) {
       const secsLeft = Math.ceil((lockedUntil - now) / 1000);
-      Alert.alert("Demasiados intentos", `Espera ${secsLeft} segundos antes de intentar de nuevo.`);
+      Alert.alert(
+        "Demasiados intentos",
+        `Espera ${secsLeft} segundos antes de intentar de nuevo.`,
+      );
       return;
     }
     setLoading(true);
@@ -100,7 +103,10 @@ export default function LoginScreen({ navigation }: Props) {
           const lockTime = Math.min(30 * Math.pow(2, attempts - 5), 300) * 1000;
           setLockedUntil(Date.now() + lockTime);
           setLoginAttempts(0);
-          Alert.alert("Demasiados intentos", `Cuenta bloqueada temporalmente. Intenta en ${Math.round(lockTime / 1000)} segundos.`);
+          Alert.alert(
+            "Demasiados intentos",
+            `Cuenta bloqueada temporalmente. Intenta en ${Math.round(lockTime / 1000)} segundos.`,
+          );
         } else {
           Alert.alert("Error", error.message);
         }
@@ -128,14 +134,36 @@ export default function LoginScreen({ navigation }: Props) {
         Alert.alert("Error", "No se recibió token de Apple.");
         return;
       }
-      const { error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: credential.identityToken,
       });
-      if (error) Alert.alert("Error", error.message);
+      if (error) {
+        Alert.alert("Error", error.message);
+      } else if (data.user && credential.fullName) {
+        // Apple solo envía el nombre en el primer login — guardarlo
+        const nombre = credential.fullName.givenName ?? "";
+        const apellido = credential.fullName.familyName ?? "";
+        if (nombre || apellido) {
+          await supabase.from("usuarios").upsert(
+            [
+              {
+                user_id: data.user.id,
+                nombre,
+                apellido,
+                email: data.user.email ?? "",
+              },
+            ],
+            { onConflict: "user_id" },
+          );
+        }
+      }
     } catch (e: any) {
       if (e.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("Error", "No se pudo completar el inicio de sesión con Apple.");
+        Alert.alert(
+          "Error",
+          "No se pudo completar el inicio de sesión con Apple.",
+        );
       }
     } finally {
       setLoading(false);
@@ -166,7 +194,10 @@ export default function LoginScreen({ navigation }: Props) {
         }
       } catch (e: any) {
         if (e?.code === "SIGN_IN_CANCELLED") return;
-        Alert.alert("Error", e?.message ?? "No se pudo iniciar sesión con Google.");
+        Alert.alert(
+          "Error",
+          e?.message ?? "No se pudo iniciar sesión con Google.",
+        );
       } finally {
         setLoading(false);
       }
@@ -181,21 +212,32 @@ export default function LoginScreen({ navigation }: Props) {
         options: { redirectTo, skipBrowserRedirect: true },
       });
       if (error || !data?.url) {
-        Alert.alert("Error", error?.message ?? "No se obtuvo URL de autenticación");
+        Alert.alert(
+          "Error",
+          error?.message ?? "No se obtuvo URL de autenticación",
+        );
         return;
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectTo,
+      );
 
       if (result.type === "success" && result.url) {
         const codeMatch = result.url.match(/[?&#]code=([^&#]+)/);
         if (codeMatch) {
-          const { error: ex } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
+          const { error: ex } = await supabase.auth.exchangeCodeForSession(
+            codeMatch[1],
+          );
           if (ex) Alert.alert("Error", ex.message);
         }
       }
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo iniciar sesión con Google.");
+      Alert.alert(
+        "Error",
+        e?.message ?? "No se pudo iniciar sesión con Google.",
+      );
     } finally {
       setLoading(false);
     }
@@ -217,7 +259,7 @@ export default function LoginScreen({ navigation }: Props) {
             {/* HERO */}
             <View style={s.hero}>
               <Image
-                source={require("../../../assets/TruckBook/grille.png")}
+                source={require("../../../assets/TruckBook/grilleBlack.png")}
                 style={s.heroImg}
                 resizeMode="contain"
               />
@@ -355,11 +397,7 @@ export default function LoginScreen({ navigation }: Props) {
                     onPress={handleAppleLogin}
                     disabled={loading}
                     activeOpacity={0.8}>
-                    <Ionicons
-                      name="logo-apple"
-                      size={19}
-                      color={c.text}
-                    />
+                    <Ionicons name="logo-apple" size={19} color={c.text} />
                     <Text style={[s.socialText, { color: c.text }]}>Apple</Text>
                   </TouchableOpacity>
                 )}
@@ -380,46 +418,46 @@ export default function LoginScreen({ navigation }: Props) {
                   <Text style={[s.socialText, { color: c.text }]}>Google</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* FOOTER */}
+              <View style={[s.footer, { borderTopColor: c.border }]}>
+                <Text style={[s.footerText, { color: c.textSecondary }]}>
+                  ¿No tienes cuenta?{" "}
+                  <Text
+                    style={[s.footerLink, { color: c.accent }]}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      navigation.navigate("Register");
+                    }}>
+                    Regístrate
+                  </Text>
+                </Text>
+              </View>
             </View>
           </ScrollView>
-
-          {/* FOOTER */}
-          <View style={[s.footer, { borderTopColor: c.border }]}>
-            <Text style={[s.footerText, { color: c.textSecondary }]}>
-              ¿No tienes cuenta?{" "}
-              <Text
-                style={[s.footerLink, { color: c.accent }]}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  navigation.navigate("Register");
-                }}>
-                Regístrate
-              </Text>
-            </Text>
-          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
 }
 
-const IMG_H = Math.min(height * 0.2, 420);
+const IMG_H = Math.min(height * 0.18, 200);
 
 const s = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
   kav: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 8 },
+  scrollContent: { flexGrow: 1, justifyContent: "center", paddingBottom: 8 },
 
   // HERO
   hero: {
     alignItems: "center",
-    paddingTop: COMPACT ? 12 : 20,
-    paddingBottom: COMPACT ? 12 : 20,
+    paddingTop: COMPACT ? 8 : 12,
+    paddingBottom: COMPACT ? 4 : 8,
     paddingHorizontal: 24,
   },
-  heroImg: { width: width * 0.8, height: IMG_H, marginBottom: 30 },
+  heroImg: { width: width * 0.3, height: IMG_H, marginBottom: 4 },
   badge: {
     borderRadius: 999,
     paddingHorizontal: 14,

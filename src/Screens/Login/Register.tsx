@@ -183,11 +183,27 @@ export default function Register({ navigation }: Props) {
         Alert.alert("Error", "No se recibió token de Apple.");
         return;
       }
-      const { error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: credential.identityToken,
       });
-      if (error) Alert.alert("Error", error.message);
+      if (error) {
+        Alert.alert("Error", error.message);
+      } else if (data.user && credential.fullName) {
+        const nombre = credential.fullName.givenName ?? "";
+        const apellido = credential.fullName.familyName ?? "";
+        if (nombre || apellido) {
+          await supabase.from("usuarios").upsert(
+            [{
+              user_id: data.user.id,
+              nombre,
+              apellido,
+              email: data.user.email ?? "",
+            }],
+            { onConflict: "user_id" },
+          );
+        }
+      }
     } catch (e: any) {
       if (e.code !== "ERR_REQUEST_CANCELED") {
         Alert.alert("Error", "No se pudo completar el registro con Apple.");
