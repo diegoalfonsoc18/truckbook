@@ -71,7 +71,13 @@ export default {
         },
       ],
       "expo-apple-authentication",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          iosUrlScheme:
+            "com.googleusercontent.apps.48411599186-o45n7euch24bvbl0e1rb5fcul8kojgso",
+        },
+      ],
       "expo-secure-store",
       [
         "expo-image-picker",
