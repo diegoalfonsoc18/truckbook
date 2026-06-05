@@ -51,7 +51,7 @@ export default function VehicleCard({
   const vehicleStats = React.useMemo(() => {
     const fletes = ingresos.filter((i) => i.tipo_ingreso === "Flete");
     const totalViajes = fletes.length;
-    const totalIngresos = fletes.reduce((sum, i) => sum + (i.monto ?? 0), 0);
+    const totalIngresos = fletes.reduce((sum, i) => sum + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
     const clientesSet = new Set<string>();
     for (const ing of fletes) {
       if (ing.descripcion) {

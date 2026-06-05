@@ -153,15 +153,22 @@ function generarReporteHTML(params: {
     </tr>`;
   }).join("");
 
+  const cleanDesc = (d: string) => (d || "—").replace(/\[TEL:[^\]]*\]/g, "").trim() || "—";
+
   const top10Ingresos = [...params.ingresosDetalle]
-    .sort((a, b) => b.monto - a.monto)
+    .sort((a, b) => (b.monto * ((b as any).cantidad ?? 1)) - (a.monto * ((a as any).cantidad ?? 1)))
     .slice(0, 15)
-    .map(i => `<tr>
+    .map(i => {
+      const cant = (i as any).cantidad ?? 1;
+      const total = i.monto * cant;
+      const cantLabel = cant > 1 ? ` (x${cant})` : "";
+      return `<tr>
       <td>${fmtFecha(i.fecha)}</td>
-      <td>${i.tipo_ingreso}</td>
-      <td>${i.descripcion || "—"}</td>
-      <td class="right green">${fmt(i.monto)}</td>
-    </tr>`).join("");
+      <td>${i.tipo_ingreso}${cantLabel}</td>
+      <td>${cleanDesc(i.descripcion)}</td>
+      <td class="right green">${fmt(total)}</td>
+    </tr>`;
+    }).join("");
 
   const top10Gastos = [...params.gastosDetalle]
     .sort((a, b) => b.monto - a.monto)
@@ -169,7 +176,7 @@ function generarReporteHTML(params: {
     .map(g => `<tr>
       <td>${fmtFecha(g.fecha)}</td>
       <td>${g.tipo_gasto}</td>
-      <td>${g.descripcion || "—"}</td>
+      <td>${cleanDesc(g.descripcion)}</td>
       <td class="right red">${fmt(g.monto)}</td>
     </tr>`).join("");
 
@@ -525,7 +532,7 @@ export default function FinanzasGenerales() {
     const iPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
 
     const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
-    const iTransf = iPorPlaca.map((i) => ({ fecha: i.fecha, value: i.monto }));
+    const iTransf = iPorPlaca.map((i) => ({ fecha: i.fecha, value: i.monto * ((i as any).cantidad ?? 1) }));
 
     const gFilt = filtrarPorRango(gTransf, rango.inicio, rango.fin);
     const iFilt = filtrarPorRango(iTransf, rango.inicio, rango.fin);
@@ -595,7 +602,7 @@ export default function FinanzasGenerales() {
 
     // Recalcular datos agrupados para el período del informe
     const gFilt = gastosDetalle.map((g) => ({ fecha: g.fecha, value: g.monto }));
-    const iFilt = ingresosDetalle.map((i) => ({ fecha: i.fecha, value: i.monto }));
+    const iFilt = ingresosDetalle.map((i) => ({ fecha: i.fecha, value: i.monto * ((i as any).cantidad ?? 1) }));
     const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, 7));
     const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, 7));
     const keys = Array.from(new Set([...Object.keys(gGrp), ...Object.keys(iGrp)])).sort();

@@ -121,7 +121,7 @@ export default function WidgetResumen({ isDark }: WProps) {
   const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
   const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
   const totalG      = gastosHoy.reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalI      = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0), 0);
+  const totalI      = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
   const balance     = totalI - totalG;
 
   const hace7 = new Date();

@@ -92,10 +92,10 @@ export function ModalPendientes({
                   86_400_000,
               )
             : 0;
-          return `${cl}: ${fmtI(p.monto ?? 0)} (hace ${dias}d)`;
+          return `${cl}: ${fmtI((p.monto ?? 0) * (p.cantidad ?? 1))} (hace ${dias}d)`;
         })
         .join(", ");
-      const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+      const total = pendientes.reduce((a, p) => a + (p.monto ?? 0) * (p.cantidad ?? 1), 0);
       const prompt =
         `Eres asistente de un camionero colombiano. Tiene ${pendientes.length} cuenta(s) por cobrar: ${lines}. Total: ${fmtI(total)}.\n` +
         `Genera UN consejo corto (máximo 80 caracteres) para motivarlo a cobrar hoy. Español colombiano informal. Sin emojis. Solo el texto.`;
@@ -150,7 +150,7 @@ export function ModalPendientes({
     );
   };
 
-  const totalPend = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
+  const totalPend = pendientes.reduce((a, p) => a + (p.monto ?? 0) * (p.cantidad ?? 1), 0);
 
   return (
     <Modal

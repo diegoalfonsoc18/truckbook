@@ -58,12 +58,14 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
   return ingresos
     .filter((i) => {
       // Incluir si no está completamente pagado
+      const montoTotal = i.monto * (i.cantidad ?? 1);
       const montoPagado = i.monto_pagado ?? 0;
-      return i.estado !== "pagado" || montoPagado < i.monto;
+      return i.estado !== "pagado" || montoPagado < montoTotal;
     })
     .map((i) => {
+      const montoTotal = i.monto * (i.cantidad ?? 1);
       const montoPagado = i.monto_pagado ?? 0;
-      const montoRestante = Math.max(0, i.monto - montoPagado);
+      const montoRestante = Math.max(0, montoTotal - montoPagado);
       const fechaVenc = i.fecha_vencimiento
         ? new Date(i.fecha_vencimiento)
         : undefined;
@@ -71,7 +73,7 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
       let estado: EstadoCobro;
       let diasVencido = 0;
 
-      if (montoPagado >= i.monto) {
+      if (montoPagado >= montoTotal) {
         estado = "pagado";
       } else if (montoPagado > 0) {
         estado = "parcial";
@@ -88,7 +90,7 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
         id: i.id,
         cliente: i.cliente ?? i.descripcion,
         descripcion: i.descripcion,
-        monto: i.monto,
+        monto: montoTotal,
         montoPagado,
         montoRestante,
         fechaVencimiento: fechaVenc,

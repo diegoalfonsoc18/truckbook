@@ -29,8 +29,8 @@ export default function WidgetClientes({ isDark }: WProps) {
       if (!nombre || nombre === "Flete") continue;
 
       const prev = clienteMap.get(nombre) ?? { viajes: 0, total: 0, ultimaFecha: "", cargas: new Map() };
-      prev.viajes += 1;
-      prev.total  += ing.monto ?? 0;
+      prev.viajes += (ing.cantidad ?? 1);
+      prev.total  += (ing.monto ?? 0) * (ing.cantidad ?? 1);
       const fecha = ing.fecha ?? ing.created_at ?? "";
       if (fecha > prev.ultimaFecha) prev.ultimaFecha = fecha;
 

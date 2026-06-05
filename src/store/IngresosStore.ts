@@ -14,6 +14,7 @@ export interface Ingreso {
   fecha: string;
   estado: "pendiente" | "confirmado" | "pagado" | "vencido" | "parcial";
   created_at: string;
+  cantidad?: number; // Fletes múltiples: x2, x3, etc. Default 1
   // Campos para Centro de Pendientes
   fecha_vencimiento?: string | null;
   monto_pagado?: number | null;

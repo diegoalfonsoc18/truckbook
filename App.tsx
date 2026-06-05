@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   View,
   ActivityIndicator,
   Platform,
-  StatusBar as RNStatusBar,
+  AppState,
+  type AppStateStatus,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -26,11 +27,48 @@ import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
 import logger from "./src/utils/logger";
 
-// Componente interno que usa el tema
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Sincroniza datos del usuario en la tabla `usuarios` (background, no bloquea UI) */
+const syncUsuarioDB = async (user: { id: string; email?: string; user_metadata?: any }) => {
+  if (!user?.id) return;
+  try {
+    const { error } = await supabase.from("usuarios").upsert(
+      [{
+        user_id: user.id,
+        nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
+        email: user.email,
+        cedula: user.user_metadata?.cedula || "",
+      }],
+      { onConflict: "user_id", ignoreDuplicates: true },
+    );
+    if (error) logger.error("❌ syncUsuarioDB:", error.message);
+  } catch (e: any) {
+    logger.error("❌ syncUsuarioDB catch:", e?.message ?? e);
+  }
+};
+
+/** Sincroniza usuario + valida placa en background */
+const syncBackground = (user: any) => {
+  Promise.all([
+    syncUsuarioDB(user),
+    useVehiculoStore.getState().validarPlacaParaUsuario(user.id),
+  ]).catch((err) => logger.error("❌ syncBackground:", err));
+};
+
+// ─── AppContent ──────────────────────────────────────────────────────────────
+
 function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const sessionRef = useRef<Session | null>(null);
+
+  // Mantener ref sincronizado para acceder en callbacks sin re-renders
+  const updateSession = useCallback((s: Session | null) => {
+    sessionRef.current = s;
+    setSession(s);
+  }, []);
 
   // Tema de navegación dinámico
   const NavigationTheme = {
@@ -45,88 +83,107 @@ function AppContent() {
     },
   };
 
+  // ─── Refresh al volver de background ───────────────────────────────────
   useEffect(() => {
-    const asegurarUsuarioEnDB = async (user: any) => {
-      if (!user?.id) return;
-      try {
-        const { error: upsertErr } = await supabase.from("usuarios").upsert(
-          [{
-            user_id: user.id,
-            nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
-            email: user.email,
-            cedula: user.user_metadata?.cedula || "",
-          }],
-          { onConflict: "user_id", ignoreDuplicates: true }
-        );
-        if (upsertErr) {
-          logger.error("❌ Error en usuario DB:", upsertErr.message, upsertErr.code, upsertErr.details);
+    const handleAppState = async (nextState: AppStateStatus) => {
+      if (nextState === "active" && sessionRef.current) {
+        // App vuelve a foreground — refrescar token silenciosamente
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (error) {
+            logger.error("❌ Refresh en foreground:", error.message);
+          } else if (data.session) {
+            updateSession(data.session);
+          }
+          // Si no hay sesión, NO limpiar — puede ser transitorio
+        } catch (e: any) {
+          logger.error("❌ Refresh foreground catch:", e?.message);
         }
-      } catch (e: any) {
-        logger.error("❌ Error en usuario DB (catch):", e?.message ?? e);
       }
     };
 
-    // Leer sesión local (AsyncStorage) con timeout de seguridad
-    const sessionTimeout = setTimeout(() => {
-      logger.log("⚠️ Timeout en getSession, continuando sin sesión");
-      setSession(null);
-      setLoading(false);
-    }, 5000);
+    const sub = AppState.addEventListener("change", handleAppState);
+    return () => sub.remove();
+  }, [updateSession]);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(sessionTimeout);
-      setSession(session);
-      setLoading(false);
+  // ─── Inicialización de sesión + listener ───────────────────────────────
+  useEffect(() => {
+    let mounted = true;
 
-      // Sincronizar con DB en background sin bloquear la UI
-      if (session?.user) {
-        Promise.all([
-          asegurarUsuarioEnDB(session.user),
-          useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
-        ]).catch((err) => logger.error("❌ Error en sync background:", err));
+    // Timeout de seguridad — solo si SecureStore tarda mucho
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        logger.log("⚠️ Timeout getSession (15s)");
+        setLoading(false);
+        // NO setSession(null) — si había sesión en SecureStore, se carga después
       }
-    }).catch(async (err) => {
-      clearTimeout(sessionTimeout);
-      logger.error("❌ Error al inicializar sesión:", err);
-      // Si el token es inválido, limpiar para ir al login
-      if (err?.message?.includes("Refresh Token")) {
-        await supabase.auth.signOut().catch(() => {});
-      }
-      setSession(null);
+    }, 15000);
+
+    // Cargar sesión persistida
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      clearTimeout(timeout);
+      if (!mounted) return;
+      updateSession(s);
       setLoading(false);
+      if (s?.user) syncBackground(s.user);
+    }).catch((err) => {
+      clearTimeout(timeout);
+      if (!mounted) return;
+      logger.error("❌ getSession error:", err?.message);
+      setLoading(false);
+      // No limpiar sesión — el usuario podría tener sesión válida en SecureStore
     });
 
+    // Listener de cambios de auth
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        // Token inválido — limpiar sesión
-        if (_event === "TOKEN_REFRESHED" && !session) {
-          logger.log("⚠️ Token refresh falló, cerrando sesión");
-          await supabase.auth.signOut().catch(() => {});
-          useVehiculoStore.getState().clearVehiculo();
-          setSession(null);
-          return;
-        }
-        if (session?.user) {
-          try {
-            await Promise.all([
-              asegurarUsuarioEnDB(session.user),
-              useVehiculoStore.getState().validarPlacaParaUsuario(session.user.id),
-            ]);
-          } catch (err) {
-            logger.error("❌ Error en sync auth:", err);
-          }
-          setSession(session);
-        } else {
-          useVehiculoStore.getState().clearVehiculo();
-          setSession(null);
+      (_event, newSession) => {
+        if (!mounted) return;
+        logger.log(`🔑 ${_event} | session: ${!!newSession}`);
+
+        switch (_event) {
+          case "SIGNED_IN":
+          case "TOKEN_REFRESHED":
+          case "USER_UPDATED":
+            if (newSession?.user) {
+              updateSession(newSession);
+              syncBackground(newSession.user);
+            }
+            // Si el evento llega sin sesión, ignorar — transitorio
+            break;
+
+          case "SIGNED_OUT":
+            // Único caso donde se limpia la sesión
+            useVehiculoStore.getState().clearVehiculo();
+            updateSession(null);
+            break;
+
+          case "INITIAL_SESSION":
+            // Solo actualizar si tenemos sesión; si es null y ya tenemos
+            // una sesión cargada, no sobreescribir
+            if (newSession?.user) {
+              updateSession(newSession);
+              syncBackground(newSession.user);
+            } else if (!sessionRef.current) {
+              // Realmente no hay sesión
+              updateSession(null);
+            }
+            break;
+
+          default:
+            // Eventos futuros — solo actualizar si hay sesión válida
+            if (newSession?.user) {
+              updateSession(newSession);
+            }
+            break;
         }
       },
     );
 
     return () => {
+      mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [updateSession]);
 
   if (loading) {
     return (
@@ -159,7 +216,8 @@ function AppContent() {
   );
 }
 
-// App principal con ThemeProvider
+// ─── App principal ───────────────────────────────────────────────────────────
+
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { validarMonto, validarFecha, parsearMonto } from "../utils/validacion";
 import { localDateStr } from "../utils/dataUtils";
 
@@ -69,6 +70,7 @@ export interface Transaction {
   monto: number;
   fecha: string;
   estado: string;
+  cantidad?: number;
 }
 
 export interface TransactionScreenProps {
@@ -84,7 +86,7 @@ export interface TransactionScreenProps {
   // Extra fields per category (e.g. flete needs mercancía, origen, destino, cliente)
   camposExtra?: Record<
     string,
-    Array<{ key: string; label: string; placeholder: string }>
+    Array<{ key: string; label: string; placeholder: string; numeric?: boolean }>
   >;
   onAdd: (
     categoriaId: string,
@@ -330,7 +332,7 @@ function TransactionRow({
         </View>
         <View style={s.rowInfo}>
           <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
-            {item.descripcion || item.tipo}
+            {(item.descripcion || item.tipo).replace(/\[TEL:[^\]]*\]/g, "").trim()}
           </Text>
           <View style={s.rowMeta}>
             {/* Badge de estado — tappable si canToggle */}
@@ -369,9 +371,16 @@ function TransactionRow({
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={[s.rowAmount, { color: textColor }]}>
-          {formatCurrency(item.monto)}
-        </Text>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={[s.rowAmount, { color: textColor }]}>
+            {formatCurrency(item.monto * (item.cantidad ?? 1))}
+          </Text>
+          {(item.cantidad ?? 1) > 1 && (
+            <Text style={[s.rowQtyDetail, { color: textMuted }]}>
+              {formatCurrency(item.monto)} x{item.cantidad}
+            </Text>
+          )}
+        </View>
       </AnimatedPressable>
     </ReanimatedSwipeable>
   );
@@ -478,6 +487,13 @@ export default function TransactionScreen({
 
   const [selectedDate, setSelectedDate] = useState(localDateStr());
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+
+  // Resetear a fecha actual cuando la pantalla recibe foco
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedDate(localDateStr());
+    }, []),
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [subModalVisible, setSubModalVisible] = useState(false);
@@ -548,7 +564,7 @@ export default function TransactionScreen({
     .filter((t) => t.placa === placaActual && t.fecha === selectedDate)
     .filter((t, i, self) => i === self.findIndex((x) => x.id === t.id));
 
-  const total = filtered.reduce((sum, t) => sum + (t.monto || 0), 0);
+  const total = filtered.reduce((sum, t) => sum + (t.monto || 0) * (t.cantidad ?? 1), 0);
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -1231,42 +1247,67 @@ export default function TransactionScreen({
                         camposExtra?.[selectedCat]?.map((campo) => (
                           <View key={campo.key} style={s.inputGroup}>
                             <Text style={[s.inputLabel, { color: c.textSecondary }]}>{campo.label}</Text>
-                            <View style={[s.inputRow, inputStyle]}>
-                              <TextInput
-                                keyboardAppearance="light"
-                                style={[s.textInput, { color: c.text }]}
-                                placeholder={campo.placeholder}
-                                placeholderTextColor={c.textMuted}
-                                value={extraValues[campo.key] || ""}
-                                onChangeText={(v) =>
-                                  setExtraValues((prev) => ({ ...prev, [campo.key]: v }))
-                                }
-                              />
-                              {campo.key === "cliente" && (
+                            {campo.numeric ? (
+                              /* ─── Campo numérico con botones +/- (multiplicador) ─── */
+                              <View style={[s.inputRow, inputStyle, { justifyContent: "space-between" }]}>
                                 <TouchableOpacity
-                                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                  onPress={async () => {
-                                    try {
-                                      const { status } = await Contacts.requestPermissionsAsync();
-                                      if (status !== "granted") {
-                                        Alert.alert(
-                                          "Permiso denegado",
-                                          "Para importar contactos ve a Configuración → TruckBook → Contactos y activa el permiso.",
-                                        );
-                                        return;
-                                      }
-                                      // Abre la vista de inmediato — sin cargar nada todavía
-                                      setContactsList([]);
-                                      setContactsSearch("");
-                                      setContactsVisible(true);
-                                    } catch {
-                                      Alert.alert("Error", "No se pudo acceder a los contactos.");
-                                    }
+                                  style={[s.qtyBtn, { backgroundColor: c.border }]}
+                                  onPress={() => {
+                                    const cur = parseInt(extraValues[campo.key] || "1", 10) || 1;
+                                    if (cur > 1) setExtraValues((prev) => ({ ...prev, [campo.key]: String(cur - 1) }));
                                   }}>
-                                  <Ionicons name="people-outline" size={22} color={accentColor} />
+                                  <Ionicons name="remove" size={20} color={c.text} />
                                 </TouchableOpacity>
-                              )}
-                            </View>
+                                <Text style={[s.qtyText, { color: c.text }]}>
+                                  {extraValues[campo.key] || "1"}
+                                </Text>
+                                <TouchableOpacity
+                                  style={[s.qtyBtn, { backgroundColor: c.border }]}
+                                  onPress={() => {
+                                    const cur = parseInt(extraValues[campo.key] || "1", 10) || 1;
+                                    if (cur < 20) setExtraValues((prev) => ({ ...prev, [campo.key]: String(cur + 1) }));
+                                  }}>
+                                  <Ionicons name="add" size={20} color={c.text} />
+                                </TouchableOpacity>
+                              </View>
+                            ) : (
+                              /* ─── Campo de texto normal ─── */
+                              <View style={[s.inputRow, inputStyle]}>
+                                <TextInput
+                                  keyboardAppearance="light"
+                                  style={[s.textInput, { color: c.text }]}
+                                  placeholder={campo.placeholder}
+                                  placeholderTextColor={c.textMuted}
+                                  value={extraValues[campo.key] || ""}
+                                  onChangeText={(v) =>
+                                    setExtraValues((prev) => ({ ...prev, [campo.key]: v }))
+                                  }
+                                />
+                                {campo.key === "cliente" && (
+                                  <TouchableOpacity
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    onPress={async () => {
+                                      try {
+                                        const { status } = await Contacts.requestPermissionsAsync();
+                                        if (status !== "granted") {
+                                          Alert.alert(
+                                            "Permiso denegado",
+                                            "Para importar contactos ve a Configuración → TruckBook → Contactos y activa el permiso.",
+                                          );
+                                          return;
+                                        }
+                                        setContactsList([]);
+                                        setContactsSearch("");
+                                        setContactsVisible(true);
+                                      } catch {
+                                        Alert.alert("Error", "No se pudo acceder a los contactos.");
+                                      }
+                                    }}>
+                                    <Ionicons name="people-outline" size={22} color={accentColor} />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            )}
                           </View>
                         ))}
 
@@ -1609,6 +1650,9 @@ const s = StyleSheet.create({
 
   // INPUTS
   inputGroup: { marginBottom: 14 },
+  qtyBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center" as const, justifyContent: "center" as const },
+  qtyText: { fontSize: 22, fontWeight: "700" as const, minWidth: 40, textAlign: "center" as const },
+  rowQtyDetail: { fontSize: 11, fontWeight: "500" as const, marginTop: 2 },
   inputLabel: {
     fontSize: 13,
     fontWeight: "600",

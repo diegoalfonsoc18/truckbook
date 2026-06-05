@@ -39,7 +39,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
     programarRecordatorioIACobros(pendientes).catch(() => {});
   }, [pendientes.length]);
 
-  const totalPend = pendientes.reduce((a, i) => a + (i.monto ?? 0), 0);
+  const totalPend = pendientes.reduce((a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
   const mostrados = pendientes.slice(0, 3);
   const resto = pendientes.length - 3;
 

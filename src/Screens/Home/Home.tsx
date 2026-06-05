@@ -675,7 +675,7 @@ const s = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: Platform.OS === "android" ? 0 : -0.4,
   },
-  gridContainer: { paddingBottom: 0 },
+  gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
   // Apple Support — lista vertical de filas
   listSection: {

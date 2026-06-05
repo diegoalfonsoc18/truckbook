@@ -24,3 +24,8 @@ export const getCurrentDay = (): string => {
   const today = new Date();
   return today.getDate().toString();
 };
+
+/** Monto efectivo de una transacción considerando cantidad (fletes múltiples) */
+export function montoEfectivo(t: { monto?: number; cantidad?: number }): number {
+  return (t.monto ?? 0) * (t.cantidad ?? 1);
+}

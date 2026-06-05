@@ -102,9 +102,9 @@ function useGastosStats(gastos: Gasto[], ingresos: Ingreso[]) {
     const fletes = ingresos.filter((i) => i.tipo_ingreso === "Flete");
     const fletesSem = fletes.filter((i) => fechaIng(i) >= hace7);
     const fletesAnt = fletes.filter((i) => fechaIng(i) >= hace14 && fechaIng(i) < hace7);
-    const viajesSem   = fletesSem.length;
-    const viajesAnt   = fletesAnt.length;
-    const totalFleteSem = fletesSem.reduce((a, i) => a + (i.monto ?? 0), 0);
+    const viajesSem   = fletesSem.reduce((a, i) => a + (i.cantidad ?? 1), 0);
+    const viajesAnt   = fletesAnt.reduce((a, i) => a + (i.cantidad ?? 1), 0);
+    const totalFleteSem = fletesSem.reduce((a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
     const promFlete = viajesSem > 0 ? Math.round(totalFleteSem / viajesSem) : 0;
     const viajesTrend = viajesAnt > 0 ? Math.round(((viajesSem - viajesAnt) / viajesAnt) * 100) : 0;
     const lastViaje = [...fletes].sort((a, b) => fechaIng(b).localeCompare(fechaIng(a)))[0];
