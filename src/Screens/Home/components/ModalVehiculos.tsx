@@ -26,7 +26,11 @@ import {
   registrarVehiculoPropietario,
   removerConductorDeVehiculo,
 } from "../../../services/vehiculoAutorizacionService";
-import { useTheme, TYPOGRAPHY, getShadow } from "../../../constants/Themecontext";
+import {
+  useTheme,
+  TYPOGRAPHY,
+  getShadow,
+} from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { validarPlaca } from "../../../utils/validacion";
 import logger from "../../../utils/logger";
@@ -53,7 +57,11 @@ export default function ModalVehiculos({
   const { placa: placaActual, setPlaca, setTipoCamion } = useVehiculoStore();
   const { user } = useAuth();
 
-  const { vehiculos: vehiculosStore, cargando, cargar: cargarVehiculos } = useVehiculosListStore();
+  const {
+    vehiculos: vehiculosStore,
+    cargando,
+    cargar: cargarVehiculos,
+  } = useVehiculosListStore();
   const [placaInput, setPlacaInput] = useState("");
   const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
     null,
@@ -89,7 +97,9 @@ export default function ModalVehiculos({
     }
   }, [vehiculosStore, placaActual]);
 
-  const recargar = () => { if (user?.id) cargarVehiculos(user.id); };
+  const recargar = () => {
+    if (user?.id) cargarVehiculos(user.id);
+  };
 
   const getTipoCamionData = (tipo: TipoCamion | null) =>
     TIPOS_CAMION.find((t) => t.id === tipo);
@@ -140,7 +150,10 @@ export default function ModalVehiculos({
       return;
     }
     setGuardando(true);
-    const placaNueva = placaEditInput.trim().toUpperCase().replace(/[-\s]/g, "");
+    const placaNueva = placaEditInput
+      .trim()
+      .toUpperCase()
+      .replace(/[-\s]/g, "");
     try {
       await supabase
         .from("vehiculo_conductores")
@@ -327,20 +340,28 @@ export default function ModalVehiculos({
                               ]}
                               onPress={() => handleSeleccionarVehiculo(v)}
                               activeOpacity={0.7}>
+                              {isActive && (
+                                <View style={s.activeBadge}>
+                                  <Ionicons
+                                    name="checkmark"
+                                    size={12}
+                                    color={c.accentText}
+                                  />
+                                </View>
+                              )}
                               <View style={s.vehicleOptionIcon}>
                                 <ItemIcon
                                   name={vIconName}
-                                  size={Platform.OS === "ios" ? 52 : 52}
+                                  size={Platform.OS === "ios" ? 48 : 48}
                                 />
                               </View>
-                              <View style={s.vehicleOptionInfo}>
-                                <Text
-                                  style={[
-                                    s.vehicleOptionPlaca,
-                                    { color: c.text },
-                                  ]}>
-                                  {v.placa}
-                                </Text>
+                              <View
+                                style={{
+                                  flex: 1,
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                }}>
                                 <Text
                                   style={[
                                     s.vehicleOptionType,
@@ -348,20 +369,10 @@ export default function ModalVehiculos({
                                   ]}>
                                   {tipo?.label || "Vehículo"}
                                 </Text>
-                              </View>
-                              {isActive && (
-                                <View
-                                  style={[
-                                    s.statusBadge,
-                                    { backgroundColor: c.accent },
-                                  ]}>
-                                  <Ionicons
-                                    name="checkmark"
-                                    size={14}
-                                    color={c.accentText}
-                                  />
+                                <View style={s.placaBadge}>
+                                  <Text style={s.placaText}>{v.placa}</Text>
                                 </View>
-                              )}
+                              </View>
                             </TouchableOpacity>
                           </Swipeable>
                         );
@@ -531,7 +542,10 @@ export default function ModalVehiculos({
                               size={Platform.OS === "ios" ? 52 : 52}
                             />
                             <Text
-                              style={[s.tipoChipLabel, { color: c.textSecondary }]}>
+                              style={[
+                                s.tipoChipLabel,
+                                { color: c.textSecondary },
+                              ]}>
                               {tipo.label}
                             </Text>
                           </TouchableOpacity>
@@ -606,33 +620,46 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 28,
-    paddingVertical: 13,
-    paddingHorizontal: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 8,
+    position: "relative" as const,
   },
   vehicleOptionIcon: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 52,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
-  },
-  vehicleOptionInfo: { flex: 1 },
-  vehicleOptionPlaca: {
-    ...TYPOGRAPHY.bodyBold,
-    letterSpacing: 1,
-    fontFamily: Platform.select({ ios: "Courier New", android: "monospace" }),
+    marginRight: 12,
   },
   vehicleOptionType: {
-    ...TYPOGRAPHY.caption,
-    marginTop: 2,
+    ...TYPOGRAPHY.bodyBold,
+    fontSize: 18,
+    fontWeight: "700" as const,
   },
-  statusBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
+  placaBadge: {
+    backgroundColor: "#FACC15",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+  },
+  placaText: {
+    ...TYPOGRAPHY.bodyBold,
+    fontSize: 15,
+    fontWeight: "800" as const,
+    color: "#000",
+    letterSpacing: 1,
+  },
+  activeBadge: {
+    position: "absolute" as const,
+    top: 10,
+    right: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#2EC98D",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   swipeActions: {
     flexDirection: "row",

@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  Image,
 } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -691,10 +692,10 @@ export default function FinanzasGenerales() {
                     : c.surface,
                 },
               ]}>
-              <Ionicons
-                name="bar-chart-outline"
-                size={48}
-                color={c.textMuted}
+              <Image
+                source={require("../../assets/icons/report.webp")}
+                style={{ width: 64, height: 64 }}
+                resizeMode="contain"
               />
             </View>
             <Text style={[styles.emptyTitle, { color: c.text }]}>

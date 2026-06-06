@@ -24,7 +24,9 @@ export default function WidgetClientes({ isDark }: WProps) {
 
     for (const ing of ingresos) {
       if (ing.tipo_ingreso !== "Flete" || !ing.descripcion) continue;
-      const partes = ing.descripcion.split(" · ");
+      // Limpiar [TEL:xxx] antes de parsear
+      const descLimpia = ing.descripcion.replace(/\[TEL:[^\]]*\]/g, "").trim();
+      const partes = descLimpia.split(" · ");
       const nombre = partes[0]?.trim();
       if (!nombre || nombre === "Flete") continue;
 
@@ -40,9 +42,7 @@ export default function WidgetClientes({ isDark }: WProps) {
           : partes.length === 2
             ? partes[1]?.trim()
             : null;
-      const mercancia = rawMercancia
-        ? rawMercancia.replace(/\[tel:[^\]]*\]/gi, "").trim()
-        : null;
+      const mercancia = rawMercancia?.trim() || null;
       if (mercancia && !mercancia.includes("→")) {
         rawList.push(mercancia);
         prev.cargas.set(mercancia, (prev.cargas.get(mercancia) ?? 0) + 1);

@@ -55,7 +55,7 @@ export default function VehicleCard({
     const clientesSet = new Set<string>();
     for (const ing of fletes) {
       if (ing.descripcion) {
-        const nombre = ing.descripcion.split(" · ")[0]?.trim();
+        const nombre = ing.descripcion.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0]?.trim();
         if (nombre && nombre !== "Flete") clientesSet.add(nombre);
       }
     }
