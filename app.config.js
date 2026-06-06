@@ -10,9 +10,9 @@ export default {
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/TruckBook/grilleBlack.png",
       resizeMode: "contain",
-      backgroundColor: "#0A0A0A",
+      backgroundColor: "#FFFFFF",
     },
     ios: {
       supportsTablet: true,
