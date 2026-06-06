@@ -143,16 +143,25 @@ export default function Ingresos() {
   );
 
   const onUpdate = useCallback(
-    async (id: string, monto: string, fecha: string) => {
+    async (id: string, monto: string, fecha: string, descripcion?: string, extras?: Record<string, string>) => {
       const montoResult = validarMonto(monto);
       if (!montoResult.valido) return { success: false, error: montoResult.error };
 
       const fechaResult = validarFecha(fecha);
       if (!fechaResult.valido) return { success: false, error: fechaResult.error };
 
+      const payload: Record<string, any> = { monto: parsearMonto(monto), fecha };
+      if (descripcion !== undefined) {
+        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 500);
+      }
+      if (extras?.cantidad) {
+        const cant = parseInt(extras.cantidad, 10);
+        if (!isNaN(cant) && cant >= 1 && cant <= 20) payload.cantidad = cant;
+      }
+
       const { error } = await supabase
         .from("conductor_ingresos")
-        .update({ monto: parsearMonto(monto), fecha })
+        .update(payload)
         .eq("id", id);
       if (error) return { success: false, error: error.message };
       useIngresosStore.getState().cargarIngresosDelDB(placaActual!);

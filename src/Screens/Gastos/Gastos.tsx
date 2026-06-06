@@ -103,14 +103,19 @@ export default function Gastos() {
   );
 
   const onUpdate = useCallback(
-    async (id: string, monto: string, fecha: string) => {
+    async (id: string, monto: string, fecha: string, descripcion?: string, _extras?: Record<string, string>) => {
       const montoResult = validarMonto(monto);
       if (!montoResult.valido) return { success: false, error: montoResult.error };
 
       const fechaResult = validarFecha(fecha);
       if (!fechaResult.valido) return { success: false, error: fechaResult.error };
 
-      return actualizarGasto(id, { monto: parsearMonto(monto), fecha });
+      const payload: Record<string, any> = { monto: parsearMonto(monto), fecha };
+      if (descripcion !== undefined) {
+        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 500);
+      }
+
+      return actualizarGasto(id, payload);
     },
     [actualizarGasto],
   );

@@ -100,6 +100,8 @@ export interface TransactionScreenProps {
     id: string,
     monto: string,
     fecha: string,
+    descripcion?: string,
+    extras?: Record<string, string>,
   ) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
   onToggleEstado?: (
@@ -285,9 +287,11 @@ function TransactionRow({
 
   // Bloquea el onPress mientras el swipe esté activo para evitar que abra el edit
   const swipeOpenRef = useRef(false);
+  const swipeRef = useRef<any>(null);
 
   return (
     <ReanimatedSwipeable
+      ref={swipeRef}
       friction={2}
       overshootRight={false}
       rightThreshold={80}
@@ -295,7 +299,6 @@ function TransactionRow({
         swipeOpenRef.current = true;
       }}
       onSwipeableClose={() => {
-        // Delay para que el evento onPress (que dispara al soltar el dedo) ya haya pasado
         setTimeout(() => {
           swipeOpenRef.current = false;
         }, 150);
@@ -303,8 +306,8 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeRowActions
           drag={drag}
-          onEdit={() => onPress(item.id)}
-          onDelete={() => onDelete(item.id)}
+          onEdit={() => { swipeRef.current?.close(); onPress(item.id); }}
+          onDelete={() => { swipeRef.current?.close(); onDelete(item.id); }}
         />
       )}
       containerStyle={{ marginBottom: 6, paddingVertical: 4 }}>
@@ -332,8 +335,18 @@ function TransactionRow({
         </View>
         <View style={s.rowInfo}>
           <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
-            {(item.descripcion || item.tipo).replace(/\[TEL:[^\]]*\]/g, "").trim()}
+            {(item.descripcion || item.tipo).replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim()}
           </Text>
+          {(() => {
+            const raw = (item.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
+            const partes = raw.split(" · ");
+            const sub = partes.length > 1 ? partes.slice(1).join(" · ") : null;
+            return sub ? (
+              <Text style={{ fontSize: 11, color: textMuted, marginTop: 1 }} numberOfLines={1}>
+                {sub}
+              </Text>
+            ) : null;
+          })()}
           <View style={s.rowMeta}>
             {/* Badge de estado — tappable si canToggle */}
             <TouchableOpacity
@@ -618,7 +631,29 @@ export default function TransactionScreen({
     setEditValue(formatMontoInput(t.monto));
     setEditId(id);
     setEditDate(t.fecha);
-    setSelectedCat(t.tipo?.toLowerCase() || null);
+    const catKey = t.tipo?.toLowerCase() || null;
+    setSelectedCat(catKey);
+
+    // Parsear descripción existente para llenar campos extra
+    const raw = (t.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
+    const partes = raw.split(" · ");
+    const extras: Record<string, string> = {};
+    if (catKey && camposExtra?.[catKey]) {
+      const campos = camposExtra[catKey];
+      const textCampos = campos.filter((c) => !c.numeric);
+      textCampos.forEach((campo, i) => {
+        if (partes[i]) extras[campo.key] = partes[i].trim();
+      });
+      const numCampos = campos.filter((c) => c.numeric);
+      numCampos.forEach((campo) => {
+        if (campo.key === "cantidad" && t.cantidad) {
+          extras[campo.key] = String(t.cantidad);
+        }
+      });
+    } else if (partes.length > 0) {
+      extras["descripcion"] = raw;
+    }
+    setExtraValues(extras);
     setModalVisible(true);
   };
 
@@ -633,8 +668,16 @@ export default function TransactionScreen({
 
     setLoading(true);
     try {
+      // Reconstruir descripción desde campos extra al editar
+      let editDesc: string | undefined;
+      if (isEditing && selectedCat && camposExtra?.[selectedCat]) {
+        const campos = camposExtra[selectedCat].filter((c) => !c.numeric);
+        const partes = campos.map((c) => (extraValues[c.key] || "").trim()).filter(Boolean);
+        if (partes.length > 0) editDesc = partes.join(" · ");
+      }
+
       const result = isEditing
-        ? await onUpdate(editId!, editValue, editDate)
+        ? await onUpdate(editId!, editValue, editDate, editDesc, extraValues)
         : selectedCat
           ? await onAdd(
               selectedCat,
@@ -669,6 +712,7 @@ export default function TransactionScreen({
     isEditing,
     onAdd,
     onUpdate,
+    camposExtra,
   ]);
 
   const handleDelete = (id: string) => {
@@ -1224,7 +1268,7 @@ export default function TransactionScreen({
                         })()}
 
                       {/* Descripción personalizada (ej: "otros" en Gastos) */}
-                      {hasCustomDescription && selectedCat === "otros" && !isEditing && (
+                      {hasCustomDescription && selectedCat === "otros" && (
                         <View style={s.inputGroup}>
                           <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
                           <View style={[s.inputRow, inputStyle]}>
@@ -1242,8 +1286,7 @@ export default function TransactionScreen({
                       )}
 
                       {/* Campos extra (flete, otro, etc.) */}
-                      {!isEditing &&
-                        selectedCat &&
+                      {selectedCat &&
                         camposExtra?.[selectedCat]?.map((campo) => (
                           <View key={campo.key} style={s.inputGroup}>
                             <Text style={[s.inputLabel, { color: c.textSecondary }]}>{campo.label}</Text>
