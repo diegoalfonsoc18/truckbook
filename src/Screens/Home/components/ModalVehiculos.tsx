@@ -334,21 +334,12 @@ export default function ModalVehiculos({
                                     : "#F2F2F7",
                                 },
                                 isActive && {
-                                  borderWidth: 1.5,
+                                  borderWidth: 2,
                                   borderColor: c.accent,
                                 },
                               ]}
                               onPress={() => handleSeleccionarVehiculo(v)}
                               activeOpacity={0.7}>
-                              {isActive && (
-                                <View style={s.activeBadge}>
-                                  <Ionicons
-                                    name="checkmark"
-                                    size={12}
-                                    color={c.accentText}
-                                  />
-                                </View>
-                              )}
                               <View style={s.vehicleOptionIcon}>
                                 <ItemIcon
                                   name={vIconName}
@@ -649,17 +640,6 @@ const s = StyleSheet.create({
     fontWeight: "800" as const,
     color: "#000",
     letterSpacing: 1,
-  },
-  activeBadge: {
-    position: "absolute" as const,
-    top: 10,
-    right: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#2EC98D",
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
   },
   swipeActions: {
     flexDirection: "row",

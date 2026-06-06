@@ -20,8 +20,6 @@ import { callGemini } from "../../../config/aiConfig";
 import {
   fmtI,
   diasDesde,
-  labelDias,
-  avatarColor,
   extraerTelDesc,
   mensajeCobroWA,
   formatearTel,
@@ -269,7 +267,10 @@ export function ModalPendientes({
               const subtitulo =
                 partes.length > 1 ? partes.slice(1).join(" · ") : null;
               const dias = item.fecha ? diasDesde(item.fecha) : 0;
-              const color = avatarColor(i);
+              const fechaLabel = item.fecha
+                ? new Date(item.fecha + "T00:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" })
+                : "";
+              const avatarBg = dias >= 15 ? "#EF4444" : dias >= 7 ? "#F59E0B" : "#2EC98D";
               const cargando = cobrando === item.id;
 
               return (
@@ -288,13 +289,13 @@ export function ModalPendientes({
                           width: 42,
                           height: 42,
                           borderRadius: 21,
-                          backgroundColor: c.surface,
+                          backgroundColor: avatarBg + "18",
                           borderWidth: 1.5,
-                          borderColor: c.border,
+                          borderColor: avatarBg,
                           alignItems: "center",
                           justifyContent: "center",
                         }}>
-                        <Feather name={clientTypes[cliente] === "empresa" ? "briefcase" : "user"} size={18} color={c.textSecondary} />
+                        <Feather name={clientTypes[cliente] === "empresa" ? "briefcase" : "user"} size={18} color={avatarBg} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text
@@ -319,7 +320,7 @@ export function ModalPendientes({
                         )}
                         <Text
                           style={{ fontSize: 11, color: c.textSecondary, marginTop: 1 }}>
-                          {labelDias(dias)}
+                          {fechaLabel}
                         </Text>
                       </View>
                       <Text
@@ -358,18 +359,18 @@ export function ModalPendientes({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: 5,
-                          backgroundColor: c.cardBg,
+                          backgroundColor: "#3B82F6" + "14",
                           borderWidth: 1,
-                          borderColor: c.border,
+                          borderColor: "#3B82F6" + "30",
                           borderRadius: 10,
                           paddingVertical: 7,
                         }}>
-                        <Feather name="phone" size={13} color={c.text} />
+                        <Feather name="phone" size={13} color="#3B82F6" />
                         <Text
                           style={{
                             fontSize: 12,
                             fontWeight: "600",
-                            color: c.text,
+                            color: "#3B82F6",
                           }}>
                           Llamar
                         </Text>
@@ -397,22 +398,22 @@ export function ModalPendientes({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: 5,
-                          backgroundColor: c.cardBg,
+                          backgroundColor: "#25D366" + "14",
                           borderWidth: 1,
-                          borderColor: c.border,
+                          borderColor: "#25D366" + "30",
                           borderRadius: 10,
                           paddingVertical: 7,
                         }}>
                         <MaterialCommunityIcons
                           name="whatsapp"
                           size={14}
-                          color={c.text}
+                          color="#25D366"
                         />
                         <Text
                           style={{
                             fontSize: 12,
                             fontWeight: "600",
-                            color: c.text,
+                            color: "#25D366",
                           }}>
                           WhatsApp
                         </Text>
@@ -430,26 +431,26 @@ export function ModalPendientes({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: 4,
-                          backgroundColor: c.cardBg,
+                          backgroundColor: "#2EC98D" + "14",
                           borderWidth: 1,
-                          borderColor: c.border,
+                          borderColor: "#2EC98D" + "30",
                           borderRadius: 10,
                           paddingVertical: 7,
                         }}>
                         {cargando ? (
                           <ActivityIndicator
                             size="small"
-                            color={c.text}
+                            color="#2EC98D"
                             style={{ width: 13, height: 13 }}
                           />
                         ) : (
-                          <Feather name="check" size={13} color={c.text} />
+                          <Feather name="check" size={13} color="#2EC98D" />
                         )}
                         <Text
                           style={{
                             fontSize: 12,
                             fontWeight: "700",
-                            color: c.text,
+                            color: "#2EC98D",
                           }}>
                           Cobrado
                         </Text>
