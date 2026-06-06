@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   View,
+  Text,
+  Image,
   ActivityIndicator,
   Platform,
   AppState,
@@ -189,9 +191,13 @@ function AppContent() {
 
   if (loading) {
     return (
-      <View
-        style={[styles.loadingContainer, { backgroundColor: colors.primary }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={styles.splashContainer}>
+        <Image
+          source={require("./assets/TruckBook/grilleBlack.png")}
+          style={styles.splashIcon}
+          resizeMode="contain"
+        />
+        <Text style={styles.splashText}>TruckBook</Text>
       </View>
     );
   }
@@ -240,5 +246,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  splashContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  splashIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+  },
+  splashText: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#000000",
+    letterSpacing: -0.5,
   },
 });
