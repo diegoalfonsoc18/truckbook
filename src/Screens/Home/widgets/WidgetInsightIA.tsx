@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 import { fmtI, diasDesde, labelDias, WProps } from "../homeUtils";
@@ -134,11 +135,11 @@ export default function WidgetInsightIA({ isDark }: WProps) {
                     alignItems: "center",
                     justifyContent: "center",
                   }}>
-                  <Ionicons
-                    name="hourglass-outline"
-                    size={18}
-                    color={isDark ? "#FFFFFF" : "#8B3A1A"}
-                  />
+                  {Platform.OS === "ios" ? (
+                    <SymbolView name="timer" size={20} tintColor={isDark ? "#FFFFFF" : "#8B3A1A"} weight="semibold" />
+                  ) : (
+                    <Ionicons name="timer-outline" size={20} color={isDark ? "#FFFFFF" : "#8B3A1A"} />
+                  )}
                 </View>
               )}
               <Text
