@@ -277,12 +277,21 @@ export default function Cuenta() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      // Cargar directamente desde DB; el registro ya guarda nombre y apellido por separado.
-      // Fallback a user_metadata para usuarios registrados antes del cambio.
-      setNombre(perfil?.nombre ?? session.user.user_metadata?.nombre ?? "");
-      setApellido(
-        perfil?.apellido ?? session.user.user_metadata?.apellido ?? "",
-      );
+      const meta = session.user.user_metadata ?? {};
+      const nombreDB = perfil?.nombre ?? meta.nombre ?? "";
+      const apellidoMeta = meta.apellido ?? "";
+
+      if (apellidoMeta) {
+        setNombre(nombreDB);
+        setApellido(apellidoMeta);
+      } else if (nombreDB.trim().includes(" ")) {
+        const partes = nombreDB.trim().split(/\s+/);
+        setNombre(partes[0]);
+        setApellido(partes.slice(1).join(" "));
+      } else {
+        setNombre(nombreDB);
+        setApellido("");
+      }
       setTelefono(perfil?.telefono ?? "");
     } catch (error) {
       logger.error("Error cargando usuario:", error);
@@ -328,11 +337,13 @@ export default function Cuenta() {
     }
     setSavingProfile(true);
     try {
-      // Construir el objeto de actualización solo con los campos que tienen valor
-      // (apellido y telefono requieren que existan esas columnas en la tabla usuarios)
-      const updatePayload: Record<string, string> = { nombre: nombre.trim() };
-      if (apellido.trim()) updatePayload.apellido = apellido.trim();
-      if (telefono.trim()) updatePayload.telefono = telefono.trim();
+      const sanitize = (s: string) => s.replace(/[<>{}]/g, "").trim().slice(0, 100);
+      const nombreSafe = sanitize(nombre);
+      const apellidoSafe = sanitize(apellido);
+      const telSafe = telefono.replace(/[^0-9+\- ]/g, "").trim().slice(0, 20);
+
+      const updatePayload: Record<string, string> = { nombre: nombreSafe };
+      if (telSafe) updatePayload.telefono = telSafe;
 
       const { error: dbErr } = await supabase
         .from("usuarios")
@@ -343,7 +354,7 @@ export default function Cuenta() {
 
       // Keep user_metadata in sync
       await supabase.auth.updateUser({
-        data: { nombre: nombre.trim(), apellido: apellido.trim() },
+        data: { nombre: nombreSafe, apellido: apellidoSafe },
       });
 
       setProfileVisible(false);

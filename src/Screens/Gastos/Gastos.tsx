@@ -85,11 +85,15 @@ export default function Gastos() {
       // "pagado" del modal se mapea a "aprobado"
       const estadoDB = (estado === "pendiente" ? "pendiente" : "aprobado") as "pendiente" | "aprobado";
 
+      const descSafe = (descripcion?.trim() || cat.name)
+        .replace(/[<>{}]/g, "")
+        .slice(0, 500);
+
       return agregarGasto({
         placa: placaActual,
         conductor_id: user.id,
         tipo_gasto: cat.name,
-        descripcion: descripcion?.trim() || cat.name,
+        descripcion: descSafe,
         monto: parsearMonto(monto),
         fecha,
         estado: estadoDB,

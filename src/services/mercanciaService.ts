@@ -171,6 +171,9 @@ async function geminiNormalize(
 ): Promise<Record<string, string>> {
   if (brutos.length === 0) return {};
 
+  const sanitize = (s: string) => s.replace(/[`${}\\<>]/g, "").slice(0, 80);
+  const brutosSafe = brutos.map(sanitize);
+
   // Si el tipo de camión tiene contexto predefinido lo usa; si no, construye
   // un fallback dinámico que al menos incluye el nombre del tipo de camión
   // para que Gemini pueda inferir qué cargas son típicas para ese vehículo.
@@ -195,7 +198,7 @@ async function geminiNormalize(
     `tenga errores. Nunca dejes un campo vacío.\n\n` +
     `Responde SOLO JSON válido, sin markdown, sin comentarios:\n` +
     `{ "cadena_original": "Nombre Canónico", ... }\n\n` +
-    `Mercancías a normalizar:\n${JSON.stringify(brutos)}`;
+    `Mercancías a normalizar:\n${JSON.stringify(brutosSafe)}`;
 
   try {
     const { text, error } = await callGemini(prompt, { maxOutputTokens: 512 });

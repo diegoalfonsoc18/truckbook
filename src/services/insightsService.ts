@@ -16,13 +16,15 @@ export async function generarInsights(
     countPorCobrar,
     totalPorCobrar,
     countVencidosCobro,
-    clienteMasAntiguo,
+    clienteMasAntiguo: rawCliente,
     diasMasAntiguo,
     montoVencidosCobro,
     countVencidosPago,
     countProximosPago,
     totalPorPagar,
   } = resumen;
+
+  const clienteMasAntiguo = rawCliente?.replace(/[`${}\\<>]/g, "").slice(0, 50);
 
   // Si no hay nada pendiente, no llamar a la IA
   if (countPorCobrar === 0 && countVencidosPago === 0 && countProximosPago === 0) {

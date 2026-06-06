@@ -56,7 +56,7 @@ export async function programarRecordatorioIACobros(
       const hoy  = new Date(); hoy.setHours(0, 0, 0, 0);
       const total = pendientes.reduce((a, p) => a + (p.monto ?? 0), 0);
       const lines = pendientes.slice(0, 4).map((p) => {
-        const cl   = (p.descripcion ?? "Flete").replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
+        const cl   = (p.descripcion ?? "Flete").replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].replace(/[`${}\\<>]/g, "").trim().slice(0, 50);
         const dias = p.fecha
           ? Math.floor((hoy.getTime() - new Date(p.fecha + "T00:00:00").getTime()) / 86_400_000)
           : 0;

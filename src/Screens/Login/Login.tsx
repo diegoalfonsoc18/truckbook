@@ -141,7 +141,6 @@ export default function LoginScreen({ navigation }: Props) {
       if (error) {
         Alert.alert("Error", error.message);
       } else if (data.user && credential.fullName) {
-        // Apple solo envía el nombre en el primer login — guardarlo
         const nombre = credential.fullName.givenName ?? "";
         const apellido = credential.fullName.familyName ?? "";
         if (nombre || apellido) {
@@ -149,13 +148,15 @@ export default function LoginScreen({ navigation }: Props) {
             [
               {
                 user_id: data.user.id,
-                nombre,
-                apellido,
+                nombre: [nombre, apellido].filter(Boolean).join(" "),
                 email: data.user.email ?? "",
               },
             ],
             { onConflict: "user_id" },
           );
+          await supabase.auth.updateUser({
+            data: { nombre, apellido },
+          });
         }
       }
     } catch (e: any) {

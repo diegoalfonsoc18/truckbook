@@ -187,7 +187,8 @@ export async function analizarFactura(
   tipo: TipoTransaccion,
 ): Promise<{ data?: DatosFactura; error?: string }> {
   try {
-    const prompt = buildPrompt(tipo) + "\n\n--- TEXTO OCR ---\n" + textoOCR;
+    const ocrSafe = textoOCR.replace(/[`${}\\]/g, "").slice(0, 2000);
+    const prompt = buildPrompt(tipo) + "\n\n--- TEXTO OCR ---\n" + ocrSafe;
 
     const { text, error } = await callGeminiWithRetry(prompt, {
       temperature: 0.1,

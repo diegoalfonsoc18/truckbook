@@ -124,10 +124,13 @@ export default function Register({ navigation }: Props) {
     }
     setLoading(true);
     try {
+      const clean = (s: string) => s.replace(/[<>{}]/g, "").trim().slice(0, 100);
+      const nombreSafe = clean(nombre);
+      const apellidoSafe = clean(apellido);
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
-        options: { data: { nombre: nombre.trim(), apellido: apellido.trim() } },
+        options: { data: { nombre: nombreSafe, apellido: apellidoSafe } },
       });
 
       if (error?.message.includes("compromised")) {
@@ -148,8 +151,7 @@ export default function Register({ navigation }: Props) {
         await supabase.from("usuarios").upsert(
           [{
             user_id: data.user.id,
-            nombre:   nombre.trim(),
-            apellido: apellido.trim(),
+            nombre: [nombreSafe, apellidoSafe].filter(Boolean).join(" "),
             email:    email.toLowerCase().trim(),
           }],
           { onConflict: "user_id" },
@@ -196,12 +198,14 @@ export default function Register({ navigation }: Props) {
           await supabase.from("usuarios").upsert(
             [{
               user_id: data.user.id,
-              nombre,
-              apellido,
+              nombre: [nombre, apellido].filter(Boolean).join(" "),
               email: data.user.email ?? "",
             }],
             { onConflict: "user_id" },
           );
+          await supabase.auth.updateUser({
+            data: { nombre, apellido },
+          });
         }
       }
     } catch (e: any) {

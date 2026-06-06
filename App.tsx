@@ -33,12 +33,14 @@ import logger from "./src/utils/logger";
 const syncUsuarioDB = async (user: { id: string; email?: string; user_metadata?: any }) => {
   if (!user?.id) return;
   try {
+    const meta = user.user_metadata ?? {};
+    const nombre = meta.nombre || meta.full_name || meta.name || user.email?.split("@")[0] || "";
     const { error } = await supabase.from("usuarios").upsert(
       [{
         user_id: user.id,
-        nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "",
+        nombre,
         email: user.email,
-        cedula: user.user_metadata?.cedula || "",
+        cedula: meta.cedula || "",
       }],
       { onConflict: "user_id", ignoreDuplicates: true },
     );
