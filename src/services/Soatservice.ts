@@ -12,8 +12,10 @@ class SOATService {
    */
   async consultarSOATporPlaca(placa: string): Promise<RespuestaSOAT> {
     try {
+      const url = `${API_BASE_URL}/soat/placa`;
+      if (!url.startsWith("https://")) throw new Error("Solo se permiten conexiones HTTPS");
       const response = await axios.get<RespuestaSOAT>(
-        `${API_BASE_URL}/soat/placa`,
+        url,
         {
           params: { placa: placa.toUpperCase() },
           timeout: 15000,
@@ -40,8 +42,10 @@ class SOATService {
    */
   async consultarSOATporVin(vin: string): Promise<RespuestaSOAT> {
     try {
+      const url = `${API_BASE_URL}/soat/vin`;
+      if (!url.startsWith("https://")) throw new Error("Solo se permiten conexiones HTTPS");
       const response = await axios.get<RespuestaSOAT>(
-        `${API_BASE_URL}/soat/vin`,
+        url,
         {
           params: { vin },
           timeout: 15000,

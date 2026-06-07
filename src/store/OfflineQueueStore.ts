@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { encryptedStorage } from "../utils/encryptedStorage";
 
 export type OfflineAction = "insert" | "update" | "delete";
 export type OfflineTable = "conductor_gastos" | "conductor_ingresos";
@@ -52,7 +52,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
     }),
     {
       name: "offline-queue-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => encryptedStorage),
     }
   )
 );

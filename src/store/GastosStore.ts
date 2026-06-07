@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
+import { encryptedStorage } from "../utils/encryptedStorage";
 
 export interface Gasto {
   id: string;
@@ -85,7 +85,7 @@ export const useGastosStore = create<GastosState>()(
     }),
     {
       name: "gastos-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => encryptedStorage),
     }
   )
 );
