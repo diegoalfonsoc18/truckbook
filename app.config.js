@@ -35,9 +35,10 @@ export default {
       },
     },
     android: {
+      icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
       adaptiveIcon: {
-        foregroundImage: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
-        backgroundColor: "#393E46",
+        foregroundImage: "./assets/TruckBook/grilleBlack.png",
+        backgroundColor: "#FFFFFF",
       },
       package: "com.truckbook.app",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
