@@ -10,7 +10,7 @@ export default {
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/TruckBook/grilleBlack.png",
+      image: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
       resizeMode: "contain",
       backgroundColor: "#FFFFFF",
     },
@@ -42,9 +42,6 @@ export default {
       },
       package: "com.truckbook.app",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
-    },
-    web: {
-      favicon: "./assets/favicon.png",
     },
     plugins: [
       "expo-localization",

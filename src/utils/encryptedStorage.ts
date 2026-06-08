@@ -7,7 +7,7 @@ import CryptoJS from "crypto-js";
 import type { StateStorage } from "zustand/middleware";
 import logger from "./logger";
 
-const ENCRYPTION_KEY_ALIAS = "@truckbook_storage_key";
+const ENCRYPTION_KEY_ALIAS = "truckbook_storage_key";
 
 /** Obtiene o genera la clave AES almacenada en SecureStore (keychain del dispositivo) */
 async function getEncryptionKey(): Promise<string> {

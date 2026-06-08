@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
-  Dimensions,
   View,
   TouchableOpacity,
   ActivityIndicator,
@@ -9,7 +8,6 @@ import {
   StyleSheet,
   Animated,
   Modal,
-  Pressable,
   Alert,
   Image,
 } from "react-native";
@@ -20,13 +18,9 @@ import Reanimated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
-  withSpring,
   Easing,
 } from "react-native-reanimated";
-
-const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LineChart } from "react-native-chart-kit";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -34,12 +28,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
-import {
-  cargarVehiculosPropietarioConConductores,
-} from "../../services/vehiculoAutorizacionService";
 import { Ionicons } from "@expo/vector-icons";
+import ChartComparativa from "./components/ChartComparativa";
 
-const { width } = Dimensions.get("window");
 const HORIZONTAL_PADDING = 20;
 
 function groupBy<T extends { fecha: string; value: number | string }>(
@@ -90,14 +81,6 @@ function formatLabel(fecha: string, view: string) {
     return `${meses[parseInt(mes, 10) - 1]} ${anio?.slice(2)}`;
   }
   return fecha;
-}
-
-function abreviarNumero(valor: number | string): string {
-  const num = Number(valor);
-  if (isNaN(num)) return String(valor);
-  if (Math.abs(num) >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-  if (Math.abs(num) >= 1_000) return (num / 1_000).toFixed(0) + "K";
-  return num.toLocaleString("es-CO");
 }
 
 function formatCurrency(value: number) {
@@ -392,12 +375,6 @@ export default function FinanzasGenerales() {
     if (p !== "personalizado") setExportRango(calcularRangoPeriodo(p));
   };
 
-  const [placasDisponibles, setPlacasDisponibles] = useState<string[]>([]);
-  const [placasSeleccionadas, setPlacasSeleccionadas] = useState<Set<string>>(
-    new Set(),
-  );
-  const esMultiVehiculo = false;
-
   const [rango, setRango] = useState<{ inicio: string; fin: string }>(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -434,57 +411,13 @@ export default function FinanzasGenerales() {
     opacity: balOpacity.value,
     transform: [{ scale: balScale.value }],
   }));
-  const chartStyle = useAnimatedStyle(() => ({
-    opacity: chartOpacity.value,
-    transform: [{ translateY: chartTransY.value }],
-  }));
-
-  // Cargar placas disponibles para admin/propietario
-  useEffect(() => {
-    if (!esMultiVehiculo || !user?.id) return;
-    const cargarPlacas = async () => {
-      const { data } =
-        false
-          ? await cargarTodosVehiculosConConductores()
-          : await cargarVehiculosPropietarioConConductores(user.id);
-      const placas = data.map((v) => v.placa);
-      setPlacasDisponibles(placas);
-      setPlacasSeleccionadas(new Set(placas));
-    };
-    cargarPlacas();
-  }, [user?.id, esMultiVehiculo]);
-
-  const togglePlaca = (placa: string) => {
-    setPlacasSeleccionadas((prev) => {
-      const next = new Set(prev);
-      if (next.has(placa)) {
-        next.delete(placa);
-      } else {
-        next.add(placa);
-      }
-      return next;
-    });
-  };
-
-  const toggleTodas = () => {
-    if (placasSeleccionadas.size === placasDisponibles.length) {
-      setPlacasSeleccionadas(new Set());
-    } else {
-      setPlacasSeleccionadas(new Set(placasDisponibles));
-    }
-  };
-
-  // Determinar placas activas para filtrado
-  const placasActivas = esMultiVehiculo
-    ? Array.from(placasSeleccionadas)
-    : placaActual
-      ? [placaActual]
-      : [];
+  // Placas activas para filtrado
+  const placasActivas = placaActual ? [placaActual] : [];
 
   // Los datos ya están en Zustand stores (cargados por DataProvider con realtime).
   // Solo animamos la entrada — no hay que esperar queries.
   useEffect(() => {
-    if (!esMultiVehiculo && !placaActual) return;
+    if (!placaActual) return;
     setLoading(false);
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -508,7 +441,7 @@ export default function FinanzasGenerales() {
     balScale.value = withDelay(200, withTiming(1, { duration: 360, easing: easeOut }));
     chartOpacity.value = withDelay(280, withTiming(1, { duration: 320, easing: easeOut }));
     chartTransY.value = withDelay(280, withTiming(0, { duration: 360, easing: easeOut }));
-  }, [placaActual, esMultiVehiculo]);
+  }, [placaActual]);
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
@@ -584,8 +517,6 @@ export default function FinanzasGenerales() {
     setCalendarTarget(target);
     setCalendarVisible(true);
   };
-
-  const shadow = getShadow(isDark, "sm");
 
   const generarPDF = async () => {
     if (exportando) return;
@@ -678,7 +609,7 @@ export default function FinanzasGenerales() {
     );
   }
 
-  if (!esMultiVehiculo && !placaActual) {
+  if (!placaActual) {
     return (
       <View style={[styles.container, { backgroundColor: c.primary }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -725,8 +656,7 @@ export default function FinanzasGenerales() {
                 Finanzas
               </Text>
             </View>
-            {!esMultiVehiculo && (
-              <View
+            <View
                 style={[
                   styles.placaBadge,
                   {
@@ -739,76 +669,7 @@ export default function FinanzasGenerales() {
                   {placaActual}
                 </Text>
               </View>
-            )}
           </View>
-
-          {/* FILTRO MULTI-VEHÍCULO */}
-          {esMultiVehiculo && placasDisponibles.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.filterScroll}
-              contentContainerStyle={styles.filterContent}>
-              <TouchableOpacity
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor:
-                      placasSeleccionadas.size === placasDisponibles.length
-                        ? c.accent
-                        : c.cardBg,
-                    borderColor:
-                      placasSeleccionadas.size === placasDisponibles.length
-                        ? c.accent
-                        : c.border,
-                  },
-                ]}
-                onPress={toggleTodas}
-                activeOpacity={0.7}>
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    {
-                      color:
-                        placasSeleccionadas.size === placasDisponibles.length
-                          ? c.accentText
-                          : c.textSecondary,
-                    },
-                  ]}>
-                  todos ({placasDisponibles.length})
-                </Text>
-              </TouchableOpacity>
-              {placasDisponibles.map((placa) => (
-                <TouchableOpacity
-                  key={placa}
-                  style={[
-                    styles.filterChip,
-                    {
-                      backgroundColor: placasSeleccionadas.has(placa)
-                        ? c.accent
-                        : c.cardBg,
-                      borderColor: placasSeleccionadas.has(placa)
-                        ? c.accent
-                        : c.border,
-                    },
-                  ]}
-                  onPress={() => togglePlaca(placa)}
-                  activeOpacity={0.7}>
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      {
-                        color: placasSeleccionadas.has(placa)
-                          ? c.accentText
-                          : c.textSecondary,
-                      },
-                    ]}>
-                    {placa}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
         </Animated.View>
 
         {/* CONTENIDO SCROLLEABLE */}
@@ -976,88 +837,12 @@ export default function FinanzasGenerales() {
             </View>
 
             {/* GRÁFICO */}
-            <Reanimated.View
-              style={[
-                styles.chartContainer,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "sm"),
-                chartStyle,
-              ]}>
-              <View style={styles.chartHeader}>
-                <Text style={[styles.chartTitle, { color: c.text }]}>
-                  Comparativa
-                </Text>
-                <View style={styles.chartLegend}>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: c.income }]}
-                    />
-                    <Text
-                      style={[styles.legendText, { color: c.textSecondary }]}>
-                      ingresos
-                    </Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: c.expense }]}
-                    />
-                    <Text
-                      style={[styles.legendText, { color: c.textSecondary }]}>
-                      gastos
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <LineChart
-                data={{
-                  labels: formattedLabels.slice(0, 6),
-                  datasets: [
-                    {
-                      data:
-                        chartIngresosData.length > 0 ? chartIngresosData : [0],
-                      color: () => c.income,
-                      strokeWidth: 3,
-                    },
-                    {
-                      data: chartGastosData.length > 0 ? chartGastosData : [0],
-                      color: () => c.expense,
-                      strokeWidth: 3,
-                    },
-                  ],
-                }}
-                width={width - 40}
-                height={200}
-                yAxisLabel="$"
-                yAxisInterval={1}
-                fromZero={true}
-                withVerticalLines={false}
-                withHorizontalLines={true}
-                formatYLabel={abreviarNumero}
-                chartConfig={{
-                  backgroundColor: "transparent",
-                  backgroundGradientFrom: c.cardBg,
-                  backgroundGradientTo: c.cardBg,
-                  decimalPlaces: 0,
-                  color: (opacity = 1) =>
-                    `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
-                  labelColor: () => c.textSecondary,
-                  style: { borderRadius: 28 },
-                  propsForDots: {
-                    r: "4",
-                    strokeWidth: "2",
-                    stroke: c.cardBg,
-                  },
-                  propsForBackgroundLines: {
-                    strokeDasharray: "",
-                    stroke: c.border,
-                    strokeWidth: 1,
-                  },
-                }}
-                bezier
-                style={styles.chart}
-              />
-            </Reanimated.View>
+            <ChartComparativa
+              labels={formattedLabels}
+              ingresosData={chartIngresosData}
+              gastosData={chartGastosData}
+              animatedStyle={{ opacity: chartOpacity, translateY: chartTransY }}
+            />
 
             {/* DETALLES */}
             <View
@@ -1282,7 +1067,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, marginTop: 2 },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
   placaText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
   exportarBtn: {
@@ -1306,12 +1090,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  filterChipActive: {},
   filterChipText: {
     fontSize: 13,
     fontWeight: "600",
   },
-  filterChipTextActive: {},
 
   // SCROLL
   scrollView: { flex: 1 },
@@ -1357,7 +1139,6 @@ const styles = StyleSheet.create({
   dateButtonLabel: { fontSize: 10 },
   dateButtonValue: { fontSize: 15, fontWeight: "600", marginTop: 2 },
   rangeDivider: { paddingHorizontal: 10 },
-  rangeDividerText: { fontSize: 16 },
 
   // SUMMARY GRID
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },
@@ -1415,25 +1196,7 @@ const styles = StyleSheet.create({
   },
   viewTabText: { fontSize: 13, fontWeight: "600" },
 
-  // CHART
-  chartContainer: {
-    borderRadius: 28,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-  },
-  chartHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  chartTitle: { fontSize: 15, fontWeight: "600" },
-  chartLegend: { flexDirection: "row", gap: 12 },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontSize: 11 },
-  chart: { borderRadius: 12, marginLeft: -14 },
+  // CHART — moved to ChartComparativa component
 
   // DETAILS
   detailsSection: { borderRadius: 14, padding: 14, borderWidth: 1 },

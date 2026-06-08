@@ -41,6 +41,7 @@ import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeabl
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
+import { SymbolView } from "expo-symbols";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
 import * as Contacts from "expo-contacts";
@@ -86,7 +87,12 @@ export interface TransactionScreenProps {
   // Extra fields per category (e.g. flete needs mercancía, origen, destino, cliente)
   camposExtra?: Record<
     string,
-    Array<{ key: string; label: string; placeholder: string; numeric?: boolean }>
+    Array<{
+      key: string;
+      label: string;
+      placeholder: string;
+      numeric?: boolean;
+    }>
   >;
   onAdd: (
     categoriaId: string,
@@ -306,8 +312,14 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeRowActions
           drag={drag}
-          onEdit={() => { swipeRef.current?.close(); onPress(item.id); }}
-          onDelete={() => { swipeRef.current?.close(); onDelete(item.id); }}
+          onEdit={() => {
+            swipeRef.current?.close();
+            onPress(item.id);
+          }}
+          onDelete={() => {
+            swipeRef.current?.close();
+            onDelete(item.id);
+          }}
         />
       )}
       containerStyle={{ marginBottom: 6, paddingVertical: 4 }}>
@@ -318,8 +330,7 @@ function TransactionRow({
         }}
         onPressOut={() => {
           scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-        }}
->
+        }}>
         <View
           style={[
             s.rowIconWrap,
@@ -335,14 +346,21 @@ function TransactionRow({
         </View>
         <View style={s.rowInfo}>
           <Text style={[s.rowName, { color: textColor }]} numberOfLines={1}>
-            {(item.descripcion || item.tipo).replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim()}
+            {(item.descripcion || item.tipo)
+              .replace(/\[TEL:[^\]]*\]/g, "")
+              .split(" · ")[0]
+              .trim()}
           </Text>
           {(() => {
-            const raw = (item.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
+            const raw = (item.descripcion || "")
+              .replace(/\[TEL:[^\]]*\]/g, "")
+              .trim();
             const partes = raw.split(" · ");
             const sub = partes.length > 1 ? partes.slice(1).join(" · ") : null;
             return sub ? (
-              <Text style={{ fontSize: 11, color: textMuted, marginTop: 1 }} numberOfLines={1}>
+              <Text
+                style={{ fontSize: 11, color: textMuted, marginTop: 1 }}
+                numberOfLines={1}>
                 {sub}
               </Text>
             ) : null;
@@ -521,7 +539,9 @@ export default function TransactionScreen({
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsList, setContactsList] = useState<Contacts.Contact[]>([]);
   const [contactsSearch, setContactsSearch] = useState("");
-  const contactsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contactsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-10)).current;
@@ -569,7 +589,7 @@ export default function TransactionScreen({
   const catSeleccionada = allCategorias.find(
     (c) =>
       c.id === selectedCat ||
-      c.name.toLowerCase() === (selectedCat ?? "").toLowerCase()
+      c.name.toLowerCase() === (selectedCat ?? "").toLowerCase(),
   );
   const modalTitulo = catSeleccionada?.name ?? title.slice(0, -1);
 
@@ -577,7 +597,10 @@ export default function TransactionScreen({
     .filter((t) => t.placa === placaActual && t.fecha === selectedDate)
     .filter((t, i, self) => i === self.findIndex((x) => x.id === t.id));
 
-  const total = filtered.reduce((sum, t) => sum + (t.monto || 0) * (t.cantidad ?? 1), 0);
+  const total = filtered.reduce(
+    (sum, t) => sum + (t.monto || 0) * (t.cantidad ?? 1),
+    0,
+  );
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -672,7 +695,9 @@ export default function TransactionScreen({
       let editDesc: string | undefined;
       if (isEditing && selectedCat && camposExtra?.[selectedCat]) {
         const campos = camposExtra[selectedCat].filter((c) => !c.numeric);
-        const partes = campos.map((c) => (extraValues[c.key] || "").trim()).filter(Boolean);
+        const partes = campos
+          .map((c) => (extraValues[c.key] || "").trim())
+          .filter(Boolean);
         if (partes.length > 0) editDesc = partes.join(" · ");
       }
 
@@ -764,7 +789,8 @@ export default function TransactionScreen({
               Sin vehículo seleccionado
             </Text>
             <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
-              Ve a Cuenta y vincula un vehículo para registrar {title.toLowerCase()}
+              Ve a Cuenta y vincula un vehículo para registrar{" "}
+              {title.toLowerCase()}
             </Text>
           </View>
         </SafeAreaView>
@@ -779,62 +805,73 @@ export default function TransactionScreen({
         {/* HEADER */}
         <Animated.View
           style={[s.header, { transform: [{ translateY: headerY }] }]}>
-          <View style={{ flex: 1 }}>
+          {/* Título + Placa en la misma línea */}
+          <View style={s.headerRow}>
             <Text style={[s.headerTitle, { color: c.text }]}>{title}</Text>
-            <TouchableOpacity
-              onPress={() => setCalendarVisible(true)}
-              activeOpacity={0.7}
-              style={[
-                s.dateBtn,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-              ]}>
-              <Ionicons
-                name="calendar-outline"
-                size={14}
-                color={c.textSecondary}
-              />
-              <Text style={[s.dateBtnText, { color: c.textSecondary }]}>
-                {formatDateFriendly(selectedDate)}
-              </Text>
-              <Ionicons name="chevron-down" size={13} color={c.textMuted} />
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            {headerAction && (
-              <TouchableOpacity
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              {headerAction && (
+                <TouchableOpacity
+                  style={[
+                    s.headerActionBtn,
+                    {
+                      backgroundColor: accentColor + "18",
+                      borderColor: accentColor + "40",
+                    },
+                  ]}
+                  onPress={headerAction.onPress}
+                  activeOpacity={0.7}>
+                  <Ionicons
+                    name={headerAction.icon as any}
+                    size={14}
+                    color={accentColor}
+                  />
+                  <Text style={[s.headerActionText, { color: accentColor }]}>
+                    {headerAction.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <View
                 style={[
-                  s.headerActionBtn,
+                  s.placaBadge,
                   {
-                    backgroundColor: accentColor + "18",
-                    borderColor: accentColor + "40",
+                    backgroundColor: c.plateYellow,
+                    borderColor: c.plateBorder,
+                    borderWidth: 1,
                   },
-                ]}
-                onPress={headerAction.onPress}
-                activeOpacity={0.7}>
-                <Ionicons
-                  name={headerAction.icon as any}
-                  size={14}
-                  color={accentColor}
-                />
-                <Text style={[s.headerActionText, { color: accentColor }]}>
-                  {headerAction.label}
+                ]}>
+                <Text style={[s.placaText, { color: c.plateText }]}>
+                  {placaActual}
                 </Text>
-              </TouchableOpacity>
-            )}
-            <View
-              style={[
-                s.placaBadge,
-                {
-                  backgroundColor: c.plateYellow,
-                  borderColor: c.plateBorder,
-                  borderWidth: 1,
-                },
-              ]}>
-              <Text style={[s.placaText, { color: c.plateText }]}>
-                {placaActual}
-              </Text>
+              </View>
             </View>
           </View>
+          {/* Date badge debajo */}
+          <TouchableOpacity
+            onPress={() => setCalendarVisible(true)}
+            activeOpacity={0.7}
+            style={[
+              s.dateBtn,
+              { backgroundColor: c.cardBg, borderColor: c.border },
+            ]}>
+            {Platform.OS === "ios" ? (
+              <SymbolView
+                name="calendar.badge.plus"
+                size={30}
+                tintColor={c.textSecondary}
+                weight="semibold"
+              />
+            ) : (
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color={c.textSecondary}
+              />
+            )}
+            <Text style={[s.dateBtnText, { color: c.textSecondary }]}>
+              {formatDateFriendly(selectedDate)}
+            </Text>
+            <Ionicons name="chevron-down" size={15} color={c.textSecondary} />
+          </TouchableOpacity>
         </Animated.View>
 
         <ScrollView
@@ -1027,9 +1064,7 @@ export default function TransactionScreen({
                     : {},
                 ]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
-                <Text style={[s.sheetTitle, { color: c.text }]}>
-                  Taller
-                </Text>
+                <Text style={[s.sheetTitle, { color: c.text }]}>Taller</Text>
                 <View style={s.subGrid}>
                   {subcategorias.map((sub) => (
                     <TouchableOpacity
@@ -1050,7 +1085,8 @@ export default function TransactionScreen({
                         <ItemIcon name={sub.iconName} size={sub.size} />
                       </View>
                       <Text style={[s.subName, { color: c.text }]}>
-                        {sub.name.charAt(0).toUpperCase() + sub.name.slice(1).toLowerCase()}
+                        {sub.name.charAt(0).toUpperCase() +
+                          sub.name.slice(1).toLowerCase()}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -1067,7 +1103,10 @@ export default function TransactionScreen({
         transparent
         animationType="slide"
         onRequestClose={() => {
-          if (contactsVisible) { setContactsVisible(false); return; }
+          if (contactsVisible) {
+            setContactsVisible(false);
+            return;
+          }
           closeModal();
         }}>
         <KeyboardAvoidingView
@@ -1077,7 +1116,10 @@ export default function TransactionScreen({
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
             onPress={() => {
-              if (contactsVisible) { setContactsVisible(false); return; }
+              if (contactsVisible) {
+                setContactsVisible(false);
+                return;
+              }
               closeModal();
             }}>
             <TouchableWithoutFeedback>
@@ -1095,10 +1137,17 @@ export default function TransactionScreen({
                 {contactsVisible ? (
                   <>
                     {/* Header con botón atrás */}
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 8 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginBottom: 16,
+                        gap: 8,
+                      }}>
                       <TouchableOpacity
                         onPress={() => {
-                          if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                          if (contactsDebounceRef.current)
+                            clearTimeout(contactsDebounceRef.current);
                           setContactsVisible(false);
                           setContactsList([]);
                           setContactsSearch("");
@@ -1107,10 +1156,21 @@ export default function TransactionScreen({
                         style={{ padding: 4 }}>
                         <Ionicons name="arrow-back" size={22} color={c.text} />
                       </TouchableOpacity>
-                      <Text style={[s.sheetTitle, { color: c.text, marginBottom: 0, flex: 1, textAlign: "left" }]}>
+                      <Text
+                        style={[
+                          s.sheetTitle,
+                          {
+                            color: c.text,
+                            marginBottom: 0,
+                            flex: 1,
+                            textAlign: "left",
+                          },
+                        ]}>
                         Seleccionar cliente
                       </Text>
-                      {contactsLoading && <ActivityIndicator size="small" color={accentColor} />}
+                      {contactsLoading && (
+                        <ActivityIndicator size="small" color={accentColor} />
+                      )}
                     </View>
 
                     {/* Buscador */}
@@ -1118,14 +1178,26 @@ export default function TransactionScreen({
                       style={[
                         s.inputRow,
                         {
-                          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface,
-                          borderColor: contactsSearch.length >= 2
-                            ? accentColor + "80"
-                            : isDark ? "rgba(255,255,255,0.1)" : c.border,
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.06)"
+                            : c.surface,
+                          borderColor:
+                            contactsSearch.length >= 2
+                              ? accentColor + "80"
+                              : isDark
+                                ? "rgba(255,255,255,0.1)"
+                                : c.border,
                           marginBottom: 12,
                         },
                       ]}>
-                      <Ionicons name="search-outline" size={16} color={contactsSearch.length >= 2 ? accentColor : c.textMuted} style={{ marginRight: 8 }} />
+                      <Ionicons
+                        name="search-outline"
+                        size={16}
+                        color={
+                          contactsSearch.length >= 2 ? accentColor : c.textMuted
+                        }
+                        style={{ marginRight: 8 }}
+                      />
                       <TextInput
                         keyboardAppearance="light"
                         style={[s.textInput, { color: c.text }]}
@@ -1137,7 +1209,8 @@ export default function TransactionScreen({
                           setContactsSearch(query);
 
                           // Cancelar búsqueda anterior
-                          if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                          if (contactsDebounceRef.current)
+                            clearTimeout(contactsDebounceRef.current);
 
                           if (query.length < 2) {
                             setContactsList([]);
@@ -1150,7 +1223,10 @@ export default function TransactionScreen({
                           contactsDebounceRef.current = setTimeout(async () => {
                             try {
                               const { data } = await Contacts.getContactsAsync({
-                                fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+                                fields: [
+                                  Contacts.Fields.Name,
+                                  Contacts.Fields.PhoneNumbers,
+                                ],
                                 name: query, // filtro nativo en iOS/Android
                               });
                               setContactsList(data.filter((ct) => !!ct.name));
@@ -1165,37 +1241,74 @@ export default function TransactionScreen({
                       {contactsSearch.length > 0 && (
                         <TouchableOpacity
                           onPress={() => {
-                            if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                            if (contactsDebounceRef.current)
+                              clearTimeout(contactsDebounceRef.current);
                             setContactsSearch("");
                             setContactsList([]);
                             setContactsLoading(false);
                           }}>
-                          <Ionicons name="close-circle" size={16} color={c.textMuted} />
+                          <Ionicons
+                            name="close-circle"
+                            size={16}
+                            color={c.textMuted}
+                          />
                         </TouchableOpacity>
                       )}
                     </View>
 
                     {/* Resultados */}
-                    <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                      keyboardShouldPersistTaps="handled"
+                      showsVerticalScrollIndicator={false}>
                       {contactsSearch.length < 2 ? (
                         // Estado inicial — instrucción
-                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
-                          <Ionicons name="search-outline" size={38} color={c.textMuted} />
-                          <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14, textAlign: "center" }}>
-                            Escribe mínimo 2 letras{"\n"}para buscar en tus contactos
+                        <View
+                          style={{ alignItems: "center", paddingVertical: 36 }}>
+                          <Ionicons
+                            name="search-outline"
+                            size={38}
+                            color={c.textMuted}
+                          />
+                          <Text
+                            style={{
+                              color: c.textMuted,
+                              marginTop: 12,
+                              fontSize: 14,
+                              textAlign: "center",
+                            }}>
+                            Escribe mínimo 2 letras{"\n"}para buscar en tus
+                            contactos
                           </Text>
                         </View>
                       ) : contactsLoading ? (
                         // Buscando...
-                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
+                        <View
+                          style={{ alignItems: "center", paddingVertical: 36 }}>
                           <ActivityIndicator size="large" color={accentColor} />
-                          <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14 }}>Buscando...</Text>
+                          <Text
+                            style={{
+                              color: c.textMuted,
+                              marginTop: 12,
+                              fontSize: 14,
+                            }}>
+                            Buscando...
+                          </Text>
                         </View>
                       ) : contactsList.length === 0 ? (
                         // Sin resultados
-                        <View style={{ alignItems: "center", paddingVertical: 36 }}>
-                          <Ionicons name="person-outline" size={38} color={c.textMuted} />
-                          <Text style={{ color: c.textMuted, marginTop: 12, fontSize: 14 }}>
+                        <View
+                          style={{ alignItems: "center", paddingVertical: 36 }}>
+                          <Ionicons
+                            name="person-outline"
+                            size={38}
+                            color={c.textMuted}
+                          />
+                          <Text
+                            style={{
+                              color: c.textMuted,
+                              marginTop: 12,
+                              fontSize: 14,
+                            }}>
                             Sin resultados para "{contactsSearch}"
                           </Text>
                         </View>
@@ -1204,7 +1317,14 @@ export default function TransactionScreen({
                         contactsList.map((ct, i) => (
                           <TouchableOpacity
                             key={(ct as any).id ?? `${i}`}
-                            style={[s.contactRow, { borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "#F0F0F5" }]}
+                            style={[
+                              s.contactRow,
+                              {
+                                borderBottomColor: isDark
+                                  ? "rgba(255,255,255,0.06)"
+                                  : "#F0F0F5",
+                              },
+                            ]}
                             onPress={() => {
                               const rawTel = ct.phoneNumbers?.[0]?.number ?? "";
                               const tel = rawTel.replace(/[\s\-().]/g, "");
@@ -1213,17 +1333,28 @@ export default function TransactionScreen({
                                 cliente: ct.name ?? "",
                                 ...(tel ? { telefono: tel } : {}),
                               }));
-                              if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+                              if (contactsDebounceRef.current)
+                                clearTimeout(contactsDebounceRef.current);
                               setContactsVisible(false);
                               setContactsList([]);
                               setContactsSearch("");
                             }}>
-                            <View style={[s.contactAvatar, { backgroundColor: accentColor + "22" }]}>
-                              <Text style={[s.contactAvatarText, { color: accentColor }]}>
+                            <View
+                              style={[
+                                s.contactAvatar,
+                                { backgroundColor: accentColor + "22" },
+                              ]}>
+                              <Text
+                                style={[
+                                  s.contactAvatarText,
+                                  { color: accentColor },
+                                ]}>
                                 {(ct.name ?? "?").charAt(0).toUpperCase()}
                               </Text>
                             </View>
-                            <Text style={[s.contactName, { color: c.text }]}>{ct.name}</Text>
+                            <Text style={[s.contactName, { color: c.text }]}>
+                              {ct.name}
+                            </Text>
                           </TouchableOpacity>
                         ))
                       )}
@@ -1234,7 +1365,9 @@ export default function TransactionScreen({
                   /* ── Vista formulario normal ── */
                   <>
                     <Text style={[s.sheetTitle, { color: c.text }]}>
-                      {isEditing ? `Editar ${modalTitulo.toLowerCase()}` : modalTitulo}
+                      {isEditing
+                        ? `Editar ${modalTitulo.toLowerCase()}`
+                        : modalTitulo}
                     </Text>
 
                     {/* Contenido scrollable */}
@@ -1248,19 +1381,29 @@ export default function TransactionScreen({
                           const cat = allCategorias.find(
                             (x) =>
                               x.id === selectedCat ||
-                              x.name.toLowerCase() === (selectedCat ?? "").toLowerCase(),
+                              x.name.toLowerCase() ===
+                                (selectedCat ?? "").toLowerCase(),
                           );
                           return (
                             <View style={s.selectedCat}>
                               <View
                                 style={[
                                   s.selectedCatCircle,
-                                  { backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}` },
+                                  {
+                                    backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}`,
+                                  },
                                 ]}>
                                 {cat?.iconName ? (
-                                  <ItemIcon name={cat.iconName} size={cat.size ?? 32} />
+                                  <ItemIcon
+                                    name={cat.iconName}
+                                    size={cat.size ?? 32}
+                                  />
                                 ) : (
-                                  <Ionicons name="cash" size={28} color={accentColor} />
+                                  <Ionicons
+                                    name="cash"
+                                    size={28}
+                                    color={accentColor}
+                                  />
                                 )}
                               </View>
                             </View>
@@ -1270,7 +1413,10 @@ export default function TransactionScreen({
                       {/* Descripción personalizada (ej: "otros" en Gastos) */}
                       {hasCustomDescription && selectedCat === "otros" && (
                         <View style={s.inputGroup}>
-                          <Text style={[s.inputLabel, { color: c.textSecondary }]}>Descripción</Text>
+                          <Text
+                            style={[s.inputLabel, { color: c.textSecondary }]}>
+                            Descripción
+                          </Text>
                           <View style={[s.inputRow, inputStyle]}>
                             <TextInput
                               keyboardAppearance="light"
@@ -1289,28 +1435,69 @@ export default function TransactionScreen({
                       {selectedCat &&
                         camposExtra?.[selectedCat]?.map((campo) => (
                           <View key={campo.key} style={s.inputGroup}>
-                            <Text style={[s.inputLabel, { color: c.textSecondary }]}>{campo.label}</Text>
+                            <Text
+                              style={[
+                                s.inputLabel,
+                                { color: c.textSecondary },
+                              ]}>
+                              {campo.label}
+                            </Text>
                             {campo.numeric ? (
                               /* ─── Campo numérico con botones +/- (multiplicador) ─── */
-                              <View style={[s.inputRow, inputStyle, { justifyContent: "space-between" }]}>
+                              <View
+                                style={[
+                                  s.inputRow,
+                                  inputStyle,
+                                  { justifyContent: "space-between" },
+                                ]}>
                                 <TouchableOpacity
-                                  style={[s.qtyBtn, { backgroundColor: c.border }]}
+                                  style={[
+                                    s.qtyBtn,
+                                    { backgroundColor: c.border },
+                                  ]}
                                   onPress={() => {
-                                    const cur = parseInt(extraValues[campo.key] || "1", 10) || 1;
-                                    if (cur > 1) setExtraValues((prev) => ({ ...prev, [campo.key]: String(cur - 1) }));
+                                    const cur =
+                                      parseInt(
+                                        extraValues[campo.key] || "1",
+                                        10,
+                                      ) || 1;
+                                    if (cur > 1)
+                                      setExtraValues((prev) => ({
+                                        ...prev,
+                                        [campo.key]: String(cur - 1),
+                                      }));
                                   }}>
-                                  <Ionicons name="remove" size={20} color={c.text} />
+                                  <Ionicons
+                                    name="remove"
+                                    size={20}
+                                    color={c.text}
+                                  />
                                 </TouchableOpacity>
                                 <Text style={[s.qtyText, { color: c.text }]}>
                                   {extraValues[campo.key] || "1"}
                                 </Text>
                                 <TouchableOpacity
-                                  style={[s.qtyBtn, { backgroundColor: c.border }]}
+                                  style={[
+                                    s.qtyBtn,
+                                    { backgroundColor: c.border },
+                                  ]}
                                   onPress={() => {
-                                    const cur = parseInt(extraValues[campo.key] || "1", 10) || 1;
-                                    if (cur < 20) setExtraValues((prev) => ({ ...prev, [campo.key]: String(cur + 1) }));
+                                    const cur =
+                                      parseInt(
+                                        extraValues[campo.key] || "1",
+                                        10,
+                                      ) || 1;
+                                    if (cur < 20)
+                                      setExtraValues((prev) => ({
+                                        ...prev,
+                                        [campo.key]: String(cur + 1),
+                                      }));
                                   }}>
-                                  <Ionicons name="add" size={20} color={c.text} />
+                                  <Ionicons
+                                    name="add"
+                                    size={20}
+                                    color={c.text}
+                                  />
                                 </TouchableOpacity>
                               </View>
                             ) : (
@@ -1323,15 +1510,24 @@ export default function TransactionScreen({
                                   placeholderTextColor={c.textMuted}
                                   value={extraValues[campo.key] || ""}
                                   onChangeText={(v) =>
-                                    setExtraValues((prev) => ({ ...prev, [campo.key]: v }))
+                                    setExtraValues((prev) => ({
+                                      ...prev,
+                                      [campo.key]: v,
+                                    }))
                                   }
                                 />
                                 {campo.key === "cliente" && (
                                   <TouchableOpacity
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    hitSlop={{
+                                      top: 10,
+                                      bottom: 10,
+                                      left: 10,
+                                      right: 10,
+                                    }}
                                     onPress={async () => {
                                       try {
-                                        const { status } = await Contacts.requestPermissionsAsync();
+                                        const { status } =
+                                          await Contacts.requestPermissionsAsync();
                                         if (status !== "granted") {
                                           Alert.alert(
                                             "Permiso denegado",
@@ -1343,10 +1539,17 @@ export default function TransactionScreen({
                                         setContactsSearch("");
                                         setContactsVisible(true);
                                       } catch {
-                                        Alert.alert("Error", "No se pudo acceder a los contactos.");
+                                        Alert.alert(
+                                          "Error",
+                                          "No se pudo acceder a los contactos.",
+                                        );
                                       }
                                     }}>
-                                    <Ionicons name="people-outline" size={22} color={accentColor} />
+                                    <Ionicons
+                                      name="people-outline"
+                                      size={22}
+                                      color={accentColor}
+                                    />
                                   </TouchableOpacity>
                                 )}
                               </View>
@@ -1356,18 +1559,33 @@ export default function TransactionScreen({
 
                       {/* Monto */}
                       <View style={s.inputGroup}>
-                        <Text style={[s.inputLabel, { color: c.textSecondary }]}>Monto</Text>
+                        <Text
+                          style={[s.inputLabel, { color: c.textSecondary }]}>
+                          Monto
+                        </Text>
                         <View style={[s.inputRow, inputStyle]}>
-                          <Text style={[s.inputPrefix, { color: c.textMuted }]}>$</Text>
+                          <Text style={[s.inputPrefix, { color: c.textMuted }]}>
+                            $
+                          </Text>
                           <TextInput
                             keyboardAppearance="light"
-                            style={[s.textInput, s.textInputLg, { color: c.text }]}
+                            style={[
+                              s.textInput,
+                              s.textInputLg,
+                              { color: c.text },
+                            ]}
                             placeholder="0"
                             placeholderTextColor={c.textMuted}
                             keyboardType="numeric"
                             value={editValue}
-                            onChangeText={(text) => setEditValue(formatMontoInput(text))}
-                            autoFocus={!(hasCustomDescription && selectedCat === "otros") && !camposExtra?.[selectedCat ?? ""]}
+                            onChangeText={(text) =>
+                              setEditValue(formatMontoInput(text))
+                            }
+                            autoFocus={
+                              !(
+                                hasCustomDescription && selectedCat === "otros"
+                              ) && !camposExtra?.[selectedCat ?? ""]
+                            }
                           />
                         </View>
                       </View>
@@ -1375,40 +1593,81 @@ export default function TransactionScreen({
                       {/* Estado (solo al agregar) */}
                       {!isEditing && (
                         <View style={s.inputGroup}>
-                          <Text style={[s.inputLabel, { color: c.textSecondary }]}>Estado</Text>
+                          <Text
+                            style={[s.inputLabel, { color: c.textSecondary }]}>
+                            Estado
+                          </Text>
                           <View
                             style={[
                               s.estadoToggle,
                               {
-                                backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface,
-                                borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+                                backgroundColor: isDark
+                                  ? "rgba(255,255,255,0.06)"
+                                  : c.surface,
+                                borderColor: isDark
+                                  ? "rgba(255,255,255,0.1)"
+                                  : c.border,
                               },
                             ]}>
                             <TouchableOpacity
-                              style={[s.estadoBtn, editEstado === "pagado" && { backgroundColor: accentColor }]}
+                              style={[
+                                s.estadoBtn,
+                                editEstado === "pagado" && {
+                                  backgroundColor: accentColor,
+                                },
+                              ]}
                               onPress={() => setEditEstado("pagado")}
                               activeOpacity={0.8}>
                               <Ionicons
                                 name="checkmark-circle"
                                 size={14}
-                                color={editEstado === "pagado" ? "#fff" : c.textMuted}
+                                color={
+                                  editEstado === "pagado" ? "#fff" : c.textMuted
+                                }
                                 style={{ marginRight: 5 }}
                               />
-                              <Text style={[s.estadoBtnText, { color: editEstado === "pagado" ? "#fff" : c.textMuted }]}>
+                              <Text
+                                style={[
+                                  s.estadoBtnText,
+                                  {
+                                    color:
+                                      editEstado === "pagado"
+                                        ? "#fff"
+                                        : c.textMuted,
+                                  },
+                                ]}>
                                 Pagado
                               </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={[s.estadoBtn, editEstado === "pendiente" && { backgroundColor: "#FFB800" }]}
+                              style={[
+                                s.estadoBtn,
+                                editEstado === "pendiente" && {
+                                  backgroundColor: "#FFB800",
+                                },
+                              ]}
                               onPress={() => setEditEstado("pendiente")}
                               activeOpacity={0.8}>
                               <Ionicons
                                 name="time-outline"
                                 size={14}
-                                color={editEstado === "pendiente" ? "#fff" : c.textMuted}
+                                color={
+                                  editEstado === "pendiente"
+                                    ? "#fff"
+                                    : c.textMuted
+                                }
                                 style={{ marginRight: 5 }}
                               />
-                              <Text style={[s.estadoBtnText, { color: editEstado === "pendiente" ? "#fff" : c.textMuted }]}>
+                              <Text
+                                style={[
+                                  s.estadoBtnText,
+                                  {
+                                    color:
+                                      editEstado === "pendiente"
+                                        ? "#fff"
+                                        : c.textMuted,
+                                  },
+                                ]}>
                                 Pendiente
                               </Text>
                             </TouchableOpacity>
@@ -1420,9 +1679,15 @@ export default function TransactionScreen({
                     {/* Botones — fuera del scroll, siempre visibles */}
                     <View style={[s.modalBtns, { marginTop: 10 }]}>
                       <TouchableOpacity
-                        style={[s.cancelBtn, { backgroundColor: c.surface, borderColor: c.border }]}
+                        style={[
+                          s.cancelBtn,
+                          { backgroundColor: c.surface, borderColor: c.border },
+                        ]}
                         onPress={closeModal}>
-                        <Text style={[s.cancelBtnText, { color: c.textSecondary }]}>Cancelar</Text>
+                        <Text
+                          style={[s.cancelBtnText, { color: c.textSecondary }]}>
+                          Cancelar
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
@@ -1430,7 +1695,10 @@ export default function TransactionScreen({
                           { backgroundColor: accentColor },
                           (!editValue ||
                             loading ||
-                            (hasCustomDescription && selectedCat === "otros" && !isEditing && !customDescription.trim())) && {
+                            (hasCustomDescription &&
+                              selectedCat === "otros" &&
+                              !isEditing &&
+                              !customDescription.trim())) && {
                             opacity: 0.35,
                           },
                         ]}
@@ -1438,12 +1706,17 @@ export default function TransactionScreen({
                         disabled={
                           !editValue ||
                           loading ||
-                          (hasCustomDescription && selectedCat === "otros" && !isEditing && !customDescription.trim())
+                          (hasCustomDescription &&
+                            selectedCat === "otros" &&
+                            !isEditing &&
+                            !customDescription.trim())
                         }>
                         {loading ? (
                           <ActivityIndicator color="#FFF" size="small" />
                         ) : (
-                          <Text style={s.saveBtnText}>{isEditing ? "Actualizar" : "Guardar"}</Text>
+                          <Text style={s.saveBtnText}>
+                            {isEditing ? "Actualizar" : "Guardar"}
+                          </Text>
                         )}
                       </TouchableOpacity>
                     </View>
@@ -1466,29 +1739,31 @@ const s = StyleSheet.create({
 
   // HEADER
   header: {
+    paddingHorizontal: H_PAD,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 8,
+  },
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: H_PAD,
-    paddingTop: 8,
-    paddingBottom: 16,
-    gap: 12,
   },
   headerTitle: {
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.5,
-    marginBottom: 8,
   },
   dateBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    gap: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 22,
     borderWidth: 1,
     alignSelf: "flex-start" as const,
+    marginTop: 4,
   },
   dateBtnText: { fontSize: 13, fontWeight: "500" },
   placaBadge: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
@@ -1693,8 +1968,19 @@ const s = StyleSheet.create({
 
   // INPUTS
   inputGroup: { marginBottom: 14 },
-  qtyBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center" as const, justifyContent: "center" as const },
-  qtyText: { fontSize: 22, fontWeight: "700" as const, minWidth: 40, textAlign: "center" as const },
+  qtyBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  qtyText: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    minWidth: 40,
+    textAlign: "center" as const,
+  },
   rowQtyDetail: { fontSize: 11, fontWeight: "500" as const, marginTop: 2 },
   inputLabel: {
     fontSize: 13,
@@ -1711,7 +1997,13 @@ const s = StyleSheet.create({
     minHeight: 50,
   },
   inputPrefix: { fontSize: 18, fontWeight: "700", marginRight: 4 },
-  textInput: { flex: 1, fontSize: 16, fontWeight: "400", paddingVertical: 12, letterSpacing: 0 },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "400",
+    paddingVertical: 12,
+    letterSpacing: 0,
+  },
   textInputLg: { fontSize: 22, fontWeight: "700" },
 
   // ESTADO TOGGLE
