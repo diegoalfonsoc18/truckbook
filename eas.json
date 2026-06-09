@@ -29,6 +29,10 @@
         "ascApiKeyPath": "./AuthKey_Z9RKCQLP96.p8",
         "ascApiKeyId": "Z9RKCQLP96",
         "ascApiKeyIssuerId": "b626aee4-7be5-4050-9dc5-f91c77fb3330"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
       }
     }
   }

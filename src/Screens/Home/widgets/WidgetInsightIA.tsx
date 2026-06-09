@@ -20,7 +20,8 @@ import { useClientType } from "../../../hooks/useClientType";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
-const WIDGET_SIZE = Math.floor((width - H_PAD * 2 - 16) / 2);
+const PAD = Platform.OS === "android" ? 4 : H_PAD;
+const WIDGET_SIZE = Math.floor((width - PAD * 2 - 16) / 2);
 const WIDGET_HEIGHT = 180;
 
 export default function WidgetInsightIA({ isDark }: WProps) {
@@ -68,32 +69,32 @@ export default function WidgetInsightIA({ isDark }: WProps) {
   const urgenciaColor = urgencia < 0.5 ? "#7e1d1a" : "#EF4444";
 
   const { colors: c } = useTheme();
-  const shadow = getShadow(isDark, "md");
   const wText = isDark ? "#FFFFFF" : "#691714";
   const wMuted = isDark ? "rgba(255,255,255,0.55)" : "#8B5E3C";
   const wSubtle = isDark ? "rgba(255,255,255,0.15)" : "rgba(139,94,60,0.12)";
-  const lightShadow =
-    Platform.OS === "android"
-      ? { borderWidth: 1, borderColor: c.border, ...shadow }
-      : shadow;
-  const cardBorder = isDark
-    ? { borderWidth: 1, borderColor: c.border }
-    : lightShadow;
+  const cardStyle = isDark
+    ? { borderWidth: 1, borderColor: `${c.accent}33` }
+    : Platform.OS === "android"
+      ? { borderWidth: 1, borderColor: "#E0E0E0" }
+      : getShadow(isDark, "md");
 
   return (
     <>
       <View
-        style={{
-          width: WIDGET_SIZE,
-          height: WIDGET_HEIGHT,
-          borderRadius: 28,
-          ...cardBorder,
-        }}>
+        style={[
+          {
+            width: Platform.OS === "android" ? undefined : WIDGET_SIZE,
+            flex: Platform.OS === "android" ? 1 : undefined,
+            height: WIDGET_HEIGHT,
+            borderRadius: 28,
+          },
+          cardStyle,
+        ]}>
         <LinearGradient
           colors={isDark ? [c.cardBg, c.cardBg] : ["#FFF7F4", "#FFEDE8"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ flex: 1, borderRadius: 28 }}>
+          style={{ flex: 1, borderRadius: 28, overflow: "hidden" }}>
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => pendientes.length > 0 && setModalVisible(true)}

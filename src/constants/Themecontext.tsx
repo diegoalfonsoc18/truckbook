@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useColorScheme } from "react-native";
+import { useColorScheme, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import logger from "../utils/logger";
 
@@ -390,27 +390,28 @@ export const getShadow = (
   elevation: "sm" | "md" | "lg" = "md",
 ) => {
   const opacity = isDark ? 0.4 : 0.08;
+  const isAndroid = Platform.OS === "android";
   const shadows = {
     sm: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: opacity,
       shadowRadius: 2,
-      elevation: 2,
+      elevation: isAndroid ? 1 : 2,
     },
     md: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: opacity,
       shadowRadius: 4,
-      elevation: 4,
+      elevation: isAndroid ? 2 : 4,
     },
     lg: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: opacity,
       shadowRadius: 8,
-      elevation: 8,
+      elevation: isAndroid ? 3 : 8,
     },
   };
   return shadows[elevation];

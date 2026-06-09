@@ -1,6 +1,6 @@
 // src/Screens/Home/widgets/WidgetResumen.tsx
-import React from "react";
-import { View, Dimensions, Platform } from "react-native";
+import React, { useState } from "react";
+import { View, Dimensions, Platform, LayoutChangeEvent } from "react-native";
 import { getShadow } from "../../../constants/Themecontext";
 import Svg, {
   Path, Circle, Line, Defs,
@@ -13,17 +13,19 @@ import { fechaLocalHoy, WProps } from "../homeUtils";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
-const WIDGET_SIZE   = Math.floor((width - H_PAD * 2 - 16) / 2);
+const PAD = Platform.OS === "android" ? 4 : H_PAD;
+const WIDGET_SIZE   = Math.floor((width - PAD * 2 - 16) / 2);
 const WIDGET_HEIGHT = 180;
 
 // ─── GaugeBalance ─────────────────────────────────────────────────────────────
 function GaugeBalance({
-  ratio, isDark, balance, totalI, totalG, balSem,
+  ratio, isDark, balance, totalI, totalG, balSem, containerWidth,
 }: {
   ratio: number; isDark: boolean; balance: number;
   balColor: string; totalI: number; totalG: number; balSem: number;
+  containerWidth?: number;
 }) {
-  const W  = WIDGET_SIZE;
+  const W  = containerWidth ?? WIDGET_SIZE;
   const H  = WIDGET_HEIGHT;
   const CX = W / 2;
   const R  = 62;
@@ -117,6 +119,7 @@ export default function WidgetResumen({ isDark }: WProps) {
   const gastos   = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const hoy      = fechaLocalHoy();
+  const [measuredW, setMeasuredW] = useState<number>(WIDGET_SIZE);
 
   const gastosHoy   = gastos.filter((g) => (g.fecha ?? g.created_at ?? "").startsWith(hoy));
   const ingresosHoy = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "").startsWith(hoy));
@@ -133,18 +136,27 @@ export default function WidgetResumen({ isDark }: WProps) {
   const total     = totalI + totalG;
   const ratioI    = total > 0 ? totalI / total : 0.5;
 
-  const shadow = getShadow(isDark, "md");
-  const lightShadow = Platform.OS === "android"
-    ? { borderWidth: 1, borderColor: "#E0E0E0", ...shadow }
-    : shadow;
-  const cardShadow = isDark ? {} : lightShadow;
+  const cardStyle = isDark
+    ? { borderWidth: 1, borderColor: "rgba(46,201,141,0.2)" }
+    : Platform.OS === "android"
+      ? { borderWidth: 1, borderColor: "#E0E0E0" }
+      : getShadow(isDark, "md");
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const w = Math.floor(e.nativeEvent.layout.width);
+    if (w > 0 && w !== measuredW) setMeasuredW(w);
+  };
 
   return (
-    <View style={{ width: WIDGET_SIZE, height: WIDGET_HEIGHT, borderRadius: 28, ...cardShadow }}>
-      <View style={{ flex: 1, borderRadius: 28, overflow: "hidden" }}>
+    <View style={[
+      { width: Platform.OS === "android" ? undefined : WIDGET_SIZE, flex: Platform.OS === "android" ? 1 : undefined, height: WIDGET_HEIGHT, borderRadius: 28 },
+      cardStyle,
+    ]}>
+      <View style={{ flex: 1, borderRadius: 28, overflow: "hidden" }} onLayout={onLayout}>
         <GaugeBalance
           ratio={ratioI} isDark={isDark} balance={balance}
           balColor="" totalI={totalI} totalG={totalG} balSem={balSem}
+          containerWidth={measuredW}
         />
       </View>
     </View>

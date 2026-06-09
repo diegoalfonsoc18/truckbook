@@ -351,14 +351,20 @@ export default function HomeBaseAdapted({
             ]}>
             {/* VEHICLE CARD */}
             {showCamionHeader && (
-              <VehicleCard
-                vehicleCardTitle={vehicleCardTitle}
-                onPress={() => setModalVehiculosVisible(true)}
-              />
+              <View style={Platform.OS === "android" ? { paddingHorizontal: 4, paddingVertical: 2 } : undefined}>
+                <VehicleCard
+                  vehicleCardTitle={vehicleCardTitle}
+                  onPress={() => setModalVehiculosVisible(true)}
+                />
+              </View>
             )}
 
             {/* WIDGETS — fila de dos columnas */}
-            <View style={s.widgetRow}>
+            <View
+              style={[
+                s.widgetRow,
+                Platform.OS === "android" && { paddingHorizontal: 4 },
+              ]}>
               <WidgetResumen isDark={isDark} />
               <WidgetInsightIA isDark={isDark} />
             </View>
@@ -1006,7 +1012,7 @@ const s = StyleSheet.create({
     width: "100%",
     marginTop: 6,
     marginBottom: 12,
-    gap: 16,
+    gap: 10,
     zIndex: 1,
   },
 

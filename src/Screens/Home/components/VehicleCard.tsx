@@ -104,7 +104,9 @@ export default function VehicleCard({
       style={[
         s.card,
         { backgroundColor: isDark ? `${c.accent}14` : "#FFFFFF" },
-        isDark ? { borderWidth: 1, borderColor: `${c.accent}33` } : vcShadow,
+        isDark
+          ? { borderWidth: 1, borderColor: `${c.accent}33` }
+          : vcShadow,
         vcAnimStyle,
       ]}
       onPressIn={() => {
@@ -244,6 +246,7 @@ const s = StyleSheet.create({
   card: {
     borderRadius: 22,
     marginBottom: 20,
+    overflow: "hidden",
   },
   content: {
     paddingVertical: 14,

@@ -805,10 +805,11 @@ export default function TransactionScreen({
         {/* HEADER */}
         <Animated.View
           style={[s.header, { transform: [{ translateY: headerY }] }]}>
-          {/* Título + Placa en la misma línea */}
+          {/* Título + Placa*/}
           <View style={s.headerRow}>
             <Text style={[s.headerTitle, { color: c.text }]}>{title}</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               {headerAction && (
                 <TouchableOpacity
                   style={[
@@ -858,7 +859,7 @@ export default function TransactionScreen({
                 name="calendar.badge.plus"
                 size={30}
                 tintColor={c.textSecondary}
-                weight="semibold"
+                weight="medium"
               />
             ) : (
               <Ionicons

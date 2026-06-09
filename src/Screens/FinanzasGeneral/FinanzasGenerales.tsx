@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Text,
   View,
@@ -102,47 +102,91 @@ function generarReporteHTML(params: {
   totalGastos: number;
   balance: number;
   rentabilidad: string;
-  periodos: string[];        // allKeys
+  periodos: string[]; // allKeys
   ingresosPorPeriodo: number[];
   gastosPorPeriodo: number[];
-  gastosDetalle: Array<{ fecha: string; tipo_gasto: string; descripcion: string; monto: number }>;
-  ingresosDetalle: Array<{ fecha: string; tipo_ingreso: string; descripcion: string; monto: number }>;
+  gastosDetalle: Array<{
+    fecha: string;
+    tipo_gasto: string;
+    descripcion: string;
+    monto: number;
+  }>;
+  ingresosDetalle: Array<{
+    fecha: string;
+    tipo_ingreso: string;
+    descripcion: string;
+    monto: number;
+  }>;
   view: ViewType;
 }) {
   const fmt = (n: number) =>
-    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(n);
 
   const fmtFecha = (s: string) => {
     const d = new Date(s + "T12:00:00");
-    return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("es-CO", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const labelPeriodo = (key: string) => {
-    const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-    if (params.view === "dias") { const [,m,d] = key.split("-"); return `${d}/${m}`; }
-    if (params.view === "meses") { const [a,m] = key.split("-"); return `${meses[parseInt(m)-1]} ${a}`; }
+    const meses = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    if (params.view === "dias") {
+      const [, m, d] = key.split("-");
+      return `${d}/${m}`;
+    }
+    if (params.view === "meses") {
+      const [a, m] = key.split("-");
+      return `${meses[parseInt(m) - 1]} ${a}`;
+    }
     return key;
   };
 
-  const periodoRows = params.periodos.map((k, i) => {
-    const ing = params.ingresosPorPeriodo[i] || 0;
-    const gas = params.gastosPorPeriodo[i] || 0;
-    const bal = ing - gas;
-    const balColor = bal >= 0 ? "#2EC98D" : "#EF4444";
-    return `<tr>
+  const periodoRows = params.periodos
+    .map((k, i) => {
+      const ing = params.ingresosPorPeriodo[i] || 0;
+      const gas = params.gastosPorPeriodo[i] || 0;
+      const bal = ing - gas;
+      const balColor = bal >= 0 ? "#2EC98D" : "#EF4444";
+      return `<tr>
       <td>${labelPeriodo(k)}</td>
       <td class="right green">${fmt(ing)}</td>
       <td class="right red">${fmt(gas)}</td>
       <td class="right" style="color:${balColor};font-weight:700">${fmt(bal)}</td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 
-  const cleanDesc = (d: string) => (d || "—").replace(/\[TEL:[^\]]*\]/g, "").trim() || "—";
+  const cleanDesc = (d: string) =>
+    (d || "—").replace(/\[TEL:[^\]]*\]/g, "").trim() || "—";
 
   const top10Ingresos = [...params.ingresosDetalle]
-    .sort((a, b) => (b.monto * ((b as any).cantidad ?? 1)) - (a.monto * ((a as any).cantidad ?? 1)))
+    .sort(
+      (a, b) =>
+        b.monto * ((b as any).cantidad ?? 1) -
+        a.monto * ((a as any).cantidad ?? 1),
+    )
     .slice(0, 15)
-    .map(i => {
+    .map((i) => {
       const cant = (i as any).cantidad ?? 1;
       const total = i.monto * cant;
       const cantLabel = cant > 1 ? ` (x${cant})` : "";
@@ -152,17 +196,21 @@ function generarReporteHTML(params: {
       <td>${cleanDesc(i.descripcion)}</td>
       <td class="right green">${fmt(total)}</td>
     </tr>`;
-    }).join("");
+    })
+    .join("");
 
   const top10Gastos = [...params.gastosDetalle]
     .sort((a, b) => b.monto - a.monto)
     .slice(0, 15)
-    .map(g => `<tr>
+    .map(
+      (g) => `<tr>
       <td>${fmtFecha(g.fecha)}</td>
       <td>${g.tipo_gasto}</td>
       <td>${cleanDesc(g.descripcion)}</td>
       <td class="right red">${fmt(g.monto)}</td>
-    </tr>`).join("");
+    </tr>`,
+    )
+    .join("");
 
   const rentNum = Number(params.rentabilidad);
   const balColor = params.balance >= 0 ? "#2EC98D" : "#EF4444";
@@ -264,7 +312,9 @@ function generarReporteHTML(params: {
   </div>
 
   <!-- POR PERÍODO -->
-  ${params.periodos.length > 0 ? `
+  ${
+    params.periodos.length > 0
+      ? `
   <div class="section-title">Resumen por período</div>
   <table>
     <thead><tr>
@@ -282,10 +332,14 @@ function generarReporteHTML(params: {
         <td class="right" style="color:${balColor}">${fmt(params.balance)}</td>
       </tr>
     </tbody>
-  </table>` : ""}
+  </table>`
+      : ""
+  }
 
   <!-- INGRESOS DETALLE -->
-  ${params.ingresosDetalle.length > 0 ? `
+  ${
+    params.ingresosDetalle.length > 0
+      ? `
   <div class="section-title">Ingresos del período (${params.ingresosDetalle.length})</div>
   <table>
     <thead><tr>
@@ -294,10 +348,14 @@ function generarReporteHTML(params: {
     <tbody>${top10Ingresos}</tbody>
   </table>
   ${params.ingresosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.ingresosDetalle.length} registros</div>` : ""}
-  ` : ""}
+  `
+      : ""
+  }
 
   <!-- GASTOS DETALLE -->
-  ${params.gastosDetalle.length > 0 ? `
+  ${
+    params.gastosDetalle.length > 0
+      ? `
   <div class="section-title">Gastos del período (${params.gastosDetalle.length})</div>
   <table>
     <thead><tr>
@@ -306,7 +364,9 @@ function generarReporteHTML(params: {
     <tbody>${top10Gastos}</tbody>
   </table>
   ${params.gastosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.gastosDetalle.length} registros</div>` : ""}
-  ` : ""}
+  `
+      : ""
+  }
 
   <div class="footer">Generado con TruckBook · ${new Date().toLocaleString("es-CO")}</div>
 </div>
@@ -326,46 +386,70 @@ export default function FinanzasGenerales() {
   const [exportModal, setExportModal] = useState(false);
   const [view, setView] = useState<ViewType>("meses");
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">("inicio");
-  const [calendarTarget, setCalendarTarget] = useState<"main" | "export">("main");
+  const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">(
+    "inicio",
+  );
+  const [calendarTarget, setCalendarTarget] = useState<"main" | "export">(
+    "main",
+  );
 
   // Estado del modal de exportación
-  type PeriodoRapido = "semana" | "mes" | "mes_anterior" | "trimestre" | "año" | "personalizado";
+  type PeriodoRapido =
+    | "semana"
+    | "mes"
+    | "mes_anterior"
+    | "trimestre"
+    | "año"
+    | "personalizado";
   const [periodoRapido, setPeriodoRapido] = useState<PeriodoRapido>("mes");
-  const [exportRango, setExportRango] = useState<{ inicio: string; fin: string }>(() => {
+  const [exportRango, setExportRango] = useState<{
+    inicio: string;
+    fin: string;
+  }>(() => {
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, "0");
-    return { inicio: `${y}-${m}-01`, fin: `${y}-${m}-${String(new Date(y, now.getMonth()+1, 0).getDate()).padStart(2,"0")}` };
+    return {
+      inicio: `${y}-${m}-01`,
+      fin: `${y}-${m}-${String(new Date(y, now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`,
+    };
   });
 
-  const calcularRangoPeriodo = (p: PeriodoRapido): { inicio: string; fin: string } => {
+  const calcularRangoPeriodo = (
+    p: PeriodoRapido,
+  ): { inicio: string; fin: string } => {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
-    const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const iso = (d: Date) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     if (p === "semana") {
-      const lunes = new Date(now); lunes.setDate(now.getDate() - ((now.getDay()+6)%7));
-      const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6);
+      const lunes = new Date(now);
+      lunes.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const domingo = new Date(lunes);
+      domingo.setDate(lunes.getDate() + 6);
       return { inicio: iso(lunes), fin: iso(domingo) };
     }
     if (p === "mes") {
       const first = new Date(now.getFullYear(), now.getMonth(), 1);
-      const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       return { inicio: iso(first), fin: iso(last) };
     }
     if (p === "mes_anterior") {
-      const first = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const last = new Date(now.getFullYear(), now.getMonth(), 0);
       return { inicio: iso(first), fin: iso(last) };
     }
     if (p === "trimestre") {
-      const firstMonth = Math.floor(now.getMonth()/3)*3;
+      const firstMonth = Math.floor(now.getMonth() / 3) * 3;
       const first = new Date(now.getFullYear(), firstMonth, 1);
-      const last = new Date(now.getFullYear(), firstMonth+3, 0);
+      const last = new Date(now.getFullYear(), firstMonth + 3, 0);
       return { inicio: iso(first), fin: iso(last) };
     }
     if (p === "año") {
-      return { inicio: `${now.getFullYear()}-01-01`, fin: `${now.getFullYear()}-12-31` };
+      return {
+        inicio: `${now.getFullYear()}-01-01`,
+        fin: `${now.getFullYear()}-12-31`,
+      };
     }
     return exportRango; // personalizado — mantener lo que ya tiene
   };
@@ -433,14 +517,38 @@ export default function FinanzasGenerales() {
       }),
     ]).start();
     // Stagger cards
-    card1Opacity.value = withDelay(60, withTiming(1, { duration: 300, easing: easeOut }));
-    card1Scale.value = withDelay(60, withTiming(1, { duration: 340, easing: easeOut }));
-    card2Opacity.value = withDelay(130, withTiming(1, { duration: 300, easing: easeOut }));
-    card2Scale.value = withDelay(130, withTiming(1, { duration: 340, easing: easeOut }));
-    balOpacity.value = withDelay(200, withTiming(1, { duration: 320, easing: easeOut }));
-    balScale.value = withDelay(200, withTiming(1, { duration: 360, easing: easeOut }));
-    chartOpacity.value = withDelay(280, withTiming(1, { duration: 320, easing: easeOut }));
-    chartTransY.value = withDelay(280, withTiming(0, { duration: 360, easing: easeOut }));
+    card1Opacity.value = withDelay(
+      60,
+      withTiming(1, { duration: 300, easing: easeOut }),
+    );
+    card1Scale.value = withDelay(
+      60,
+      withTiming(1, { duration: 340, easing: easeOut }),
+    );
+    card2Opacity.value = withDelay(
+      130,
+      withTiming(1, { duration: 300, easing: easeOut }),
+    );
+    card2Scale.value = withDelay(
+      130,
+      withTiming(1, { duration: 340, easing: easeOut }),
+    );
+    balOpacity.value = withDelay(
+      200,
+      withTiming(1, { duration: 320, easing: easeOut }),
+    );
+    balScale.value = withDelay(
+      200,
+      withTiming(1, { duration: 360, easing: easeOut }),
+    );
+    chartOpacity.value = withDelay(
+      280,
+      withTiming(1, { duration: 320, easing: easeOut }),
+    );
+    chartTransY.value = withDelay(
+      280,
+      withTiming(0, { duration: 360, easing: easeOut }),
+    );
   }, [placaActual]);
 
   const gastos = useGastosStore(useShallow((state) => state.gastos));
@@ -466,7 +574,10 @@ export default function FinanzasGenerales() {
     const iPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
 
     const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
-    const iTransf = iPorPlaca.map((i) => ({ fecha: i.fecha, value: i.monto * ((i as any).cantidad ?? 1) }));
+    const iTransf = iPorPlaca.map((i) => ({
+      fecha: i.fecha,
+      value: i.monto * ((i as any).cantidad ?? 1),
+    }));
 
     const gFilt = filtrarPorRango(gTransf, rango.inicio, rango.fin);
     const iFilt = filtrarPorRango(iTransf, rango.inicio, rango.fin);
@@ -481,15 +592,22 @@ export default function FinanzasGenerales() {
       new Set([...Object.keys(groupedG), ...Object.keys(groupedI)]),
     ).sort();
 
-    const chartG = keys.map((k) => { const v = Number(groupedG[k]); return isFinite(v) ? v : 0; });
-    const chartI = keys.map((k) => { const v = Number(groupedI[k]); return isFinite(v) ? v : 0; });
+    const chartG = keys.map((k) => {
+      const v = Number(groupedG[k]);
+      return isFinite(v) ? v : 0;
+    });
+    const chartI = keys.map((k) => {
+      const v = Number(groupedI[k]);
+      return isFinite(v) ? v : 0;
+    });
 
     const totG = chartG.reduce((a, b) => a + b, 0);
     const totI = chartI.reduce((a, b) => a + b, 0);
     const bal = totI - totG;
     const rent = totI === 0 ? 0 : ((bal / totI) * 100).toFixed(1);
 
-    const labels = keys.length > 0 ? keys.map((k) => formatLabel(k, view)) : ["Sin datos"];
+    const labels =
+      keys.length > 0 ? keys.map((k) => formatLabel(k, view)) : ["Sin datos"];
 
     return {
       gastosPorPlaca: gPorPlaca,
@@ -505,14 +623,24 @@ export default function FinanzasGenerales() {
       rentabilidad: rent,
       formattedLabels: labels,
     };
-  }, [gastos, ingresos, placasActivas.join(","), rango.inicio, rango.fin, view]);
+  }, [
+    gastos,
+    ingresos,
+    placasActivas.join(","),
+    rango.inicio,
+    rango.fin,
+    view,
+  ]);
 
   const formatDateShort = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");
     return date.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
   };
 
-  const openCalendar = (type: "inicio" | "fin", target: "main" | "export" = "main") => {
+  const openCalendar = (
+    type: "inicio" | "fin",
+    target: "main" | "export" = "main",
+  ) => {
     setSelectingDate(type);
     setCalendarTarget(target);
     setCalendarVisible(true);
@@ -528,16 +656,27 @@ export default function FinanzasGenerales() {
       (i) => i.fecha >= r.inicio && i.fecha <= r.fin,
     );
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
-      Alert.alert("Sin datos", "No hay transacciones en el período seleccionado.");
+      Alert.alert(
+        "Sin datos",
+        "No hay transacciones en el período seleccionado.",
+      );
       return;
     }
 
     // Recalcular datos agrupados para el período del informe
-    const gFilt = gastosDetalle.map((g) => ({ fecha: g.fecha, value: g.monto }));
-    const iFilt = ingresosDetalle.map((i) => ({ fecha: i.fecha, value: i.monto * ((i as any).cantidad ?? 1) }));
+    const gFilt = gastosDetalle.map((g) => ({
+      fecha: g.fecha,
+      value: g.monto,
+    }));
+    const iFilt = ingresosDetalle.map((i) => ({
+      fecha: i.fecha,
+      value: i.monto * ((i as any).cantidad ?? 1),
+    }));
     const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, 7));
     const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, 7));
-    const keys = Array.from(new Set([...Object.keys(gGrp), ...Object.keys(iGrp)])).sort();
+    const keys = Array.from(
+      new Set([...Object.keys(gGrp), ...Object.keys(iGrp)]),
+    ).sort();
     const ingPeriodo = keys.map((k) => Number(iGrp[k]) || 0);
     const gasPeriodo = keys.map((k) => Number(gGrp[k]) || 0);
     const totIng = ingPeriodo.reduce((a, b) => a + b, 0);
@@ -657,18 +796,18 @@ export default function FinanzasGenerales() {
               </Text>
             </View>
             <View
-                style={[
-                  styles.placaBadge,
-                  {
-                    backgroundColor: c.plateYellow,
-                    borderColor: c.plateBorder,
-                    borderWidth: 1,
-                  },
-                ]}>
-                <Text style={[styles.placaText, { color: c.plateText }]}>
-                  {placaActual}
-                </Text>
-              </View>
+              style={[
+                styles.placaBadge,
+                {
+                  backgroundColor: c.plateYellow,
+                  borderColor: c.plateBorder,
+                  borderWidth: 1,
+                },
+              ]}>
+              <Text style={[styles.placaText, { color: c.plateText }]}>
+                {placaActual}
+              </Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -894,19 +1033,28 @@ export default function FinanzasGenerales() {
             {/* BOTÓN EXPORTAR */}
             <TouchableOpacity
               style={[styles.exportarBtn, { backgroundColor: c.accent }]}
-              onPress={() => { seleccionarPeriodo("mes"); setExportModal(true); }}
+              onPress={() => {
+                seleccionarPeriodo("mes");
+                setExportModal(true);
+              }}
               disabled={exportando}
               activeOpacity={0.8}>
               {exportando ? (
                 <ActivityIndicator size="small" color={c.accentText} />
               ) : (
                 <>
-                  <Ionicons name="document-text-outline" size={20} color={c.accentText} />
-                  <Text style={[styles.exportarBtnText, { color: c.accentText }]}>Exportar informe</Text>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={20}
+                    color={c.accentText}
+                  />
+                  <Text
+                    style={[styles.exportarBtnText, { color: c.accentText }]}>
+                    Exportar informe
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
-
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -922,53 +1070,81 @@ export default function FinanzasGenerales() {
           activeOpacity={1}
           onPress={() => setExportModal(false)}>
           <TouchableOpacity activeOpacity={1}>
-            <View style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
-              <View style={[styles.modalHandle, { backgroundColor: c.textMuted }]} />
+            <View
+              style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
+              <View
+                style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
+              />
               <View style={styles.exportModalHeader}>
-                <Text style={[styles.modalTitle, { color: c.text }]}>Exportar informe</Text>
+                <Text style={[styles.modalTitle, { color: c.text }]}>
+                  Exportar informe
+                </Text>
                 <TouchableOpacity onPress={() => setExportModal(false)}>
                   <Ionicons name="close" size={22} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
 
               {/* OPCIONES RÁPIDAS */}
-              <Text style={[styles.exportSectionLabel, { color: c.textMuted }]}>Período</Text>
+              <Text style={[styles.exportSectionLabel, { color: c.textMuted }]}>
+                Período
+              </Text>
               <View style={styles.periodosGrid}>
-                {([
-                  { key: "semana",       label: "Esta semana" },
-                  { key: "mes",          label: "Este mes" },
-                  { key: "mes_anterior", label: "Mes anterior" },
-                  { key: "trimestre",    label: "Trimestre" },
-                  { key: "año",          label: "Este año" },
-                  { key: "personalizado",label: "Personalizado" },
-                ] as { key: PeriodoRapido; label: string }[]).map(({ key, label }) => (
+                {(
+                  [
+                    { key: "semana", label: "Esta semana" },
+                    { key: "mes", label: "Este mes" },
+                    { key: "mes_anterior", label: "Mes anterior" },
+                    { key: "trimestre", label: "Trimestre" },
+                    { key: "año", label: "Este año" },
+                    { key: "personalizado", label: "Personalizado" },
+                  ] as { key: PeriodoRapido; label: string }[]
+                ).map(({ key, label }) => (
                   <TouchableOpacity
                     key={key}
                     style={[
                       styles.periodoChip,
                       { borderColor: c.border, backgroundColor: c.cardBg },
-                      periodoRapido === key && { backgroundColor: c.accent, borderColor: c.accent },
+                      periodoRapido === key && {
+                        backgroundColor: c.accent,
+                        borderColor: c.accent,
+                      },
                     ]}
                     onPress={() => seleccionarPeriodo(key)}
                     activeOpacity={0.7}>
-                    <Text style={[
-                      styles.periodoChipText,
-                      { color: c.textSecondary },
-                      periodoRapido === key && { color: c.accentText },
-                    ]}>{label}</Text>
+                    <Text
+                      style={[
+                        styles.periodoChipText,
+                        { color: c.textSecondary },
+                        periodoRapido === key && { color: c.accentText },
+                      ]}>
+                      {label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* RANGO PERSONALIZADO */}
-              <View style={[styles.exportRangeRow, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+              <View
+                style={[
+                  styles.exportRangeRow,
+                  { backgroundColor: c.cardBg, borderColor: c.border },
+                ]}>
                 <TouchableOpacity
                   style={styles.exportDateBtn}
                   onPress={() => openCalendar("inicio", "export")}
                   activeOpacity={0.7}>
-                  <Text style={[styles.exportDateLabel, { color: c.textMuted }]}>Desde</Text>
+                  <Text
+                    style={[styles.exportDateLabel, { color: c.textMuted }]}>
+                    Desde
+                  </Text>
                   <Text style={[styles.exportDateValue, { color: c.text }]}>
-                    {new Date(exportRango.inicio + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(
+                      exportRango.inicio + "T12:00:00",
+                    ).toLocaleDateString("es-CO", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </Text>
                 </TouchableOpacity>
                 <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
@@ -976,9 +1152,15 @@ export default function FinanzasGenerales() {
                   style={styles.exportDateBtn}
                   onPress={() => openCalendar("fin", "export")}
                   activeOpacity={0.7}>
-                  <Text style={[styles.exportDateLabel, { color: c.textMuted }]}>Hasta</Text>
+                  <Text
+                    style={[styles.exportDateLabel, { color: c.textMuted }]}>
+                    Hasta
+                  </Text>
                   <Text style={[styles.exportDateValue, { color: c.text }]}>
-                    {new Date(exportRango.fin + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(exportRango.fin + "T12:00:00").toLocaleDateString(
+                      "es-CO",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -988,8 +1170,15 @@ export default function FinanzasGenerales() {
                 style={[styles.exportGenerarBtn, { backgroundColor: c.accent }]}
                 onPress={generarPDF}
                 activeOpacity={0.85}>
-                <Ionicons name="document-text-outline" size={18} color={c.accentText} />
-                <Text style={[styles.exportGenerarText, { color: c.accentText }]}>Generar PDF</Text>
+                <Ionicons
+                  name="document-text-outline"
+                  size={18}
+                  color={c.accentText}
+                />
+                <Text
+                  style={[styles.exportGenerarText, { color: c.accentText }]}>
+                  Generar PDF
+                </Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -1014,25 +1203,53 @@ export default function FinanzasGenerales() {
               fecha {selectingDate === "inicio" ? "inicial" : "final"}
             </Text>
             <Calendar
-              current={calendarTarget === "export"
-                ? (selectingDate === "inicio" ? exportRango.inicio : exportRango.fin)
-                : (selectingDate === "inicio" ? rango.inicio : rango.fin)}
+              current={
+                calendarTarget === "export"
+                  ? selectingDate === "inicio"
+                    ? exportRango.inicio
+                    : exportRango.fin
+                  : selectingDate === "inicio"
+                    ? rango.inicio
+                    : rango.fin
+              }
               onDayPress={(day: any) => {
                 if (calendarTarget === "export") {
-                  setExportRango((prev) => ({ ...prev, [selectingDate]: day.dateString }));
+                  setExportRango((prev) => ({
+                    ...prev,
+                    [selectingDate]: day.dateString,
+                  }));
                   setPeriodoRapido("personalizado");
                 } else {
-                  setRango((prev) => ({ ...prev, [selectingDate]: day.dateString }));
+                  setRango((prev) => ({
+                    ...prev,
+                    [selectingDate]: day.dateString,
+                  }));
                 }
                 setCalendarVisible(false);
               }}
-              markedDates={calendarTarget === "export" ? {
-                [exportRango.inicio]: { selected: selectingDate === "inicio", selectedColor: c.accent },
-                [exportRango.fin]: { selected: selectingDate === "fin", selectedColor: c.accent },
-              } : {
-                [rango.inicio]: { selected: selectingDate === "inicio", selectedColor: c.accent },
-                [rango.fin]: { selected: selectingDate === "fin", selectedColor: c.accent },
-              }}
+              markedDates={
+                calendarTarget === "export"
+                  ? {
+                      [exportRango.inicio]: {
+                        selected: selectingDate === "inicio",
+                        selectedColor: c.accent,
+                      },
+                      [exportRango.fin]: {
+                        selected: selectingDate === "fin",
+                        selectedColor: c.accent,
+                      },
+                    }
+                  : {
+                      [rango.inicio]: {
+                        selected: selectingDate === "inicio",
+                        selectedColor: c.accent,
+                      },
+                      [rango.fin]: {
+                        selected: selectingDate === "fin",
+                        selectedColor: c.accent,
+                      },
+                    }
+              }
               theme={{
                 backgroundColor: c.modalBg,
                 calendarBackground: c.modalBg,
@@ -1090,10 +1307,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
+  filterChipActive: {},
   filterChipText: {
     fontSize: 13,
     fontWeight: "600",
   },
+  filterChipTextActive: {},
 
   // SCROLL
   scrollView: { flex: 1 },
@@ -1139,6 +1358,7 @@ const styles = StyleSheet.create({
   dateButtonLabel: { fontSize: 10 },
   dateButtonValue: { fontSize: 15, fontWeight: "600", marginTop: 2 },
   rangeDivider: { paddingHorizontal: 10 },
+  rangeDividerText: { fontSize: 16 },
 
   // SUMMARY GRID
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },
@@ -1262,7 +1482,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exportDateBtn: { flex: 1, alignItems: "center" },
-  exportDateLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 0.3, marginBottom: 3 },
+  exportDateLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    marginBottom: 3,
+  },
   exportDateValue: { fontSize: 14, fontWeight: "600" },
   exportGenerarBtn: {
     flexDirection: "row",
