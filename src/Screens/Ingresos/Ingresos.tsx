@@ -4,9 +4,9 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
+import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useTheme } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
-import supabase from "../../config/SupaBaseConfig";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
 import { useNavigation } from "@react-navigation/native";
@@ -41,12 +41,14 @@ export default function Ingresos() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
+  const { agregarIngreso, actualizarIngreso, eliminarIngreso } =
+    useIngresosConductor(placaActual, user?.id);
 
   useEffect(() => {
     if (placaActual) {
       useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
     }
-  }, [placaActual]);
+  }, [placaActual, user?.id]);
 
   // Sincroniza el recordatorio de fletes pendientes cada vez que cambian los ingresos
   useEffect(() => {
@@ -124,7 +126,7 @@ export default function Ingresos() {
       if (isNaN(rawCantidad) || rawCantidad < 1) return { success: false, error: "Cantidad inválida" };
       const cantidad = Math.min(rawCantidad, 20);
 
-      const { error } = await supabase.from("conductor_ingresos").insert([{
+      return agregarIngreso({
         placa: placaActual,
         conductor_id: user.id,
         tipo_ingreso: cat.name,
@@ -133,11 +135,7 @@ export default function Ingresos() {
         fecha,
         estado: estadoInicial,
         cantidad,
-      }]);
-
-      if (error) return { success: false, error: error.message };
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
-      return { success: true };
+      });
     },
     [placaActual, user?.id],
   );
@@ -159,43 +157,22 @@ export default function Ingresos() {
         if (!isNaN(cant) && cant >= 1 && cant <= 20) payload.cantidad = cant;
       }
 
-      const { error } = await supabase
-        .from("conductor_ingresos")
-        .update(payload)
-        .eq("id", id);
-      if (error) return { success: false, error: error.message };
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
-      return { success: true };
+      return actualizarIngreso(id, payload);
     },
-    [placaActual],
+    [actualizarIngreso],
   );
 
   const onDelete = useCallback(
-    async (id: string) => {
-      const { error } = await supabase
-        .from("conductor_ingresos")
-        .delete()
-        .eq("id", id);
-      if (error) return { success: false, error: error.message };
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
-      return { success: true };
-    },
-    [placaActual],
+    async (id: string) => eliminarIngreso(id),
+    [eliminarIngreso],
   );
 
-  /** Alterna el estado de pago de un flete: pendiente ↔ pagado */
   const onToggleEstado = useCallback(
     async (id: string, estadoActual: string) => {
       const nuevoEstado = estadoActual === "pendiente" ? "pagado" : "pendiente";
-      const { error } = await supabase
-        .from("conductor_ingresos")
-        .update({ estado: nuevoEstado })
-        .eq("id", id);
-      if (error) return { success: false, error: error.message };
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
-      return { success: true };
+      return actualizarIngreso(id, { estado: nuevoEstado });
     },
-    [placaActual],
+    [actualizarIngreso],
   );
 
   const getStatusColor = (estado?: string) => {

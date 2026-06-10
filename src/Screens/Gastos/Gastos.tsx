@@ -9,7 +9,6 @@ import { useTheme } from "../../constants/Themecontext";
 import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
-import supabase from "../../config/SupaBaseConfig";
 
 const MANTENIMIENTO_SUBCATEGORIAS: Categoria[] = [
   { id: "reparacion", name: "Reparación", iconName: "repair" as IconName, color: "#74B9FF", size: 60 },
@@ -127,18 +126,10 @@ export default function Gastos() {
 
   const onToggleEstado = useCallback(
     async (id: string, estadoActual: string) => {
-      // conductor_gastos solo acepta: "pendiente" | "aprobado" | "rechazado"
-      // Usamos "aprobado" como equivalente a "pagado"
       const nuevoEstado = estadoActual === "pendiente" ? "aprobado" : "pendiente";
-      const { error } = await supabase
-        .from("conductor_gastos")
-        .update({ estado: nuevoEstado })
-        .eq("id", id);
-      if (error) return { success: false, error: error.message };
-      useGastosStore.getState().cargarGastosDelDB(placaActual!, user?.id);
-      return { success: true };
+      return actualizarGasto(id, { estado: nuevoEstado });
     },
-    [placaActual],
+    [actualizarGasto],
   );
 
   const getStatusColor = (estado?: string) =>
