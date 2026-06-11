@@ -37,8 +37,8 @@ export default {
     android: {
       icon: "./assets/TruckBook/grilleWhite.png",
       adaptiveIcon: {
-        foregroundImage: "./assets/TruckBook/grilleBlack.png",
-        backgroundColor: "#FFFFFF",
+        foregroundImage: "./assets/TruckBook/adaptive-foreground.png",
+        backgroundColor: "#1A1A2E",
       },
       package: "com.truckbook.app",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
