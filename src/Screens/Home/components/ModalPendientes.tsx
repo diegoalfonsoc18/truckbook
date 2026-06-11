@@ -320,7 +320,7 @@ export function ModalPendientes({
                         )}
                         <Text
                           style={{ fontSize: 11, color: c.textSecondary, marginTop: 1 }}>
-                          {fechaLabel}
+                          {fechaLabel}{(item.cantidad ?? 1) > 1 ? ` · ${item.cantidad} fletes` : ""}
                         </Text>
                       </View>
                       <Text
@@ -329,7 +329,7 @@ export function ModalPendientes({
                           fontWeight: "700",
                           color: c.textSecondary,
                         }}>
-                        {fmtI(item.monto ?? 0)}
+                        {fmtI((item.monto ?? 0) * (item.cantidad ?? 1))}
                       </Text>
                     </View>
 
@@ -380,7 +380,7 @@ export function ModalPendientes({
                       <TouchableOpacity
                         onPress={() => {
                           const msg = encodeURIComponent(
-                            mensajeCobroWA(cliente, item.monto ?? 0, dias),
+                            mensajeCobroWA(cliente, (item.monto ?? 0) * (item.cantidad ?? 1), dias),
                           );
                           const tel = telContacto
                             ? formatearTel(telContacto)
@@ -422,7 +422,7 @@ export function ModalPendientes({
                       {/* Cobrado */}
                       <TouchableOpacity
                         onPress={() =>
-                          confirmarCobro(item.id, cliente, item.monto ?? 0)
+                          confirmarCobro(item.id, cliente, (item.monto ?? 0) * (item.cantidad ?? 1))
                         }
                         disabled={!!cobrando}
                         style={{

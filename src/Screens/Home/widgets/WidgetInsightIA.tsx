@@ -233,7 +233,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
                           fontWeight: "700",
                           color: c.text,
                         }}>
-                        {fmtI(item.monto ?? 0)}
+                        {fmtI((item.monto ?? 0) * (item.cantidad ?? 1))}
                       </Text>
                     </View>
                   );

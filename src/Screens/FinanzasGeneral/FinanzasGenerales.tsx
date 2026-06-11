@@ -663,7 +663,12 @@ export default function FinanzasGenerales() {
       return;
     }
 
-    // Recalcular datos agrupados para el período del informe
+    const canShare = await Sharing.isAvailableAsync();
+    if (!canShare) {
+      Alert.alert("No disponible", "Tu dispositivo no soporta compartir archivos.");
+      return;
+    }
+
     const gFilt = gastosDetalle.map((g) => ({
       fecha: g.fecha,
       value: g.monto,
@@ -702,14 +707,23 @@ export default function FinanzasGenerales() {
         ingresosDetalle,
         view: "meses",
       });
-      const { uri } = await Print.printToFileAsync({ html, base64: false });
+
+      const printPromise = Print.printToFileAsync({ html, base64: false });
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), 15000),
+      );
+      const { uri } = await Promise.race([printPromise, timeout]);
+
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
         dialogTitle: "Compartir informe financiero",
         UTI: "com.adobe.pdf",
       });
-    } catch {
-      Alert.alert("Error", "No se pudo generar el informe.");
+    } catch (err: any) {
+      const msg = err?.message === "timeout"
+        ? "La generación del PDF tardó demasiado. Intenta de nuevo."
+        : "No se pudo generar el informe.";
+      Alert.alert("Error", msg);
     } finally {
       setExportando(false);
     }
