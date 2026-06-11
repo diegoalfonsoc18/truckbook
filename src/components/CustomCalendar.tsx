@@ -53,6 +53,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
         textSectionTitleDisabledColor: colors.textSecondary,
 
         // Color de las líneas divisorias
+        // @ts-expect-error borderColor not in Theme type but supported by Calendar
         borderColor: "#27ff10df",
 
         // Texto de los meses

@@ -28,7 +28,7 @@ const LOCALES: Record<string, typeof LocaleConfig.locales[string]> = {
 };
 
 export function setupCalendarLocale() {
-  const tag = Localization.getLocales?.()[0]?.languageCode ?? Localization.locale ?? "es";
+  const tag = Localization.getLocales?.()[0]?.languageCode ?? "es";
   const lang = tag.slice(0, 2).toLowerCase();
   const key  = LOCALES[lang] ? lang : "es"; // fallback español
 

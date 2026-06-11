@@ -625,6 +625,7 @@ export default function TransactionScreen({
   };
 
   const closeModal = () => {
+    Keyboard.dismiss();
     setModalVisible(false);
     setEditId(null);
     setEditValue("");
@@ -721,8 +722,8 @@ export default function TransactionScreen({
       } else {
         Alert.alert("Error", result.error || "No se pudo guardar");
       }
-    } catch {
-      Alert.alert("Error", "Ocurrió un error");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Ocurrió un error inesperado");
     } finally {
       setLoading(false);
     }

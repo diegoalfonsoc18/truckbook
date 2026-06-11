@@ -72,11 +72,9 @@ export default function TecnomecanicaVehiculos() {
 
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
-    const { data } = false
-      ? await cargarTodosVehiculosConConductores()
-      : await cargarVehiculosPropietarioConConductores(user.id);
+    const { data } = await cargarVehiculosPropietarioConConductores(user.id);
 
-    const placas = data.map((v) => v.placa);
+    const placas = (data ?? []).map((v: any) => v.placa);
     if (placas.length === 0) { setVehiculos([]); return; }
 
     const { data: db } = await supabase

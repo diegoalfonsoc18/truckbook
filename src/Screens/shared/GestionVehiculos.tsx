@@ -181,17 +181,14 @@ export default function GestionVehiculos() {
 
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
-    const { data } =
-      false
-        ? await cargarTodosVehiculosConConductores()
-        : await cargarVehiculosPropietarioConConductores(user.id);
+    const { data } = await cargarVehiculosPropietarioConConductores(user.id);
 
-    const mapped: VehiculoInfo[] = data.map((v) => ({
+    const mapped: VehiculoInfo[] = (data ?? []).map((v: any) => ({
       placa: v.placa,
       tipo_camion: v.tipo_camion,
       color: (v as any).color ?? undefined,
       conductoresCount: v.conductores.length,
-      conductores: v.conductores.map((cc) => ({
+      conductores: v.conductores.map((cc: any) => ({
         nombre: cc.nombre,
         estado: cc.estado,
       })),

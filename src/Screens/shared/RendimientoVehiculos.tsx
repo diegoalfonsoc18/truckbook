@@ -70,16 +70,14 @@ export default function RendimientoVehiculos() {
 
     try {
       const { data: vehiculosData } =
-        false
-          ? await cargarTodosVehiculosConConductores()
-          : await cargarVehiculosPropietarioConConductores(user.id);
+        await cargarVehiculosPropietarioConConductores(user.id);
 
       if (!vehiculosData || vehiculosData.length === 0) {
         setVehiculos([]);
         return;
       }
 
-      const placas = vehiculosData.map((v) => v.placa);
+      const placas = vehiculosData.map((v: any) => v.placa);
       const { inicio, fin } = getRangoFechas();
 
       const [gastosRes, ingresosRes] = await Promise.all([
@@ -113,7 +111,7 @@ export default function RendimientoVehiculos() {
         viajesPorPlaca[i.placa] = (viajesPorPlaca[i.placa] || 0) + 1;
       });
 
-      const resultado: VehiculoRendimiento[] = vehiculosData.map((v) => {
+      const resultado: VehiculoRendimiento[] = vehiculosData.map((v: any) => {
         const ing = ingresosPorPlaca[v.placa] || 0;
         const gas = gastosPorPlaca[v.placa] || 0;
         const bal = ing - gas;
