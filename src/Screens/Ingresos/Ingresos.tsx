@@ -23,6 +23,12 @@ const FLETE_CAMPOS = [
   { key: "cantidad",    label: "Cantidad de fletes", placeholder: "1", numeric: true },
 ];
 
+const MERCANCIA_CAMPOS = [
+  { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
+  { key: "cliente",     label: "Cliente",           placeholder: "Nombre del cliente o empresa" },
+  { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
+];
+
 const OTRO_CAMPOS = [
   { key: "cliente",   label: "Cliente",   placeholder: "Nombre del cliente o empresa" },
   { key: "mercancia", label: "Mercancía", placeholder: "Cemento, Arena, Ganado" },
@@ -56,6 +62,7 @@ const getMercanciaIcon = (tipoCamion: TipoCamion | null): IconName => {
 
 const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "flete",        name: "Flete",          iconName: "freight"  as IconName, color: "#00D9A5", size: 60 },
+  { id: "mercancia",    name: "Mercancía",      iconName: "mercancia_box" as IconName, color: "#FFA500", size: 60 },
   { id: "anticipo",     name: "Anticipo",       iconName: "advance"  as IconName, color: "#74B9FF", size: 60 },
   { id: "reembolso",    name: "Reembolso",      iconName: "refund"   as IconName, color: "#FD79A8", size: 60 },
   { id: "otro",         name: "Otro",           iconName: "otros"    as IconName, color: "#6C5CE7", size: 60 },
@@ -74,6 +81,8 @@ export default function Ingresos() {
   const categoriasConIconoDinamico = INGRESOS_CATEGORIAS.map((cat) =>
     cat.id === "flete"
       ? { ...cat, iconName: getTruckIconName(tipoCamion) }
+      : cat.id === "mercancia"
+      ? { ...cat, iconName: getMercanciaIcon(tipoCamion) }
       : cat
   );
 
@@ -230,7 +239,7 @@ export default function Ingresos() {
       accentColor={c.income}
       accentColorLight={c.incomeLight}
       emptyIcon="💸"
-      camposExtra={{ flete: FLETE_CAMPOS, otro: OTRO_CAMPOS }}
+      camposExtra={{ flete: FLETE_CAMPOS, mercancia: MERCANCIA_CAMPOS, otro: OTRO_CAMPOS }}
       tipoCamionActual={tipoCamion}
       getMercanciaIcon={getMercanciaIcon}
       onAdd={onAdd}
