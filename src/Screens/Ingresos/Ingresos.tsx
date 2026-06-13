@@ -23,8 +23,8 @@ const FLETE_CAMPOS = [
 ];
 
 const MERCANCIA_CAMPOS = [
-  { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
   { key: "cliente",     label: "Cliente",           placeholder: "Nombre del cliente o empresa" },
+  { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
   { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
 ];
 
