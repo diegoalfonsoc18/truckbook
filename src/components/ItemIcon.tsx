@@ -40,6 +40,7 @@ const ICONS = {
   portaContenedor: require("../assets/icons/portaContenedor.webp"),
   parrilla: require("../assets/icons/parrilla.webp"),
   // Flete icons (dinámicos por tipo de camión)
+  estacaFlete: require("../assets/icons/estacaFlete.webp"),
   gruaFlete: require("../assets/icons/gruaFlete.webp"),
   planchonFlete: require("../assets/icons/planchonFlete.png"),
   planchosFlete: require("../assets/icons/planchosFlete.webp"),

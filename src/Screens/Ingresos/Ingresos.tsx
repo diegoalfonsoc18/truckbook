@@ -30,7 +30,7 @@ const OTRO_CAMPOS = [
 
 const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
   switch (tipoCamion) {
-    case "estacas": return "estacas" as IconName;
+    case "estacas": return "estacaFlete" as IconName;
     case "volqueta": return "volquetaFlete" as IconName;
     case "furgon": return "furgon" as IconName;
     case "grua": return "gruaFlete" as IconName;
