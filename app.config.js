@@ -35,9 +35,9 @@ export default {
       },
     },
     android: {
-      icon: "./assets/TruckBook/grilleWhite.png",
+      icon: "./assets/android/play_store_512.png",
       adaptiveIcon: {
-        foregroundImage: "./assets/TruckBook/adaptive-foreground.png",
+        foregroundImage: "./assets/android/mipmap-xxxhdpi/ic_launcher.png",
         backgroundColor: "#1A1A2E",
       },
       package: "com.truckbook.app",
