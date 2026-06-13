@@ -45,6 +45,11 @@ const ICONS = {
   planchonFlete: require("../assets/icons/planchonFlete.png"),
   planchosFlete: require("../assets/icons/planchosFlete.webp"),
   volquetaFlete: require("../assets/icons/volquetaFlete.webp"),
+  // Mercancía icons (dinámicos por tipo de camión)
+  mercancia_box: require("../assets/icons/mercancia/box.webp"),
+  mercancia_carGrua: require("../assets/icons/mercancia/carGrua.webp"),
+  mercancia_gasStation: require("../assets/icons/mercancia/gasStation.webp"),
+  mercancia_gravel: require("../assets/icons/mercancia/gravel.webp"),
 } as const;
 
 export type IconName = keyof typeof ICONS;

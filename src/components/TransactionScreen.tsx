@@ -94,6 +94,8 @@ export interface TransactionScreenProps {
       numeric?: boolean;
     }>
   >;
+  tipoCamionActual?: any;
+  getMercanciaIcon?: (tipoCamion: any) => IconName;
   onAdd: (
     categoriaId: string,
     monto: string,
@@ -503,6 +505,8 @@ export default function TransactionScreen({
   emptyIcon = "💸",
   hasCustomDescription = false,
   camposExtra,
+  tipoCamionActual,
+  getMercanciaIcon,
   onAdd,
   onUpdate,
   onDelete,
@@ -1437,13 +1441,18 @@ export default function TransactionScreen({
                       {selectedCat &&
                         camposExtra?.[selectedCat]?.map((campo) => (
                           <View key={campo.key} style={s.inputGroup}>
-                            <Text
-                              style={[
-                                s.inputLabel,
-                                { color: c.textSecondary },
-                              ]}>
-                              {campo.label}
-                            </Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                              <Text
+                                style={[
+                                  s.inputLabel,
+                                  { color: c.textSecondary },
+                                ]}>
+                                {campo.label}
+                              </Text>
+                              {campo.key === "mercancia" && getMercanciaIcon && tipoCamionActual && (
+                                <ItemIcon name={getMercanciaIcon(tipoCamionActual)} size={20} />
+                              )}
+                            </View>
                             {campo.numeric ? (
                               /* ─── Campo numérico con botones +/- (multiplicador) ─── */
                               <View

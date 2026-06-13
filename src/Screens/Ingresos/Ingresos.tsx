@@ -41,6 +41,19 @@ const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
   }
 };
 
+const getMercanciaIcon = (tipoCamion: TipoCamion | null): IconName => {
+  switch (tipoCamion) {
+    case "estacas": return "mercancia_box" as IconName;
+    case "volqueta": return "mercancia_gravel" as IconName;
+    case "furgon": return "mercancia_box" as IconName;
+    case "grua": return "mercancia_carGrua" as IconName;
+    case "cisterna": return "mercancia_gasStation" as IconName;
+    case "planchon": return "mercancia_carGrua" as IconName;
+    case "portacontenedor": return "mercancia_box" as IconName;
+    default: return "mercancia_box" as IconName;
+  }
+};
+
 const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "flete",        name: "Flete",          iconName: "freight"  as IconName, color: "#00D9A5", size: 60 },
   { id: "anticipo",     name: "Anticipo",       iconName: "advance"  as IconName, color: "#74B9FF", size: 60 },
@@ -218,6 +231,8 @@ export default function Ingresos() {
       accentColorLight={c.incomeLight}
       emptyIcon="💸"
       camposExtra={{ flete: FLETE_CAMPOS, otro: OTRO_CAMPOS }}
+      tipoCamionActual={tipoCamion}
+      getMercanciaIcon={getMercanciaIcon}
       onAdd={onAdd}
       onUpdate={onUpdate}
       onDelete={onDelete}
