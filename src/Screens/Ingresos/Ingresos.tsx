@@ -149,11 +149,12 @@ export default function Ingresos() {
         if (!tipoResult.valido) {
           return { success: false, error: "Tipo de mercancía: " + tipoResult.error };
         }
-        // Construir descripción para mercancía
-        const partes: string[] = [extras.tipo];
-        if (extras.cliente)     partes.push(extras.cliente);
-        if (extras.descripcion) partes.push(extras.descripcion);
-        if (partes.length > 0) desc = partes.join(" · ");
+        // Construir descripción para mercancía — cliente primero
+        desc = extras.cliente || cat.name;
+        const detalles: string[] = [];
+        if (extras.tipo)        detalles.push(extras.tipo);
+        if (extras.descripcion) detalles.push(extras.descripcion);
+        if (detalles.length > 0) desc = `${desc} · ${detalles.join(" · ")}`;
       } else if (catId === "flete" && extras) {
         const partes: string[] = [];
         if (extras.cliente)     partes.push(extras.cliente);
