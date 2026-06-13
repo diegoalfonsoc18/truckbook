@@ -36,7 +36,7 @@ const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
     case "grua": return "gruaFlete" as IconName;
     case "cisterna": return "cisterna" as IconName;
     case "planchon": return "planchosFlete" as IconName;
-    case "portacontenedor": return "planchonFlete" as IconName;
+    case "portacontenedor": return "portaContenedor" as IconName;
     default: return "freight" as IconName;
   }
 };
