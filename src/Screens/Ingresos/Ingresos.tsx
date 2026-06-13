@@ -28,10 +28,32 @@ const MERCANCIA_CAMPOS = [
   { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
 ];
 
-const OTRO_CAMPOS = [
-  { key: "cliente",   label: "Cliente",   placeholder: "Nombre del cliente o empresa" },
-  { key: "mercancia", label: "Mercancía", placeholder: "Cemento, Arena, Ganado" },
+const ANTICIPO_CAMPOS = [
+  { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  { key: "descripcion", label: "Descripción", placeholder: "Motivo, detalles (opcional)" },
 ];
+
+const REEMBOLSO_CAMPOS = [
+  { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  { key: "descripcion", label: "Descripción", placeholder: "Concepto, detalles (opcional)" },
+];
+
+const OTRO_CAMPOS = [
+  { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  { key: "descripcion", label: "Descripción", placeholder: "Detalle de ingreso (opcional)" },
+];
+
+const CUENTA_COBRO_CAMPOS = [
+  { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  { key: "descripcion", label: "Descripción", placeholder: "Servicio, detalles (opcional)" },
+];
+
+const sanitizarInput = (texto: string, maxLength: number = 500): string => {
+  return texto
+    .replace(/[<>{}[\]]/g, "")
+    .trim()
+    .slice(0, maxLength);
+};
 
 const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
   switch (tipoCamion) {
@@ -157,24 +179,39 @@ export default function Ingresos() {
         if (detalles.length > 0) desc = `${desc} · ${detalles.join(" · ")}`;
       } else if (catId === "flete" && extras) {
         const partes: string[] = [];
-        if (extras.cliente)     partes.push(extras.cliente);
-        if (extras.descripcion) partes.push(extras.descripcion);
+        if (extras.cliente)     partes.push(sanitizarInput(extras.cliente));
+        if (extras.descripcion) partes.push(sanitizarInput(extras.descripcion));
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if (catId === "anticipo" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente)     partes.push(sanitizarInput(extras.cliente));
+        if (extras.descripcion) partes.push(sanitizarInput(extras.descripcion));
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if (catId === "reembolso" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente)     partes.push(sanitizarInput(extras.cliente));
+        if (extras.descripcion) partes.push(sanitizarInput(extras.descripcion));
         if (partes.length > 0) desc = partes.join(" · ");
       } else if (catId === "otro" && extras) {
         const partes: string[] = [];
-        if (extras.cliente)     partes.push(extras.cliente);
-        if (extras.mercancia)   partes.push(extras.mercancia);
+        if (extras.cliente)     partes.push(sanitizarInput(extras.cliente));
+        if (extras.descripcion) partes.push(sanitizarInput(extras.descripcion));
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if (catId === "cuenta_cobro" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente)     partes.push(sanitizarInput(extras.cliente));
+        if (extras.descripcion) partes.push(sanitizarInput(extras.descripcion));
         if (partes.length > 0) desc = partes.join(" · ");
       }
+
       // Adjuntar teléfono del contacto al final (parseable, invisible en display)
       if (extras?.telefono) desc = `${desc}[TEL:${extras.telefono}]`;
 
       // El estado lo elige el usuario en el modal; por defecto "pagado"
       const estadoInicial = (estado === "pendiente" ? "pendiente" : "pagado") as "pendiente" | "pagado";
 
-      // Sanitizar descripción — solo texto plano, sin scripts ni inyecciones
+      // Sanitizar descripción final — solo texto plano, sin scripts ni inyecciones
       desc = desc
-        .replace(/[<>{}]/g, "")       // eliminar caracteres HTML/template
         .replace(/\[TEL:[^\]]*\]/g, "") // no permitir inyectar tags TEL manualmente
         .trim()
         .slice(0, 500);               // max 500 caracteres
@@ -257,7 +294,14 @@ export default function Ingresos() {
       accentColor={c.income}
       accentColorLight={c.incomeLight}
       emptyIcon="💸"
-      camposExtra={{ flete: FLETE_CAMPOS, mercancia: MERCANCIA_CAMPOS, otro: OTRO_CAMPOS }}
+      camposExtra={{
+        flete: FLETE_CAMPOS,
+        mercancia: MERCANCIA_CAMPOS,
+        anticipo: ANTICIPO_CAMPOS,
+        reembolso: REEMBOLSO_CAMPOS,
+        otro: OTRO_CAMPOS,
+        cuenta_cobro: CUENTA_COBRO_CAMPOS,
+      }}
       tipoCamionActual={tipoCamion}
       getMercanciaIcon={getMercanciaIcon}
       onAdd={onAdd}
