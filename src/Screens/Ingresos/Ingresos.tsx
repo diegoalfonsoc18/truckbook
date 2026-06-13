@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from "react";
-import { validarMonto, validarFecha, parsearMonto } from "../../utils/validacion";
+import { validarMonto, validarFecha, validarDescripcion, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -141,7 +141,21 @@ export default function Ingresos() {
 
       // Build descripcion — compose from extra fields depending on category
       let desc = cat.name;
-      if ((catId === "flete" || catId === "otro") && extras) {
+      if (catId === "mercancia" && extras) {
+        // Validar mercancía tipo
+        if (!extras.tipo || extras.tipo.trim() === "") {
+          return { success: false, error: "Ingresa el tipo de mercancía" };
+        }
+        const tipoResult = validarDescripcion(extras.tipo);
+        if (!tipoResult.valido) {
+          return { success: false, error: "Tipo de mercancía: " + tipoResult.error };
+        }
+        // Construir descripción para mercancía
+        const partes: string[] = [extras.tipo];
+        if (extras.cliente)     partes.push(extras.cliente);
+        if (extras.descripcion) partes.push(extras.descripcion);
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if ((catId === "flete" || catId === "otro") && extras) {
         const partes: string[] = [];
         if (extras.cliente)     partes.push(extras.cliente);
         if (extras.mercancia)   partes.push(extras.mercancia);
