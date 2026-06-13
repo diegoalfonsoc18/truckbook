@@ -18,7 +18,6 @@ import {
 
 const FLETE_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
-  { key: "mercancia",   label: "Mercancía",   placeholder: "Cemento, Arena, Ganado" },
   { key: "descripcion", label: "Descripción", placeholder: "Ruta, notas, detalles (opcional)" },
   { key: "cantidad",    label: "Cantidad de fletes", placeholder: "1", numeric: true },
 ];
@@ -155,11 +154,15 @@ export default function Ingresos() {
         if (extras.cliente)     partes.push(extras.cliente);
         if (extras.descripcion) partes.push(extras.descripcion);
         if (partes.length > 0) desc = partes.join(" · ");
-      } else if ((catId === "flete" || catId === "otro") && extras) {
+      } else if (catId === "flete" && extras) {
+        const partes: string[] = [];
+        if (extras.cliente)     partes.push(extras.cliente);
+        if (extras.descripcion) partes.push(extras.descripcion);
+        if (partes.length > 0) desc = partes.join(" · ");
+      } else if (catId === "otro" && extras) {
         const partes: string[] = [];
         if (extras.cliente)     partes.push(extras.cliente);
         if (extras.mercancia)   partes.push(extras.mercancia);
-        if (extras.descripcion) partes.push(extras.descripcion);
         if (partes.length > 0) desc = partes.join(" · ");
       }
       // Adjuntar teléfono del contacto al final (parseable, invisible en display)
