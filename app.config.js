@@ -44,6 +44,7 @@ export default {
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
     },
     plugins: [
+      "./plugins/withModularHeaders",
       "expo-localization",
       [
         "expo-location",
