@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { validarMonto, validarFecha, parsearMonto } from "../../utils/validacion";
-import { useVehiculoStore } from "../../store/VehiculoStore";
+import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
@@ -28,6 +28,19 @@ const OTRO_CAMPOS = [
   { key: "mercancia", label: "Mercancía", placeholder: "Cemento, Arena, Ganado" },
 ];
 
+const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
+  switch (tipoCamion) {
+    case "estacas": return "estacas" as IconName;
+    case "volqueta": return "volqueta" as IconName;
+    case "furgon": return "furgon" as IconName;
+    case "grua": return "grua" as IconName;
+    case "cisterna": return "cisterna" as IconName;
+    case "planchon": return "planchon" as IconName;
+    case "portacontenedor": return "portacontenedor" as IconName;
+    default: return "freight" as IconName;
+  }
+};
+
 const INGRESOS_CATEGORIAS: Categoria[] = [
   { id: "flete",        name: "Flete",          iconName: "freight"  as IconName, color: "#00D9A5", size: 60 },
   { id: "anticipo",     name: "Anticipo",       iconName: "advance"  as IconName, color: "#74B9FF", size: 60 },
@@ -39,11 +52,17 @@ const INGRESOS_CATEGORIAS: Categoria[] = [
 export default function Ingresos() {
   const navigation = useNavigation<any>();
   const { colors: c } = useTheme();
-  const { placa: placaActual } = useVehiculoStore();
+  const { placa: placaActual, tipoCamion } = useVehiculoStore();
   const { user } = useAuth();
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
   const { agregarIngreso, actualizarIngreso, eliminarIngreso } =
     useIngresosConductor(placaActual, user?.id);
+
+  const categoriasConIconoDinamico = INGRESOS_CATEGORIAS.map((cat) =>
+    cat.id === "flete"
+      ? { ...cat, iconName: getTruckIconName(tipoCamion) }
+      : cat
+  );
 
   useEffect(() => {
     if (placaActual) {
@@ -193,7 +212,7 @@ export default function Ingresos() {
     <TransactionScreen
       title="Ingresos"
       placaActual={placaActual}
-      categorias={INGRESOS_CATEGORIAS}
+      categorias={categoriasConIconoDinamico}
       transactions={transactions}
       accentColor={c.income}
       accentColorLight={c.incomeLight}
