@@ -39,6 +39,11 @@ const ICONS = {
   oil: require("../assets/icons/oil.webp"),
   portaContenedor: require("../assets/icons/portaContenedor.webp"),
   parrilla: require("../assets/icons/parrilla.webp"),
+  // Flete icons (dinámicos por tipo de camión)
+  gruaFlete: require("../assets/icons/gruaFlete.webp"),
+  planchonFlete: require("../assets/icons/planchonFlete.png"),
+  planchosFlete: require("../assets/icons/planchosFlete.webp"),
+  volquetaFlete: require("../assets/icons/volquetaFlete.webp"),
 } as const;
 
 export type IconName = keyof typeof ICONS;

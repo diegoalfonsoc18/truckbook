@@ -31,12 +31,12 @@ const OTRO_CAMPOS = [
 const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
   switch (tipoCamion) {
     case "estacas": return "estacas" as IconName;
-    case "volqueta": return "volqueta" as IconName;
+    case "volqueta": return "volquetaFlete" as IconName;
     case "furgon": return "furgon" as IconName;
-    case "grua": return "grua" as IconName;
+    case "grua": return "gruaFlete" as IconName;
     case "cisterna": return "cisterna" as IconName;
-    case "planchon": return "planchon" as IconName;
-    case "portacontenedor": return "portacontenedor" as IconName;
+    case "planchon": return "planchosFlete" as IconName;
+    case "portacontenedor": return "planchonFlete" as IconName;
     default: return "freight" as IconName;
   }
 };
