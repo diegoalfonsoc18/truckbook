@@ -35,16 +35,15 @@ export default {
       },
     },
     android: {
-      icon: "./src/assets/android/play_store_512.png",
+      icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
       adaptiveIcon: {
-        foregroundImage: "./src/assets/android/mipmap-xxxhdpi/ic_launcher.png",
+        foregroundImage: "./assets/TruckBook/adaptive-foreground.png",
         backgroundColor: "#1A1A2E",
       },
       package: "com.truckbook.app",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
     },
     plugins: [
-      "./plugins/withModularHeaders",
       "expo-localization",
       [
         "expo-location",
