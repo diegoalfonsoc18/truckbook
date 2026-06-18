@@ -5,12 +5,9 @@ import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
 
 export interface VehiculoItem {
-  id: string;             // relacion_id en vehiculo_conductores
+  id: string;
   placa: string;
   tipo_camion: string;
-  rol: string;
-  estado: string;
-  conductorNombre?: string;
 }
 
 interface VehiculosListState {
@@ -35,48 +32,19 @@ export const useVehiculosListStore = create<VehiculosListState>()(
       cargar: async (userId: string) => {
         set({ cargando: true });
         try {
-          // Query principal: vehículos del usuario con tipo_camion desde vehiculos
+          // Vehículos del usuario con tipo_camion desde vehiculos
           const { data, error } = await supabase
             .from("vehiculo_conductores")
-            .select("id, vehiculo_placa, rol, estado, vehiculos(tipo_camion)")
+            .select("id, vehiculo_placa, vehiculos(tipo_camion)")
             .eq("conductor_id", userId)
             .order("created_at", { ascending: false });
 
           if (error) throw error;
 
-          const placas = (data || []).map((v) => v.vehiculo_placa);
-
-          // Conductores autorizados de esos vehículos (1 query)
-          let conductorMap = new Map<string, string>();
-          if (placas.length > 0) {
-            const { data: rels } = await supabase
-              .from("vehiculo_conductores")
-              .select("vehiculo_placa, conductor_id")
-              .in("vehiculo_placa", placas)
-              .eq("rol", "conductor")
-              .eq("estado", "autorizado");
-
-            const ids = [...new Set((rels || []).map((r) => r.conductor_id))];
-            if (ids.length > 0) {
-              const { data: usuarios } = await supabase
-                .from("usuarios")
-                .select("user_id, nombre")
-                .in("user_id", ids);
-
-              for (const rel of rels || []) {
-                const usr = (usuarios || []).find((u) => u.user_id === rel.conductor_id);
-                if (usr?.nombre) conductorMap.set(rel.vehiculo_placa, usr.nombre);
-              }
-            }
-          }
-
           const vehiculos: VehiculoItem[] = (data || []).map((rel) => ({
             id: rel.id,
             placa: rel.vehiculo_placa,
             tipo_camion: (rel.vehiculos as any)?.tipo_camion || "estacas",
-            rol: rel.rol,
-            estado: rel.estado,
-            conductorNombre: conductorMap.get(rel.vehiculo_placa),
           }));
 
           set({ vehiculos });

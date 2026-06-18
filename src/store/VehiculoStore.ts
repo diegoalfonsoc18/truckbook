@@ -81,7 +81,6 @@ export const useVehiculoStore = create<VehiculoStore>()(
             .select("vehiculo_placa")
             .eq("conductor_id", userId)
             .eq("vehiculo_placa", placa)
-            .eq("estado", "autorizado")
             .maybeSingle();
 
           // Si hay error de red o timeout → conservar placa, reintentar en próxima apertura

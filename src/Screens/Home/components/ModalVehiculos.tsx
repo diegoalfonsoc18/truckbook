@@ -22,7 +22,6 @@ import { useVehiculosListStore } from "../../../store/VehiculosListStore";
 import { useAuth } from "../../../hooks/useAuth";
 import supabase from "../../../config/SupaBaseConfig";
 import {
-  cargarVehiculosConEstado,
   registrarVehiculoPropietario,
   removerConductorDeVehiculo,
 } from "../../../services/vehiculoAutorizacionService";
@@ -79,23 +78,11 @@ export default function ModalVehiculos({
     if (visible && user?.id) cargarVehiculos(user.id);
   }, [visible]);
 
-  // Mapear store a tipo local con normalizarTipo
-  const vehiculos = vehiculosStore.map((v) => ({
+  const vehiculos: Vehiculo[] = vehiculosStore.map((v) => ({
     id: v.id,
     placa: v.placa,
     tipo_camion: normalizarTipo(v.tipo_camion),
-    estado: v.estado,
-    rol: v.rol,
-    conductorNombre: v.conductorNombre,
-  })) as Vehiculo[];
-
-  // Sync conductor name
-  useEffect(() => {
-    if (placaActual) {
-      const actual = vehiculos.find((v) => v.placa === placaActual);
-      onConductorChange(actual?.conductorNombre);
-    }
-  }, [vehiculosStore, placaActual]);
+  }));
 
   const recargar = () => {
     if (user?.id) cargarVehiculos(user.id);
@@ -105,17 +92,6 @@ export default function ModalVehiculos({
     TIPOS_CAMION.find((t) => t.id === tipo);
 
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
-    if (vehiculo.estado === "pendiente") {
-      Alert.alert(
-        "Esperando autorización",
-        "El propietario aún no ha autorizado tu acceso.",
-      );
-      return;
-    }
-    if (vehiculo.estado === "rechazado") {
-      Alert.alert("Acceso denegado", "El propietario rechazó tu solicitud.");
-      return;
-    }
     if (placaActual === vehiculo.placa) {
       useVehiculoStore.getState().clearVehiculo();
       onConductorChange(undefined);
@@ -123,7 +99,7 @@ export default function ModalVehiculos({
     }
     setPlaca(vehiculo.placa);
     setTipoCamion(vehiculo.tipo_camion);
-    onConductorChange(vehiculo.conductorNombre);
+    onConductorChange(undefined);
   };
 
   const cerrarModal = () => {

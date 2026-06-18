@@ -89,42 +89,18 @@ export async function registrarVehiculoPropietario(
   placa: string,
   tipoCamion: string
 ): Promise<{ success: boolean; error?: string }> {
-  // 1. Verificar si ya existe relacion
-  const { data: existente } = await supabase
-    .from("vehiculo_conductores")
-    .select("id")
-    .eq("vehiculo_placa", placa)
-    .eq("conductor_id", userId)
-    .maybeSingle();
-  if (existente) return { success: false, error: "Ya tienes este vehiculo registrado" };
-
-  // 2. Verificar si ya tiene propietario
-  const { data: propietarioExistente } = await supabase
-    .from("vehiculo_conductores")
-    .select("id")
-    .eq("vehiculo_placa", placa)
-    .eq("rol", "propietario")
-    .maybeSingle();
-  if (propietarioExistente) return { success: false, error: "Este vehiculo ya tiene un propietario registrado" };
-
-  // 3. Insertar vehiculo en tabla global si no existe (solo guarda la placa)
-  const { data: vehiculoExiste } = await supabase
+  // 1. Upsert del vehículo — si la placa ya existe la actualiza, si no la crea
+  const { error: upsertError } = await supabase
     .from("vehiculos")
-    .select("placa")
-    .eq("placa", placa)
-    .maybeSingle();
+    .upsert([{ placa, tipo_camion: tipoCamion }], { onConflict: "placa" });
+  if (upsertError) return { success: false, error: "Error al registrar el vehículo" };
 
-  if (!vehiculoExiste) {
-    const { error: insertError } = await supabase
-      .from("vehiculos")
-      .insert([{ placa }]);
-    if (insertError) return { success: false, error: "Error al registrar vehiculo" };
-  }
-
-  // 4. Crear relacion con tipo_camion propio del usuario
-  const { error } = await supabase.from("vehiculo_conductores").insert([
-    { vehiculo_placa: placa, conductor_id: userId, rol: "propietario", estado: "autorizado", tipo_camion: tipoCamion },
-  ]);
+  // 2. Upsert de la relación usuario ↔ vehículo (sin rol ni estado)
+  const { error } = await supabase
+    .from("vehiculo_conductores")
+    .upsert([{ vehiculo_placa: placa, conductor_id: userId }], {
+      onConflict: "vehiculo_placa,conductor_id",
+    });
   if (error) return { success: false, error: error.message };
 
   return { success: true };

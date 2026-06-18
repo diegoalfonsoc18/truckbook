@@ -2,16 +2,12 @@
 // Shared vehicle constants used by Home and ModalVehiculos
 import type { IconName } from "../../components/ItemIcon";
 import type { TipoCamion } from "../../store/VehiculoStore";
-import type { EstadoAutorizacion } from "../../services/vehiculoAutorizacionService";
 import { HOME_COLORS } from "./HomeConstants";
 
 export interface Vehiculo {
   id: string;
   placa: string;
   tipo_camion: TipoCamion;
-  estado?: EstadoAutorizacion;
-  rol?: string;
-  conductorNombre?: string;
 }
 
 export const ICON_MAP: Record<TipoCamion, IconName> = {
