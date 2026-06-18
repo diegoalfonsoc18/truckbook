@@ -6,7 +6,6 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useTheme } from "../../constants/Themecontext";
-import { verificarAutorizacion } from "../../services/vehiculoAutorizacionService";
 import NetInfo from "@react-native-community/netinfo";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
@@ -138,17 +137,6 @@ export default function Ingresos() {
           success: false,
           error: !placaActual ? "Selecciona una placa primero" : "Usuario no identificado",
         };
-      }
-
-      const net = await NetInfo.fetch();
-      if (net.isConnected && net.isInternetReachable) {
-        const { autorizado } = await verificarAutorizacion(user.id, placaActual);
-        if (!autorizado) {
-          return {
-            success: false,
-            error: "No tienes autorización para registrar datos en este vehículo",
-          };
-        }
       }
 
       const cat = INGRESOS_CATEGORIAS.find((x) => x.id === catId);
