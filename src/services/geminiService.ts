@@ -209,6 +209,12 @@ export async function analizarFactura(
       return { error: "No se pudo interpretar la respuesta de Gemini" };
     }
 
+    // Validar categoria contra allowlist para prevenir prompt injection
+    const allowlist = tipo === "gasto" ? CATEGORIAS_GASTO : CATEGORIAS_INGRESO;
+    if (data.categoria && !allowlist.includes(data.categoria)) {
+      data.categoria = "Otros";
+    }
+
     return { data };
   } catch (err: any) {
     logger.error("Error llamando Gemini:", err);

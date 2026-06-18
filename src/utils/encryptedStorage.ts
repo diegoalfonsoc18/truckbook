@@ -20,9 +20,8 @@ async function getEncryptionKey(): Promise<string> {
     }
     return key;
   } catch (e: any) {
-    // Fallback: si SecureStore falla (ej. Expo Go en Android), usar clave fija derivada
     logger.error("SecureStore unavailable for encryption key:", e?.message);
-    return "truckbook_fallback_key_dev_only";
+    throw new Error("SecureStore no disponible — no se puede cifrar el almacenamiento");
   }
 }
 
