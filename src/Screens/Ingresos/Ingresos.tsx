@@ -223,6 +223,7 @@ export default function Ingresos() {
         fecha,
         estado: estadoInicial,
         cantidad,
+        cliente: extras?.cliente ? sanitizarInput(extras.cliente) : undefined,
       });
     },
     [placaActual, user?.id],

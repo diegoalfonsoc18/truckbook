@@ -10,6 +10,9 @@ import {
   Modal,
   Alert,
   Image,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -116,7 +119,9 @@ function generarReporteHTML(params: {
     tipo_ingreso: string;
     descripcion: string;
     monto: number;
+    cliente?: string | null;
   }>;
+  clienteFiltro?: string | null;
   view: ViewType;
 }) {
   const fmt = (n: number) =>
@@ -128,11 +133,10 @@ function generarReporteHTML(params: {
 
   const fmtFecha = (s: string) => {
     const d = new Date(s + "T12:00:00");
-    return d.toLocaleDateString("es-CO", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
   };
 
   const labelPeriodo = (key: string) => {
@@ -166,7 +170,7 @@ function generarReporteHTML(params: {
       const ing = params.ingresosPorPeriodo[i] || 0;
       const gas = params.gastosPorPeriodo[i] || 0;
       const bal = ing - gas;
-      const balColor = bal >= 0 ? "#2EC98D" : "#EF4444";
+      const balColor = bal >= 0 ? "#16A34A" : "#EF4444";
       return `<tr>
       <td>${labelPeriodo(k)}</td>
       <td class="right green">${fmt(ing)}</td>
@@ -190,9 +194,14 @@ function generarReporteHTML(params: {
       const cant = (i as any).cantidad ?? 1;
       const total = i.monto * cant;
       const cantLabel = cant > 1 ? ` (x${cant})` : "";
+      const clienteLabel = i.cliente || (() => {
+        const d = (i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
+        return d.length > 1 ? d : "—";
+      })();
       return `<tr>
       <td>${fmtFecha(i.fecha)}</td>
       <td>${i.tipo_ingreso}${cantLabel}</td>
+      <td>${clienteLabel}</td>
       <td>${cleanDesc(i.descripcion)}</td>
       <td class="right green">${fmt(total)}</td>
     </tr>`;
@@ -213,7 +222,7 @@ function generarReporteHTML(params: {
     .join("");
 
   const rentNum = Number(params.rentabilidad);
-  const balColor = params.balance >= 0 ? "#2EC98D" : "#EF4444";
+  const balColor = params.balance >= 0 ? "#16A34A" : "#EF4444";
 
   return `<!DOCTYPE html>
 <html>
@@ -222,44 +231,44 @@ function generarReporteHTML(params: {
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, Helvetica, sans-serif; background: #F5F5F5; padding: 24px; color: #222; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #F5F5F5; padding: 24px; color: #000; }
     .page { background: #fff; max-width: 680px; margin: 0 auto; padding: 32px; border-radius: 8px; }
 
     /* HEADER */
-    .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #0F172A; padding-bottom: 16px; }
-    .brand { font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
-    .brand span { color: #2EC98D; }
-    .doc-info { text-align: right; font-size: 12px; color: #666; }
-    .doc-info strong { color: #0F172A; display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #000; padding-bottom: 16px; }
+    .brand { font-size: 24px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
+    .brand span { color: #000; }
+    .doc-info { text-align: right; font-size: 12px; color: #000; }
+    .doc-info strong { color: #000; display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
 
     /* META */
-    .meta-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 32px; font-size: 12px; color: #555; }
-    .meta-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 2px; }
-    .meta-item span { font-size: 13px; font-weight: 600; color: #0F172A; }
+    .meta-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 32px; font-size: 12px; color: #000; }
+    .meta-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 2px; }
+    .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
 
     /* SUMMARY GRID */
     .summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
-    .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #888; margin-bottom: 6px; }
-    .s-value { font-size: 15px; font-weight: 800; }
-    .green { color: #2EC98D; }
+    .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #000; margin-bottom: 6px; }
+    .s-value { font-size: 15px; font-weight: 800; color: #000; }
+    .green { color: #16A34A; }
     .red { color: #EF4444; }
 
     /* SECTION */
-    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #888; margin: 24px 0 10px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #000; margin: 24px 0 10px; }
 
     /* TABLES */
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { background: #0F172A; color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
+    th { background: #000; color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
     th.right { text-align: right; }
-    td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; color: #333; vertical-align: middle; }
+    td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; color: #000; vertical-align: middle; }
     td.right { text-align: right; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #F8FAFC; }
-    .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; }
+    .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; color: #000; }
 
     /* FOOTER */
-    .footer { text-align: center; font-size: 10px; color: #BBB; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 14px; }
+    .footer { text-align: center; font-size: 10px; color: #000; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 14px; }
   </style>
 </head>
 <body>
@@ -285,6 +294,7 @@ function generarReporteHTML(params: {
       <strong>Vehículo(s)</strong>
       <span>${params.placas.length > 0 ? params.placas.join(", ") : "Todos"}</span>
     </div>
+    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${params.clienteFiltro}</span></div>` : ""}
     <div class="meta-item">
       <strong>Transacciones</strong>
       <span>${params.gastosDetalle.length + params.ingresosDetalle.length}</span>
@@ -293,7 +303,7 @@ function generarReporteHTML(params: {
 
   <!-- RESUMEN -->
   <div class="summary">
-    <div class="s-card" style="border-color:#2EC98D40">
+    <div class="s-card" style="border-color:#16A34A40">
       <div class="s-label">Ingresos</div>
       <div class="s-value green">${fmt(params.totalIngresos)}</div>
     </div>
@@ -305,9 +315,9 @@ function generarReporteHTML(params: {
       <div class="s-label">Balance</div>
       <div class="s-value" style="color:${balColor}">${fmt(params.balance)}</div>
     </div>
-    <div class="s-card" style="border-color:${rentNum >= 0 ? "#2EC98D40" : "#EF444440"}">
+    <div class="s-card" style="border-color:${rentNum >= 0 ? "#16A34A40" : "#EF444440"}">
       <div class="s-label">Rentabilidad</div>
-      <div class="s-value" style="color:${rentNum >= 0 ? "#2EC98D" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
+      <div class="s-value" style="color:${rentNum >= 0 ? "#16A34A" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
     </div>
   </div>
 
@@ -343,7 +353,7 @@ function generarReporteHTML(params: {
   <div class="section-title">Ingresos del período (${params.ingresosDetalle.length})</div>
   <table>
     <thead><tr>
-      <th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="right">Monto</th>
+      <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Descripción</th><th class="right">Monto</th>
     </tr></thead>
     <tbody>${top10Ingresos}</tbody>
   </table>
@@ -368,7 +378,7 @@ function generarReporteHTML(params: {
       : ""
   }
 
-  <div class="footer">Generado con TruckBook · ${new Date().toLocaleString("es-CO")}</div>
+  <div class="footer">Generado con TruckBook</div>
 </div>
 </body>
 </html>`;
@@ -402,6 +412,8 @@ export default function FinanzasGenerales() {
     | "año"
     | "personalizado";
   const [periodoRapido, setPeriodoRapido] = useState<PeriodoRapido>("mes");
+  const [exportCliente, setExportCliente] = useState<string | null>(null);
+  const [clienteInputFocused, setClienteInputFocused] = useState(false);
   const [exportRango, setExportRango] = useState<{
     inicio: string;
     fin: string;
@@ -649,11 +661,20 @@ export default function FinanzasGenerales() {
   const generarPDF = async () => {
     if (exportando) return;
     const r = exportRango;
-    const gastosDetalle = gastosPorPlaca.filter(
-      (g) => g.fecha >= r.inicio && g.fecha <= r.fin,
-    );
+    const gastosDetalle = exportCliente
+      ? []
+      : gastosPorPlaca.filter((g) => g.fecha >= r.inicio && g.fecha <= r.fin);
+    const getClienteIngreso = (i: any): string | null => {
+      if (i.cliente) return i.cliente;
+      const desc: string = i.descripcion || "";
+      const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
+      return parte.length > 1 ? parte : null;
+    };
     const ingresosDetalle = ingresosPorPlaca.filter(
-      (i) => i.fecha >= r.inicio && i.fecha <= r.fin,
+      (i) =>
+        i.fecha >= r.inicio &&
+        i.fecha <= r.fin &&
+        (exportCliente === null || getClienteIngreso(i) === exportCliente),
     );
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
       Alert.alert(
@@ -706,13 +727,17 @@ export default function FinanzasGenerales() {
         gastosDetalle,
         ingresosDetalle,
         view: "meses",
+        clienteFiltro: exportCliente,
       });
 
-      const printPromise = Print.printToFileAsync({ html, base64: false });
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 15000),
-      );
-      const { uri } = await Promise.race([printPromise, timeout]);
+      await new Promise((res) => setTimeout(res, 600));
+
+      const { uri } = await Promise.race([
+        Print.printToFileAsync({ html, base64: false }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 12000),
+        ),
+      ]);
 
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
@@ -721,9 +746,9 @@ export default function FinanzasGenerales() {
       });
     } catch (err: any) {
       const msg = err?.message === "timeout"
-        ? "La generación del PDF tardó demasiado. Intenta de nuevo."
-        : "No se pudo generar el informe.";
-      Alert.alert("Error", msg);
+        ? "La generación tardó demasiado. Intenta con un rango de fechas más corto."
+        : `No se pudo generar el informe: ${err?.message ?? "error desconocido"}`;
+      Alert.alert("Error al exportar", msg);
     } finally {
       setExportando(false);
     }
@@ -1049,6 +1074,7 @@ export default function FinanzasGenerales() {
               style={[styles.exportarBtn, { backgroundColor: c.accent }]}
               onPress={() => {
                 seleccionarPeriodo("mes");
+                setExportCliente(null);
                 setExportModal(true);
               }}
               disabled={exportando}
@@ -1079,13 +1105,16 @@ export default function FinanzasGenerales() {
         transparent
         animationType="slide"
         onRequestClose={() => setExportModal(false)}>
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
-          activeOpacity={1}
-          onPress={() => setExportModal(false)}>
-          <TouchableOpacity activeOpacity={1}>
-            <View
-              style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
+            activeOpacity={1}
+            onPress={() => setExportModal(false)}>
+            <TouchableOpacity activeOpacity={1}>
+              <View
+                style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
               <View
                 style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
               />
@@ -1099,7 +1128,7 @@ export default function FinanzasGenerales() {
               </View>
 
               {/* OPCIONES RÁPIDAS */}
-              <Text style={[styles.exportSectionLabel, { color: c.textMuted }]}>
+              <Text style={[styles.exportSectionLabel, { color: c.textMuted, textTransform: "none" }]}>
                 Período
               </Text>
               <View style={styles.periodosGrid}>
@@ -1179,6 +1208,67 @@ export default function FinanzasGenerales() {
                 </TouchableOpacity>
               </View>
 
+              {/* FILTRO CLIENTE */}
+              {(() => {
+                const getCliente = (i: any): string | null => {
+                  if (i.cliente) return i.cliente;
+                  const desc: string = i.descripcion || "";
+                  const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
+                  return parte.length > 1 ? parte : null;
+                };
+                const clientesDisponibles = Array.from(
+                  new Set(
+                    ingresosPorPlaca
+                      .map(getCliente)
+                      .filter((v): v is string => !!v),
+                  ),
+                ).sort();
+                const texto = exportCliente ?? "";
+                const sugerencias = clienteInputFocused && texto.length >= 2
+                  ? clientesDisponibles.filter((cli) =>
+                      cli.toLowerCase().includes(texto.toLowerCase()),
+                    )
+                  : [];
+                return (
+                  <>
+                    <Text style={[styles.exportSectionLabel, { color: c.textMuted, marginTop: 14, textTransform: "none" }]}>
+                      Filtrar por cliente (opcional)
+                    </Text>
+                    <TextInput
+                      style={[
+                        styles.exportClienteInput,
+                        { backgroundColor: c.cardBg, borderColor: exportCliente ? c.accent : c.border, color: c.text },
+                      ]}
+                      placeholder="Escribe el nombre del cliente..."
+                      placeholderTextColor={c.textMuted}
+                      value={texto}
+                      onChangeText={(t) => {
+                        const limpio = t
+                          .replace(/[<>{}[\]\\\/`'"%;()&+]/g, "")
+                          .slice(0, 80);
+                        setExportCliente(limpio.length > 0 ? limpio : null);
+                      }}
+                      onFocus={() => setClienteInputFocused(true)}
+                      onBlur={() => setTimeout(() => setClienteInputFocused(false), 150)}
+                      returnKeyType="done"
+                    />
+                    {sugerencias.length > 0 && (
+                      <View style={[styles.exportSugerencias, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+                        {sugerencias.slice(0, 5).map((cli) => (
+                          <TouchableOpacity
+                            key={cli}
+                            style={[styles.exportSugerenciaItem, { borderBottomColor: c.border }]}
+                            onPress={() => { setExportCliente(cli); setClienteInputFocused(false); }}
+                            activeOpacity={0.7}>
+                            <Text style={{ color: c.text, fontSize: 14 }}>{cli}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                );
+              })()}
+
               {/* BOTÓN GENERAR */}
               <TouchableOpacity
                 style={[styles.exportGenerarBtn, { backgroundColor: c.accent }]}
@@ -1193,10 +1283,11 @@ export default function FinanzasGenerales() {
                   style={[styles.exportGenerarText, { color: c.accentText }]}>
                   Generar PDF
                 </Text>
-              </TouchableOpacity>
-            </View>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* MODAL CALENDARIO */}
@@ -1470,6 +1561,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginBottom: 10,
     textTransform: "uppercase",
+  },
+  exportClienteInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  exportSugerencias: {
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 4,
+    overflow: "hidden",
+  },
+  exportSugerenciaItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   periodosGrid: {
     flexDirection: "row",

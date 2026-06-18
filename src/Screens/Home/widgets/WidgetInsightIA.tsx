@@ -188,7 +188,7 @@ export default function WidgetInsightIA({ isDark }: WProps) {
                     .trim();
                   const dias = item.fecha ? diasDesde(item.fecha) : 0;
                   const itemColor =
-                    dias >= 15 ? "#EF4444" : dias >= 7 ? "#F59E0B" : "#2EC98D";
+                    dias >= 15 ? "#EF4444" : dias >= 7 ? "#F59E0B" : "#16A34A";
                   return (
                     <View
                       key={item.id}

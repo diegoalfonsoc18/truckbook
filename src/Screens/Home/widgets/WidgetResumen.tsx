@@ -53,9 +53,9 @@ function GaugeBalance({
   const gradLX     = pt(START).x;
   const gradRX     = pt(START + SPAN).x;
 
-  const dotColor    = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#FFB800" : "#2EC98D";
+  const dotColor    = ratio < 0.38 ? "#EF4444" : ratio < 0.62 ? "#FFB800" : "#16A34A";
   const statusLabel = ratio < 0.38 ? "Negativo"  : ratio < 0.62 ? "Equilibrio" : "Positivo";
-  const statusColor = ratio < 0.38 ? "#F87171"   : ratio < 0.62 ? "#FBBF24"    : "#2EC98D";
+  const statusColor = ratio < 0.38 ? "#F87171"   : ratio < 0.62 ? "#FBBF24"    : "#16A34A";
 
   const ticks: Array<{ o: { x: number; y: number }; i: { x: number; y: number }; major: boolean }> = [];
   for (let i = 0; i <= SPAN; i += 5) {
@@ -74,9 +74,9 @@ function GaugeBalance({
   };
 
   const cardBg      = isDark ? "#161616" : "#FFFFFF";
-  const balTextColor = isDark ? "#FFFFFF" : balance >= 0 ? "#24A072" : "#DC2626";
+  const balTextColor = isDark ? "#FFFFFF" : balance >= 0 ? "#15803D" : "#DC2626";
   const mutedClr     = isDark ? "#4B5268" : "#6B7280";
-  const ingClr       = isDark ? "#2EC98D" : "#24A072";
+  const ingClr       = isDark ? "#16A34A" : "#15803D";
   const gasClr       = isDark ? "#F87171" : "#DC2626";
   const tickClr      = isDark ? "#1A3826" : balance >= 0 ? "#5A8C6A" : "#8C5A5A";
   const tickMajClr   = isDark ? "#2A4A38" : balance >= 0 ? "#3D6B4D" : "#6B3D3D";
@@ -87,7 +87,7 @@ function GaugeBalance({
         <SvgGradient id="gfill" x1={gradLX} y1={0} x2={gradRX} y2={0} gradientUnits="userSpaceOnUse">
           <Stop offset="0"    stopColor="#EF4444" />
           <Stop offset="0.42" stopColor="#FFB800" />
-          <Stop offset="1"    stopColor="#2EC98D" />
+          <Stop offset="1"    stopColor="#16A34A" />
         </SvgGradient>
         <SvgGradient id="cardBgGrad" x1="0" y1="0" x2={W} y2={H} gradientUnits="userSpaceOnUse">
           <Stop offset="0"   stopColor={isDark ? "#161616" : "#F0FBF4"} />

@@ -123,7 +123,7 @@ export default function WidgetConsejIA({ isDark }: WProps) {
   const border = isDark ? "rgba(46,204,113,0.20)" : "rgba(34,197,94,0.22)";
   const ink    = isDark ? "#E2E8F0" : "#111827";
   const muted  = isDark ? "#64748B" : "#6B7280";
-  const GREEN  = "#2EC98D";
+  const GREEN  = "#16A34A";
 
   // El widget siempre se muestra; si la Edge Function no está disponible, mostrará el error inline
 

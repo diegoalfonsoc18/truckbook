@@ -38,9 +38,9 @@ export const LIGHT_COLORS = {
   accentGradient: ["#1E293B", "#020617"] as [string, string],
 
   // Semánticos
-  success: "#2EC98D",
-  successLight: "rgba(46, 201, 141, 0.10)",
-  successDark: "#24A072",
+  success: "#16A34A",
+  successLight: "rgba(22, 163, 74, 0.10)",
+  successDark: "#15803D",
   danger: "#EF4444",
   dangerLight: "rgba(239, 68, 68, 0.10)",
   dangerDark: "#DC2626",
@@ -50,8 +50,8 @@ export const LIGHT_COLORS = {
   infoLight: "rgba(108, 92, 231, 0.10)",
 
   // TruckBook
-  income: "#2EC98D",
-  incomeLight: "rgba(46, 201, 141, 0.10)",
+  income: "#16A34A",
+  incomeLight: "rgba(22, 163, 74, 0.10)",
   expense: "#EF4444",
   expenseLight: "rgba(239, 68, 68, 0.10)",
   analytics: "#6C5CE7",
@@ -64,7 +64,7 @@ export const LIGHT_COLORS = {
 
   // Categorías
   catCombustible: "#F59E0B",
-  catPeajes: "#2EC98D",
+  catPeajes: "#16A34A",
   catComida: "#F87171",
   catHospedaje: "#6C5CE7",
   catMantenimiento: "#60A5FA",
@@ -74,13 +74,13 @@ export const LIGHT_COLORS = {
   catOtros: "#9CA3AF",
 
   // Vehículos
-  vehicleEstacas: "#2EC98D",
+  vehicleEstacas: "#16A34A",
   vehicleVolqueta: "#F59E0B",
   vehicleFurgon: "#6C5CE7",
   vehicleGrua: "#EF4444",
 
   // Estados
-  active: "#2EC98D",
+  active: "#16A34A",
   inactive: "#AFAFAF",
 
   // Sombras
@@ -111,15 +111,15 @@ export const DARK_COLORS = {
   divider: "#222222",
 
   // Acento — verde esmeralda
-  accent: "#2EC98D",
-  accentLight: "rgba(46, 201, 141, 0.14)",
+  accent: "#16A34A",
+  accentLight: "rgba(22, 163, 74, 0.14)",
   accentText: "#000000",
-  accentGradient: ["#2EC98D", "#24A072"] as [string, string],
+  accentGradient: ["#16A34A", "#15803D"] as [string, string],
 
   // Semánticos
-  success: "#2EC98D",
-  successLight: "rgba(46, 201, 141, 0.12)",
-  successDark: "#24A072",
+  success: "#16A34A",
+  successLight: "rgba(22, 163, 74, 0.12)",
+  successDark: "#15803D",
   danger: "#FF453A",
   dangerLight: "rgba(255, 69, 58, 0.12)",
   dangerDark: "#D63030",
@@ -129,8 +129,8 @@ export const DARK_COLORS = {
   infoLight: "rgba(124, 111, 240, 0.12)",
 
   // TruckBook
-  income: "#2EC98D",
-  incomeLight: "rgba(46, 201, 141, 0.12)",
+  income: "#16A34A",
+  incomeLight: "rgba(22, 163, 74, 0.12)",
   expense: "#FF453A",
   expenseLight: "rgba(255, 69, 58, 0.12)",
   analytics: "#7C6FF0",
@@ -143,7 +143,7 @@ export const DARK_COLORS = {
 
   // Categorías
   catCombustible: "#FFD60A",
-  catPeajes: "#2EC98D",
+  catPeajes: "#16A34A",
   catComida: "#FF6B6B",
   catHospedaje: "#7C6FF0",
   catMantenimiento: "#5AC8FA",
@@ -153,13 +153,13 @@ export const DARK_COLORS = {
   catOtros: "#636E72",
 
   // Vehículos
-  vehicleEstacas: "#2EC98D",
+  vehicleEstacas: "#16A34A",
   vehicleVolqueta: "#FFD60A",
   vehicleFurgon: "#7C6FF0",
   vehicleGrua: "#FF453A",
 
   // Estados
-  active: "#2EC98D",
+  active: "#16A34A",
   inactive: "#4A4A4E",
 
   // Sombras

@@ -277,7 +277,7 @@ export default function CentroPendientes() {
               <EmptyState
                 icon="checkmark-circle-outline"
                 texto="Sin cuentas pendientes por cobrar"
-                color="#2EC98D"
+                color="#16A34A"
                 cardBg={c.cardBg}
                 textSecondary={c.textSecondary}
               />
@@ -301,7 +301,7 @@ export default function CentroPendientes() {
               <EmptyState
                 icon="checkmark-circle-outline"
                 texto="Sin gastos pendientes de pago"
-                color="#2EC98D"
+                color="#16A34A"
                 cardBg={c.cardBg}
                 textSecondary={c.textSecondary}
               />

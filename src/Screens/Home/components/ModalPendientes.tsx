@@ -270,7 +270,7 @@ export function ModalPendientes({
               const fechaLabel = item.fecha
                 ? new Date(item.fecha + "T00:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" })
                 : "";
-              const avatarBg = dias >= 15 ? "#EF4444" : dias >= 7 ? "#F59E0B" : "#2EC98D";
+              const avatarBg = dias >= 15 ? "#EF4444" : dias >= 7 ? "#F59E0B" : "#16A34A";
               const cargando = cobrando === item.id;
 
               return (
@@ -431,26 +431,26 @@ export function ModalPendientes({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: 4,
-                          backgroundColor: "#2EC98D" + "14",
+                          backgroundColor: "#16A34A" + "14",
                           borderWidth: 1,
-                          borderColor: "#2EC98D" + "30",
+                          borderColor: "#16A34A" + "30",
                           borderRadius: 10,
                           paddingVertical: 7,
                         }}>
                         {cargando ? (
                           <ActivityIndicator
                             size="small"
-                            color="#2EC98D"
+                            color="#16A34A"
                             style={{ width: 13, height: 13 }}
                           />
                         ) : (
-                          <Feather name="check" size={13} color="#2EC98D" />
+                          <Feather name="check" size={13} color="#16A34A" />
                         )}
                         <Text
                           style={{
                             fontSize: 12,
                             fontWeight: "700",
-                            color: "#2EC98D",
+                            color: "#16A34A",
                           }}>
                           Cobrado
                         </Text>

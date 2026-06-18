@@ -186,7 +186,7 @@ export const COLORES_ESTADO_COBRO: Record<EstadoCobro, string> = {
   vencido: "#EF4444",
   parcial: "#F59E0B",
   pendiente: "#FFB800",
-  pagado: "#2EC98D",
+  pagado: "#16A34A",
 };
 
 export const COLORES_ESTADO_PAGO: Record<EstadoPago, string> = {
