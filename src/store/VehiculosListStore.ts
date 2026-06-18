@@ -35,10 +35,10 @@ export const useVehiculosListStore = create<VehiculosListState>()(
       cargar: async (userId: string) => {
         set({ cargando: true });
         try {
-          // Query principal: vehículos del usuario
+          // Query principal: vehículos del usuario con tipo_camion desde vehiculos
           const { data, error } = await supabase
             .from("vehiculo_conductores")
-            .select("id, vehiculo_placa, rol, estado, tipo_camion")
+            .select("id, vehiculo_placa, rol, estado, vehiculos(tipo_camion)")
             .eq("conductor_id", userId)
             .order("created_at", { ascending: false });
 
@@ -73,7 +73,7 @@ export const useVehiculosListStore = create<VehiculosListState>()(
           const vehiculos: VehiculoItem[] = (data || []).map((rel) => ({
             id: rel.id,
             placa: rel.vehiculo_placa,
-            tipo_camion: rel.tipo_camion || "estacas",
+            tipo_camion: (rel.vehiculos as any)?.tipo_camion || "estacas",
             rol: rel.rol,
             estado: rel.estado,
             conductorNombre: conductorMap.get(rel.vehiculo_placa),
