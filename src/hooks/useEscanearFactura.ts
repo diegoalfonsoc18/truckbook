@@ -3,9 +3,8 @@ import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useVehiculoStore } from "../store/VehiculoStore";
 import { useAuth } from "../hooks/useAuth";
-import { useGastosStore } from "../store/GastosStore";
-import { useIngresosStore } from "../store/IngresosStore";
-import supabase from "../config/SupaBaseConfig";
+import { useGastosConductor } from "../hooks/UseGastosConductor";
+import { useIngresosConductor } from "../hooks/UseingresosConductor";
 import {
   analizarFactura,
   componerDescripcion,
@@ -16,8 +15,10 @@ import { extraerTextoOCR } from "../services/visionService";
 import logger from "../utils/logger";
 
 export function useEscanearFactura() {
-  const { placa: placaActual } = useVehiculoStore();
+  const { placa: placaActual, tipoCamion } = useVehiculoStore();
   const { user } = useAuth();
+  const { agregarGasto } = useGastosConductor(placaActual, user?.id);
+  const { agregarIngreso } = useIngresosConductor(placaActual, user?.id);
   const [procesando, setProcesando] = useState(false);
 
   const escanear = async (
@@ -75,14 +76,12 @@ export function useEscanearFactura() {
 
       setProcesando(true);
 
-      // Paso 1: OCR con Cloud Vision API
       const { texto, error: ocrError } = await extraerTextoOCR(asset.base64);
       if (ocrError || !texto) {
         Alert.alert("Error OCR", ocrError ?? "No se pudo leer el texto de la imagen.");
         return;
       }
 
-      // Paso 2: Clasificación con Gemini (solo texto)
       const { data, error } = await analizarFactura(texto, tipo);
       if (error || !data) {
         Alert.alert("Error de IA", error ?? "No se pudieron extraer los datos.");
@@ -117,43 +116,37 @@ export function useEscanearFactura() {
     const descripcion = componerDescripcion(data) || categoria;
 
     if (tipo === "gasto") {
-      const { error } = await supabase.from("conductor_gastos").insert([
-        {
-          placa: placaActual,
-          conductor_id: user!.id,
-          tipo_gasto: categoria,
-          descripcion,
-          monto: data.monto,
-          fecha,
-          estado: "aprobado",
-        },
-      ]);
-      if (error) {
-        Alert.alert("Error guardando", error.message);
+      const { success, error } = await agregarGasto({
+        placa: placaActual!,
+        conductor_id: user!.id,
+        tipo_gasto: categoria,
+        descripcion,
+        monto: data.monto,
+        fecha,
+        estado: "aprobado",
+      });
+      if (!success) {
+        Alert.alert("Error guardando", error ?? "No se pudo guardar el gasto.");
         return;
       }
-      useGastosStore.getState().cargarGastosDelDB(placaActual!);
       Alert.alert(
         "✓ Gasto registrado",
         `${categoria} · $${data.monto.toLocaleString("es-CO")}\n${descripcion}`,
       );
     } else {
-      const { error } = await supabase.from("conductor_ingresos").insert([
-        {
-          placa: placaActual,
-          conductor_id: user!.id,
-          tipo_ingreso: categoria,
-          descripcion,
-          monto: data.monto,
-          fecha,
-          estado: "pagado",
-        },
-      ]);
-      if (error) {
-        Alert.alert("Error guardando", error.message);
+      const { success, error } = await agregarIngreso({
+        placa: placaActual!,
+        conductor_id: user!.id,
+        tipo_ingreso: categoria,
+        descripcion,
+        monto: data.monto,
+        fecha,
+        estado: "pagado",
+      });
+      if (!success) {
+        Alert.alert("Error guardando", error ?? "No se pudo guardar el ingreso.");
         return;
       }
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual!);
       Alert.alert(
         "✓ Ingreso registrado",
         `${categoria} · $${data.monto.toLocaleString("es-CO")}\n${descripcion}`,

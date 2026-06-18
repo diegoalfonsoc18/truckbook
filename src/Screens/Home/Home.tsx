@@ -30,7 +30,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { useTheme, TYPOGRAPHY, getShadow } from "../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../components/ItemIcon";
-import { MotorIcon, LicenciaIcon, SoatIcon } from "../../assets/icons/icons";
+
 import { HOME_COLORS } from "./HomeConstants";
 import { ICON_MAP, TIPOS_CAMION } from "./vehicleConstants";
 import WidgetResumen from "./widgets/WidgetResumen";
@@ -228,25 +228,7 @@ function ListRow({
       accessibilityHint={item.subtitle || undefined}>
       {/* Icono — sin fondo */}
       <View style={s.listRowIcon}>
-        {item.id === "tecnicomecanica" ? (
-          <MotorIcon
-            width={Platform.OS === "android" ? 40 : 54}
-            height={Platform.OS === "android" ? 40 : 54}
-            color={accent}
-          />
-        ) : item.id === "licencia" ? (
-          <LicenciaIcon
-            width={Platform.OS === "android" ? 40 : 54}
-            height={Platform.OS === "android" ? 40 : 54}
-            color={accent}
-          />
-        ) : item.id === "soat" ? (
-          <SoatIcon
-            width={Platform.OS === "android" ? 40 : 54}
-            height={Platform.OS === "android" ? 40 : 54}
-            color={accent}
-          />
-        ) : item.iconName ? (
+        {item.iconName ? (
           <ItemIcon
             name={item.iconName}
             size={Platform.OS === "android" ? 40 : 54}

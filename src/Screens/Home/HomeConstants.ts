@@ -66,10 +66,7 @@ export const HOME_COLORS = {
   // Hero Cards — icono (tamaño por defecto y por item)
   heroIconSize: 64, // fallback si el item no tiene tamaño definido
   heroIconSizes: {
-    tecnicomecanica: 90, // hero card 1
-    soat: 100, // hero card 2
     mantenimiento: 72,
-    licencia: 72,
   },
 
   // Tipos de camión — color de acento por tipo

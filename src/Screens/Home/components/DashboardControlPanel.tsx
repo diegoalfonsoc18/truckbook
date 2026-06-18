@@ -25,10 +25,6 @@ const ICON_MAP_WEBP: Record<string, any> = {
   mantenimiento: require("../../../assets/icons/tool.webp"),
   viajes:        require("../../../assets/icons/trip.webp"),
   comida:        require("../../../assets/icons/food.webp"),
-  // legacy
-  tecnicomecanica: require("../../../assets/icons/motor.webp"),
-  soat:            require("../../../assets/icons/shield.webp"),
-  licencia:        require("../../../assets/icons/licencia.webp"),
 };
 
 // ─── DashboardControlPanel ────────────────────────────────────────────────────

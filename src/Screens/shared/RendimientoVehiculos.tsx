@@ -8,6 +8,9 @@ import {
   RefreshControl,
   StyleSheet,
 } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
+import { useGastosStore } from "../../store/GastosStore";
+import { useIngresosStore } from "../../store/IngresosStore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
@@ -41,6 +44,8 @@ export default function RendimientoVehiculos() {
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const gastosCache = useGastosStore((s) => s.gastos);
+  const ingresosCache = useIngresosStore((s) => s.ingresos);
 
   const [vehiculos, setVehiculos] = useState<VehiculoRendimiento[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,35 +73,56 @@ export default function RendimientoVehiculos() {
   const cargarDatos = useCallback(async () => {
     if (!user?.id) return;
 
-    try {
-      const { data: vehiculosData } =
-        await cargarVehiculosPropietarioConConductores(user.id);
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected && netState.isInternetReachable;
 
-      if (!vehiculosData || vehiculosData.length === 0) {
+    try {
+      const { data: vehiculosData } = isOnline
+        ? await cargarVehiculosPropietarioConConductores(user.id)
+        : { data: null };
+
+      const { inicio, fin } = getRangoFechas();
+
+      let gastos: { placa: string; monto: number; fecha?: string }[];
+      let ingresos: { placa: string; monto: number; fecha?: string }[];
+
+      if (isOnline && vehiculosData && vehiculosData.length > 0) {
+        const placas = vehiculosData.map((v: any) => v.placa);
+        const [gastosRes, ingresosRes] = await Promise.all([
+          supabase
+            .from("conductor_gastos")
+            .select("placa, monto")
+            .in("placa", placas)
+            .gte("fecha", inicio)
+            .lte("fecha", fin),
+          supabase
+            .from("conductor_ingresos")
+            .select("placa, monto")
+            .in("placa", placas)
+            .gte("fecha", inicio)
+            .lte("fecha", fin),
+        ]);
+        gastos = gastosRes.data || [];
+        ingresos = ingresosRes.data || [];
+      } else {
+        // Offline: usar datos del store filtrados por periodo
+        gastos = gastosCache.filter((g) => g.fecha >= inicio && g.fecha <= fin);
+        ingresos = ingresosCache.filter((i) => i.fecha >= inicio && i.fecha <= fin);
+      }
+
+      // Derivar lista de placas únicas cuando offline
+      const placasSet = new Set([
+        ...gastos.map((g) => g.placa),
+        ...ingresos.map((i) => i.placa),
+      ]);
+      const vehiculosEfectivos = isOnline && vehiculosData
+        ? vehiculosData
+        : Array.from(placasSet).map((p) => ({ placa: p, tipo: "Camión" }));
+
+      if (vehiculosEfectivos.length === 0) {
         setVehiculos([]);
         return;
       }
-
-      const placas = vehiculosData.map((v: any) => v.placa);
-      const { inicio, fin } = getRangoFechas();
-
-      const [gastosRes, ingresosRes] = await Promise.all([
-        supabase
-          .from("conductor_gastos")
-          .select("placa, monto")
-          .in("placa", placas)
-          .gte("fecha", inicio)
-          .lte("fecha", fin),
-        supabase
-          .from("conductor_ingresos")
-          .select("placa, monto")
-          .in("placa", placas)
-          .gte("fecha", inicio)
-          .lte("fecha", fin),
-      ]);
-
-      const gastos = gastosRes.data || [];
-      const ingresos = ingresosRes.data || [];
 
       // Agrupar por placa
       const gastosPorPlaca: Record<string, number> = {};
@@ -111,7 +137,7 @@ export default function RendimientoVehiculos() {
         viajesPorPlaca[i.placa] = (viajesPorPlaca[i.placa] || 0) + 1;
       });
 
-      const resultado: VehiculoRendimiento[] = vehiculosData.map((v: any) => {
+      const resultado: VehiculoRendimiento[] = vehiculosEfectivos.map((v: any) => {
         const ing = ingresosPorPlaca[v.placa] || 0;
         const gas = gastosPorPlaca[v.placa] || 0;
         const bal = ing - gas;

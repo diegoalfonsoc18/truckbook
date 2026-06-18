@@ -23,6 +23,7 @@ import { useTheme, getShadow } from "../../constants/Themecontext";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
 import { solicitarAccesoVehiculo } from "../../services/vehiculoAutorizacionService";
 import supabase from "../../config/SupaBaseConfig";
+import NetInfo from "@react-native-community/netinfo";
 
 const DELETE_WIDTH = 80;
 
@@ -75,6 +76,14 @@ export default function SolicitarVehiculo() {
 
   const cargarSolicitudes = useCallback(async (silencioso = false) => {
     if (!user?.id) return;
+
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected && netState.isInternetReachable;
+    if (!isOnline) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
 
     // Cargar mis relaciones como conductor (excluyendo propietario)
     const { data: relaciones, error } = await supabase

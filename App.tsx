@@ -28,6 +28,7 @@ import supabase from "./src/config/SupaBaseConfig";
 import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
 import logger from "./src/utils/logger";
+import NetInfo from "@react-native-community/netinfo";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -156,9 +157,16 @@ function AppContent() {
             break;
 
           case "SIGNED_OUT":
-            // Único caso donde se limpia la sesión
-            useVehiculoStore.getState().clearVehiculo();
-            updateSession(null);
+            // Solo cerrar sesión si hay conexión — offline puede ser un
+            // fallo de refresh de token, no un logout real del usuario
+            NetInfo.fetch().then((state) => {
+              if (state.isConnected) {
+                useVehiculoStore.getState().clearVehiculo();
+                updateSession(null);
+              } else {
+                logger.log("⚠️ SIGNED_OUT ignorado — sin conexión");
+              }
+            });
             break;
 
           case "INITIAL_SESSION":
