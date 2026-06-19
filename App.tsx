@@ -9,6 +9,7 @@ import {
   AppState,
   type AppStateStatus,
 } from "react-native";
+import * as Linking from "expo-linking";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   NavigationContainer,
@@ -67,6 +68,7 @@ function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
 
   // Mantener ref sincronizado para acceder en callbacks sin re-renders
@@ -111,6 +113,27 @@ function AppContent() {
     return () => sub.remove();
   }, [updateSession]);
 
+  // ─── Deep link handler (password recovery) ────────────────────────────
+  useEffect(() => {
+    const handleUrl = async (url: string) => {
+      if (!url.includes("auth/callback")) return;
+      try {
+        const { error } = await supabase.auth.exchangeCodeForSession(url);
+        if (error) logger.error("❌ exchangeCodeForSession:", error.message);
+        // onAuthStateChange disparará PASSWORD_RECOVERY automáticamente
+      } catch (e: any) {
+        logger.error("❌ deep link handler:", e?.message);
+      }
+    };
+
+    // App abierta desde cold start con el link
+    Linking.getInitialURL().then((url) => { if (url) handleUrl(url); });
+
+    // App ya abierta, llega el link
+    const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
+    return () => sub.remove();
+  }, []);
+
   // ─── Inicialización de sesión + listener ───────────────────────────────
   useEffect(() => {
     let mounted = true;
@@ -146,12 +169,19 @@ function AppContent() {
         logger.log(`🔑 ${_event} | session: ${!!newSession}`);
 
         switch (_event) {
+          case "PASSWORD_RECOVERY":
+            if (newSession?.user) {
+              updateSession(newSession);
+              setRecoveryMode(true);
+            }
+            break;
+
           case "SIGNED_IN":
           case "TOKEN_REFRESHED":
           case "USER_UPDATED":
             if (newSession?.user) {
               updateSession(newSession);
-              syncBackground(newSession.user);
+              if (!recoveryMode) syncBackground(newSession.user);
             }
             // Si el evento llega sin sesión, ignorar — transitorio
             break;
@@ -163,6 +193,7 @@ function AppContent() {
               if (state.isConnected) {
                 useVehiculoStore.getState().clearVehiculo();
                 updateSession(null);
+                setRecoveryMode(false);
               } else {
                 logger.log("⚠️ SIGNED_OUT ignorado — sin conexión");
               }
@@ -217,7 +248,7 @@ function AppContent() {
         translucent={Platform.OS === "android"}
         backgroundColor="transparent"
       />
-      {session ? (
+      {session && !recoveryMode ? (
         <DataProvider>
           <NavigationContainer theme={NavigationTheme}>
             <AppStack />
@@ -225,7 +256,7 @@ function AppContent() {
         </DataProvider>
       ) : (
         <NavigationContainer theme={NavigationTheme}>
-          <AuthStack />
+          <AuthStack initialRoute={recoveryMode ? "ResetPassword" : undefined} />
         </NavigationContainer>
       )}
     </View>
