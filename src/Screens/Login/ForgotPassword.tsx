@@ -122,7 +122,7 @@ export default function ForgotPassword({ navigation }: Props) {
                       placeholder="tu@correo.com"
                       placeholderTextColor={colors.textMuted}
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(t) => setEmail(t.replace(/[<>{}[\]\\`'"%;()&+]/g, "").slice(0, 254))}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"
