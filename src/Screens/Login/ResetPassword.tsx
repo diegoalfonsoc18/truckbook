@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import supabase from "../../config/SupaBaseConfig";
@@ -86,9 +87,11 @@ export default function ResetPassword({ navigation }: Props) {
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.content}>
               <View style={styles.titleSection}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.accent + "20" }]}>
-                  <Text style={styles.icon}>🔑</Text>
-                </View>
+                <Image
+                  source={require("../../../assets/TruckBook/grilleBlack.png")}
+                  style={styles.iconImage}
+                  resizeMode="contain"
+                />
                 <Text style={[styles.title, ds.text]}>Nueva contraseña</Text>
                 <Text style={[styles.subtitle, ds.textSecondary]}>
                   Ingresa tu nueva contraseña para continuar
@@ -165,6 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   icon: { fontSize: 36 },
+  iconImage: { width: 120, height: 120 },
   title: { fontSize: 26, fontWeight: "700", marginBottom: 8, textAlign: "center" },
   subtitle: { fontSize: 14, textAlign: "center", lineHeight: 20, paddingHorizontal: 20 },
   formCard: { borderRadius: 20, padding: 20, borderWidth: 1 },
