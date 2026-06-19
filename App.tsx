@@ -134,10 +134,19 @@ function AppContent() {
   useEffect(() => {
     const handleUrl = async (url: string) => {
       if (!url.includes("auth/callback")) return;
+      logger.log("🔗 Deep link recibido:", url);
       try {
-        const { error } = await supabase.auth.exchangeCodeForSession(url);
-        if (error) logger.error("❌ exchangeCodeForSession:", error.message);
-        // onAuthStateChange disparará PASSWORD_RECOVERY automáticamente
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+        if (error) {
+          logger.error("❌ exchangeCodeForSession:", error.message);
+          return;
+        }
+        logger.log("✅ exchangeCodeForSession OK, activando recoveryMode");
+        // Con flowType:"pkce", el exchange dispara SIGNED_IN (no PASSWORD_RECOVERY).
+        // Como el único deep link a auth/callback es el de recuperación de
+        // contraseña, activamos recoveryMode aquí directamente.
+        if (data.session) updateSession(data.session);
+        setRecoveryMode(true);
       } catch (e: any) {
         logger.error("❌ deep link handler:", e?.message);
       }
@@ -149,7 +158,7 @@ function AppContent() {
     // App ya abierta, llega el link
     const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
     return () => sub.remove();
-  }, []);
+  }, [updateSession]);
 
   // ─── Inicialización de sesión + listener ───────────────────────────────
   useEffect(() => {
