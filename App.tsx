@@ -136,17 +136,43 @@ function AppContent() {
       if (!url.includes("auth/callback")) return;
       logger.log("🔗 Deep link recibido:", url);
       try {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-        if (error) {
-          logger.error("❌ exchangeCodeForSession:", error.message);
+        // Flujo PKCE: URL tiene ?code=xxx
+        if (url.includes("code=")) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+          if (error) { logger.error("❌ exchangeCodeForSession:", error.message); return; }
+          logger.log("✅ PKCE exchange OK");
+          if (data.session) updateSession(data.session);
+          setRecoveryMode(true);
           return;
         }
-        logger.log("✅ exchangeCodeForSession OK, activando recoveryMode");
-        // Con flowType:"pkce", el exchange dispara SIGNED_IN (no PASSWORD_RECOVERY).
-        // Como el único deep link a auth/callback es el de recuperación de
-        // contraseña, activamos recoveryMode aquí directamente.
-        if (data.session) updateSession(data.session);
-        setRecoveryMode(true);
+
+        // Flujo implícito: resetPasswordForEmail redirige con tokens en el hash
+        // Ejemplo: truckbook://auth/callback#access_token=xxx&refresh_token=yyy&type=recovery
+        const hash = url.includes("#") ? url.split("#")[1] : url.split("?")[1] ?? "";
+        const params: Record<string, string> = {};
+        hash.split("&").forEach((pair) => {
+          const [k, v] = pair.split("=");
+          if (k) params[decodeURIComponent(k)] = decodeURIComponent(v ?? "");
+        });
+
+        logger.log("🔗 Params:", JSON.stringify(params));
+
+        const accessToken  = params["access_token"];
+        const refreshToken = params["refresh_token"];
+        const type         = params["type"];
+
+        if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token:  accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) { logger.error("❌ setSession:", error.message); return; }
+          logger.log("✅ setSession OK, type:", type);
+          if (data.session) updateSession(data.session);
+          if (type === "recovery") setRecoveryMode(true);
+        } else {
+          logger.error("❌ Deep link sin tokens ni code:", url);
+        }
       } catch (e: any) {
         logger.error("❌ deep link handler:", e?.message);
       }
