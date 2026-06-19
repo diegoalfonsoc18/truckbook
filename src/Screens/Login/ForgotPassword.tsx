@@ -18,6 +18,7 @@ import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
+import { sanitizeEmail } from "../../utils/sanitize";
 import logger from "../../utils/logger";
 
 type AuthStackParamList = {
@@ -49,7 +50,7 @@ export default function ForgotPassword({ navigation }: Props) {
         Alert.alert("Error", error.message);
       } else {
         Alert.alert(
-          "✅ Éxito",
+          "Éxito",
           "Hemos enviado un enlace para restablecer tu contraseña.",
         );
         navigation.goBack();
@@ -122,7 +123,7 @@ export default function ForgotPassword({ navigation }: Props) {
                       placeholder="tu@correo.com"
                       placeholderTextColor={colors.textMuted}
                       value={email}
-                      onChangeText={(t) => setEmail(t.replace(/[<>{}[\]\\`'"%;()&+]/g, "").slice(0, 254))}
+                      onChangeText={(t) => setEmail(sanitizeEmail(t))}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"

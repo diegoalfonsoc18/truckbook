@@ -17,6 +17,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import { Ionicons } from "@expo/vector-icons";
+import { sanitizePassword } from "../../utils/sanitize";
 import logger from "../../utils/logger";
 
 type AuthStackParamList = {
@@ -53,7 +55,7 @@ export default function ResetPassword({ navigation }: Props) {
         logger.error("ResetPassword error:", error.message);
         Alert.alert("Error", error.message);
       } else {
-        Alert.alert("✅ Éxito", "Tu contraseña ha sido actualizada.", [
+        Alert.alert("Éxito", "Tu contraseña ha sido actualizada.", [
           {
             text: "Iniciar sesión",
             onPress: async () => {
@@ -102,13 +104,18 @@ export default function ResetPassword({ navigation }: Props) {
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>Nueva contraseña</Text>
                   <View style={[styles.inputWrapper, ds.inputBg, { borderColor: colors.border }]}>
-                    <Text style={styles.inputIcon}>🔒</Text>
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={colors.textMuted}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={[styles.input, ds.text]}
                       placeholder="Mínimo 6 caracteres"
                       placeholderTextColor={colors.textMuted}
                       value={password}
-                      onChangeText={(t) => setPassword(t.slice(0, 72))}
+                      onChangeText={(t) => setPassword(sanitizePassword(t))}
                       secureTextEntry
                       autoCapitalize="none"
                       keyboardAppearance="light"
@@ -119,13 +126,18 @@ export default function ResetPassword({ navigation }: Props) {
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>Confirmar contraseña</Text>
                   <View style={[styles.inputWrapper, ds.inputBg, { borderColor: colors.border }]}>
-                    <Text style={styles.inputIcon}>🔒</Text>
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={colors.textMuted}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={[styles.input, ds.text]}
                       placeholder="Repite tu contraseña"
                       placeholderTextColor={colors.textMuted}
                       value={confirm}
-                      onChangeText={(t) => setConfirm(t.slice(0, 72))}
+                      onChangeText={(t) => setConfirm(sanitizePassword(t))}
                       secureTextEntry
                       autoCapitalize="none"
                       keyboardAppearance="light"

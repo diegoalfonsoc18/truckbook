@@ -22,6 +22,7 @@ import * as Linking from "expo-linking";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useTheme, getShadow, getInputStyles } from "../../constants/Themecontext";
+import { sanitizeText, sanitizeEmail, sanitizePassword } from "../../utils/sanitize";
 
 let GoogleSignin: any = null;
 let isSuccessResponse: any = null;
@@ -314,7 +315,7 @@ export default function Register({ navigation }: Props) {
                   <View style={s.nameCol}>
                     <Field
                       label="Nombre" placeholder="Juan"
-                      value={nombre} onChangeText={(t) => { setNombre(t); if (errors.nombre) setErrors({ ...errors, nombre: undefined }); }}
+                      value={nombre} onChangeText={(t) => { setNombre(sanitizeText(t)); if (errors.nombre) setErrors({ ...errors, nombre: undefined }); }}
                       error={errors.nombre} autoCapitalize="words" editable={!loading}
                       icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
                     />
@@ -322,7 +323,7 @@ export default function Register({ navigation }: Props) {
                   <View style={s.nameCol}>
                     <Field
                       label="Apellido" placeholder="Rodríguez"
-                      value={apellido} onChangeText={(t) => { setApellido(t); if (errors.apellido) setErrors({ ...errors, apellido: undefined }); }}
+                      value={apellido} onChangeText={(t) => { setApellido(sanitizeText(t)); if (errors.apellido) setErrors({ ...errors, apellido: undefined }); }}
                       error={errors.apellido} autoCapitalize="words" editable={!loading}
                       icon="person-outline" c={c} shadow={shadow} inputSty={inputSty}
                     />
@@ -332,7 +333,7 @@ export default function Register({ navigation }: Props) {
 
 <Field
                   label="Correo electrónico" placeholder="tu@correo.com"
-                  value={email} onChangeText={(t) => { setEmail(t); if (errors.email) setErrors({ ...errors, email: undefined }); }}
+                  value={email} onChangeText={(t) => { setEmail(sanitizeEmail(t)); if (errors.email) setErrors({ ...errors, email: undefined }); }}
                   error={errors.email} autoCapitalize="none" keyboardType="email-address" editable={!loading}
                   icon="mail-outline" c={c} shadow={shadow} inputSty={inputSty}
                 />
@@ -350,9 +351,10 @@ export default function Register({ navigation }: Props) {
                       secureTextEntry={!showPwd}
                       value={password}
                       onChangeText={(t) => {
-                        setPassword(t);
+                        const safe = sanitizePassword(t);
+                        setPassword(safe);
                         if (errors.password) setErrors({ ...errors, password: undefined });
-                        if (t.length > 0) setShowStrength(true);
+                        if (safe.length > 0) setShowStrength(true);
                       }}
                       editable={!loading}
                     />
@@ -367,9 +369,14 @@ export default function Register({ navigation }: Props) {
                       <View style={[s.strengthBg, { backgroundColor: c.border }]}>
                         <View style={[s.strengthFill, { width: strengthPct as any, backgroundColor: isStrong ? SUCCESS : "#FF9500" }]} />
                       </View>
-                      <Text style={[s.strengthLabel, { color: isStrong ? SUCCESS : "#FF9500" }]}>
-                        {isStrong ? "✓ Contraseña fuerte" : "Contraseña débil"}
-                      </Text>
+                      <View style={s.strengthLabelRow}>
+                        {isStrong && (
+                          <Ionicons name="checkmark-circle" size={13} color={SUCCESS} />
+                        )}
+                        <Text style={[s.strengthLabel, { color: isStrong ? SUCCESS : "#FF9500" }]}>
+                          {isStrong ? "Contraseña fuerte" : "Contraseña débil"}
+                        </Text>
+                      </View>
                       <View style={s.reqList}>
                         {[
                           { met: requirements.hasMinLength,   label: "8+ caracteres" },
@@ -378,9 +385,16 @@ export default function Register({ navigation }: Props) {
                           { met: requirements.hasNumber,      label: "Número (0-9)" },
                           { met: requirements.hasSpecialChar, label: "Especial (!@#$)" },
                         ].map(({ met, label }) => (
-                          <Text key={label} style={[s.reqItem, { color: met ? SUCCESS : c.textMuted }]}>
-                            {met ? "✓" : "○"} {label}
-                          </Text>
+                          <View key={label} style={s.reqRow}>
+                            <Ionicons
+                              name={met ? "checkmark-circle" : "ellipse-outline"}
+                              size={13}
+                              color={met ? SUCCESS : c.textMuted}
+                            />
+                            <Text style={[s.reqItem, { color: met ? SUCCESS : c.textMuted }]}>
+                              {label}
+                            </Text>
+                          </View>
                         ))}
                       </View>
                     </View>
@@ -399,7 +413,7 @@ export default function Register({ navigation }: Props) {
                       placeholderTextColor={c.textMuted}
                       secureTextEntry={!showConfirmPwd}
                       value={confirmPassword}
-                      onChangeText={(t) => { setConfirmPassword(t); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined }); }}
+                      onChangeText={(t) => { setConfirmPassword(sanitizePassword(t)); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined }); }}
                       editable={!loading}
                     />
                     <TouchableOpacity onPress={() => setShowConfirmPwd(!showConfirmPwd)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -547,8 +561,10 @@ const s = StyleSheet.create({
   strengthBox:   { marginTop: 10 },
   strengthBg:    { height: 4, borderRadius: 2, overflow: "hidden" },
   strengthFill:  { height: "100%", borderRadius: 2 },
-  strengthLabel: { fontSize: 11, fontWeight: "600", marginTop: 5 },
+  strengthLabelRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 5 },
+  strengthLabel: { fontSize: 11, fontWeight: "600" },
   reqList:       { marginTop: 6, gap: 2 },
+  reqRow:        { flexDirection: "row", alignItems: "center", gap: 5 },
   reqItem:       { fontSize: 11 },
 
   // PRIVACY
