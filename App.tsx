@@ -74,6 +74,7 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
+  const pendingRecovery = useRef(false);
 
   // Mantener ref sincronizado para acceder en callbacks sin re-renders
   const updateSession = useCallback((s: Session | null) => {
@@ -97,9 +98,12 @@ function AppContent() {
   // ─── Navegar a ResetPassword cuando recovery mode se activa ──────────
   useEffect(() => {
     if (!recoveryMode) return;
-    // Si el navigator ya está montado, navegar imperativamente
     if (authNavigationRef.isReady()) {
+      // Navigator ya montado (usuario no tenía sesión activa)
       authNavigationRef.navigate("ResetPassword");
+    } else {
+      // Navigator recién montando (venía de AppStack) — onReady lo manejará
+      pendingRecovery.current = true;
     }
   }, [recoveryMode]);
 
@@ -268,7 +272,15 @@ function AppContent() {
           </NavigationContainer>
         </DataProvider>
       ) : (
-        <NavigationContainer ref={authNavigationRef} theme={NavigationTheme}>
+        <NavigationContainer
+          ref={authNavigationRef}
+          theme={NavigationTheme}
+          onReady={() => {
+            if (pendingRecovery.current) {
+              pendingRecovery.current = false;
+              authNavigationRef.navigate("ResetPassword");
+            }
+          }}>
           <AuthStack />
         </NavigationContainer>
       )}
