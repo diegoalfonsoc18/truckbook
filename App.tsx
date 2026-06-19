@@ -15,7 +15,9 @@ import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
+  createNavigationContainerRef,
 } from "@react-navigation/native";
+import type { AuthStackParamList } from "./src/navigation/AuthStack";
 import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
 import { setupCalendarLocale } from "./src/utils/calendarLocale";
@@ -64,6 +66,8 @@ const syncBackground = (user: any) => {
 
 // ─── AppContent ──────────────────────────────────────────────────────────────
 
+const authNavigationRef = createNavigationContainerRef<AuthStackParamList>();
+
 function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
@@ -89,6 +93,15 @@ function AppContent() {
       primary: colors.accent,
     },
   };
+
+  // ─── Navegar a ResetPassword cuando recovery mode se activa ──────────
+  useEffect(() => {
+    if (!recoveryMode) return;
+    // Si el navigator ya está montado, navegar imperativamente
+    if (authNavigationRef.isReady()) {
+      authNavigationRef.navigate("ResetPassword");
+    }
+  }, [recoveryMode]);
 
   // ─── Refresh al volver de background ───────────────────────────────────
   useEffect(() => {
@@ -255,8 +268,8 @@ function AppContent() {
           </NavigationContainer>
         </DataProvider>
       ) : (
-        <NavigationContainer theme={NavigationTheme}>
-          <AuthStack initialRoute={recoveryMode ? "ResetPassword" : undefined} />
+        <NavigationContainer ref={authNavigationRef} theme={NavigationTheme}>
+          <AuthStack />
         </NavigationContainer>
       )}
     </View>

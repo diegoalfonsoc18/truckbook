@@ -27,6 +27,7 @@ import {
   getShadow,
   getInputStyles,
 } from "../../constants/Themecontext";
+import { sanitizeEmail, sanitizePassword } from "../../utils/sanitize";
 
 // Google Sign-In nativo — solo disponible en dev client / producción
 let GoogleSignin: any = null;
@@ -297,7 +298,7 @@ export default function LoginScreen({ navigation }: Props) {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoComplete="email"
-                  onChangeText={setEmail}
+                  onChangeText={(t) => setEmail(sanitizeEmail(t))}
                   value={email}
                   editable={!loading}
                   returnKeyType="next"
@@ -327,7 +328,7 @@ export default function LoginScreen({ navigation }: Props) {
                   secureTextEntry={!showPwd}
                   autoCapitalize="none"
                   autoComplete="password"
-                  onChangeText={setPassword}
+                  onChangeText={(t) => setPassword(sanitizePassword(t))}
                   value={password}
                   editable={!loading}
                   returnKeyType="done"

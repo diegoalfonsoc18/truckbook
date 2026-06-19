@@ -30,6 +30,7 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
+import { sanitizeText, sanitizePassword, sanitizePhone } from "../../utils/sanitize";
 
 const H_PAD = 20;
 
@@ -502,7 +503,7 @@ export default function Cuenta() {
   const handleEliminarCuenta = () => {
     Alert.alert(
       "⚠️ Eliminar cuenta",
-      "Esta acción eliminará permanentemente:\n\n• Tu cuenta de usuario\n• Todos tus gastos e ingresos\n• Tu relación con vehículos\n\nEsta acción NO se puede deshacer.",
+      "Se anonimizarán de forma irreversible tu nombre, correo y datos personales. El historial de gastos e ingresos del vehículo se conserva para no afectar a otros conductores.\n\nEsta acción NO se puede deshacer.",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -511,7 +512,7 @@ export default function Cuenta() {
           onPress: () => {
             Alert.alert(
               "¿Estás completamente seguro?",
-              "Se borrarán todos tus datos de forma permanente. No podrás recuperarlos.",
+              "Tus datos personales serán eliminados de forma permanente e irreversible.",
               [
                 { text: "No, mantener mi cuenta", style: "cancel" },
                 {
@@ -521,12 +522,23 @@ export default function Cuenta() {
                     try {
                       const userId = user?.id;
                       if (!userId) throw new Error("Sin sesión");
-                      await Promise.all([
-                        supabase.from("conductor_gastos").delete().eq("conductor_id", userId),
-                        supabase.from("conductor_ingresos").delete().eq("conductor_id", userId),
-                        supabase.from("vehiculo_conductores").delete().eq("user_id", userId),
-                        supabase.from("usuarios").delete().eq("user_id", userId),
-                      ]);
+
+                      // Anonimizar datos personales de forma irreversible.
+                      // No se borran filas para no romper FKs en gastos/ingresos/vehículos.
+                      const { error: anonError } = await supabase
+                        .from("usuarios")
+                        .update({
+                          nombre: "Usuario eliminado",
+                          email: `deleted_${userId}@deleted.truckbook`,
+                          telefono: null,
+                          push_token: null,
+                          deleted: true,
+                          deleted_at: new Date().toISOString(),
+                        })
+                        .eq("user_id", userId);
+
+                      if (anonError) throw anonError;
+
                       await supabase.auth.signOut();
                     } catch (e: any) {
                       logger.error("❌ Error al eliminar cuenta:", e?.message ?? e);
@@ -923,7 +935,7 @@ export default function Cuenta() {
                 placeholder="Tu nombre"
                 placeholderTextColor={c.textMuted}
                 value={nombre}
-                onChangeText={setNombre}
+                onChangeText={(t) => setNombre(sanitizeText(t))}
                 autoCapitalize="words"
               />
             </View>
@@ -942,7 +954,7 @@ export default function Cuenta() {
                 placeholder="Tu apellido"
                 placeholderTextColor={c.textMuted}
                 value={apellido}
-                onChangeText={setApellido}
+                onChangeText={(t) => setApellido(sanitizeText(t))}
                 autoCapitalize="words"
               />
             </View>
@@ -961,7 +973,7 @@ export default function Cuenta() {
                 placeholder="Número de teléfono"
                 placeholderTextColor={c.textMuted}
                 value={telefono}
-                onChangeText={setTelefono}
+                onChangeText={(t) => setTelefono(sanitizePhone(t))}
                 keyboardType="phone-pad"
               />
             </View>
@@ -1055,7 +1067,7 @@ export default function Cuenta() {
                 placeholderTextColor={c.textMuted}
                 secureTextEntry={!showCurrent}
                 value={currentPassword}
-                onChangeText={setCurrentPassword}
+                onChangeText={(t) => setCurrentPassword(sanitizePassword(t))}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -1088,7 +1100,7 @@ export default function Cuenta() {
                 placeholderTextColor={c.textMuted}
                 secureTextEntry={!showNew}
                 value={newPassword}
-                onChangeText={setNewPassword}
+                onChangeText={(t) => setNewPassword(sanitizePassword(t))}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -1118,7 +1130,7 @@ export default function Cuenta() {
                 placeholderTextColor={c.textMuted}
                 secureTextEntry={!showConfirm}
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={(t) => setConfirmPassword(sanitizePassword(t))}
                 autoCapitalize="none"
                 autoCorrect={false}
               />

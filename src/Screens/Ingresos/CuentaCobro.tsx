@@ -23,6 +23,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useTheme } from "../../constants/Themecontext";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
+import { sanitizeText, sanitizePhone } from "../../utils/sanitize";
 
 const H_PAD = 20;
 
@@ -492,7 +493,7 @@ export default function CuentaCobro() {
                   placeholder="Nombre de quien paga"
                   placeholderTextColor={c.textMuted}
                   value={cliente.nombre}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, nombre: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, nombre: sanitizeText(v) }))}
                 />
               </View>
 
@@ -505,7 +506,7 @@ export default function CuentaCobro() {
                   placeholder="Empresa (opcional)"
                   placeholderTextColor={c.textMuted}
                   value={cliente.empresa}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, empresa: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, empresa: sanitizeText(v) }))}
                 />
               </View>
 
@@ -518,7 +519,7 @@ export default function CuentaCobro() {
                   placeholder="NIT o documento"
                   placeholderTextColor={c.textMuted}
                   value={cliente.nit}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, nit: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, nit: sanitizeText(v, 30) }))}
                   keyboardType="numbers-and-punctuation"
                 />
               </View>
@@ -532,7 +533,7 @@ export default function CuentaCobro() {
                   placeholder="Teléfono"
                   placeholderTextColor={c.textMuted}
                   value={cliente.telefono}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, telefono: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, telefono: sanitizePhone(v) }))}
                   keyboardType="phone-pad"
                 />
               </View>
@@ -546,7 +547,7 @@ export default function CuentaCobro() {
                   placeholder="Dirección (opcional)"
                   placeholderTextColor={c.textMuted}
                   value={cliente.direccion}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, direccion: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, direccion: sanitizeText(v, 200) }))}
                 />
               </View>
 
@@ -559,7 +560,7 @@ export default function CuentaCobro() {
                   placeholder="Ciudad (opcional)"
                   placeholderTextColor={c.textMuted}
                   value={cliente.ciudad}
-                  onChangeText={(v) => setCliente((p) => ({ ...p, ciudad: v }))}
+                  onChangeText={(v) => setCliente((p) => ({ ...p, ciudad: sanitizeText(v) }))}
                 />
               </View>
             </View>
@@ -574,7 +575,7 @@ export default function CuentaCobro() {
                   placeholder="Mi NIT o cédula"
                   placeholderTextColor={c.textMuted}
                   value={nitConductor}
-                  onChangeText={setNitConductor}
+                  onChangeText={(t) => setNitConductor(sanitizeText(t, 30))}
                   keyboardType="numbers-and-punctuation"
                 />
               </View>
@@ -586,7 +587,7 @@ export default function CuentaCobro() {
                   placeholder="Mi ciudad"
                   placeholderTextColor={c.textMuted}
                   value={ciudadConductor}
-                  onChangeText={setCiudadConductor}
+                  onChangeText={(t) => setCiudadConductor(sanitizeText(t))}
                 />
               </View>
             </View>
@@ -625,7 +626,7 @@ export default function CuentaCobro() {
                       placeholder="Descripción (ej. Flete Bogotá–Medellín)"
                       placeholderTextColor={c.textMuted}
                       value={item.descripcion}
-                      onChangeText={(v) => actualizarServicio(item.id, "descripcion", v)}
+                      onChangeText={(v) => actualizarServicio(item.id, "descripcion", sanitizeText(v, 200))}
                     />
                   </View>
 
@@ -685,7 +686,7 @@ export default function CuentaCobro() {
                   placeholder="Entidad bancaria (opcional)"
                   placeholderTextColor={c.textMuted}
                   value={banco}
-                  onChangeText={setBanco}
+                  onChangeText={(t) => setBanco(sanitizeText(t))}
                 />
               </View>
               <View style={[s.divider, { backgroundColor: c.divider }]} />
@@ -696,7 +697,7 @@ export default function CuentaCobro() {
                   placeholder="Número de cuenta (opcional)"
                   placeholderTextColor={c.textMuted}
                   value={numeroCuenta}
-                  onChangeText={setNumeroCuenta}
+                  onChangeText={(t) => setNumeroCuenta(sanitizeText(t, 30))}
                   keyboardType="number-pad"
                 />
               </View>
@@ -710,7 +711,7 @@ export default function CuentaCobro() {
                 placeholder="Ej. Pago contra entrega, transferencia a cuenta..."
                 placeholderTextColor={c.textMuted}
                 value={nota}
-                onChangeText={setNota}
+                onChangeText={(t) => setNota(sanitizeText(t, 500))}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
