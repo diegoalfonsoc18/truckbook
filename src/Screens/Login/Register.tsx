@@ -34,10 +34,12 @@ if (!isExpoGo) {
     GoogleSignin = mod.GoogleSignin;
     isSuccessResponse = mod.isSuccessResponse;
     const extra = Constants.expoConfig?.extra;
+    // androidClientId no es un parámetro válido para el módulo nativo en iOS
     GoogleSignin.configure({
       webClientId: extra?.googleWebClientId ?? "",
-      iosClientId: extra?.googleIosClientId ?? "",
-      androidClientId: extra?.googleAndroidClientId ?? "",
+      ...(Platform.OS === "ios"
+        ? { iosClientId: extra?.googleIosClientId ?? "" }
+        : { androidClientId: extra?.googleAndroidClientId ?? "" }),
     });
   } catch {}
 }

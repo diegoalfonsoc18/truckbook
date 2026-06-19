@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Platform,
   AppState,
+  Alert,
   type AppStateStatus,
 } from "react-native";
 import * as Linking from "expo-linking";
@@ -162,10 +163,23 @@ function AppContent() {
         const refreshToken = params["refresh_token"];
         const type         = params["type"];
 
+        // El link de recuperación es de un solo uso: si expiró o ya fue
+        // consumido (prefetch del correo), llega con error en vez de code/token
+        if (params["error"] || params["error_code"]) {
+          Alert.alert(
+            "Enlace expirado",
+            "El enlace de recuperación no es válido o ya fue usado. Solicita uno nuevo.",
+          );
+          return;
+        }
+
         // Flujo PKCE: ?code=xxx — pasar SOLO el código, no la URL completa
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) { logger.error("❌ exchangeCodeForSession:", error.message); return; }
+          if (error) {
+            logger.error("❌ exchangeCodeForSession:", error.message);
+            return;
+          }
           logger.log("✅ PKCE exchange OK");
           if (data.session) updateSession(data.session);
           enterRecoveryMode();
@@ -178,7 +192,10 @@ function AppContent() {
             access_token:  accessToken,
             refresh_token: refreshToken,
           });
-          if (error) { logger.error("❌ setSession:", error.message); return; }
+          if (error) {
+            logger.error("❌ setSession:", error.message);
+            return;
+          }
           logger.log("✅ setSession OK, type:", type);
           if (data.session) updateSession(data.session);
           if (type === "recovery") enterRecoveryMode();
