@@ -75,6 +75,14 @@ function AppContent() {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);
+  const recoveryModeRef = useRef(false);
+
+  // Mantener ref de recoveryMode sincronizado para leerlo en callbacks con
+  // closure stale (listener de onAuthStateChange)
+  const enterRecoveryMode = useCallback(() => {
+    recoveryModeRef.current = true;
+    setRecoveryMode(true);
+  }, []);
 
   // Mantener ref sincronizado para acceder en callbacks sin re-renders
   const updateSession = useCallback((s: Session | null) => {
@@ -136,31 +144,35 @@ function AppContent() {
       if (!url.includes("auth/callback")) return;
       logger.log("🔗 Deep link recibido:", url);
       try {
-        // Flujo PKCE: URL tiene ?code=xxx
-        if (url.includes("code=")) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-          if (error) { logger.error("❌ exchangeCodeForSession:", error.message); return; }
-          logger.log("✅ PKCE exchange OK");
-          if (data.session) updateSession(data.session);
-          setRecoveryMode(true);
-          return;
-        }
-
-        // Flujo implícito: resetPasswordForEmail redirige con tokens en el hash
-        // Ejemplo: truckbook://auth/callback#access_token=xxx&refresh_token=yyy&type=recovery
-        const hash = url.includes("#") ? url.split("#")[1] : url.split("?")[1] ?? "";
+        // Unir params de query (?a=b) y de hash (#a=b) en un solo objeto
         const params: Record<string, string> = {};
-        hash.split("&").forEach((pair) => {
-          const [k, v] = pair.split("=");
-          if (k) params[decodeURIComponent(k)] = decodeURIComponent(v ?? "");
-        });
+        const collect = (segment?: string) => {
+          if (!segment) return;
+          segment.split("&").forEach((pair) => {
+            const [k, v] = pair.split("=");
+            if (k) params[decodeURIComponent(k)] = decodeURIComponent(v ?? "");
+          });
+        };
+        const [beforeHash, afterHash] = url.split("#");
+        collect(beforeHash.split("?")[1]); // query params
+        collect(afterHash);                // hash params
 
-        logger.log("🔗 Params:", JSON.stringify(params));
-
+        const code         = params["code"];
         const accessToken  = params["access_token"];
         const refreshToken = params["refresh_token"];
         const type         = params["type"];
 
+        // Flujo PKCE: ?code=xxx — pasar SOLO el código, no la URL completa
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) { logger.error("❌ exchangeCodeForSession:", error.message); return; }
+          logger.log("✅ PKCE exchange OK");
+          if (data.session) updateSession(data.session);
+          enterRecoveryMode();
+          return;
+        }
+
+        // Flujo implícito: #access_token=xxx&refresh_token=yyy&type=recovery
         if (accessToken && refreshToken) {
           const { data, error } = await supabase.auth.setSession({
             access_token:  accessToken,
@@ -169,10 +181,11 @@ function AppContent() {
           if (error) { logger.error("❌ setSession:", error.message); return; }
           logger.log("✅ setSession OK, type:", type);
           if (data.session) updateSession(data.session);
-          if (type === "recovery") setRecoveryMode(true);
-        } else {
-          logger.error("❌ Deep link sin tokens ni code:", url);
+          if (type === "recovery") enterRecoveryMode();
+          return;
         }
+
+        logger.error("❌ Deep link sin tokens ni code:", url);
       } catch (e: any) {
         logger.error("❌ deep link handler:", e?.message);
       }
@@ -184,7 +197,7 @@ function AppContent() {
     // App ya abierta, llega el link
     const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
     return () => sub.remove();
-  }, [updateSession]);
+  }, [updateSession, enterRecoveryMode]);
 
   // ─── Inicialización de sesión + listener ───────────────────────────────
   useEffect(() => {
@@ -224,7 +237,7 @@ function AppContent() {
           case "PASSWORD_RECOVERY":
             if (newSession?.user) {
               updateSession(newSession);
-              setRecoveryMode(true);
+              enterRecoveryMode();
             }
             break;
 
@@ -233,7 +246,8 @@ function AppContent() {
           case "USER_UPDATED":
             if (newSession?.user) {
               updateSession(newSession);
-              if (!recoveryMode) syncBackground(newSession.user);
+              // recoveryModeRef evita el closure stale de recoveryMode
+              if (!recoveryModeRef.current) syncBackground(newSession.user);
             }
             // Si el evento llega sin sesión, ignorar — transitorio
             break;
@@ -245,6 +259,7 @@ function AppContent() {
               if (state.isConnected) {
                 useVehiculoStore.getState().clearVehiculo();
                 updateSession(null);
+                recoveryModeRef.current = false;
                 setRecoveryMode(false);
               } else {
                 logger.log("⚠️ SIGNED_OUT ignorado — sin conexión");
