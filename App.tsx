@@ -161,6 +161,7 @@ function AppContent() {
         collect(afterHash);                // hash params
 
         const code         = params["code"];
+        const tokenHash    = params["token_hash"];
         const accessToken  = params["access_token"];
         const refreshToken = params["refresh_token"];
         const type         = params["type"];
@@ -172,6 +173,28 @@ function AppContent() {
             "Enlace expirado",
             "El enlace de recuperación no es válido o ya fue usado. Solicita uno nuevo.",
           );
+          return;
+        }
+
+        // Flujo stateless (preferido): ?token_hash=xxx&type=recovery
+        // verifyOtp NO necesita code-verifier guardado en el dispositivo, así
+        // que funciona sin importar desde qué instalación se pidió el reset.
+        if (tokenHash) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: (type as any) || "recovery",
+          });
+          if (error) {
+            logger.error("❌ verifyOtp:", error.message);
+            Alert.alert(
+              "Enlace inválido",
+              "El enlace de recuperación no es válido o ya fue usado. Solicita uno nuevo.",
+            );
+            return;
+          }
+          logger.log("✅ verifyOtp OK, type:", type);
+          if (data.session) updateSession(data.session);
+          if ((type || "recovery") === "recovery") enterRecoveryMode();
           return;
         }
 
