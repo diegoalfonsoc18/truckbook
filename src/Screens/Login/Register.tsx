@@ -412,7 +412,11 @@ export default function Register({ navigation }: Props) {
               {/* PRIVACY */}
               <Text style={[s.privacy, { color: c.textMuted }]}>
                 Al registrarte aceptas nuestra{" "}
-                <Text style={{ color: c.accent, fontWeight: "600" }}>Política de Privacidad</Text>
+                <Text
+                  style={{ color: c.accent, fontWeight: "600" }}
+                  onPress={() => Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html")}>
+                  Política de Privacidad
+                </Text>
               </Text>
 
               {/* CTA */}

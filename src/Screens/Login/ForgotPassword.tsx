@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import supabase from "../../config/SupaBaseConfig";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import { Ionicons } from "@expo/vector-icons";
 import logger from "../../utils/logger";
 
 type AuthStackParamList = {
@@ -80,9 +81,9 @@ export default function ForgotPassword({ navigation }: Props) {
               {/* HEADER */}
               <View style={styles.header}>
                 <TouchableOpacity
-                  style={[styles.backButton, ds.cardBg]}
+                  style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => navigation.goBack()}>
-                  <Text style={styles.backButtonText}>←</Text>
+                  <Ionicons name="chevron-back" size={20} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -174,14 +175,13 @@ const styles = StyleSheet.create({
   // HEADER
   header: { paddingVertical: 12 },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  backButtonText: { fontSize: 20 },
 
   // TITLE SECTION
   titleSection: { alignItems: "center", paddingVertical: 32 },
