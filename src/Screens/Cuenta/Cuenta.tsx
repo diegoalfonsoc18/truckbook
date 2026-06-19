@@ -499,6 +499,49 @@ export default function Cuenta() {
     );
   };
 
+  const handleEliminarCuenta = () => {
+    Alert.alert(
+      "⚠️ Eliminar cuenta",
+      "Esta acción eliminará permanentemente:\n\n• Tu cuenta de usuario\n• Todos tus gastos e ingresos\n• Tu relación con vehículos\n\nEsta acción NO se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Continuar",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "¿Estás completamente seguro?",
+              "Se borrarán todos tus datos de forma permanente. No podrás recuperarlos.",
+              [
+                { text: "No, mantener mi cuenta", style: "cancel" },
+                {
+                  text: "Sí, eliminar mi cuenta",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const userId = user?.id;
+                      if (!userId) throw new Error("Sin sesión");
+                      await Promise.all([
+                        supabase.from("conductor_gastos").delete().eq("conductor_id", userId),
+                        supabase.from("conductor_ingresos").delete().eq("conductor_id", userId),
+                        supabase.from("vehiculo_conductores").delete().eq("user_id", userId),
+                        supabase.from("usuarios").delete().eq("user_id", userId),
+                      ]);
+                      await supabase.auth.signOut();
+                    } catch (e: any) {
+                      logger.error("❌ Error al eliminar cuenta:", e?.message ?? e);
+                      Alert.alert("Error", "No se pudo eliminar la cuenta. Intenta de nuevo.");
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   const handleItemPress = (id: string) => {
     if (id === "profile") return openProfile();
     if (id === "security") return openSecurity();
@@ -718,6 +761,39 @@ export default function Cuenta() {
                 </TouchableOpacity>
               </>
             ) : null}
+
+            {/* ELIMINAR CUENTA */}
+            {!placa ? (
+              <Text style={[s.sectionLabel, { color: c.textSecondary, marginTop: 8 }]}>
+                Zona de peligro
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              style={[
+                s.menuRow,
+                card,
+                {
+                  borderColor: `${c.danger}40`,
+                  borderWidth: 1,
+                  backgroundColor: isDark ? `${c.danger}18` : `${c.danger}10`,
+                  marginTop: 8,
+                  elevation: 0,
+                  shadowOpacity: 0,
+                },
+              ]}
+              onPress={handleEliminarCuenta}
+              activeOpacity={0.7}>
+              <View style={[s.menuIconWrap, { backgroundColor: `${c.danger}18` }]}>
+                <Ionicons name="person-remove-outline" size={18} color={c.danger} />
+              </View>
+              <View style={s.menuInfo}>
+                <Text style={[s.menuLabel, { color: c.danger }]}>Eliminar cuenta</Text>
+                <Text style={[s.menuSub, { color: c.textMuted }]}>
+                  Borra permanentemente tu cuenta y todos tus datos
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={`${c.danger}60`} />
+            </TouchableOpacity>
 
             {/* LOGOUT */}
             <TouchableOpacity
