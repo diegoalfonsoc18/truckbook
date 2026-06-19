@@ -31,6 +31,8 @@ import AuthStack from "./src/navigation/AuthStack";
 import supabase from "./src/config/SupaBaseConfig";
 import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
+import { useGastosStore } from "./src/store/GastosStore";
+import { useIngresosStore } from "./src/store/IngresosStore";
 import logger from "./src/utils/logger";
 import NetInfo from "@react-native-community/netinfo";
 
@@ -275,6 +277,10 @@ function AppContent() {
             NetInfo.fetch().then((state) => {
               if (state.isConnected) {
                 useVehiculoStore.getState().clearVehiculo();
+                // Limpiar datos financieros persistidos para que la siguiente
+                // cuenta no vea ingresos/gastos de la cuenta anterior
+                useGastosStore.getState().limpiarGastos();
+                useIngresosStore.getState().limpiarIngresos();
                 updateSession(null);
                 recoveryModeRef.current = false;
                 setRecoveryMode(false);

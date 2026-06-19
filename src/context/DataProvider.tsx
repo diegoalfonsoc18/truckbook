@@ -19,6 +19,19 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       setUserId(data.user?.id ?? null);
     });
   }, []);
+
+  // 🔒 Defensa: purgar cualquier fila persistida que no pertenezca al usuario
+  // actual (evita fuga de datos entre cuentas si el logout no limpió el store)
+  useEffect(() => {
+    if (!userId) return;
+    const { gastos, setGastos } = useGastosStore.getState();
+    const gastosPropios = gastos.filter((g) => g.conductor_id === userId);
+    if (gastosPropios.length !== gastos.length) setGastos(gastosPropios);
+
+    const { ingresos, setIngresos } = useIngresosStore.getState();
+    const ingresosPropios = ingresos.filter((i) => i.conductor_id === userId);
+    if (ingresosPropios.length !== ingresos.length) setIngresos(ingresosPropios);
+  }, [userId]);
   const { setGastosPorPlaca, agregarGasto, editarGasto, eliminarGasto } =
     useGastosStore();
   const {
@@ -115,22 +128,26 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
   // ✅ SUSCRIBIRSE A GASTOS
   useEffect(() => {
-    if (!placa) return;
+    if (!placa || !userId) return;
 
     const subscription = supabase
-      .channel(`gastos-${placa}`)
+      .channel(`gastos-${userId}-${placa}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "conductor_gastos",
-          filter: `placa=eq.${placa}`,
+          // Filtrar por conductor_id (seguridad): evita recibir filas de otras
+          // cuentas que comparten la misma placa. La placa se valida en el handler.
+          filter: `conductor_id=eq.${userId}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
+            if (payload.new.placa !== placa) return;
             agregarGasto(payload.new as Gasto);
           } else if (payload.eventType === "UPDATE") {
+            if (payload.new.placa !== placa) return;
             editarGasto(payload.new.id, payload.new);
           } else if (payload.eventType === "DELETE") {
             eliminarGasto(payload.old.id);
@@ -142,26 +159,30 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [placa]);
+  }, [placa, userId]);
 
   // ✅ SUSCRIBIRSE A INGRESOS
   useEffect(() => {
-    if (!placa) return;
+    if (!placa || !userId) return;
 
     const subscription = supabase
-      .channel(`ingresos-${placa}`)
+      .channel(`ingresos-${userId}-${placa}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "conductor_ingresos",
-          filter: `placa=eq.${placa}`,
+          // Filtrar por conductor_id (seguridad): evita recibir filas de otras
+          // cuentas que comparten la misma placa. La placa se valida en el handler.
+          filter: `conductor_id=eq.${userId}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
+            if (payload.new.placa !== placa) return;
             agregarIngreso(payload.new as Ingreso);
           } else if (payload.eventType === "UPDATE") {
+            if (payload.new.placa !== placa) return;
             editarIngreso(payload.new.id, payload.new);
           } else if (payload.eventType === "DELETE") {
             eliminarIngreso(payload.old.id);
@@ -173,7 +194,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [placa]);
+  }, [placa, userId]);
 
   return <>{children}</>;
 };
