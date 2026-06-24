@@ -41,7 +41,6 @@ const ICONS = {
   // Flete icons (dinámicos por tipo de camión)
   estacaFlete: require("../assets/icons/estacaFlete.webp"),
   gruaFlete: require("../assets/icons/gruaFlete.webp"),
-  planchonFlete: require("../assets/icons/planchonFlete.png"),
   planchosFlete: require("../assets/icons/planchosFlete.webp"),
   volquetaFlete: require("../assets/icons/volquetaFlete.webp"),
   // Mercancía icons (dinámicos por tipo de camión)
