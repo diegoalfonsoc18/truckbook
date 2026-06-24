@@ -13,7 +13,6 @@ const ICONS = {
   shield: require("../assets/icons/shield.webp"),
   tool: require("../assets/icons/tool.webp"),
   comparendo: require("../assets/icons/comparendo.webp"),
-  licencia: require("../assets/icons/licencia.webp"),
   check: require("../assets/icons/check.webp"),
   volqueta2: require("../assets/icons/volqueta2.webp"),
   furgon: require("../assets/icons/furgon.webp"),

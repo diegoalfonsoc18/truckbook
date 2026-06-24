@@ -107,5 +107,9 @@ Import statements reference them with the space included. Do not rename them.
 
 ### Services
 
-- `src/services/Soatservice.ts`, `licenciaService.ts`, `rtmService.ts`, `simitService.ts` — fetch Colombian vehicle compliance documents (SOAT insurance, RTM/technomechanical inspection, SIMIT fines) using external APIs (via `axios`).
-- External API calls use hooks in `src/hooks/` (e.g., `UseSoat.ts`, `useLicencia.ts`, `useMultas.ts`).
+- `vehiculoAutorizacionService.ts` — driver/vehicle authorization (junction table, push notifications). See section above.
+- `mercanciaService.ts` — cargo/merchandise types per truck type.
+- `pendientesService.ts` / `pendientesNotificacionService.ts` — pending items and their notifications.
+- `geminiService.ts` / `visionService.ts` — AI (invoice OCR / image analysis via Gemini).
+- `insightsService.ts` — financial insights. `fleteNotifications.ts` — freight notifications.
+- External data hooks live in `src/hooks/` (e.g., `useClima.ts` weather, `useGasolineras.ts` gas stations, `usePicoYPlaca.ts`, `usePrecioDiesel.ts`, `useEscanearFactura.ts` invoice scanning).

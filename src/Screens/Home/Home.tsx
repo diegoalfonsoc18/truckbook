@@ -116,7 +116,7 @@ function HeroSquareCard({
       accessibilityRole="button"
       accessibilityLabel={item.name}
       accessibilityHint={item.subtitle || undefined}>
-      {/* Badge absoluto (multas pendientes, etc.) */}
+      {/* Badge absoluto (pendientes, alertas, etc.) */}
       {renderBadge?.(item)}
 
       {/* Icono con sombra proyectada */}
