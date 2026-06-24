@@ -45,6 +45,8 @@ export default {
         "expo-splash-screen",
         {
           backgroundColor: "#FFFFFF",
+          image: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
+          imageWidth: 200,
         },
       ],
       "expo-localization",
