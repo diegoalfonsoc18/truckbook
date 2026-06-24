@@ -32,7 +32,7 @@ export default {
     android: {
       icon: "./assets/Android/play_store_512.png",
       adaptiveIcon: {
-        foregroundImage: "./assets/Android/mipmap-xxxhdpi/ic_launcher.png",
+        foregroundImage: "./assets/TruckBook/grilleWhite.png",
         backgroundColor: "#1A1A2E",
       },
       package: "com.truckbook.app",
