@@ -9,11 +9,6 @@ export default {
     orientation: "portrait",
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",
-    splash: {
-      image: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
-      resizeMode: "contain",
-      backgroundColor: "#FFFFFF",
-    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.truckbook.app",
@@ -45,6 +40,12 @@ export default {
     },
     plugins: [
       "./plugins/withModularHeaders",
+      [
+        "expo-splash-screen",
+        {
+          backgroundColor: "#FFFFFF",
+        },
+      ],
       "expo-localization",
       [
         "expo-location",
