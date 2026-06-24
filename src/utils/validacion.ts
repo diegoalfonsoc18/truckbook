@@ -80,14 +80,12 @@ export function validarFecha(fecha: string): ResultadoValidacion {
   return { valido: true };
 }
 
-// ─── Placa colombiana ─────────────────────────────────────────────────────────
-// Formatos válidos:
-//   Vehículos/motos nuevas: 3 letras + 3 dígitos  (ABC123)
-//   Motos antiguas:         3 letras + 2 dígitos  (ABC12)
-//   Camiones especiales:    3 letras + 3 dígitos o superior
-// Se acepta sin espacios o guión, todo UPPERCASE.
+// ─── Placa / matrícula (LATAM) ───────────────────────────────────────────────
+// Acepta los formatos de la región: 5-10 caracteres alfanuméricos.
+// Ejemplos: EKA854 (CO), ABC1234 (BR), AB123CD (AR), ABCD12 (CL), ABC1D23 (BR Mercosur)
+// sanitizePlaca (sanitize.ts) debe aplicarse antes de llamar a esta función.
 
-const REGEX_PLACA = /^[A-Z]{3}[0-9]{2,3}$/;
+const REGEX_PLACA = /^[A-Z0-9]{4,10}$/;
 
 export function validarPlaca(placa: string): ResultadoValidacion {
   if (!placa || placa.trim() === "") {
@@ -99,7 +97,7 @@ export function validarPlaca(placa: string): ResultadoValidacion {
   if (!REGEX_PLACA.test(normalizada)) {
     return {
       valido: false,
-      error: "La placa debe tener 3 letras seguidas de 2 o 3 dígitos (ej. ABC123)",
+      error: "Ingresa una placa válida (ej. EKA854, ABC1234, AB123CD)",
     };
   }
 

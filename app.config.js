@@ -5,7 +5,7 @@ export default {
     name: "TruckBook",
     slug: "TruckBook",
     scheme: "truckbook",
-    version: "1.0.0",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",

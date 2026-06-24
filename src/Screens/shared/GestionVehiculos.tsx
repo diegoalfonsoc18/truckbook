@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { validarPlaca } from "../../utils/validacion";
+import { sanitizePlaca } from "../../utils/sanitize";
 import {
   View,
   Text,
@@ -241,7 +242,7 @@ export default function GestionVehiculos() {
   // ─── CRUD ──────────────────────────────────────────────────────────────────
 
   const handleAgregar = async () => {
-    const placa = nuevaPlaca.trim().toUpperCase();
+    const placa = sanitizePlaca(nuevaPlaca);
 
     const placaResult = validarPlaca(placa);
     if (!placaResult.valido) {

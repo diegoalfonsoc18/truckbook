@@ -13,3 +13,7 @@ export const sanitizeEmail = (value: string): string =>
 /** Allow only digits, spaces, +, - for phone numbers. */
 export const sanitizePhone = (value: string): string =>
   value.replace(/[^0-9+\-\s]/g, "").slice(0, 20);
+
+/** Normalize vehicle plate: uppercase, strip spaces/hyphens/injection chars, max 10 chars. */
+export const sanitizePlaca = (value: string): string =>
+  value.replace(/[^A-Za-z0-9\-]/g, "").toUpperCase().slice(0, 10);

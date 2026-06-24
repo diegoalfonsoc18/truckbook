@@ -32,6 +32,7 @@ import {
 } from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { validarPlaca } from "../../../utils/validacion";
+import { sanitizePlaca } from "../../../utils/sanitize";
 import logger from "../../../utils/logger";
 import {
   Vehiculo,
@@ -120,16 +121,13 @@ export default function ModalVehiculos({
   const handleGuardarEdicion = async () => {
     if (!vehiculoEditando || !placaEditInput.trim() || !tipoCamionEditInput)
       return;
-    const placaResult = validarPlaca(placaEditInput);
+    const placaNueva = sanitizePlaca(placaEditInput);
+    const placaResult = validarPlaca(placaNueva);
     if (!placaResult.valido) {
       Alert.alert("Placa inválida", placaResult.error);
       return;
     }
     setGuardando(true);
-    const placaNueva = placaEditInput
-      .trim()
-      .toUpperCase()
-      .replace(/[-\s]/g, "");
     try {
       await supabase
         .from("vehiculo_conductores")
@@ -195,13 +193,13 @@ export default function ModalVehiculos({
 
   const handleAgregarVehiculo = async () => {
     if (!user?.id || !placaInput.trim() || !tipoCamionInput) return;
-    const placaResult = validarPlaca(placaInput);
+    const placa = sanitizePlaca(placaInput);
+    const placaResult = validarPlaca(placa);
     if (!placaResult.valido) {
       Alert.alert("Placa inválida", placaResult.error);
       return;
     }
     setGuardando(true);
-    const placa = placaInput.trim().toUpperCase().replace(/[-\s]/g, "");
     const result = await registrarVehiculoPropietario(
       user.id,
       placa,
