@@ -36,6 +36,7 @@ export default {
         backgroundColor: "#1A1A2E",
       },
       package: "com.truckbook.app",
+      googleServicesFile: "./google-services.json",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
     },
     plugins: [
