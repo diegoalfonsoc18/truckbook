@@ -258,9 +258,25 @@ function AppContent() {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       clearTimeout(timeout);
       if (!mounted) return;
-      updateSession(s);
-      setLoading(false);
-      if (s?.user) syncBackground(s.user);
+      if (s) {
+        updateSession(s);
+        setLoading(false);
+        syncBackground(s.user);
+      } else {
+        // Session null: puede ser token expirado sin red — verificar antes de
+        // mostrar login (si offline, el refresh falló pero el usuario sigue logueado)
+        NetInfo.fetch().then((state) => {
+          if (!mounted) return;
+          if (!state.isConnected) {
+            logger.log("⚠️ getSession null + offline — no mostramos login");
+            // No llamar updateSession(null): se queda en loading=false sin sesión,
+            // el listener de NetInfo abajo reintentará cuando vuelva la conexión
+          } else {
+            updateSession(null);
+          }
+          setLoading(false);
+        });
+      }
     }).catch((err) => {
       clearTimeout(timeout);
       if (!mounted) return;
@@ -314,14 +330,19 @@ function AppContent() {
             break;
 
           case "INITIAL_SESSION":
-            // Solo actualizar si tenemos sesión; si es null y ya tenemos
-            // una sesión cargada, no sobreescribir
             if (newSession?.user) {
               updateSession(newSession);
               syncBackground(newSession.user);
             } else if (!sessionRef.current) {
-              // Realmente no hay sesión
-              updateSession(null);
+              // Null session: puede ser token expirado sin red, no necesariamente logout
+              NetInfo.fetch().then((state) => {
+                if (!mounted) return;
+                if (state.isConnected) {
+                  updateSession(null);
+                } else {
+                  logger.log("⚠️ INITIAL_SESSION null + offline — ignorado");
+                }
+              });
             }
             break;
 
@@ -335,8 +356,26 @@ function AppContent() {
       },
     );
 
+    // Reintentar sesión cuando vuelve la conexión (cubre el caso offline con
+    // token expirado: getSession/INITIAL_SESSION devolvieron null sin red)
+    const unsubNetInfo = NetInfo.addEventListener((state) => {
+      if (!mounted || sessionRef.current) return;
+      if (state.isConnected) {
+        logger.log("🌐 Conexión restaurada — reintentando getSession");
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (!mounted) return;
+          updateSession(s);
+          if (s?.user) syncBackground(s.user);
+        }).catch(() => {
+          if (!mounted) return;
+          updateSession(null);
+        });
+      }
+    });
+
     return () => {
       mounted = false;
+      unsubNetInfo();
       listener.subscription.unsubscribe();
     };
   }, [updateSession]);
