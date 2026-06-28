@@ -9,7 +9,7 @@ export default function GastosNavigation() {
   return (
     <Tab.Navigator>
       <Tab.Screen
-        name="Gastos"
+        name="GastosMain"
         component={GastosScreen}
         /* options={{ headerShown: false }} */
       />

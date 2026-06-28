@@ -34,7 +34,8 @@ export const useGastosConductor = (placa?: string | null, conductorId?: string |
         .from("conductor_gastos")
         .select("*")
         .eq("placa", placa)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       if (err) throw err;
       setGastosPorPlaca(placa || "", data || []);

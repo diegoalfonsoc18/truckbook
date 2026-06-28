@@ -54,7 +54,8 @@ export const useIngresosConductor = (
         .from("conductor_ingresos")
         .select("*")
         .eq("placa", placa)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       if (err) throw err;
       setIngresosPorPlaca(placa || "", data || []);

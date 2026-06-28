@@ -27,52 +27,52 @@ eas build --platform android --profile production
 
 `App.tsx` wraps everything in `ThemeProvider` → `GestureHandlerRootView` → `SafeAreaProvider`. Inside `AppContent`, a Supabase session listener decides whether to render `AuthStack` (unauthenticated) or `AppStack` (authenticated, wrapped in `DataProvider`).
 
-On login, the app:
-1. Upserts the user into the `usuarios` table
-2. Loads the user's role from the DB via `useRoleStore.getState().cargarRolDesdeDB()`
-3. Validates the cached vehicle plate belongs to the user via `useVehiculoStore.getState().validarPlacaParaUsuario()`
+On login, the app (`syncBackground` in `App.tsx`):
+1. Upserts the user into the `usuarios` table (`syncUsuarioDB`)
+2. Validates the cached vehicle plate still belongs to the user via `useVehiculoStore.getState().validarPlacaParaUsuario()`
 
-### Role-based navigation
+> **Note:** The role system was removed (commits `f6b0073`, `9905ed0`). There is no `RoleStore` and no role-based branching — all users are drivers.
 
-`AppStack` (`src/navigation/AppStack.tsx`) is a bottom tab navigator that renders different screen sets depending on the role stored in `useRoleStore`:
+### Navigation
 
-| Role | Home Stack | Extra tabs |
-|---|---|---|
-| `conductor` | `ConductorNavigation` | Gastos, Ingresos, Reportes |
-| `propietario` | `PropietarioNavigation` | Reportes, Gastos, Ingresos |
-| `administrador` | `AdministradorNavigation` | Gastos, Reportes |
-| `null` | — | Cuenta only |
+`AppStack` (`src/navigation/AppStack.tsx`) is a single bottom tab navigator, identical for every user:
 
-All headers are hidden (`headerShown: false`) — each screen implements its own header UI.
+| Tab | Component |
+|---|---|
+| Home | `ConductorNavigation` |
+| Gastos | `GastosNavigation` (`Screens/Gastos/Gastos`) |
+| Ingresos | `IngresosNavigation` |
+| Reportes | `FinanzasNavigation` (`Screens/FinanzasGeneral/FinanzasGenerales`) |
+
+There is also a Cuenta screen. All headers are hidden (`headerShown: false`) — each screen implements its own header UI.
 
 ### State management
 
-Four Zustand stores in `src/store/`:
+Five Zustand stores in `src/store/`, all persisted to `encryptedStorage` (SecureStore-backed):
 
-- **`RoleStore`** — user role (`conductor | propietario | administrador`), persisted to AsyncStorage. Load via `cargarRolDesdeDB`, save via `guardarRolEnDB`.
-- **`VehiculoStore`** — active vehicle plate and truck type, persisted to AsyncStorage. `validarPlacaParaUsuario` clears the plate if the user no longer has an authorized relation.
-- **`GastosStore`** — in-memory list of expenses (not persisted). Loaded and updated in real time by `DataProvider`.
-- **`IngresosStore`** — same pattern as GastosStore but for income.
+- **`VehiculoStore`** — active vehicle plate and truck type. `validarPlacaParaUsuario` clears the plate if the user is no longer linked to it in `vehiculo_conductores`.
+- **`VehiculosListStore`** — the user's list of vehicles (joins `vehiculo_conductores` → `vehiculos` for `tipo_camion`).
+- **`GastosStore`** — list of expenses. Loaded and updated in real time by `DataProvider`; persisted under the global key `gastos-storage`.
+- **`IngresosStore`** — same pattern as GastosStore but for income (`ingresos-storage`).
+- **`OfflineQueueStore`** — queue of offline insert/update/delete operations, drained by `useSyncManager` when connectivity returns.
+
+> Persistence keys are **global**, not per-user. `App.tsx` (SIGNED_OUT) and `DataProvider` purge rows whose `conductor_id` ≠ current user to prevent cross-account cache leaks.
 
 ### Realtime data layer
 
-`DataProvider` (`src/context/DataProvider.tsx`) subscribes to Supabase realtime channels for the active vehicle plate:
-- `conductor_gastos` → feeds `GastosStore`
-- `conductor_ingresos` → feeds `IngresosStore`
+`DataProvider` (`src/context/DataProvider.tsx`) is mounted only when authenticated (`App.tsx` wraps `AppStack` with it). It subscribes to Supabase realtime for the active plate, **filtered by `conductor_id` for isolation**:
+- `conductor_gastos` + `conductor_ingresos` share **one** channel (`data-${userId}-${placa}`, two `.on()` handlers) — consolidated to reduce realtime connections at scale
+- `vehiculo_conductores` has its own channel (`vehiculos-${userId}`)
 
-This context is only mounted when the user is authenticated (`App.tsx` wraps `AppStack` with it).
+`useSyncManager` (mounted here) drains `OfflineQueueStore` on reconnect and on mount if already online.
 
-### Vehicle-driver authorization flow
+### Vehicles
 
-`src/services/vehiculoAutorizacionService.ts` manages the `vehiculo_conductores` junction table:
-- Propietario registers a vehicle → auto-authorized relation with `rol: "propietario"`
-- Conductor requests access → `estado: "pendiente"`
-- Propietario/admin approves or rejects → `estado: "autorizado" | "rechazado"`
-- Push notifications fire on both sides of each state change
+`vehiculo_conductores` is a **pure junction** (`id`, `vehiculo_placa`, `conductor_id`, `created_at`) — a user is simply linked to a plate. The old role/approval/invitation flow and its columns (`rol`, `estado`, `autorizado_por`) were removed. `src/services/vehiculoAutorizacionService.ts` now exposes only two live functions: `registrarVehiculoPropietario` (register/link a vehicle) and `removerConductorDeVehiculo` (unlink). `tipo_camion` lives on `vehiculos`, keyed by `placa`.
 
 ### Push notifications
 
-`src/services/NotificationService.ts` handles Expo push tokens. Tokens are stored in `usuarios.push_token` in Supabase. Notifications are sent server-side via `https://exp.host/--/api/v2/push/send` (no backend server — the client calls Expo's API directly). Expo project ID: `494c025d-768e-41f8-a040-ee0dd05aaaf0`.
+`src/services/NotificationService.ts` handles Expo push tokens, stored in `usuarios.push_token`. Notifications are sent server-side via the Supabase Edge Function `send-push-notification` (`supabase.functions.invoke`), which runs with the service role — the client never reads other users' tokens. Expo project ID: `494c025d-768e-41f8-a040-ee0dd05aaaf0`.
 
 ### Theming
 
@@ -87,27 +87,24 @@ Style files are co-located with screens (e.g., `HomeStyles.ts` next to `Home.tsx
 
 ### Supabase tables
 
-Key tables:
-- `usuarios` — user profile, role (`conductor | propietario | administrador`), push token
-- `vehiculos` — vehicles by plate (`placa`), truck type
-- `vehiculo_conductores` — junction: user ↔ vehicle, with `rol`, `estado`, authorization metadata
-- `conductor_gastos` — expenses keyed by `placa` and `conductor_id`
+Key tables (verified schema, 2026-06-28):
+- `usuarios` — `id`, `user_id`, `nombre`, `email`, `cedula`, `push_token`, `deleted`, `deleted_at`, `created_at`. **No `rol` column.**
+- `vehiculos` — vehicles by plate (`placa`), `tipo_camion`
+- `vehiculo_conductores` — pure junction: `id`, `vehiculo_placa`, `conductor_id`, `created_at`. **No `rol`/`estado`/authorization columns.**
+- `conductor_gastos` — expenses keyed by `placa` and `conductor_id` (has `estado`, `fecha`, `monto`, …)
 - `conductor_ingresos` — income keyed by `placa` and `conductor_id`
 
-Supabase config is in `src/config/SupaBaseConfig.ts` (anon key hardcoded).
+**RLS & scalability:** All tables have RLS with strict per-`conductor_id` (or per-`user_id`) isolation; `auth.uid()` is wrapped as `(SELECT auth.uid())` for per-query evaluation. Policies live in `supabase/rls_policies.sql`; performance indexes in `supabase/migrations/indexes_scalability.sql`. Run both in the Supabase SQL Editor after schema changes.
+
+Supabase config is in `src/config/SupaBaseConfig.ts` (URL/anon key from EAS Secrets via `Constants.expoConfig.extra`).
 
 ### Quirk: filenames with trailing spaces
 
-Several files have literal trailing spaces in their names:
-- `src/Screens/propietario/PropietarioHome .tsx`
-- `src/Screens/propietario/PropietarioStyles .tsx`
-- `src/Screens/conductor/ConductorStyles .tsx`
-
-Import statements reference them with the space included. Do not rename them.
+`src/Screens/conductor/ConductorStyles .tsx` has a literal trailing space in its name. Import statements reference it with the space included. Do not rename it.
 
 ### Services
 
-- `vehiculoAutorizacionService.ts` — driver/vehicle authorization (junction table, push notifications). See section above.
+- `vehiculoAutorizacionService.ts` — vehicle register/unlink against the junction table (slimmed; see Vehicles above).
 - `mercanciaService.ts` — cargo/merchandise types per truck type.
 - `pendientesService.ts` / `pendientesNotificacionService.ts` — pending items and their notifications.
 - `geminiService.ts` / `visionService.ts` — AI (invoice OCR / image analysis via Gemini).

@@ -129,20 +129,15 @@ export default function ModalVehiculos({
     }
     setGuardando(true);
     try {
-      await supabase
-        .from("vehiculo_conductores")
-        .update({ tipo_camion: tipoCamionEditInput })
-        .eq("id", vehiculoEditando.id);
-
       if (placaNueva !== vehiculoEditando.placa) {
-        const { data: existeNueva } = await supabase
+        // Cambio de placa: crear/actualizar el vehículo nuevo con su tipo de
+        // camión y repuntar la relación usuario↔placa.
+        // (tipo_camion vive en `vehiculos`, no en `vehiculo_conductores`.)
+        await supabase
           .from("vehiculos")
-          .select("placa")
-          .eq("placa", placaNueva)
-          .maybeSingle();
-        if (!existeNueva) {
-          await supabase.from("vehiculos").insert([{ placa: placaNueva }]);
-        }
+          .upsert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }], {
+            onConflict: "placa",
+          });
         await supabase
           .from("vehiculo_conductores")
           .update({ vehiculo_placa: placaNueva })
@@ -151,11 +146,18 @@ export default function ModalVehiculos({
           setPlaca(placaNueva);
           setTipoCamion(tipoCamionEditInput);
         }
-      } else if (
-        tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
-        placaActual === vehiculoEditando.placa
-      ) {
-        setTipoCamion(tipoCamionEditInput);
+      } else {
+        // Misma placa: solo actualizar el tipo de camión en `vehiculos`.
+        await supabase
+          .from("vehiculos")
+          .update({ tipo_camion: tipoCamionEditInput })
+          .eq("placa", vehiculoEditando.placa);
+        if (
+          tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
+          placaActual === vehiculoEditando.placa
+        ) {
+          setTipoCamion(tipoCamionEditInput);
+        }
       }
 
       setVehiculoEditando(null);

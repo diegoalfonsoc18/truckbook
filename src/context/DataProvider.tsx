@@ -85,7 +85,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           .select("*")
           .eq("placa", placa)
           .eq("conductor_id", userId)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(200);
 
         if (error) {
           logger.warn("⚠️ DataProvider: sin conexión para gastos, usando caché:", error.message);
@@ -111,7 +112,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           .select("*")
           .eq("placa", placa)
           .eq("conductor_id", userId)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(200);
 
         if (error) {
           logger.warn("⚠️ DataProvider: sin conexión para ingresos, usando caché:", error.message);
@@ -126,12 +128,15 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     cargar();
   }, [placa, userId, setIngresosPorPlaca]);
 
-  // ✅ SUSCRIBIRSE A GASTOS
+  // ✅ SUSCRIBIRSE A GASTOS + INGRESOS EN UN SOLO CANAL
+  // Escalabilidad: gastos e ingresos comparten un único canal realtime (dos
+  // handlers) en vez de dos canales separados. Reduce conexiones/suscripciones
+  // de Supabase a la mitad para este flujo, clave con miles de usuarios.
   useEffect(() => {
     if (!placa || !userId) return;
 
     const subscription = supabase
-      .channel(`gastos-${userId}-${placa}`)
+      .channel(`data-${userId}-${placa}`)
       .on(
         "postgres_changes",
         {
@@ -154,27 +159,12 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [placa, userId]);
-
-  // ✅ SUSCRIBIRSE A INGRESOS
-  useEffect(() => {
-    if (!placa || !userId) return;
-
-    const subscription = supabase
-      .channel(`ingresos-${userId}-${placa}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "conductor_ingresos",
-          // Filtrar por conductor_id (seguridad): evita recibir filas de otras
-          // cuentas que comparten la misma placa. La placa se valida en el handler.
           filter: `conductor_id=eq.${userId}`,
         },
         (payload) => {
