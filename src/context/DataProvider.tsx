@@ -15,8 +15,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useSyncManager();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
+    // getSession() lee la sesión local (sin red); getUser() la validaría contra
+    // el servidor y dejaría userId=null offline, rompiendo carga y suscripciones.
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null);
     });
   }, []);
 

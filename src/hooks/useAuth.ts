@@ -25,35 +25,38 @@ export const useAuth = (): UseAuthReturn => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Obtener usuario autenticado
-    const getUser = async () => {
+    // Obtener usuario desde la SESIÓN persistida (local, sin red).
+    // NO usar supabase.auth.getUser(): ese valida el token contra el servidor
+    // y falla sin conexión → dejaba al usuario como null offline ("Usuario no
+    // identificado" al guardar gastos/ingresos en modo avión).
+    const cargarUsuario = async () => {
       try {
         const {
-          data: { user: authUser },
+          data: { session },
           error: authError,
-        } = await supabase.auth.getUser();
+        } = await supabase.auth.getSession();
 
         if (authError) throw authError;
 
-        setUser(
-          authUser
-            ? {
-                id: authUser.id,
-                email: authUser.email,
-                user_metadata: authUser.user_metadata,
-              }
-            : null
-        );
+        const authUser = session?.user ?? null;
+        if (authUser) {
+          setUser({
+            id: authUser.id,
+            email: authUser.email,
+            user_metadata: authUser.user_metadata,
+          });
+        }
         setError(null);
       } catch (err: any) {
         setError(err.message || "Error al obtener usuario");
-        setUser(null);
+        // No forzar null en error: el listener de onAuthStateChange puede
+        // tener una sesión válida desde caché.
       } finally {
         setLoading(false);
       }
     };
 
-    getUser();
+    cargarUsuario();
 
     // Escuchar cambios de sesión
     const {
