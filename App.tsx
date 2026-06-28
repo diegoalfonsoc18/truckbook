@@ -244,13 +244,13 @@ function AppContent() {
   // ─── Inicialización de sesión + listener ───────────────────────────────
   useEffect(() => {
     let mounted = true;
+    let offlineTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Timeout de seguridad — solo si SecureStore tarda mucho
     const timeout = setTimeout(() => {
       if (mounted && loading) {
         logger.log("⚠️ Timeout getSession (15s)");
         setLoading(false);
-        // NO setSession(null) — si había sesión en SecureStore, se carga después
       }
     }, 15000);
 
@@ -263,18 +263,23 @@ function AppContent() {
         setLoading(false);
         syncBackground(s.user);
       } else {
-        // Session null: puede ser token expirado sin red — verificar antes de
-        // mostrar login (si offline, el refresh falló pero el usuario sigue logueado)
         NetInfo.fetch().then((state) => {
           if (!mounted) return;
           if (!state.isConnected) {
-            logger.log("⚠️ getSession null + offline — no mostramos login");
-            // No llamar updateSession(null): se queda en loading=false sin sesión,
-            // el listener de NetInfo abajo reintentará cuando vuelva la conexión
+            // Sin red: mantener loading=true y esperar a que vuelva la conexión.
+            // El listener de NetInfo reintentará getSession automáticamente.
+            // Fallback: si sigue offline tras 30s, mostrar login.
+            logger.log("⚠️ getSession null + offline — esperando conexión");
+            offlineTimeout = setTimeout(() => {
+              if (mounted && !sessionRef.current) {
+                logger.log("⚠️ Timeout offline (30s) — mostrando login");
+                setLoading(false);
+              }
+            }, 30000);
           } else {
             updateSession(null);
+            setLoading(false);
           }
-          setLoading(false);
         });
       }
     }).catch((err) => {
@@ -282,7 +287,6 @@ function AppContent() {
       if (!mounted) return;
       logger.error("❌ getSession error:", err?.message);
       setLoading(false);
-      // No limpiar sesión — el usuario podría tener sesión válida en SecureStore
     });
 
     // Listener de cambios de auth
@@ -304,10 +308,8 @@ function AppContent() {
           case "USER_UPDATED":
             if (newSession?.user) {
               updateSession(newSession);
-              // recoveryModeRef evita el closure stale de recoveryMode
               if (!recoveryModeRef.current) syncBackground(newSession.user);
             }
-            // Si el evento llega sin sesión, ignorar — transitorio
             break;
 
           case "SIGNED_OUT":
@@ -316,8 +318,6 @@ function AppContent() {
             NetInfo.fetch().then((state) => {
               if (state.isConnected) {
                 useVehiculoStore.getState().clearVehiculo();
-                // Limpiar datos financieros persistidos para que la siguiente
-                // cuenta no vea ingresos/gastos de la cuenta anterior
                 useGastosStore.getState().limpiarGastos();
                 useIngresosStore.getState().limpiarIngresos();
                 updateSession(null);
@@ -334,11 +334,11 @@ function AppContent() {
               updateSession(newSession);
               syncBackground(newSession.user);
             } else if (!sessionRef.current) {
-              // Null session: puede ser token expirado sin red, no necesariamente logout
               NetInfo.fetch().then((state) => {
                 if (!mounted) return;
                 if (state.isConnected) {
                   updateSession(null);
+                  setLoading(false);
                 } else {
                   logger.log("⚠️ INITIAL_SESSION null + offline — ignorado");
                 }
@@ -347,7 +347,6 @@ function AppContent() {
             break;
 
           default:
-            // Eventos futuros — solo actualizar si hay sesión válida
             if (newSession?.user) {
               updateSession(newSession);
             }
@@ -356,25 +355,31 @@ function AppContent() {
       },
     );
 
-    // Reintentar sesión cuando vuelve la conexión (cubre el caso offline con
-    // token expirado: getSession/INITIAL_SESSION devolvieron null sin red)
+    // Reintentar sesión cuando vuelve la conexión
     const unsubNetInfo = NetInfo.addEventListener((state) => {
       if (!mounted || sessionRef.current) return;
       if (state.isConnected) {
         logger.log("🌐 Conexión restaurada — reintentando getSession");
+        if (offlineTimeout) {
+          clearTimeout(offlineTimeout);
+          offlineTimeout = null;
+        }
         supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (!mounted) return;
           updateSession(s);
+          setLoading(false);
           if (s?.user) syncBackground(s.user);
         }).catch(() => {
           if (!mounted) return;
           updateSession(null);
+          setLoading(false);
         });
       }
     });
 
     return () => {
       mounted = false;
+      if (offlineTimeout) clearTimeout(offlineTimeout);
       unsubNetInfo();
       listener.subscription.unsubscribe();
     };
