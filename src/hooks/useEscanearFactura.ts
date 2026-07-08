@@ -17,7 +17,7 @@ import logger from "../utils/logger";
 export function useEscanearFactura() {
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
   const { user } = useAuth();
-  const { agregarGasto } = useGastosConductor(placaActual, user?.id);
+  const { agregarGasto } = useGastosConductor(user?.id);
   const { agregarIngreso } = useIngresosConductor(placaActual, user?.id);
   const [procesando, setProcesando] = useState(false);
 

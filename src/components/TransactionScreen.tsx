@@ -656,7 +656,8 @@ export default function TransactionScreen({
   const openEdit = (id: string) => {
     const t = transactions.find((x) => x.id === id);
     if (!t) return;
-    setEditValue(formatMontoInput(t.monto));
+    // Redondear: el input solo acepta enteros y formatMontoInput descarta el punto decimal
+    setEditValue(formatMontoInput(Math.round(t.monto)));
     setEditId(id);
     setEditDate(t.fecha);
     const catKey = t.tipo?.toLowerCase() || null;
@@ -680,6 +681,8 @@ export default function TransactionScreen({
       });
     } else if (partes.length > 0) {
       extras["descripcion"] = raw;
+      // Precargar la descripción editable (ej: "otros" en Gastos)
+      if (hasCustomDescription && catKey === "otros") setCustomDescription(raw);
     }
     setExtraValues(extras);
     setModalVisible(true);
@@ -704,6 +707,14 @@ export default function TransactionScreen({
           .map((c) => (extraValues[c.key] || "").trim())
           .filter(Boolean);
         if (partes.length > 0) editDesc = partes.join(" · ");
+      } else if (
+        isEditing &&
+        hasCustomDescription &&
+        selectedCat === "otros" &&
+        customDescription.trim()
+      ) {
+        // Descripción editable de "otros" — antes se descartaba silenciosamente
+        editDesc = customDescription.trim();
       }
 
       const result = isEditing
@@ -743,6 +754,7 @@ export default function TransactionScreen({
     onAdd,
     onUpdate,
     camposExtra,
+    hasCustomDescription,
   ]);
 
   const handleDelete = (id: string) => {

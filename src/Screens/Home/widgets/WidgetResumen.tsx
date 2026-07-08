@@ -9,7 +9,8 @@ import Svg, {
 } from "react-native-svg";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
-import { fechaLocalHoy, WProps } from "../homeUtils";
+import { useVehiculoStore } from "../../../store/VehiculoStore";
+import { fechaLocalHoy, inicioSemana, WProps } from "../homeUtils";
 
 const { width } = Dimensions.get("window");
 const H_PAD = 20;
@@ -68,8 +69,8 @@ function GaugeBalance({
 
   const fmt = (n: number) => {
     const abs = Math.abs(n), sign = n < 0 ? "-" : "";
-    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000)     return `${sign}${Math.round(abs / 1_000)}K`;
+    if (abs >= 999_500) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000)   return `${sign}${Math.round(abs / 1_000)}K`;
     return `${sign}${abs}`;
   };
 
@@ -116,8 +117,10 @@ function GaugeBalance({
 
 // ─── WidgetResumen ─────────────────────────────────────────────────────────────
 export default function WidgetResumen({ isDark }: WProps) {
-  const gastos   = useGastosStore((s) => s.gastos);
-  const ingresos = useIngresosStore((s) => s.ingresos);
+  const placa    = useVehiculoStore((s) => s.placa);
+  // El store puede tener filas de varias placas en caché — solo contar la activa
+  const gastos   = useGastosStore((s) => s.gastos).filter((g) => g.placa === placa);
+  const ingresos = useIngresosStore((s) => s.ingresos).filter((i) => i.placa === placa);
   const hoy      = fechaLocalHoy();
   const [measuredW, setMeasuredW] = useState<number>(WIDGET_SIZE);
 
@@ -127,11 +130,10 @@ export default function WidgetResumen({ isDark }: WProps) {
   const totalI      = ingresosHoy.reduce((a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
   const balance     = totalI - totalG;
 
-  const hace7 = new Date();
-  hace7.setDate(hace7.getDate() - 6);
-  const hace7Str = `${hace7.getFullYear()}-${String(hace7.getMonth() + 1).padStart(2, "0")}-${String(hace7.getDate()).padStart(2, "0")}`;
+  // Semana actual (lunes a hoy) — misma definición que las cards de actividad
+  const hace7Str = inicioSemana();
   const totalGSem = gastos.filter((g)  => (g.fecha ?? g.created_at ?? "") >= hace7Str).reduce((a, g) => a + (g.monto ?? 0), 0);
-  const totalISem = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str).reduce((a, i) => a + (i.monto ?? 0), 0);
+  const totalISem = ingresos.filter((i) => (i.fecha ?? i.created_at ?? "") >= hace7Str).reduce((a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
   const balSem    = totalISem - totalGSem;
   const total     = totalI + totalG;
   const ratioI    = total > 0 ? totalI / total : 0.5;

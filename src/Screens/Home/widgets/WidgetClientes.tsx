@@ -12,7 +12,7 @@ import { useClientType } from "../../../hooks/useClientType";
 
 export default function WidgetClientes({ isDark }: WProps) {
   const ingresos    = useIngresosStore((s) => s.ingresos);
-  const { tipoCamion } = useVehiculoStore();
+  const { placa, tipoCamion } = useVehiculoStore();
   const { colors: c } = useTheme();
 
   const [topCarga, setTopCarga] = useState<Array<[string, number]>>([]);
@@ -23,6 +23,8 @@ export default function WidgetClientes({ isDark }: WProps) {
     const rawList: string[] = [];
 
     for (const ing of ingresos) {
+      // El store puede tener filas de varias placas en caché — solo la activa
+      if (ing.placa !== placa) continue;
       if (ing.tipo_ingreso !== "Flete" || !ing.descripcion) continue;
       // Limpiar [TEL:xxx] antes de parsear
       const descLimpia = ing.descripcion.replace(/\[TEL:[^\]]*\]/g, "").trim();
@@ -57,7 +59,7 @@ export default function WidgetClientes({ isDark }: WProps) {
       .slice(0, 7);
 
     return { clienteData: clientes, rawMercancias: rawList };
-  }, [ingresos]);
+  }, [ingresos, placa]);
 
   // ── Paso 2: normalización async de mercancías con Gemini ──────────────────
   const tipoCamionKey  = tipoCamion ?? "general";

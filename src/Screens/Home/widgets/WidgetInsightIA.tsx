@@ -12,6 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useIngresosStore } from "../../../store/IngresosStore";
+import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 import { fmtI, diasDesde, labelDias, WProps } from "../homeUtils";
 import { ModalPendientes } from "../components/ModalPendientes";
@@ -25,21 +26,23 @@ const WIDGET_SIZE = Math.floor((width - PAD * 2 - 16) / 2);
 const WIDGET_HEIGHT = 180;
 
 export default function WidgetInsightIA({ isDark }: WProps) {
+  const placa = useVehiculoStore((s) => s.placa);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const [modalVisible, setModalVisible] = useState(false);
 
   const pendientes = React.useMemo(
     () =>
       ingresos
-        .filter((i) => i.estado === "pendiente")
+        // El store puede tener filas de varias placas en caché — solo la activa
+        .filter((i) => i.placa === placa && i.estado === "pendiente")
         .sort((a, b) => ((a.fecha ?? "") > (b.fecha ?? "") ? 1 : -1)),
-    [ingresos],
+    [ingresos, placa],
   );
 
   // Recordatorio IA: se reprograma cada vez que cambia la lista de pendientes
   useEffect(() => {
     programarRecordatorioIACobros(pendientes).catch(() => {});
-  }, [pendientes.length]);
+  }, [pendientes]);
 
   const totalPend = pendientes.reduce(
     (a, i) => a + (i.monto ?? 0) * (i.cantidad ?? 1),

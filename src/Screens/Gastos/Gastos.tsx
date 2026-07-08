@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { validarMonto, validarFecha, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
@@ -6,7 +6,6 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useGastosConductor } from "../../hooks/UseGastosConductor";
 import { useTheme } from "../../constants/Themecontext";
-import NetInfo from "@react-native-community/netinfo";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
 
@@ -20,7 +19,7 @@ const MANTENIMIENTO_SUBCATEGORIAS: Categoria[] = [
 const GASTOS_CATEGORIAS: Categoria[] = [
   { id: "combustible",   name: "Combustible", iconName: "fuel"    as IconName, color: "#FFB800", size: 60 },
   { id: "peajes",        name: "Peajes",      iconName: "toll"    as IconName, color: "#00D9A5", size: 60 },
-  { id: "comida",        name: "Comida",      iconName: "food"    as IconName, color: "#FF6B6B", size: 60 },
+  { id: "comida",        name: "Comida",      iconName: "food"    as IconName, color: "#F97316", size: 60 },
   { id: "hospedaje",     name: "Hospedaje",   iconName: "hotel"   as IconName, color: "#6C5CE7", size: 60 },
   { id: "mantenimiento", name: "Taller",      iconName: "tool"    as IconName, color: "#74B9FF", size: 60 },
   { id: "parqueadero",   name: "Parqueo",     iconName: "parking" as IconName, color: "#FD79A8", size: 60 },
@@ -34,14 +33,9 @@ export default function Gastos() {
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
   const gastos = useGastosStore(useShallow((state) => state.gastos));
+  // La carga y el realtime viven en DataProvider (única fuente); aquí solo mutaciones
   const { agregarGasto, actualizarGasto, eliminarGasto } =
-    useGastosConductor(placaActual);
-
-  useEffect(() => {
-    if (placaActual) {
-      useGastosStore.getState().cargarGastosDelDB(placaActual, user?.id);
-    }
-  }, [placaActual, user?.id]);
+    useGastosConductor(user?.id);
 
   // Normalise to the shared Transaction shape
   const transactions = gastos.map((g) => ({
@@ -78,7 +72,7 @@ export default function Gastos() {
 
       const descSafe = (descripcion?.trim() || cat.name)
         .replace(/[<>{}]/g, "")
-        .slice(0, 500);
+        .slice(0, 200);
 
       return agregarGasto({
         placa: placaActual,
@@ -103,7 +97,7 @@ export default function Gastos() {
 
       const payload: Record<string, any> = { monto: parsearMonto(monto), fecha };
       if (descripcion !== undefined) {
-        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 500);
+        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 200);
       }
 
       return actualizarGasto(id, payload);

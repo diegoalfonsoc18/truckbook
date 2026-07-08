@@ -1,22 +1,13 @@
 // src/Screens/Home/components/DashboardControlPanel.tsx
-import React, { useRef, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import ItemIcon from "../../../components/ItemIcon";
 import type { Item } from "../Items";
 
-const CARD_WIDTH  = 160;
-const CARD_GAP    = 10;
-const CARD_STRIDE = CARD_WIDTH + CARD_GAP;
+const CARD_WIDTH = 160;
+const CARD_GAP   = 10;
 
 // ─── Icon map — webp assets for known categories ──────────────────────────────
 const ICON_MAP_WEBP: Record<string, any> = {
@@ -33,6 +24,7 @@ export default function DashboardControlPanel({
   onItemPress,
   isDark,
   colors: c,
+  renderBadge,
 }: {
   items: Item[];
   onItemPress: (item: Item) => void;
@@ -40,34 +32,19 @@ export default function DashboardControlPanel({
   colors: ReturnType<typeof useTheme>["colors"];
   renderBadge?: (item: Item) => React.ReactNode;
 }) {
-  const cardBg     = isDark ? `${c.accent}14` : c.cardBg;
   const textMain   = isDark ? "#FFFFFF" : c.text;
   const mutedClr   = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.42)";
   const trackBg    = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)";
   const cardShadow = getShadow(isDark, "md");
-
-  const [activeIdx, setActiveIdx] = useState(0);
-
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const idx = Math.round(x / CARD_STRIDE);
-    setActiveIdx(Math.max(0, Math.min(idx, items.length - 1)));
-  };
-
-  const dotActive = isDark ? c.accent : c.accent;
-  const dotInactive = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)";
 
   return (
     <View style={{ marginBottom: 12 }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 4, gap: CARD_GAP, paddingVertical: 2 }}>
 
         {items.map((item) => {
-          const color   = item.color ?? "#6B7280";
           const iconSrc = ICON_MAP_WEBP[item.id];
 
           const trendColor = item.trendPositive === false
@@ -81,6 +58,9 @@ export default function DashboardControlPanel({
               key={item.id}
               onPress={() => onItemPress(item)}
               activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={item.name}
+              accessibilityHint={item.sublabel || undefined}
               style={[
                 {
                   width: CARD_WIDTH,
@@ -96,6 +76,9 @@ export default function DashboardControlPanel({
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
+
+              {/* Badge absoluto (pendientes, alertas, etc.) */}
+              {renderBadge?.(item)}
 
               {/* ── Icon + name row ── */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 7 }}>

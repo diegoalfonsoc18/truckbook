@@ -48,7 +48,7 @@ export const items: Item[] = [
   },
   {
     id: "mantenimiento",
-    name: "Manten.",
+    name: "Mantenimiento",
     iconName: "tool",
     color: "#74B9FF",
   },
