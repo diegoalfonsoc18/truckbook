@@ -13,6 +13,7 @@ import {
   actualizarRecordatorioFletes,
   fletesPendientes,
 } from "../../services/fleteNotifications";
+import { extraerTelDesc } from "../../utils/telefono";
 
 const FLETE_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
@@ -233,7 +234,18 @@ export default function Ingresos() {
 
       const payload: Record<string, any> = { monto: parsearMonto(monto), fecha };
       if (descripcion !== undefined) {
-        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 500);
+        let desc = descripcion
+          .replace(/\[TEL:[^\]]*\]/g, "")
+          .replace(/[<>{}]/g, "")
+          .slice(0, 500);
+        // Conservar el teléfono del registro original: el modal de edición
+        // reconstruye la descripción sin el tag [TEL:...] y lo perdía en silencio
+        const original = useIngresosStore
+          .getState()
+          .ingresos.find((i) => i.id === id);
+        const { tel } = extraerTelDesc(original?.descripcion ?? "");
+        if (tel) desc = `${desc}[TEL:${tel}]`;
+        payload.descripcion = desc;
       }
       if (extras?.cantidad) {
         const cant = parseInt(extras.cantidad, 10);
