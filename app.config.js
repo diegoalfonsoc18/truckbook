@@ -44,9 +44,19 @@ export default {
       [
         "expo-splash-screen",
         {
+          // Réplica del splash JS de App.tsx (grille negro 80dp + "TruckBook"
+          // 28px w800) para que la transición nativo→JS sea invisible.
           backgroundColor: "#FFFFFF",
-          image: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
-          imageWidth: 200,
+          image: "./assets/TruckBook/splash-icon.png",
+          imageWidth: 146,
+          android: {
+            // Android 12+ enmascara el icono del splash en un círculo — el
+            // texto se recortaría; solo el grille, el splash JS trae el texto.
+            image: "./assets/TruckBook/grilleBlack.png",
+            imageWidth: 130,
+            resizeMode: "contain",
+            backgroundColor: "#FFFFFF",
+          },
         },
       ],
       "expo-localization",
