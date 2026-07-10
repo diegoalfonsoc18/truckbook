@@ -718,6 +718,87 @@ export default function FinanzasGenerales() {
     setCalendarVisible(true);
   };
 
+  // Contenido del calendario, reutilizado por el selector de la pantalla
+  // principal (Modal propio) y por el modal de exportar (overlay interno —
+  // en iOS no se puede montar un segundo Modal sobre el de exportar).
+  const renderCalendarSheet = () => (
+    <TouchableOpacity
+      style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
+      activeOpacity={1}
+      onPress={() => setCalendarVisible(false)}>
+      <TouchableOpacity activeOpacity={1}>
+        <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
+          <View style={[styles.modalHandle, { backgroundColor: c.textMuted }]} />
+          <Text style={[styles.modalTitle, { color: c.text }]}>
+            fecha {selectingDate === "inicio" ? "inicial" : "final"}
+          </Text>
+          <Calendar
+            current={
+              calendarTarget === "export"
+                ? selectingDate === "inicio"
+                  ? exportRango.inicio
+                  : exportRango.fin
+                : selectingDate === "inicio"
+                  ? rango.inicio
+                  : rango.fin
+            }
+            onDayPress={(day: any) => {
+              if (calendarTarget === "export") {
+                setExportRango((prev) => ({
+                  ...prev,
+                  [selectingDate]: day.dateString,
+                }));
+                setPeriodoRapido("personalizado");
+              } else {
+                setRango((prev) => ({
+                  ...prev,
+                  [selectingDate]: day.dateString,
+                }));
+              }
+              setCalendarVisible(false);
+            }}
+            markedDates={
+              calendarTarget === "export"
+                ? {
+                    [exportRango.inicio]: {
+                      selected: selectingDate === "inicio",
+                      selectedColor: c.accent,
+                    },
+                    [exportRango.fin]: {
+                      selected: selectingDate === "fin",
+                      selectedColor: c.accent,
+                    },
+                  }
+                : {
+                    [rango.inicio]: {
+                      selected: selectingDate === "inicio",
+                      selectedColor: c.accent,
+                    },
+                    [rango.fin]: {
+                      selected: selectingDate === "fin",
+                      selectedColor: c.accent,
+                    },
+                  }
+            }
+            theme={{
+              backgroundColor: c.modalBg,
+              calendarBackground: c.modalBg,
+              textSectionTitleColor: c.textSecondary,
+              selectedDayBackgroundColor: c.accent,
+              selectedDayTextColor: c.accentText,
+              todayTextColor: c.accent,
+              dayTextColor: c.text,
+              textDisabledColor: c.textMuted,
+              monthTextColor: c.text,
+              arrowColor: c.accent,
+            }}
+            style={styles.calendar}
+          />
+        </View>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
   const generarPDF = async () => {
     if (exportando) return;
     // Normalizar rango invertido (Desde > Hasta filtraba a vacío → "Sin datos")
@@ -1342,90 +1423,23 @@ export default function FinanzasGenerales() {
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
+
+          {/* Calendario como overlay DENTRO del modal de exportar */}
+          {calendarVisible && calendarTarget === "export" && (
+            <View style={StyleSheet.absoluteFill}>{renderCalendarSheet()}</View>
+          )}
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* MODAL CALENDARIO */}
+      {/* MODAL CALENDARIO — solo para el selector de la pantalla principal.
+          En el modal de exportar el calendario se renderiza como overlay
+          interno (iOS no monta un segundo Modal sobre otro). */}
       <Modal
-        visible={calendarVisible}
+        visible={calendarVisible && calendarTarget === "main"}
         transparent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
-          activeOpacity={1}
-          onPress={() => setCalendarVisible(false)}>
-          <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
-            <View
-              style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-            />
-            <Text style={[styles.modalTitle, { color: c.text }]}>
-              fecha {selectingDate === "inicio" ? "inicial" : "final"}
-            </Text>
-            <Calendar
-              current={
-                calendarTarget === "export"
-                  ? selectingDate === "inicio"
-                    ? exportRango.inicio
-                    : exportRango.fin
-                  : selectingDate === "inicio"
-                    ? rango.inicio
-                    : rango.fin
-              }
-              onDayPress={(day: any) => {
-                if (calendarTarget === "export") {
-                  setExportRango((prev) => ({
-                    ...prev,
-                    [selectingDate]: day.dateString,
-                  }));
-                  setPeriodoRapido("personalizado");
-                } else {
-                  setRango((prev) => ({
-                    ...prev,
-                    [selectingDate]: day.dateString,
-                  }));
-                }
-                setCalendarVisible(false);
-              }}
-              markedDates={
-                calendarTarget === "export"
-                  ? {
-                      [exportRango.inicio]: {
-                        selected: selectingDate === "inicio",
-                        selectedColor: c.accent,
-                      },
-                      [exportRango.fin]: {
-                        selected: selectingDate === "fin",
-                        selectedColor: c.accent,
-                      },
-                    }
-                  : {
-                      [rango.inicio]: {
-                        selected: selectingDate === "inicio",
-                        selectedColor: c.accent,
-                      },
-                      [rango.fin]: {
-                        selected: selectingDate === "fin",
-                        selectedColor: c.accent,
-                      },
-                    }
-              }
-              theme={{
-                backgroundColor: c.modalBg,
-                calendarBackground: c.modalBg,
-                textSectionTitleColor: c.textSecondary,
-                selectedDayBackgroundColor: c.accent,
-                selectedDayTextColor: c.accentText,
-                todayTextColor: c.accent,
-                dayTextColor: c.text,
-                textDisabledColor: c.textMuted,
-                monthTextColor: c.text,
-                arrowColor: c.accent,
-              }}
-              style={styles.calendar}
-            />
-          </View>
-        </TouchableOpacity>
+        {renderCalendarSheet()}
       </Modal>
     </View>
   );
