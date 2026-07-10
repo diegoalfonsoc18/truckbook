@@ -27,7 +27,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
-import { useAuth } from "../../hooks/useAuth";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
@@ -388,10 +387,7 @@ export default function FinanzasGenerales() {
   const { colors, isDark } = useTheme();
   const c = colors;
   const { placa: placaActual } = useVehiculoStore();
-  const { user } = useAuth();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
   const [exportModal, setExportModal] = useState(false);
   const [view, setView] = useState<ViewType>("meses");
@@ -514,7 +510,6 @@ export default function FinanzasGenerales() {
   // Solo animamos la entrada — no hay que esperar queries.
   useEffect(() => {
     if (!placaActual) return;
-    setLoading(false);
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -753,39 +748,6 @@ export default function FinanzasGenerales() {
       setExportando(false);
     }
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={c.accent} />
-            <Text style={[styles.loadingText, { color: c.textSecondary }]}>
-              cargando…
-            </Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.errorContainer}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={48}
-              color={c.danger}
-              style={{ marginBottom: 16 }}
-            />
-            <Text style={[styles.errorText, { color: c.danger }]}>{error}</Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
   if (!placaActual) {
     return (
@@ -1403,36 +1365,11 @@ const styles = StyleSheet.create({
   },
   exportarBtnText: { fontSize: 15, fontWeight: "600" },
 
-  // FILTER CHIPS
-  filterScroll: { marginBottom: 4 },
-  filterContent: { gap: 8, paddingVertical: 4 },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  filterChipActive: {},
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  filterChipTextActive: {},
-
   // SCROLL
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 110 },
 
-  // LOADING & ERROR
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 14 },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  errorText: { fontSize: 16, textAlign: "center" },
+  // EMPTY STATE
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -1463,7 +1400,6 @@ const styles = StyleSheet.create({
   dateButtonLabel: { fontSize: 10 },
   dateButtonValue: { fontSize: 15, fontWeight: "600", marginTop: 2 },
   rangeDivider: { paddingHorizontal: 10 },
-  rangeDividerText: { fontSize: 16 },
 
   // SUMMARY GRID
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },

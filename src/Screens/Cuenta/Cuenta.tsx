@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,14 +35,7 @@ import { sanitizeText, sanitizePassword, sanitizePhone } from "../../utils/sanit
 
 const H_PAD = 20;
 
-const ROLE_META: Record<
-  string,
-  { label: string; color: string; icon: string }
-> = {
-  conductor: { label: "Conductor", color: "#111827", icon: "🚛" },
-  propietario: { label: "Propietario", color: "#FFB800", icon: "🏢" },
-  administrador: { label: "Administrador", color: "#74B9FF", icon: "⚙️" },
-};
+const AVATAR_COLOR = "#111827";
 
 const MENU_ITEMS = [
   {
@@ -197,8 +191,6 @@ export default function Cuenta() {
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
   const placa = useVehiculoStore((s) => s.placa);
-  const limpiarGastos = useGastosStore((s) => s.limpiarGastos);
-  const limpiarIngresos = useIngresosStore((s) => s.limpiarIngresos);
 
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -293,7 +285,8 @@ export default function Cuenta() {
         setNombre(nombreDB);
         setApellido("");
       }
-      setTelefono(perfil?.telefono ?? "");
+      // telefono vive en user_metadata — la tabla usuarios no tiene esa columna
+      setTelefono(meta.telefono ?? "");
     } catch (error) {
       logger.error("Error cargando usuario:", error);
     }
@@ -336,6 +329,10 @@ export default function Cuenta() {
       Alert.alert("Campo requerido", "El nombre no puede estar vacío.");
       return;
     }
+    if (!user?.id) {
+      Alert.alert("Error", "No se pudo identificar tu sesión. Intenta de nuevo.");
+      return;
+    }
     setSavingProfile(true);
     try {
       const sanitize = (s: string) => s.replace(/[<>{}]/g, "").trim().slice(0, 100);
@@ -343,20 +340,18 @@ export default function Cuenta() {
       const apellidoSafe = sanitize(apellido);
       const telSafe = telefono.replace(/[^0-9+\- ]/g, "").trim().slice(0, 20);
 
-      const updatePayload: Record<string, string> = { nombre: nombreSafe };
-      if (telSafe) updatePayload.telefono = telSafe;
-
+      // La tabla usuarios solo tiene nombre; apellido y telefono van en user_metadata
       const { error: dbErr } = await supabase
         .from("usuarios")
-        .update(updatePayload)
+        .update({ nombre: nombreSafe })
         .eq("user_id", user.id);
 
       if (dbErr) throw dbErr;
 
-      // Keep user_metadata in sync
-      await supabase.auth.updateUser({
-        data: { nombre: nombreSafe, apellido: apellidoSafe },
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { nombre: nombreSafe, apellido: apellidoSafe, telefono: telSafe },
       });
+      if (authErr) throw authErr;
 
       setProfileVisible(false);
       Alert.alert("Listo", "Tu perfil fue actualizado.");
@@ -475,8 +470,11 @@ export default function Cuenta() {
                       ]);
                       if (gastosRes.error) throw gastosRes.error;
                       if (ingresosRes.error) throw ingresosRes.error;
-                      limpiarGastos();
-                      limpiarIngresos();
+                      // Limpiar del caché solo la placa borrada — no los demás vehículos
+                      const { gastos, setGastos } = useGastosStore.getState();
+                      setGastos(gastos.filter((g) => g.placa !== placa));
+                      const { ingresos, setIngresos } = useIngresosStore.getState();
+                      setIngresos(ingresos.filter((i) => i.placa !== placa));
                       Alert.alert(
                         "Listo",
                         `Todos los registros del vehículo ${placa} fueron eliminados.`,
@@ -525,12 +523,13 @@ export default function Cuenta() {
 
                       // Anonimizar datos personales de forma irreversible.
                       // No se borran filas para no romper FKs en gastos/ingresos/vehículos.
+                      // Solo columnas que existen en usuarios — incluir una inexistente
+                      // (p. ej. telefono) hace fallar todo el update con 42703.
                       const { error: anonError } = await supabase
                         .from("usuarios")
                         .update({
                           nombre: "Usuario eliminado",
                           email: `deleted_${userId}@deleted.truckbook`,
-                          telefono: null,
                           push_token: null,
                           deleted: true,
                           deleted_at: new Date().toISOString(),
@@ -538,6 +537,12 @@ export default function Cuenta() {
                         .eq("user_id", userId);
 
                       if (anonError) throw anonError;
+
+                      // Limpiar también los datos personales de user_metadata
+                      // (best-effort: la anonimización en DB ya quedó hecha)
+                      await supabase.auth.updateUser({
+                        data: { nombre: null, apellido: null, telefono: null },
+                      });
 
                       await supabase.auth.signOut();
                     } catch (e: any) {
@@ -575,7 +580,6 @@ export default function Cuenta() {
   };
 
   // ─── Derived display values ───────────────────────────────────────────────
-  const roleMeta = ROLE_META["conductor"];
   const displayName =
     [nombre, apellido].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||
@@ -613,14 +617,14 @@ export default function Cuenta() {
               style={[
                 s.profileCard,
                 cardStyle,
-                { backgroundColor: isDark ? `${roleMeta.color}14` : c.cardBg },
+                { backgroundColor: isDark ? `${AVATAR_COLOR}14` : c.cardBg },
                 isDark
-                  ? { borderWidth: 1, borderColor: `${roleMeta.color}33` }
+                  ? { borderWidth: 1, borderColor: `${AVATAR_COLOR}33` }
                   : shadow,
               ]}>
               <View
-                style={[s.avatarRing, { borderColor: `${roleMeta.color}40` }]}>
-                <View style={[s.avatar, { backgroundColor: roleMeta.color }]}>
+                style={[s.avatarRing, { borderColor: `${AVATAR_COLOR}40` }]}>
+                <View style={[s.avatar, { backgroundColor: AVATAR_COLOR }]}>
                   <Text style={s.avatarText}>{userInitial}</Text>
                 </View>
               </View>
@@ -836,7 +840,7 @@ export default function Cuenta() {
             </TouchableOpacity>
 
             <Text style={[s.version, { color: c.textMuted }]}>
-              TruckBook v1.0.0
+              TruckBook v{Constants.expoConfig?.version ?? "1.0.2"}
             </Text>
           </Animated.View>
         </ScrollView>
@@ -1265,8 +1269,6 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   userEmail: { fontSize: 13, fontWeight: "400", marginBottom: 14 },
-  roleBadge: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
-  roleBadgeText: { fontSize: 13, fontWeight: "700" },
 
   sectionLabel: {
     fontSize: 12,
