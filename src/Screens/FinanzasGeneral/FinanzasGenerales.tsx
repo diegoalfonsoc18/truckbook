@@ -1296,9 +1296,11 @@ export default function FinanzasGenerales() {
                       placeholderTextColor={c.textMuted}
                       value={texto}
                       onChangeText={(t) => {
-                        const limpio = t
-                          .replace(/[<>{}[\]\\\/`'"%;()&+]/g, "")
-                          .slice(0, 80);
+                        // Misma sanitización que al guardar el cliente
+                        // (sanitizarInput en Ingresos): solo se quitan < > { } [ ].
+                        // Nombres como "H&H" o "López & Cía" deben poder buscarse;
+                        // el PDF escapa estos caracteres al renderizar.
+                        const limpio = t.replace(/[<>{}[\]]/g, "").slice(0, 80);
                         setExportCliente(limpio.length > 0 ? limpio : null);
                       }}
                       onFocus={() => setClienteInputFocused(true)}
