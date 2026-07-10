@@ -149,6 +149,11 @@ function generarReporteHTML(params: {
     return `${dd}/${mm}/${yyyy}`;
   };
 
+  // Fecha compacta dd/mm/aa para las filas de detalle (ahorra espacio en la
+  // tabla); directo del string YYYY-MM-DD, sin pasar por Date (sin saltos UTC)
+  const fmtFechaCorta = (s: string) =>
+    s?.length >= 10 ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(2, 4)}` : s;
+
   const labelPeriodo = (key: string) => {
     const meses = [
       "Ene",
@@ -217,7 +222,7 @@ function generarReporteHTML(params: {
           : desc;
       const pendiente = i.estado === "pendiente";
       return `<tr>
-      <td>${fmtFecha(i.fecha)}</td>
+      <td>${fmtFechaCorta(i.fecha)}</td>
       <td>${esc(i.tipo_ingreso)}</td>
       ${esCuentaCliente ? "" : `<td>${esc(clienteLabel)}</td>`}
       <td>${esc(detalle) || "—"}</td>
@@ -234,7 +239,7 @@ function generarReporteHTML(params: {
     .slice(0, MAX_FILAS)
     .map(
       (g) => `<tr>
-      <td>${fmtFecha(g.fecha)}</td>
+      <td>${fmtFechaCorta(g.fecha)}</td>
       <td>${esc(g.tipo_gasto)}</td>
       <td>${esc(cleanDesc(g.descripcion)) || "—"}</td>
       <td class="right red">${fmt(g.monto)}</td>
