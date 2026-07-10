@@ -449,7 +449,10 @@ function generarReporteHTML(params: {
       : ""
   }
 
-  <div class="footer">Generado con TruckBook</div>
+  <div class="footer">
+    Generado con <strong>TruckBook</strong>
+    <div style="margin-top:3px;">Disponible para iPhone en App Store y Android en Google Play</div>
+  </div>
 </div>
 </body>
 </html>`;
