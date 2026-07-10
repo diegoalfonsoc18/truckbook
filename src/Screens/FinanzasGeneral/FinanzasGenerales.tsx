@@ -196,6 +196,8 @@ function generarReporteHTML(params: {
   // Detalle cronológico completo (antes: solo top 15 por monto)
   const MAX_FILAS = 100;
 
+  const esCuentaCliente = !!params.clienteFiltro;
+
   const ingresosOrdenados = [...params.ingresosDetalle].sort((a, b) =>
     a.fecha.localeCompare(b.fecha),
   );
@@ -216,10 +218,12 @@ function generarReporteHTML(params: {
       const pendiente = i.estado === "pendiente";
       return `<tr>
       <td>${fmtFecha(i.fecha)}</td>
-      <td>${esc(i.tipo_ingreso)}${cant > 1 ? ` (x${cant})` : ""}</td>
-      <td>${esc(clienteLabel)}</td>
+      <td>${esc(i.tipo_ingreso)}</td>
+      ${esCuentaCliente ? "" : `<td>${esc(clienteLabel)}</td>`}
       <td>${esc(detalle) || "—"}</td>
       <td><span class="badge ${pendiente ? "b-pend" : "b-pag"}">${pendiente ? "Por cobrar" : "Pagado"}</span></td>
+      <td class="center">${cant}</td>
+      <td class="right">${fmt(i.monto)}</td>
       <td class="right green">${fmt(total)}</td>
     </tr>`;
     })
@@ -244,7 +248,6 @@ function generarReporteHTML(params: {
     .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
   const totalRecibido = params.totalIngresos - totalPorCobrar;
 
-  const esCuentaCliente = !!params.clienteFiltro;
   const rentNum = Number(params.rentabilidad);
   const balColor = params.balance >= 0 ? "#16A34A" : "#EF4444";
   const tituloDoc = esCuentaCliente ? "Estado de cuenta" : "Informe de Finanzas";
@@ -293,8 +296,10 @@ function generarReporteHTML(params: {
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { background: #000; color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
     th.right { text-align: right; }
+    th.center { text-align: center; }
     td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; color: #000; vertical-align: middle; }
-    td.right { text-align: right; }
+    td.right { text-align: right; white-space: nowrap; }
+    td.center { text-align: center; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #F8FAFC; }
     .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; color: #000; }
@@ -406,12 +411,12 @@ function generarReporteHTML(params: {
   <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${params.ingresosDetalle.length})</div>
   <table>
     <thead><tr>
-      <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th class="right">Monto</th>
+      <th>Fecha</th><th>Tipo</th>${esCuentaCliente ? "" : "<th>Cliente</th>"}<th>Descripción</th><th>Estado</th><th class="center">Cant.</th><th class="right">Vr. unitario</th><th class="right">Total</th>
     </tr></thead>
     <tbody>
       ${filasIngresos}
       <tr class="total-tr">
-        <td colspan="5">Total</td>
+        <td colspan="${esCuentaCliente ? 6 : 7}">Total</td>
         <td class="right green">${fmt(params.totalIngresos)}</td>
       </tr>
     </tbody>
