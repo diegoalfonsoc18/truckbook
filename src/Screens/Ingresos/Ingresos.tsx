@@ -251,6 +251,12 @@ export default function Ingresos() {
         const cant = parseInt(extras.cantidad, 10);
         if (!isNaN(cant) && cant >= 1 && cant <= 20) payload.cantidad = cant;
       }
+      // Mantener el campo `cliente` sincronizado con la descripción editada
+      // (antes solo cambiaba la descripción y el filtro por cliente en Reportes
+      // dejaba de encontrar el ingreso).
+      if (extras?.cliente && extras.cliente.trim()) {
+        payload.cliente = sanitizarInput(extras.cliente);
+      }
 
       return actualizarIngreso(id, payload);
     },

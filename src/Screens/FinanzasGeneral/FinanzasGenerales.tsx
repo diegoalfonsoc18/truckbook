@@ -818,12 +818,20 @@ export default function FinanzasGenerales() {
     // Comparación insensible a mayúsculas/espacios ("acme" encuentra "Acme")
     const norm = (s: string) => s.trim().toLowerCase();
     const clienteBuscado = exportCliente ? norm(exportCliente) : null;
+    // Un mismo cliente puede estar guardado en el campo `cliente` (registros
+    // nuevos) o solo al inicio de la descripción (facturas escaneadas, registros
+    // viejos, cuentas de cobro). Cotejar AMBOS para no dejar ingresos fuera.
+    const coincideCliente = (i: any): boolean => {
+      if (clienteBuscado === null) return true;
+      const cands: string[] = [];
+      if (i.cliente) cands.push(norm(String(i.cliente)));
+      const desc = String(i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "");
+      const seg = desc.split(" · ")[0].trim();
+      if (seg) cands.push(norm(seg));
+      return cands.includes(clienteBuscado);
+    };
     const ingresosDetalle = ingresosPorPlaca.filter(
-      (i) =>
-        i.fecha >= r.inicio &&
-        i.fecha <= r.fin &&
-        (clienteBuscado === null ||
-          norm(getClienteIngreso(i) ?? "") === clienteBuscado),
+      (i) => i.fecha >= r.inicio && i.fecha <= r.fin && coincideCliente(i),
     );
     // Nombre real del cliente (con sus mayúsculas) para el PDF
     const clienteReal = exportCliente
