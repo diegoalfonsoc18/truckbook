@@ -119,6 +119,8 @@ function generarReporteHTML(params: {
     descripcion: string;
     monto: number;
     cliente?: string | null;
+    cantidad?: number | null;
+    estado?: string | null;
   }>;
   clienteFiltro?: string | null;
   view: ViewType;
@@ -129,6 +131,14 @@ function generarReporteHTML(params: {
       currency: "COP",
       minimumFractionDigits: 0,
     }).format(n);
+
+  // Escapar datos del usuario interpolados en el HTML del PDF
+  const esc = (s: unknown) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
 
   const fmtFecha = (s: string) => {
     const d = new Date(s + "T12:00:00");
@@ -180,48 +190,63 @@ function generarReporteHTML(params: {
     .join("");
 
   const cleanDesc = (d: string) =>
-    (d || "—").replace(/\[TEL:[^\]]*\]/g, "").trim() || "—";
+    (d || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
 
-  const top10Ingresos = [...params.ingresosDetalle]
-    .sort(
-      (a, b) =>
-        b.monto * ((b as any).cantidad ?? 1) -
-        a.monto * ((a as any).cantidad ?? 1),
-    )
-    .slice(0, 15)
+  // Detalle cronológico completo (antes: solo top 15 por monto)
+  const MAX_FILAS = 100;
+
+  const ingresosOrdenados = [...params.ingresosDetalle].sort((a, b) =>
+    a.fecha.localeCompare(b.fecha),
+  );
+  const filasIngresos = ingresosOrdenados
+    .slice(0, MAX_FILAS)
     .map((i) => {
-      const cant = (i as any).cantidad ?? 1;
+      const cant = i.cantidad ?? 1;
       const total = i.monto * cant;
-      const cantLabel = cant > 1 ? ` (x${cant})` : "";
-      const clienteLabel = i.cliente || (() => {
-        const d = (i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
-        return d.length > 1 ? d : "—";
-      })();
+      const desc = cleanDesc(i.descripcion);
+      const clienteLabel =
+        i.cliente || (desc.split(" · ")[0].trim().length > 1 ? desc.split(" · ")[0].trim() : "—");
+      // La descripción suele empezar con el cliente — no repetirlo en la tabla
+      const partes = desc.split(" · ");
+      const detalle =
+        partes[0]?.trim() === clienteLabel
+          ? partes.slice(1).join(" · ").trim()
+          : desc;
+      const pendiente = i.estado === "pendiente";
       return `<tr>
       <td>${fmtFecha(i.fecha)}</td>
-      <td>${i.tipo_ingreso}${cantLabel}</td>
-      <td>${clienteLabel}</td>
-      <td>${cleanDesc(i.descripcion)}</td>
+      <td>${esc(i.tipo_ingreso)}${cant > 1 ? ` (x${cant})` : ""}</td>
+      <td>${esc(clienteLabel)}</td>
+      <td>${esc(detalle) || "—"}</td>
+      <td><span class="badge ${pendiente ? "b-pend" : "b-pag"}">${pendiente ? "Por cobrar" : "Pagado"}</span></td>
       <td class="right green">${fmt(total)}</td>
     </tr>`;
     })
     .join("");
 
-  const top10Gastos = [...params.gastosDetalle]
-    .sort((a, b) => b.monto - a.monto)
-    .slice(0, 15)
+  const filasGastos = [...params.gastosDetalle]
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .slice(0, MAX_FILAS)
     .map(
       (g) => `<tr>
       <td>${fmtFecha(g.fecha)}</td>
-      <td>${g.tipo_gasto}</td>
-      <td>${cleanDesc(g.descripcion)}</td>
+      <td>${esc(g.tipo_gasto)}</td>
+      <td>${esc(cleanDesc(g.descripcion)) || "—"}</td>
       <td class="right red">${fmt(g.monto)}</td>
     </tr>`,
     )
     .join("");
 
+  // Desglose recibido vs. por cobrar
+  const totalPorCobrar = params.ingresosDetalle
+    .filter((i) => i.estado === "pendiente")
+    .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
+  const totalRecibido = params.totalIngresos - totalPorCobrar;
+
+  const esCuentaCliente = !!params.clienteFiltro;
   const rentNum = Number(params.rentabilidad);
   const balColor = params.balance >= 0 ? "#16A34A" : "#EF4444";
+  const tituloDoc = esCuentaCliente ? "Estado de cuenta" : "Informe de Finanzas";
 
   return `<!DOCTYPE html>
 <html>
@@ -246,12 +271,19 @@ function generarReporteHTML(params: {
     .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
 
     /* SUMMARY GRID */
-    .summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+    .summary { display: grid; grid-template-columns: repeat(${esCuentaCliente ? 3 : 4}, 1fr); gap: 12px; margin-bottom: 8px; }
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
     .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #000; margin-bottom: 6px; }
     .s-value { font-size: 15px; font-weight: 800; color: #000; }
     .green { color: #16A34A; }
     .red { color: #EF4444; }
+    .amber { color: #B45309; }
+    .summary-note { font-size: 10px; color: #92400E; text-align: right; margin-bottom: 20px; }
+
+    /* BADGES DE ESTADO */
+    .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+    .b-pend { background: #FEF3C7; color: #92400E; }
+    .b-pag { background: #DCFCE7; color: #166534; }
 
     /* SECTION */
     .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #000; margin: 24px 0 10px; }
@@ -276,10 +308,10 @@ function generarReporteHTML(params: {
   <div class="doc-header">
     <div>
       <div class="brand">Truck<span>Book</span></div>
-      <div style="font-size:13px;color:#666;margin-top:4px;">Informe Financiero</div>
+      <div style="font-size:13px;color:#666;margin-top:4px;">${tituloDoc}</div>
     </div>
     <div class="doc-info">
-      <strong>Informe de Finanzas</strong>
+      <strong>${esCuentaCliente ? `Estado de cuenta — ${esc(params.clienteFiltro)}` : "Informe de Finanzas"}</strong>
       Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
     </div>
   </div>
@@ -291,9 +323,9 @@ function generarReporteHTML(params: {
     </div>
     <div class="meta-item">
       <strong>Vehículo(s)</strong>
-      <span>${params.placas.length > 0 ? params.placas.join(", ") : "Todos"}</span>
+      <span>${params.placas.length > 0 ? esc(params.placas.join(", ")) : "Todos"}</span>
     </div>
-    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${params.clienteFiltro}</span></div>` : ""}
+    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
     <div class="meta-item">
       <strong>Transacciones</strong>
       <span>${params.gastosDetalle.length + params.ingresosDetalle.length}</span>
@@ -301,6 +333,25 @@ function generarReporteHTML(params: {
   </div>
 
   <!-- RESUMEN -->
+  ${
+    esCuentaCliente
+      ? `
+  <div class="summary">
+    <div class="s-card" style="border-color:#E2E8F0">
+      <div class="s-label">Total facturado</div>
+      <div class="s-value">${fmt(params.totalIngresos)}</div>
+    </div>
+    <div class="s-card" style="border-color:#16A34A40">
+      <div class="s-label">Recibido</div>
+      <div class="s-value green">${fmt(totalRecibido)}</div>
+    </div>
+    <div class="s-card" style="border-color:#F59E0B40">
+      <div class="s-label">Por cobrar</div>
+      <div class="s-value amber">${fmt(totalPorCobrar)}</div>
+    </div>
+  </div>
+  <div class="summary-note">&nbsp;</div>`
+      : `
   <div class="summary">
     <div class="s-card" style="border-color:#16A34A40">
       <div class="s-label">Ingresos</div>
@@ -319,10 +370,12 @@ function generarReporteHTML(params: {
       <div class="s-value" style="color:${rentNum >= 0 ? "#16A34A" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
     </div>
   </div>
+  <div class="summary-note">${totalPorCobrar > 0 ? `Los ingresos incluyen ${fmt(totalPorCobrar)} aún por cobrar` : "&nbsp;"}</div>`
+  }
 
-  <!-- POR PERÍODO -->
+  <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta) -->
   ${
-    params.periodos.length > 0
+    !esCuentaCliente && params.periodos.length > 0
       ? `
   <div class="section-title">Resumen por período</div>
   <table>
@@ -349,14 +402,20 @@ function generarReporteHTML(params: {
   ${
     params.ingresosDetalle.length > 0
       ? `
-  <div class="section-title">Ingresos del período (${params.ingresosDetalle.length})</div>
+  <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${params.ingresosDetalle.length})</div>
   <table>
     <thead><tr>
-      <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Descripción</th><th class="right">Monto</th>
+      <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th class="right">Monto</th>
     </tr></thead>
-    <tbody>${top10Ingresos}</tbody>
+    <tbody>
+      ${filasIngresos}
+      <tr class="total-tr">
+        <td colspan="5">Total</td>
+        <td class="right green">${fmt(params.totalIngresos)}</td>
+      </tr>
+    </tbody>
   </table>
-  ${params.ingresosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.ingresosDetalle.length} registros</div>` : ""}
+  ${params.ingresosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.ingresosDetalle.length} registros</div>` : ""}
   `
       : ""
   }
@@ -370,9 +429,15 @@ function generarReporteHTML(params: {
     <thead><tr>
       <th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="right">Monto</th>
     </tr></thead>
-    <tbody>${top10Gastos}</tbody>
+    <tbody>
+      ${filasGastos}
+      <tr class="total-tr">
+        <td colspan="3">Total</td>
+        <td class="right red">${fmt(params.totalGastos)}</td>
+      </tr>
+    </tbody>
   </table>
-  ${params.gastosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.gastosDetalle.length} registros</div>` : ""}
+  ${params.gastosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.gastosDetalle.length} registros</div>` : ""}
   `
       : ""
   }
@@ -655,7 +720,11 @@ export default function FinanzasGenerales() {
 
   const generarPDF = async () => {
     if (exportando) return;
-    const r = exportRango;
+    // Normalizar rango invertido (Desde > Hasta filtraba a vacío → "Sin datos")
+    const r =
+      exportRango.inicio <= exportRango.fin
+        ? exportRango
+        : { inicio: exportRango.fin, fin: exportRango.inicio };
     const gastosDetalle = exportCliente
       ? []
       : gastosPorPlaca.filter((g) => g.fecha >= r.inicio && g.fecha <= r.fin);
@@ -665,16 +734,28 @@ export default function FinanzasGenerales() {
       const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
       return parte.length > 1 ? parte : null;
     };
+    // Comparación insensible a mayúsculas/espacios ("acme" encuentra "Acme")
+    const norm = (s: string) => s.trim().toLowerCase();
+    const clienteBuscado = exportCliente ? norm(exportCliente) : null;
     const ingresosDetalle = ingresosPorPlaca.filter(
       (i) =>
         i.fecha >= r.inicio &&
         i.fecha <= r.fin &&
-        (exportCliente === null || getClienteIngreso(i) === exportCliente),
+        (clienteBuscado === null ||
+          norm(getClienteIngreso(i) ?? "") === clienteBuscado),
     );
+    // Nombre real del cliente (con sus mayúsculas) para el PDF
+    const clienteReal = exportCliente
+      ? ingresosDetalle.length > 0
+        ? getClienteIngreso(ingresosDetalle[0])
+        : exportCliente
+      : null;
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
       Alert.alert(
         "Sin datos",
-        "No hay transacciones en el período seleccionado.",
+        exportCliente
+          ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
+          : "No hay transacciones en el período seleccionado.",
       );
       return;
     }
@@ -693,8 +774,16 @@ export default function FinanzasGenerales() {
       fecha: i.fecha,
       value: i.monto * ((i as any).cantidad ?? 1),
     }));
-    const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, 7));
-    const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, 7));
+    // Rangos cortos (≤31 días) se agrupan por día; antes siempre por mes,
+    // así que exportar "Esta semana" daba una sola fila mensual
+    const diasRango = Math.round(
+      (new Date(r.fin + "T12:00:00").getTime() -
+        new Date(r.inicio + "T12:00:00").getTime()) /
+        86_400_000,
+    );
+    const keyLen = diasRango <= 31 ? 10 : 7;
+    const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, keyLen));
+    const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, keyLen));
     const keys = Array.from(
       new Set([...Object.keys(gGrp), ...Object.keys(iGrp)]),
     ).sort();
@@ -721,8 +810,8 @@ export default function FinanzasGenerales() {
         gastosPorPeriodo: gasPeriodo,
         gastosDetalle,
         ingresosDetalle,
-        view: "meses",
-        clienteFiltro: exportCliente,
+        view: diasRango <= 31 ? "dias" : "meses",
+        clienteFiltro: clienteReal,
       });
 
       await new Promise((res) => setTimeout(res, 600));
@@ -736,7 +825,9 @@ export default function FinanzasGenerales() {
 
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
-        dialogTitle: "Compartir informe financiero",
+        dialogTitle: clienteReal
+          ? `Estado de cuenta — ${clienteReal}`
+          : "Compartir informe financiero",
         UTI: "com.adobe.pdf",
       });
     } catch (err: any) {
