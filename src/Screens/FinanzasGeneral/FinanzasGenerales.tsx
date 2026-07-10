@@ -815,8 +815,9 @@ export default function FinanzasGenerales() {
       const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
       return parte.length > 1 ? parte : null;
     };
-    // Comparación insensible a mayúsculas/espacios ("acme" encuentra "Acme")
-    const norm = (s: string) => s.trim().toLowerCase();
+    // Comparación insensible a mayúsculas y espacios (también dobles/invisibles:
+    // "h&h  ingenieros" encuentra "H&H Ingenieros")
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
     const clienteBuscado = exportCliente ? norm(exportCliente) : null;
     // Un mismo cliente puede estar guardado en el campo `cliente` (registros
     // nuevos) o solo al inicio de la descripción (facturas escaneadas, registros
