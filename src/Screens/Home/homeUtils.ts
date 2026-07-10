@@ -78,12 +78,9 @@ export function initials(nombre: string): string {
   return nombre.substring(0, 2).toUpperCase();
 }
 
-/** Extrae el teléfono incrustado en la descripción ([TEL:...]) */
-export function extraerTelDesc(desc: string): { desc: string; tel: string | null } {
-  const match = desc.match(/\[TEL:([^\]]+)\]$/);
-  if (!match) return { desc, tel: null };
-  return { desc: desc.replace(/\[TEL:[^\]]+\]$/, ""), tel: match[1] };
-}
+// Helpers de teléfono movidos a src/utils/telefono.ts (compartidos con servicios).
+// Se re-exportan aquí para no romper los imports existentes (ModalPendientes).
+export { extraerTelDesc, formatearTel } from "../../utils/telefono";
 
 /** Mensaje de cobro por WhatsApp */
 export function mensajeCobroWA(cliente: string, monto: number, dias: number): string {
@@ -91,20 +88,4 @@ export function mensajeCobroWA(cliente: string, monto: number, dias: number): st
   if (dias === 0) return `Hola ${cliente}, buen día. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
   if (dias === 1) return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
   return `Hola ${cliente}, le saludo. Quería recordarle el flete por ${m} registrado hace ${dias} días que quedó pendiente de pago. ¿Cuándo podemos cuadrar? ¡Gracias!`;
-}
-
-/** Limpia y formatea un número colombiano para wa.me / tel:
- *  Retorna string vacío si el formato no es válido */
-export function formatearTel(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  // Celular colombiano: 10 dígitos empezando por 3
-  if (digits.length === 10 && digits.startsWith("3")) return "57" + digits;
-  // Ya con código de país 57
-  if (digits.length === 12 && digits.startsWith("57")) return digits;
-  // Fijo colombiano: 7 dígitos (sin indicativo)
-  if (digits.length === 7) return "57" + digits;
-  // Fijo con indicativo: 10 dígitos empezando por 60
-  if (digits.length === 10 && digits.startsWith("60")) return "57" + digits;
-  // Formato no reconocido — no generar URL
-  return "";
 }

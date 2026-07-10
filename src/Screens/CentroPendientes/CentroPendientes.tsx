@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Clipboard from "expo-clipboard";
+import { formatearTel } from "../../utils/telefono";
 
 import { useTheme } from "../../constants/Themecontext";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -94,33 +96,42 @@ export default function CentroPendientes() {
   }, [cargarInsights]);
 
   const enviarWhatsApp = (telefono: string, mensaje: string) => {
-    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+    // Con teléfono válido abre el chat directo; sin él, WhatsApp deja elegir contacto
+    const base = telefono ? `https://wa.me/${telefono}` : "https://wa.me/";
+    const url = `${base}?text=${encodeURIComponent(mensaje)}`;
     Linking.openURL(url).catch(() =>
       Alert.alert("Error", "No se pudo abrir WhatsApp")
     );
+  };
+
+  const copiarMensaje = async (mensaje: string) => {
+    try {
+      await Clipboard.setStringAsync(mensaje);
+      Alert.alert("Copiado", "Mensaje copiado al portapapeles");
+    } catch {
+      Alert.alert("Error", "No se pudo copiar el mensaje");
+    }
   };
 
   const mostrarMensajeCobro = (item: PorCobrar) => {
     const msg =
       insights?.mensajeCobro ??
       `Hola! Te recordamos que tienes una cuenta pendiente de pago por ${formatCOP(item.montoRestante)}. Por favor comunícate con nosotros. Gracias.`;
-    Alert.alert(
-      `Cobrar a ${item.cliente}`,
-      msg,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Enviar por WhatsApp",
-          onPress: () => enviarWhatsApp("", msg),
-        },
-        {
-          text: "Copiar",
-          onPress: () => {
-            Alert.alert("Copiado", "Mensaje copiado al portapapeles");
-          },
-        },
-      ]
-    );
+    const tel = item.telefono ? formatearTel(item.telefono) : "";
+
+    const botones: Parameters<typeof Alert.alert>[2] = [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: tel ? "Enviar por WhatsApp" : "Abrir WhatsApp",
+        onPress: () => enviarWhatsApp(tel, msg),
+      },
+      {
+        text: "Copiar",
+        onPress: () => copiarMensaje(msg),
+      },
+    ];
+
+    Alert.alert(`Cobrar a ${item.cliente}`, msg, botones);
   };
 
   const styles = makeStyles(c, isDark);
