@@ -238,12 +238,17 @@ export default function Ingresos() {
           .replace(/\[TEL:[^\]]*\]/g, "")
           .replace(/[<>{}]/g, "")
           .slice(0, 500);
-        // Conservar el teléfono del registro original: el modal de edición
-        // reconstruye la descripción sin el tag [TEL:...] y lo perdía en silencio
+        // Teléfono: usar el del contacto recién elegido en la edición si lo
+        // hay; si no, conservar el del registro original (el modal reconstruye
+        // la descripción sin el tag [TEL:...] y antes lo perdía en silencio)
         const original = useIngresosStore
           .getState()
           .ingresos.find((i) => i.id === id);
-        const { tel } = extraerTelDesc(original?.descripcion ?? "");
+        const { tel: telOriginal } = extraerTelDesc(original?.descripcion ?? "");
+        const telNuevo = extras?.telefono
+          ?.replace(/[^0-9+\- ]/g, "")
+          .slice(0, 20);
+        const tel = telNuevo || telOriginal;
         if (tel) desc = `${desc}[TEL:${tel}]`;
         payload.descripcion = desc;
       }
