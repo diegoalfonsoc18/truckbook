@@ -20,9 +20,9 @@ import {
   fmtI,
   diasDesde,
   extraerTelDesc,
-  mensajeCobroWA,
   formatearTel,
 } from "../homeUtils";
+import { mensajeCuentaCobro } from "../../../utils/cuentaCobro";
 import { useTheme } from "../../../constants/Themecontext";
 import { useClientType } from "../../../hooks/useClientType";
 
@@ -379,8 +379,22 @@ export function ModalPendientes({
                       {/* WhatsApp */}
                       <TouchableOpacity
                         onPress={() => {
+                          // Cuenta de cobro resumida: todos los pendientes del cliente
+                          const lineas = pendientes
+                            .map((p) => {
+                              const { desc } = extraerTelDesc(p.descripcion ?? "");
+                              const partes = (desc || p.tipo_ingreso || "Flete").split(" · ");
+                              return {
+                                cli: partes[0].trim(),
+                                fecha: p.fecha,
+                                detalle: partes.slice(1).join(" · "),
+                                cantidad: p.cantidad,
+                                monto: (p.monto ?? 0) * (p.cantidad ?? 1),
+                              };
+                            })
+                            .filter((l) => l.cli === cliente);
                           const msg = encodeURIComponent(
-                            mensajeCobroWA(cliente, (item.monto ?? 0) * (item.cantidad ?? 1), dias),
+                            mensajeCuentaCobro(cliente, lineas),
                           );
                           const tel = telContacto
                             ? formatearTel(telContacto)

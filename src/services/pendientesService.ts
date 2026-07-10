@@ -13,6 +13,7 @@ export interface PorCobrar {
   cliente: string;
   descripcion: string;
   telefono: string | null; // teléfono de contacto (crudo) extraído de [TEL:...]
+  cantidad: number; // fletes múltiples (x2, x3…)
   monto: number;
   montoPagado: number;
   montoRestante: number;
@@ -95,6 +96,7 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
         cliente: i.cliente ?? descLimpia,
         descripcion: descLimpia,
         telefono: tel,
+        cantidad: i.cantidad ?? 1,
         monto: montoTotal,
         montoPagado,
         montoRestante,

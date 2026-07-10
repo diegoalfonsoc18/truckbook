@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Clipboard from "expo-clipboard";
 import { formatearTel } from "../../utils/telefono";
+import { mensajeCuentaCobro } from "../../utils/cuentaCobro";
 
 import { useTheme } from "../../constants/Themecontext";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -114,9 +115,25 @@ export default function CentroPendientes() {
   };
 
   const mostrarMensajeCobro = (item: PorCobrar) => {
-    const msg =
-      insights?.mensajeCobro ??
-      `Hola! Te recordamos que tienes una cuenta pendiente de pago por ${formatCOP(item.montoRestante)}. Por favor comunícate con nosotros. Gracias.`;
+    // Cuenta de cobro resumida: una línea por cada pendiente del mismo cliente
+    const delCliente = porCobrar.filter(
+      (p) => p.cliente === item.cliente && p.estado !== "pagado",
+    );
+    const detalleDe = (p: PorCobrar) => {
+      // La descripción suele empezar con el cliente ("Acme · cemento · ...")
+      const partes = (p.descripcion || "").split(" · ");
+      const resto = partes[0]?.trim() === p.cliente ? partes.slice(1) : partes;
+      return resto.join(" · ").trim();
+    };
+    const msg = mensajeCuentaCobro(
+      item.cliente,
+      delCliente.map((p) => ({
+        fecha: p.fecha,
+        detalle: detalleDe(p),
+        cantidad: p.cantidad,
+        monto: p.montoRestante,
+      })),
+    );
     const tel = item.telefono ? formatearTel(item.telefono) : "";
 
     const botones: Parameters<typeof Alert.alert>[2] = [

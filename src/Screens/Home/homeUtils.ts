@@ -82,10 +82,5 @@ export function initials(nombre: string): string {
 // Se re-exportan aquí para no romper los imports existentes (ModalPendientes).
 export { extraerTelDesc, formatearTel } from "../../utils/telefono";
 
-/** Mensaje de cobro por WhatsApp */
-export function mensajeCobroWA(cliente: string, monto: number, dias: number): string {
-  const m = fmtI(monto);
-  if (dias === 0) return `Hola ${cliente}, buen día. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
-  if (dias === 1) return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
-  return `Hola ${cliente}, le saludo. Quería recordarle el flete por ${m} registrado hace ${dias} días que quedó pendiente de pago. ¿Cuándo podemos cuadrar? ¡Gracias!`;
-}
+// El mensaje de cobro por WhatsApp ahora es la cuenta de cobro resumida
+// (src/utils/cuentaCobro.ts), compartida con CentroPendientes.
