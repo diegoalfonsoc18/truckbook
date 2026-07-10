@@ -337,10 +337,6 @@ function generarReporteHTML(params: {
       <span>${params.placas.length > 0 ? esc(params.placas.join(", ")) : "Todos"}</span>
     </div>
     ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
-    <div class="meta-item">
-      <strong>Transacciones</strong>
-      <span>${params.gastosDetalle.length + params.ingresosDetalle.length}</span>
-    </div>
   </div>
 
   <!-- RESUMEN -->
