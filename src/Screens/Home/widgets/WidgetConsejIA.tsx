@@ -1,14 +1,22 @@
 // src/Screens/Home/widgets/WidgetConsejIA.tsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  InteractionManager,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { callGemini } from "../../../config/aiConfig";
 import { useGastosStore } from "../../../store/GastosStore";
-import { WProps } from "../homeUtils";
+import { useVehiculoStore } from "../../../store/VehiculoStore";
+import { fechaLocalHoy, inicioSemana, WProps } from "../homeUtils";
+import { readAICache, writeAICache } from "../../../utils/aiCache";
 
-const CACHE_KEY = "@truckbook_consejo_ia_v2";
-const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 horas
+const CACHE_KEY = "@truckbook_consejo_ia_v3";
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 horas con los mismos datos
+const MIN_INTERVAL = 60 * 60 * 1000; // máx. 1 llamada IA por hora aunque cambien
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCOP(n: number): string {
@@ -18,24 +26,21 @@ function fmtCOP(n: number): string {
   return `$${n}`;
 }
 
-function dateStr(offset = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() - offset);
-  return d.toISOString().slice(0, 10);
-}
-
 // ─── WidgetConsejIA ────────────────────────────────────────────────────────────
 export default function WidgetConsejIA({ isDark }: WProps) {
-  const gastos = useGastosStore((s) => s.gastos);
+  const placa = useVehiculoStore((s) => s.placa);
+  const gastosAll = useGastosStore((s) => s.gastos);
   const [consejo, setConsejo] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(false);
 
-  // ── Calcular stats de la semana ────────────────────────────────────────────
+  // ── Calcular stats de la semana (lunes a hoy, hora local — igual que el Home) ──
   const stats = useMemo(() => {
-    const hace7  = dateStr(6);
-    const hace14 = dateStr(13);
-    const mesStr = dateStr(0).slice(0, 7) + "-01";
+    // El store puede tener filas de varias placas en caché — solo contar la activa
+    const gastos = placa ? gastosAll.filter((g) => g.placa === placa) : [];
+    const hace7  = inicioSemana();
+    const hace14 = inicioSemana(1);
+    const mesStr = fechaLocalHoy().slice(0, 7) + "-01";
 
     const fecha = (g: typeof gastos[0]) => (g.fecha ?? g.created_at ?? "").slice(0, 10);
 
@@ -47,7 +52,7 @@ export default function WidgetConsejIA({ isDark }: WProps) {
         })
         .reduce((a, g) => a + (g.monto ?? 0), 0);
 
-    const mantTipos = ["Reparación", "Llantas", "Aceite", "Taller"];
+    const mantTipos = ["Reparación", "Llantas", "Aceite", "Taller", "Lavado"];
 
     const combSem    = sum(["Combustible"], hace7);
     const combAnt    = sum(["Combustible"], hace14, hace7);
@@ -57,9 +62,9 @@ export default function WidgetConsejIA({ isDark }: WProps) {
     const mantMes    = sum(mantTipos, mesStr);
 
     return { combSem, combTrend, peajesSem, peajesCount, mantMes };
-  }, [gastos]);
+  }, [gastosAll, placa]);
 
-  const fingerprint = `${stats.combSem}|${stats.combTrend}|${stats.peajesSem}|${stats.mantMes}`;
+  const fingerprint = `${placa}|${stats.combSem}|${stats.combTrend}|${stats.peajesSem}|${stats.mantMes}`;
 
   const buildPrompt = () => {
     const lineas = [
@@ -79,28 +84,33 @@ export default function WidgetConsejIA({ isDark }: WProps) {
   const fetchConsejo = useCallback(
     async (force = false) => {
       if (!force) {
-        try {
-          const raw = await AsyncStorage.getItem(CACHE_KEY);
-          if (raw) {
-            const cached = JSON.parse(raw) as { text: string; ts: number; fp: string };
-            if (Date.now() - cached.ts < CACHE_TTL && cached.fp === fingerprint) {
-              setConsejo(cached.text);
-              return;
-            }
+        const cached = await readAICache<string>(CACHE_KEY);
+        if (cached) {
+          const age = Date.now() - cached.ts;
+          // Vigente: mismos datos y dentro del TTL
+          if (age < CACHE_TTL && cached.fp === fingerprint) {
+            setConsejo(cached.value);
+            return;
           }
-        } catch { /* ignore */ }
+          // Throttle: los datos cambiaron pero la última llamada fue hace <1h —
+          // mostrar el consejo anterior en vez de llamar a Gemini por cada gasto
+          if (age < MIN_INTERVAL) {
+            setConsejo(cached.value);
+            return;
+          }
+        }
       }
 
       setCargando(true);
       setError(false);
       try {
-        const { text, error: geminiError } = await callGemini(buildPrompt(), {
+        const { text } = await callGemini(buildPrompt(), {
           maxOutputTokens: 150,
           temperature: 0.7,
         });
         if (text) {
           setConsejo(text.trim());
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ text: text.trim(), ts: Date.now(), fp: fingerprint }));
+          await writeAICache(CACHE_KEY, text.trim(), fingerprint);
         } else {
           setError(true);
         }
@@ -115,7 +125,10 @@ export default function WidgetConsejIA({ isDark }: WProps) {
 
   useEffect(() => {
     const hayDatos = stats.combSem > 0 || stats.peajesSem > 0 || stats.mantMes > 0;
-    if (hayDatos) fetchConsejo();
+    if (!hayDatos) return;
+    // Diferir hasta después de las animaciones de entrada del Home
+    const task = InteractionManager.runAfterInteractions(() => fetchConsejo());
+    return () => task.cancel();
   }, [fetchConsejo]);
 
   // ── Estilos ────────────────────────────────────────────────────────────────

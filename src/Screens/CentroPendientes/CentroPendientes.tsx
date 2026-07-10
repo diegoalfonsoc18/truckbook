@@ -33,8 +33,12 @@ import {
   generarInsights,
   InsightsPendientes,
 } from "../../services/insightsService";
+import { getAICache, writeAICache } from "../../utils/aiCache";
 
 type Tab = "cobrar" | "pagar";
+
+const CACHE_INSIGHTS = "@truckbook_centro_insights_v1";
+const TTL_INSIGHTS = 6 * 3_600_000; // 6 horas
 
 export default function CentroPendientes() {
   const { colors, isDark } = useTheme();
@@ -57,12 +61,27 @@ export default function CentroPendientes() {
     [porCobrar, porPagar]
   );
 
-  const cargarInsights = useCallback(async () => {
+  // Huella del resumen: si los pendientes no cambiaron, el insight cacheado sigue válido
+  const fpResumen = `${resumen.countPorCobrar}|${resumen.totalPorCobrar}|${resumen.countVencidosCobro}|${resumen.countVencidosPago}|${resumen.countProximosPago}|${resumen.totalPorPagar}`;
+
+  const cargarInsights = useCallback(async (force = false) => {
+    if (!force) {
+      const cached = await getAICache<InsightsPendientes>(
+        CACHE_INSIGHTS,
+        TTL_INSIGHTS,
+        fpResumen,
+      );
+      if (cached) {
+        setInsights(cached);
+        return;
+      }
+    }
     setLoadingIA(true);
     const result = await generarInsights(resumen);
+    if (result) await writeAICache(CACHE_INSIGHTS, result, fpResumen);
     setInsights(result);
     setLoadingIA(false);
-  }, [resumen]);
+  }, [resumen, fpResumen]);
 
   useEffect(() => {
     cargarInsights();
@@ -70,7 +89,7 @@ export default function CentroPendientes() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await cargarInsights();
+    await cargarInsights(true);
     setRefreshing(false);
   }, [cargarInsights]);
 
@@ -152,7 +171,7 @@ export default function CentroPendientes() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={cargarInsights}
+              onPress={() => cargarInsights(true)}
               disabled={loadingIA}
               style={styles.iaRefresh}>
               {loadingIA ? (

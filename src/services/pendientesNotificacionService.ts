@@ -16,6 +16,11 @@ const ID_IA_COBRO   = "pendientes_ia_cobro_diario";
 const CACHE_IA_NOTIF = "@truckbook_pend_ia_notif_v1";
 const TTL_IA_NOTIF   = 20 * 3_600_000; // 20 horas
 
+// Huella de la última lista programada — evita cancelar/reprogramar la
+// notificación (y releer el caché) cuando el store cambia pero los
+// pendientes son los mismos (p. ej. ediciones de otros ingresos).
+let ultimaHuella: string | null = null;
+
 /** Formatea un número como COP compacto (sin signo) */
 function fmtCompact(n: number): string {
   const a = Math.abs(n);
@@ -34,6 +39,10 @@ export async function programarRecordatorioIACobros(
   pendientes: PendienteResumido[]
 ): Promise<void> {
   try {
+    const huella = pendientes.map((p) => `${p.id}:${p.monto ?? 0}`).join("|");
+    if (huella === ultimaHuella) return; // nada cambió — no reprogramar
+    ultimaHuella = huella;
+
     // Si no hay nada pendiente, cancelar y salir
     await Notifications.cancelScheduledNotificationAsync(ID_IA_COBRO).catch(() => {});
     if (pendientes.length === 0) return;
