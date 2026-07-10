@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import supabase from "../config/SupaBaseConfig";
-import logger from "../utils/logger";
 import { encryptedStorage } from "../utils/encryptedStorage";
 
 export interface Ingreso {
@@ -29,7 +27,6 @@ interface IngresosState {
   editarIngreso: (id: string, updates: Partial<Ingreso>) => void;
   eliminarIngreso: (id: string) => void;
   limpiarIngresos: () => void;
-  cargarIngresosDelDB: (placaActual?: string | null, conductorId?: string | null) => Promise<void>;
 }
 
 export const useIngresosStore = create<IngresosState>()(
@@ -67,28 +64,6 @@ export const useIngresosStore = create<IngresosState>()(
         })),
 
       limpiarIngresos: () => set({ ingresos: [] }),
-
-      cargarIngresosDelDB: async (placaActual?: string | null, conductorId?: string | null) => {
-        try {
-          let query = supabase
-            .from("conductor_ingresos")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (placaActual) {
-            query = query.eq("placa", placaActual);
-          }
-          if (conductorId) {
-            query = query.eq("conductor_id", conductorId);
-          }
-
-          const { data, error } = await query;
-          if (error) throw error;
-          set({ ingresos: data || [] });
-        } catch (err) {
-          logger.error("Error loading ingresos:", err);
-        }
-      },
     }),
     {
       name: "ingresos-storage",

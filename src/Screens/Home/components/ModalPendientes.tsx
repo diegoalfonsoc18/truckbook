@@ -12,7 +12,6 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import supabase from "../../../config/SupaBaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -40,7 +39,6 @@ export function ModalPendientes({
   pendientes: ReturnType<typeof useIngresosStore.getState>["ingresos"];
   isDark: boolean;
 }) {
-  const { placa } = useVehiculoStore();
   const { colors: c } = useTheme();
   const [geminiMsg, setGeminiMsg] = useState<string | null>(null);
   const [loadingGem, setLoadingGem] = useState(false);
@@ -129,17 +127,19 @@ export function ModalPendientes({
           style: "default",
           onPress: async () => {
             setCobrando(id);
-            const { error } = await supabase
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            let query = supabase
               .from("conductor_ingresos")
               .update({ estado: "pagado" })
               .eq("id", id);
-            if (!error && placa) {
-              const {
-                data: { session },
-              } = await supabase.auth.getSession();
-              useIngresosStore
-                .getState()
-                .cargarIngresosDelDB(placa, session?.user?.id);
+            // Doble filtro: id + conductor_id para prevenir modificar datos de otros
+            if (session?.user?.id) query = query.eq("conductor_id", session.user.id);
+            const { error } = await query;
+            if (!error) {
+              // Actualiza el caché local directo; el realtime confirma después
+              useIngresosStore.getState().editarIngreso(id, { estado: "pagado" });
             }
             setCobrando(null);
           },

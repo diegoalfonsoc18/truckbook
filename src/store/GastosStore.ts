@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import supabase from "../config/SupaBaseConfig";
-import logger from "../utils/logger";
 import { encryptedStorage } from "../utils/encryptedStorage";
 
 export interface Gasto {
@@ -26,7 +24,6 @@ interface GastosState {
   editarGasto: (id: string, updates: Partial<Gasto>) => void;
   eliminarGasto: (id: string) => void;
   limpiarGastos: () => void;
-  cargarGastosDelDB: (placaActual?: string | null, conductorId?: string | null) => Promise<void>;
 }
 
 export const useGastosStore = create<GastosState>()(
@@ -60,28 +57,6 @@ export const useGastosStore = create<GastosState>()(
         set((state) => ({ gastos: state.gastos.filter((g) => g.id !== id) })),
 
       limpiarGastos: () => set({ gastos: [] }),
-
-      cargarGastosDelDB: async (placaActual?: string | null, conductorId?: string | null) => {
-        try {
-          let query = supabase
-            .from("conductor_gastos")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (placaActual) {
-            query = query.eq("placa", placaActual);
-          }
-          if (conductorId) {
-            query = query.eq("conductor_id", conductorId);
-          }
-
-          const { data, error } = await query;
-          if (error) throw error;
-          set({ gastos: data || [] });
-        } catch (err) {
-          logger.error("Error cargando gastos:", err);
-        }
-      },
     }),
     {
       name: "gastos-storage",

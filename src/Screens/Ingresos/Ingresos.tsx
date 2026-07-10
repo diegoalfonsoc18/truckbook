@@ -6,7 +6,6 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useTheme } from "../../constants/Themecontext";
-import NetInfo from "@react-native-community/netinfo";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
 import { useNavigation } from "@react-navigation/native";
@@ -95,8 +94,9 @@ export default function Ingresos() {
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
   const { user } = useAuth();
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
+  // La carga y el realtime viven en DataProvider (única fuente); aquí solo mutaciones
   const { agregarIngreso, actualizarIngreso, eliminarIngreso } =
-    useIngresosConductor(placaActual, user?.id);
+    useIngresosConductor(user?.id);
 
   const categoriasConIconoDinamico = INGRESOS_CATEGORIAS.map((cat) =>
     cat.id === "flete"
@@ -105,12 +105,6 @@ export default function Ingresos() {
       ? { ...cat, iconName: getMercanciaIcon(tipoCamion) }
       : cat
   );
-
-  useEffect(() => {
-    if (placaActual) {
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
-    }
-  }, [placaActual, user?.id]);
 
   // Sincroniza el recordatorio de fletes pendientes cada vez que cambian los ingresos
   useEffect(() => {
@@ -226,7 +220,7 @@ export default function Ingresos() {
         cliente: extras?.cliente ? sanitizarInput(extras.cliente) : undefined,
       });
     },
-    [placaActual, user?.id],
+    [placaActual, user?.id, agregarIngreso],
   );
 
   const onUpdate = useCallback(
