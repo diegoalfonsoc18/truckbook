@@ -11,6 +11,7 @@ import {
   Alert,
   Image,
   TextInput,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -713,6 +714,9 @@ export default function FinanzasGenerales() {
     type: "inicio" | "fin",
     target: "main" | "export" = "main",
   ) => {
+    // Si el teclado está abierto (input de cliente), cerrarlo — si no, el
+    // calendario queda empujado/tapado por el teclado
+    Keyboard.dismiss();
     setSelectingDate(type);
     setCalendarTarget(target);
     setCalendarVisible(true);
@@ -1433,11 +1437,13 @@ export default function FinanzasGenerales() {
             </TouchableOpacity>
           </TouchableOpacity>
 
-          {/* Calendario como overlay DENTRO del modal de exportar */}
-          {calendarVisible && calendarTarget === "export" && (
-            <View style={StyleSheet.absoluteFill}>{renderCalendarSheet()}</View>
-          )}
         </KeyboardAvoidingView>
+
+        {/* Calendario como overlay DENTRO del modal de exportar, pero FUERA
+            del KeyboardAvoidingView para que el teclado no lo desplace */}
+        {calendarVisible && calendarTarget === "export" && (
+          <View style={StyleSheet.absoluteFill}>{renderCalendarSheet()}</View>
+        )}
       </Modal>
 
       {/* MODAL CALENDARIO — solo para el selector de la pantalla principal.
