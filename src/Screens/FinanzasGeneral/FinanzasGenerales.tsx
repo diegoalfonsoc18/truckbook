@@ -310,7 +310,11 @@ function generarReporteHTML(params: {
     .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; color: #000; }
 
     /* FOOTER */
-    .footer { text-align: center; font-size: 10px; color: #000; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 14px; }
+    .footer { text-align: center; font-size: 10px; color: #94A3B8; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 16px; }
+    .stores { display: flex; gap: 16px; justify-content: center; align-items: center; margin-top: 8px; }
+    .store-badge { display: inline-flex; align-items: center; gap: 5px; color: #94A3B8; }
+    .store-badge svg { width: 13px; height: 13px; flex-shrink: 0; fill: #94A3B8; }
+    .store-badge span { font-size: 9px; font-weight: 600; letter-spacing: 0.2px; }
   </style>
 </head>
 <body>
@@ -451,7 +455,16 @@ function generarReporteHTML(params: {
 
   <div class="footer">
     Generado con <strong>TruckBook</strong>
-    <div style="margin-top:3px;">Disponible para iPhone en App Store y Android en Google Play</div>
+    <div class="stores">
+      <span class="store-badge">
+        <svg viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.86 2.33-4.23 2.44-4.3-1.33-1.95-3.4-2.22-4.14-2.25-1.76-.18-3.44 1.04-4.33 1.04-.89 0-2.27-1.02-3.73-.99-1.92.03-3.69 1.12-4.68 2.84-2 3.46-.51 8.58 1.43 11.39.95 1.37 2.08 2.91 3.56 2.86 1.43-.06 1.97-.92 3.7-.92 1.72 0 2.21.92 3.72.89 1.54-.03 2.51-1.4 3.45-2.78 1.09-1.59 1.54-3.13 1.56-3.21-.03-.02-2.99-1.15-3.02-4.56zM14.28 4.16c.79-.96 1.32-2.29 1.18-3.62-1.14.05-2.52.76-3.33 1.72-.73.85-1.37 2.21-1.2 3.51 1.27.1 2.57-.65 3.35-1.61z"/></svg>
+        <span>App Store</span>
+      </span>
+      <span class="store-badge">
+        <svg viewBox="0 0 24 24"><path d="M3.6 2.3c-.2.2-.3.5-.3.9v17.6c0 .4.1.7.3.9l.1.1 9.9-9.9v-.2zM17 15.3l-3.4-3.4L17 8.5l3.9 2.2c1.1.6 1.1 1.7 0 2.3zM17.1 15.2 13.6 11.9 3.7 21.8c.4.4 1 .4 1.6.1zM17.1 8.6 5.3 2C4.7 1.6 4.1 1.7 3.7 2.1l9.9 9.8z"/></svg>
+        <span>Google Play</span>
+      </span>
+    </div>
   </div>
 </div>
 </body>
