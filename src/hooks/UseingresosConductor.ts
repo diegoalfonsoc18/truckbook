@@ -1,70 +1,16 @@
-import { useEffect, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import supabase from "../config/SupaBaseConfig";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
 import logger from "../utils/logger";
 
-interface UseIngresosConductorReturn {
-  ingresos: Ingreso[];
-  cargando: boolean;
-  error: string | null;
-  agregarIngreso: (
-    ingreso: Omit<Ingreso, "id" | "created_at">
-  ) => Promise<{ success: boolean; error?: string }>;
-  actualizarIngreso: (
-    id: string,
-    updates: Partial<Ingreso>
-  ) => Promise<{ success: boolean; error?: string }>;
-  eliminarIngreso: (
-    id: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  recargar: () => Promise<void>;
-}
-
-export const useIngresosConductor = (
-  placa?: string | null,
-  conductorId?: string | null
-): UseIngresosConductorReturn => {
-  const {
-    ingresos,
-    setIngresosPorPlaca,
-    agregarIngreso,
-    editarIngreso,
-    eliminarIngreso,
-  } = useIngresosStore();
+/**
+ * Mutaciones de ingresos con soporte offline (insert/update/delete).
+ * La carga inicial y el realtime viven en DataProvider — única fuente de datos.
+ */
+export const useIngresosConductor = (conductorId?: string | null) => {
+  const { agregarIngreso, editarIngreso, eliminarIngreso } = useIngresosStore();
   const { enqueue } = useOfflineQueueStore();
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!placa) {
-      setCargando(false);
-      return;
-    }
-    cargarIngresos();
-  }, [placa]);
-
-  const cargarIngresos = async () => {
-    try {
-      setCargando(true);
-      setError(null);
-
-      const { data, error: err } = await supabase
-        .from("conductor_ingresos")
-        .select("*")
-        .eq("placa", placa)
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-      if (err) throw err;
-      setIngresosPorPlaca(placa || "", data || []);
-    } catch (err: any) {
-      logger.warn("⚠️ Sin conexión, usando caché de ingresos:", err.message);
-    } finally {
-      setCargando(false);
-    }
-  };
 
   const agregarIngresoAsync = async (
     ingreso: Omit<Ingreso, "id" | "created_at">
@@ -73,6 +19,7 @@ export const useIngresosConductor = (
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
     if (isOnline) {
+      // Online: guardar directo en Supabase
       try {
         const { data, error: err } = await supabase
           .from("conductor_ingresos")
@@ -83,10 +30,10 @@ export const useIngresosConductor = (
         if (data && data[0]) agregarIngreso(data[0] as Ingreso);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
+      // Offline: guardar localmente con ID temporal y encolar
       const tempId = `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const ingresoLocal: Ingreso = {
         ...ingreso,
@@ -112,6 +59,7 @@ export const useIngresosConductor = (
     const netState = await NetInfo.fetch();
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
+    // Si es un ID temporal (offline), solo actualizar localmente
     if (id.startsWith("offline_")) {
       editarIngreso(id, updates);
       return { success: true };
@@ -123,6 +71,7 @@ export const useIngresosConductor = (
           .from("conductor_ingresos")
           .update(updates)
           .eq("id", id);
+        // Doble filtro: id + conductor_id para prevenir modificar datos de otros
         if (conductorId) query = query.eq("conductor_id", conductorId);
 
         const { error: err } = await query;
@@ -130,7 +79,6 @@ export const useIngresosConductor = (
         editarIngreso(id, updates);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
@@ -162,6 +110,7 @@ export const useIngresosConductor = (
           .from("conductor_ingresos")
           .delete()
           .eq("id", id);
+        // Doble filtro: id + conductor_id
         if (conductorId) query = query.eq("conductor_id", conductorId);
 
         const { error: err } = await query;
@@ -169,7 +118,6 @@ export const useIngresosConductor = (
         eliminarIngreso(id);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
@@ -184,12 +132,8 @@ export const useIngresosConductor = (
   };
 
   return {
-    ingresos: ingresos.filter((i) => i.placa === placa),
-    cargando,
-    error,
     agregarIngreso: agregarIngresoAsync,
     actualizarIngreso: actualizarIngresoAsync,
     eliminarIngreso: eliminarIngresoAsync,
-    recargar: cargarIngresos,
   };
 };

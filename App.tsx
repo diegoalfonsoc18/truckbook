@@ -2,15 +2,13 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   View,
-  Text,
-  Image,
-  ActivityIndicator,
   Platform,
   AppState,
   Alert,
   type AppStateStatus,
 } from "react-native";
 import * as Linking from "expo-linking";
+import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   NavigationContainer,
@@ -35,6 +33,10 @@ import { useGastosStore } from "./src/store/GastosStore";
 import { useIngresosStore } from "./src/store/IngresosStore";
 import logger from "./src/utils/logger";
 import NetInfo from "@react-native-community/netinfo";
+
+// Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
+// visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -78,6 +80,11 @@ function AppContent() {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);
+
+  // Ocultar el splash nativo cuando la sesión terminó de cargar
+  useEffect(() => {
+    if (!loading) SplashScreen.hideAsync().catch(() => {});
+  }, [loading]);
   const recoveryModeRef = useRef(false);
 
   // Mantener ref de recoveryMode sincronizado para leerlo en callbacks con
@@ -385,17 +392,10 @@ function AppContent() {
     };
   }, [updateSession]);
 
+  // Mientras carga, el splash nativo (idéntico: grille negro + TruckBook)
+  // sigue visible — no renderizar un segundo splash en JS.
   if (loading) {
-    return (
-      <View style={styles.splashContainer}>
-        <Image
-          source={require("./assets/TruckBook/grilleBlack.png")}
-          style={styles.splashIcon}
-          resizeMode="contain"
-        />
-        <Text style={styles.splashText}>TruckBook</Text>
-      </View>
-    );
+    return null;
   }
 
   return (
@@ -445,27 +445,5 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  splashContainer: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  splashIcon: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-  },
-  splashText: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#000000",
-    letterSpacing: -0.5,
   },
 });

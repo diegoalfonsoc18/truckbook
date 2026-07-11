@@ -1,6 +1,8 @@
 // src/Screens/Home/homeUtils.ts
 // Utilidades compartidas entre los componentes del Home
 
+import { localDateStr } from "../../utils/dataUtils";
+
 export interface WProps {
   isDark: boolean;
 }
@@ -11,24 +13,32 @@ export const INK   = (d: boolean) => (d ? "#FFFFFF" : "#111827");
 
 /** Fecha local YYYY-MM-DD (no UTC) */
 export function fechaLocalHoy(): string {
+  return localDateStr();
+}
+
+/** Lunes de la semana actual (offsetSemanas hacia atrás), local YYYY-MM-DD */
+export function inicioSemana(offsetSemanas = 0): string {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const day = d.getDay(); // 0=Dom, 1=Lun, ...
+  const diff = (day === 0 ? 6 : day - 1) + offsetSemanas * 7;
+  d.setDate(d.getDate() - diff);
+  return localDateStr(d);
 }
 
 /** Formateador compacto COP */
 export function formatCOP(amount: number): string {
   const abs  = Math.abs(amount);
   const sign = amount < 0 ? "-" : "";
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000)     return `${sign}$${(abs / 1_000).toFixed(0)}k`;
+  if (abs >= 999_500) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)   return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${abs.toFixed(0)}`;
 }
 
 /** Formateador compacto COP (sin signo negativo) */
 export function fmtI(n: number): string {
   const a = Math.abs(n);
-  if (a >= 1_000_000) return `$${(a / 1_000_000).toFixed(1)}M`;
-  if (a >= 1_000)     return `$${(a / 1_000).toFixed(0)}K`;
+  if (a >= 999_500) return `$${(a / 1_000_000).toFixed(1)}M`;
+  if (a >= 1_000)   return `$${Math.round(a / 1_000)}K`;
   return `$${a.toFixed(0)}`;
 }
 
@@ -40,12 +50,12 @@ export function getGreeting(): string {
   return "Buenas noches";
 }
 
-/** Cuántos días han pasado desde una fecha YYYY-MM-DD */
+/** Cuántos días han pasado desde una fecha YYYY-MM-DD (mínimo 0) */
 export function diasDesde(fecha: string): number {
   const d   = new Date(fecha + "T00:00:00");
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
-  return Math.floor((hoy.getTime() - d.getTime()) / 86_400_000);
+  return Math.max(0, Math.floor((hoy.getTime() - d.getTime()) / 86_400_000));
 }
 
 export function labelDias(dias: number): string {
@@ -68,33 +78,9 @@ export function initials(nombre: string): string {
   return nombre.substring(0, 2).toUpperCase();
 }
 
-/** Extrae el teléfono incrustado en la descripción ([TEL:...]) */
-export function extraerTelDesc(desc: string): { desc: string; tel: string | null } {
-  const match = desc.match(/\[TEL:([^\]]+)\]$/);
-  if (!match) return { desc, tel: null };
-  return { desc: desc.replace(/\[TEL:[^\]]+\]$/, ""), tel: match[1] };
-}
+// Helpers de teléfono movidos a src/utils/telefono.ts (compartidos con servicios).
+// Se re-exportan aquí para no romper los imports existentes (ModalPendientes).
+export { extraerTelDesc, formatearTel } from "../../utils/telefono";
 
-/** Mensaje de cobro por WhatsApp */
-export function mensajeCobroWA(cliente: string, monto: number, dias: number): string {
-  const m = fmtI(monto);
-  if (dias === 0) return `Hola ${cliente}, buen día. Quedó pendiente el pago del flete por ${m} de hoy. ¿Podría confirmarlo? ¡Gracias!`;
-  if (dias === 1) return `Hola ${cliente}, le saludo. Le recuerdo que ayer quedó pendiente el flete por ${m}. ¿Cuándo lo cuadramos? ¡Gracias!`;
-  return `Hola ${cliente}, le saludo. Quería recordarle el flete por ${m} registrado hace ${dias} días que quedó pendiente de pago. ¿Cuándo podemos cuadrar? ¡Gracias!`;
-}
-
-/** Limpia y formatea un número colombiano para wa.me / tel:
- *  Retorna string vacío si el formato no es válido */
-export function formatearTel(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  // Celular colombiano: 10 dígitos empezando por 3
-  if (digits.length === 10 && digits.startsWith("3")) return "57" + digits;
-  // Ya con código de país 57
-  if (digits.length === 12 && digits.startsWith("57")) return digits;
-  // Fijo colombiano: 7 dígitos (sin indicativo)
-  if (digits.length === 7) return "57" + digits;
-  // Fijo con indicativo: 10 dígitos empezando por 60
-  if (digits.length === 10 && digits.startsWith("60")) return "57" + digits;
-  // Formato no reconocido — no generar URL
-  return "";
-}
+// El mensaje de cobro por WhatsApp ahora es la cuenta de cobro resumida
+// (src/utils/cuentaCobro.ts), compartida con CentroPendientes.

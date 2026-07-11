@@ -1,51 +1,16 @@
-import { useEffect, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
 import logger from "../utils/logger";
 
-export const useGastosConductor = (placa?: string | null, conductorId?: string | null) => {
-  const {
-    gastos,
-    setGastosPorPlaca,
-    agregarGasto,
-    editarGasto,
-    eliminarGasto,
-  } = useGastosStore();
+/**
+ * Mutaciones de gastos con soporte offline (insert/update/delete).
+ * La carga inicial y el realtime viven en DataProvider — única fuente de datos.
+ */
+export const useGastosConductor = (conductorId?: string | null) => {
+  const { agregarGasto, editarGasto, eliminarGasto } = useGastosStore();
   const { enqueue } = useOfflineQueueStore();
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!placa) {
-      setCargando(false);
-      return;
-    }
-    cargarGastos();
-  }, [placa]);
-
-  const cargarGastos = async () => {
-    try {
-      setCargando(true);
-      setError(null);
-
-      const { data, error: err } = await supabase
-        .from("conductor_gastos")
-        .select("*")
-        .eq("placa", placa)
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-      if (err) throw err;
-      setGastosPorPlaca(placa || "", data || []);
-    } catch (err: any) {
-      // Sin conexión — usar caché del store
-      logger.warn("⚠️ Sin conexión, usando caché de gastos:", err.message);
-    } finally {
-      setCargando(false);
-    }
-  };
 
   const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">
@@ -65,7 +30,6 @@ export const useGastosConductor = (placa?: string | null, conductorId?: string |
         if (data && data[0]) agregarGasto(data[0] as Gasto);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
@@ -115,7 +79,6 @@ export const useGastosConductor = (placa?: string | null, conductorId?: string |
         editarGasto(id, updates);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
@@ -155,7 +118,6 @@ export const useGastosConductor = (placa?: string | null, conductorId?: string |
         eliminarGasto(id);
         return { success: true };
       } catch (err: any) {
-        setError(err.message);
         return { success: false, error: err.message };
       }
     } else {
@@ -170,12 +132,8 @@ export const useGastosConductor = (placa?: string | null, conductorId?: string |
   };
 
   return {
-    gastos: gastos.filter((g) => g.placa === placa),
-    cargando,
-    error,
     agregarGasto: agregarGastoAsync,
     actualizarGasto: editarGastoAsync,
     eliminarGasto: eliminarGastoAsync,
-    recargar: cargarGastos,
   };
 };

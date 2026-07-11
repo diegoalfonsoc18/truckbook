@@ -189,45 +189,102 @@ function CatCard({
 }
 
 // ─── Swipe actions (edit + delete) ───────────────────────────────────────────
+const SWIPE_ACTIONS_WIDTH = 148; // ancho total revelado (2 botones + gaps)
+
+function SwipeActionButton({
+  onPress,
+  icon,
+  label,
+  color,
+  isDark,
+}: {
+  onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  color: string;
+  isDark: boolean;
+}) {
+  const scale = useSharedValue(1);
+  const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(0.88, { duration: 90 });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: 140 });
+      }}
+      style={[{ width: 64, alignItems: "center", justifyContent: "center" }, aStyle]}>
+      <View
+        style={{
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          backgroundColor: color,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.45 : 0.32,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+        <Ionicons name={icon} size={21} color="#fff" />
+      </View>
+      <Text
+        style={{
+          fontSize: 10.5,
+          fontWeight: "600",
+          color: isDark ? "rgba(255,255,255,0.75)" : color,
+          marginTop: 6,
+          letterSpacing: 0.2,
+        }}>
+        {label}
+      </Text>
+    </AnimatedPressable>
+  );
+}
+
 function SwipeRowActions({
   drag,
   onEdit,
   onDelete,
+  isDark,
 }: {
   drag: SharedValue<number>;
   onEdit: () => void;
   onDelete: () => void;
+  isDark: boolean;
 }) {
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: drag.value + 152 }],
+    transform: [{ translateX: drag.value + SWIPE_ACTIONS_WIDTH }],
   }));
   return (
-    <Reanimated.View style={[animStyle, { flexDirection: "row", gap: 8 }]}>
-      <TouchableOpacity
+    <Reanimated.View
+      style={[
+        animStyle,
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          width: SWIPE_ACTIONS_WIDTH,
+          paddingLeft: 10,
+        },
+      ]}>
+      <SwipeActionButton
         onPress={onEdit}
-        style={{
-          width: 68,
-          height: "100%",
-          backgroundColor: "#3B82F6",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 28,
-          marginLeft: 8,
-        }}>
-        <Ionicons name="pencil-outline" size={20} color="#fff" />
-      </TouchableOpacity>
-      <TouchableOpacity
+        icon="pencil"
+        label="Editar"
+        color="#3B82F6"
+        isDark={isDark}
+      />
+      <SwipeActionButton
         onPress={onDelete}
-        style={{
-          width: 68,
-          height: "100%",
-          backgroundColor: "#EF4444",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 28,
-        }}>
-        <Ionicons name="trash-outline" size={20} color="#fff" />
-      </TouchableOpacity>
+        icon="trash"
+        label="Eliminar"
+        color="#EF4444"
+        isDark={isDark}
+      />
     </Reanimated.View>
   );
 }
@@ -314,6 +371,7 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeRowActions
           drag={drag}
+          isDark={isDark}
           onEdit={() => {
             swipeRef.current?.close();
             onPress(item.id);
@@ -539,10 +597,11 @@ export default function TransactionScreen({
   const [extraValues, setExtraValues] = useState<Record<string, string>>({});
   const [editEstado, setEditEstado] = useState("pagado");
   const [loading, setLoading] = useState(false);
-  const [contactsVisible, setContactsVisible] = useState(false);
+  // Sugerencias inline de contactos del dispositivo para el campo "cliente"
+  // (se buscan mientras se escribe — sin icono ni picker aparte)
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsList, setContactsList] = useState<Contacts.Contact[]>([]);
-  const [contactsSearch, setContactsSearch] = useState("");
+  const contactsPermRef = useRef<"unknown" | "granted" | "denied">("unknown");
   const contactsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -630,6 +689,9 @@ export default function TransactionScreen({
 
   const closeModal = () => {
     Keyboard.dismiss();
+    if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+    setContactsList([]);
+    setContactsLoading(false);
     setModalVisible(false);
     setEditId(null);
     setEditValue("");
@@ -638,6 +700,50 @@ export default function TransactionScreen({
     setCustomDescription("");
     setExtraValues({});
     setEditEstado("pagado");
+  };
+
+  // Busca contactos del dispositivo mientras se escribe en "cliente" y los
+  // ofrece como sugerencias inline debajo del input
+  const buscarContactos = (query: string) => {
+    if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+    const q = query.trim();
+    if (q.length < 2) {
+      setContactsList([]);
+      setContactsLoading(false);
+      return;
+    }
+    setContactsLoading(true);
+    contactsDebounceRef.current = setTimeout(async () => {
+      try {
+        // Pedir permiso una sola vez; si lo niegan, no insistir por tecla
+        if (contactsPermRef.current === "unknown") {
+          const { status } = await Contacts.requestPermissionsAsync();
+          contactsPermRef.current = status === "granted" ? "granted" : "denied";
+        }
+        if (contactsPermRef.current !== "granted") {
+          setContactsList([]);
+          return;
+        }
+        const { data } = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+          name: q, // filtro nativo en iOS/Android
+        });
+        setContactsList(
+          data
+            .filter((ct) => !!ct.name)
+            // Si ya escribió el nombre completo, no sugerirlo de nuevo
+            .filter(
+              (ct) =>
+                (ct.name ?? "").trim().toLowerCase() !== q.toLowerCase(),
+            )
+            .slice(0, 5),
+        );
+      } catch {
+        setContactsList([]);
+      } finally {
+        setContactsLoading(false);
+      }
+    }, 280);
   };
 
   const openAdd = (catId: string) => {
@@ -656,7 +762,8 @@ export default function TransactionScreen({
   const openEdit = (id: string) => {
     const t = transactions.find((x) => x.id === id);
     if (!t) return;
-    setEditValue(formatMontoInput(t.monto));
+    // Redondear: el input solo acepta enteros y formatMontoInput descarta el punto decimal
+    setEditValue(formatMontoInput(Math.round(t.monto)));
     setEditId(id);
     setEditDate(t.fecha);
     const catKey = t.tipo?.toLowerCase() || null;
@@ -680,6 +787,8 @@ export default function TransactionScreen({
       });
     } else if (partes.length > 0) {
       extras["descripcion"] = raw;
+      // Precargar la descripción editable (ej: "otros" en Gastos)
+      if (hasCustomDescription && catKey === "otros") setCustomDescription(raw);
     }
     setExtraValues(extras);
     setModalVisible(true);
@@ -704,6 +813,14 @@ export default function TransactionScreen({
           .map((c) => (extraValues[c.key] || "").trim())
           .filter(Boolean);
         if (partes.length > 0) editDesc = partes.join(" · ");
+      } else if (
+        isEditing &&
+        hasCustomDescription &&
+        selectedCat === "otros" &&
+        customDescription.trim()
+      ) {
+        // Descripción editable de "otros" — antes se descartaba silenciosamente
+        editDesc = customDescription.trim();
       }
 
       const result = isEditing
@@ -743,6 +860,7 @@ export default function TransactionScreen({
     onAdd,
     onUpdate,
     camposExtra,
+    hasCustomDescription,
   ]);
 
   const handleDelete = (id: string) => {
@@ -1108,26 +1226,14 @@ export default function TransactionScreen({
         visible={modalVisible}
         transparent
         animationType="slide"
-        onRequestClose={() => {
-          if (contactsVisible) {
-            setContactsVisible(false);
-            return;
-          }
-          closeModal();
-        }}>
+        onRequestClose={closeModal}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}>
           <TouchableOpacity
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
-            onPress={() => {
-              if (contactsVisible) {
-                setContactsVisible(false);
-                return;
-              }
-              closeModal();
-            }}>
+            onPress={closeModal}>
             <TouchableWithoutFeedback>
               <View
                 style={[
@@ -1139,237 +1245,8 @@ export default function TransactionScreen({
                 ]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
 
-                {/* ── Vista picker de contactos (reemplaza el formulario) ── */}
-                {contactsVisible ? (
-                  <>
-                    {/* Header con botón atrás */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        marginBottom: 16,
-                        gap: 8,
-                      }}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (contactsDebounceRef.current)
-                            clearTimeout(contactsDebounceRef.current);
-                          setContactsVisible(false);
-                          setContactsList([]);
-                          setContactsSearch("");
-                        }}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        style={{ padding: 4 }}>
-                        <Ionicons name="arrow-back" size={22} color={c.text} />
-                      </TouchableOpacity>
-                      <Text
-                        style={[
-                          s.sheetTitle,
-                          {
-                            color: c.text,
-                            marginBottom: 0,
-                            flex: 1,
-                            textAlign: "left",
-                          },
-                        ]}>
-                        Seleccionar cliente
-                      </Text>
-                      {contactsLoading && (
-                        <ActivityIndicator size="small" color={accentColor} />
-                      )}
-                    </View>
-
-                    {/* Buscador */}
-                    <View
-                      style={[
-                        s.inputRow,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.06)"
-                            : c.surface,
-                          borderColor:
-                            contactsSearch.length >= 2
-                              ? accentColor + "80"
-                              : isDark
-                                ? "rgba(255,255,255,0.1)"
-                                : c.border,
-                          marginBottom: 12,
-                        },
-                      ]}>
-                      <Ionicons
-                        name="search-outline"
-                        size={16}
-                        color={
-                          contactsSearch.length >= 2 ? accentColor : c.textMuted
-                        }
-                        style={{ marginRight: 8 }}
-                      />
-                      <TextInput
-                        keyboardAppearance="light"
-                        style={[s.textInput, { color: c.text }]}
-                        placeholder="Escribe el nombre del cliente..."
-                        placeholderTextColor={c.textMuted}
-                        value={contactsSearch}
-                        autoFocus
-                        onChangeText={(query) => {
-                          setContactsSearch(query);
-
-                          // Cancelar búsqueda anterior
-                          if (contactsDebounceRef.current)
-                            clearTimeout(contactsDebounceRef.current);
-
-                          if (query.length < 2) {
-                            setContactsList([]);
-                            setContactsLoading(false);
-                            return;
-                          }
-
-                          // Debounce 280ms — espera a que el usuario deje de escribir
-                          setContactsLoading(true);
-                          contactsDebounceRef.current = setTimeout(async () => {
-                            try {
-                              const { data } = await Contacts.getContactsAsync({
-                                fields: [
-                                  Contacts.Fields.Name,
-                                  Contacts.Fields.PhoneNumbers,
-                                ],
-                                name: query, // filtro nativo en iOS/Android
-                              });
-                              setContactsList(data.filter((ct) => !!ct.name));
-                            } catch {
-                              setContactsList([]);
-                            } finally {
-                              setContactsLoading(false);
-                            }
-                          }, 280);
-                        }}
-                      />
-                      {contactsSearch.length > 0 && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            if (contactsDebounceRef.current)
-                              clearTimeout(contactsDebounceRef.current);
-                            setContactsSearch("");
-                            setContactsList([]);
-                            setContactsLoading(false);
-                          }}>
-                          <Ionicons
-                            name="close-circle"
-                            size={16}
-                            color={c.textMuted}
-                          />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-
-                    {/* Resultados */}
-                    <ScrollView
-                      keyboardShouldPersistTaps="handled"
-                      showsVerticalScrollIndicator={false}>
-                      {contactsSearch.length < 2 ? (
-                        // Estado inicial — instrucción
-                        <View
-                          style={{ alignItems: "center", paddingVertical: 36 }}>
-                          <Ionicons
-                            name="search-outline"
-                            size={38}
-                            color={c.textMuted}
-                          />
-                          <Text
-                            style={{
-                              color: c.textMuted,
-                              marginTop: 12,
-                              fontSize: 14,
-                              textAlign: "center",
-                            }}>
-                            Escribe mínimo 2 letras{"\n"}para buscar en tus
-                            contactos
-                          </Text>
-                        </View>
-                      ) : contactsLoading ? (
-                        // Buscando...
-                        <View
-                          style={{ alignItems: "center", paddingVertical: 36 }}>
-                          <ActivityIndicator size="large" color={accentColor} />
-                          <Text
-                            style={{
-                              color: c.textMuted,
-                              marginTop: 12,
-                              fontSize: 14,
-                            }}>
-                            Buscando...
-                          </Text>
-                        </View>
-                      ) : contactsList.length === 0 ? (
-                        // Sin resultados
-                        <View
-                          style={{ alignItems: "center", paddingVertical: 36 }}>
-                          <Ionicons
-                            name="person-outline"
-                            size={38}
-                            color={c.textMuted}
-                          />
-                          <Text
-                            style={{
-                              color: c.textMuted,
-                              marginTop: 12,
-                              fontSize: 14,
-                            }}>
-                            Sin resultados para "{contactsSearch}"
-                          </Text>
-                        </View>
-                      ) : (
-                        // Lista de resultados
-                        contactsList.map((ct, i) => (
-                          <TouchableOpacity
-                            key={(ct as any).id ?? `${i}`}
-                            style={[
-                              s.contactRow,
-                              {
-                                borderBottomColor: isDark
-                                  ? "rgba(255,255,255,0.06)"
-                                  : "#F0F0F5",
-                              },
-                            ]}
-                            onPress={() => {
-                              const rawTel = ct.phoneNumbers?.[0]?.number ?? "";
-                              const tel = rawTel.replace(/[\s\-().]/g, "");
-                              setExtraValues((prev) => ({
-                                ...prev,
-                                cliente: ct.name ?? "",
-                                ...(tel ? { telefono: tel } : {}),
-                              }));
-                              if (contactsDebounceRef.current)
-                                clearTimeout(contactsDebounceRef.current);
-                              setContactsVisible(false);
-                              setContactsList([]);
-                              setContactsSearch("");
-                            }}>
-                            <View
-                              style={[
-                                s.contactAvatar,
-                                { backgroundColor: accentColor + "22" },
-                              ]}>
-                              <Text
-                                style={[
-                                  s.contactAvatarText,
-                                  { color: accentColor },
-                                ]}>
-                                {(ct.name ?? "?").charAt(0).toUpperCase()}
-                              </Text>
-                            </View>
-                            <Text style={[s.contactName, { color: c.text }]}>
-                              {ct.name}
-                            </Text>
-                          </TouchableOpacity>
-                        ))
-                      )}
-                      <View style={{ height: 20 }} />
-                    </ScrollView>
-                  </>
-                ) : (
-                  /* ── Vista formulario normal ── */
-                  <>
+                {/* ── Formulario ── */}
+                <>
                     <Text style={[s.sheetTitle, { color: c.text }]}>
                       {isEditing
                         ? `Editar ${modalTitulo.toLowerCase()}`
@@ -1513,57 +1390,103 @@ export default function TransactionScreen({
                               </View>
                             ) : (
                               /* ─── Campo de texto normal ─── */
-                              <View style={[s.inputRow, inputStyle]}>
-                                <TextInput
-                                  keyboardAppearance="light"
-                                  style={[s.textInput, { color: c.text }]}
-                                  placeholder={campo.placeholder}
-                                  placeholderTextColor={c.textMuted}
-                                  value={extraValues[campo.key] || ""}
-                                  onChangeText={(v) =>
-                                    setExtraValues((prev) => ({
-                                      ...prev,
-                                      [campo.key]: v,
-                                    }))
-                                  }
-                                />
-                                {campo.key === "cliente" && (
-                                  <TouchableOpacity
-                                    hitSlop={{
-                                      top: 10,
-                                      bottom: 10,
-                                      left: 10,
-                                      right: 10,
+                              <>
+                                <View style={[s.inputRow, inputStyle]}>
+                                  <TextInput
+                                    keyboardAppearance="light"
+                                    style={[s.textInput, { color: c.text }]}
+                                    placeholder={campo.placeholder}
+                                    placeholderTextColor={c.textMuted}
+                                    value={extraValues[campo.key] || ""}
+                                    onChangeText={(v) => {
+                                      setExtraValues((prev) => ({
+                                        ...prev,
+                                        [campo.key]: v,
+                                      }));
+                                      // Sugerir contactos del dispositivo al escribir
+                                      if (campo.key === "cliente")
+                                        buscarContactos(v);
                                     }}
-                                    onPress={async () => {
-                                      try {
-                                        const { status } =
-                                          await Contacts.requestPermissionsAsync();
-                                        if (status !== "granted") {
-                                          Alert.alert(
-                                            "Permiso denegado",
-                                            "Para importar contactos ve a Configuración → TruckBook → Contactos y activa el permiso.",
-                                          );
-                                          return;
-                                        }
-                                        setContactsList([]);
-                                        setContactsSearch("");
-                                        setContactsVisible(true);
-                                      } catch {
-                                        Alert.alert(
-                                          "Error",
-                                          "No se pudo acceder a los contactos.",
-                                        );
-                                      }
-                                    }}>
-                                    <Ionicons
-                                      name="people-outline"
-                                      size={22}
+                                  />
+                                  {campo.key === "cliente" && contactsLoading && (
+                                    <ActivityIndicator
+                                      size="small"
                                       color={accentColor}
                                     />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
+                                  )}
+                                </View>
+                                {campo.key === "cliente" &&
+                                  contactsList.length > 0 && (
+                                    <View
+                                      style={[
+                                        s.sugerenciasBox,
+                                        {
+                                          backgroundColor: c.modalBg,
+                                          borderColor: isDark
+                                            ? "rgba(255,255,255,0.1)"
+                                            : c.border,
+                                        },
+                                      ]}>
+                                      {contactsList.map((ct, i) => (
+                                        <TouchableOpacity
+                                          key={(ct as any).id ?? `${i}`}
+                                          style={[
+                                            s.contactRow,
+                                            {
+                                              borderBottomColor: isDark
+                                                ? "rgba(255,255,255,0.06)"
+                                                : "#F0F0F5",
+                                            },
+                                          ]}
+                                          onPress={() => {
+                                            const rawTel =
+                                              ct.phoneNumbers?.[0]?.number ?? "";
+                                            const tel = rawTel.replace(
+                                              /[\s\-().]/g,
+                                              "",
+                                            );
+                                            if (contactsDebounceRef.current)
+                                              clearTimeout(
+                                                contactsDebounceRef.current,
+                                              );
+                                            setExtraValues((prev) => ({
+                                              ...prev,
+                                              cliente: ct.name ?? "",
+                                              ...(tel ? { telefono: tel } : {}),
+                                            }));
+                                            setContactsList([]);
+                                            setContactsLoading(false);
+                                          }}>
+                                          <View
+                                            style={[
+                                              s.contactAvatar,
+                                              {
+                                                backgroundColor:
+                                                  accentColor + "22",
+                                              },
+                                            ]}>
+                                            <Text
+                                              style={[
+                                                s.contactAvatarText,
+                                                { color: accentColor },
+                                              ]}>
+                                              {(ct.name ?? "?")
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                            </Text>
+                                          </View>
+                                          <Text
+                                            style={[
+                                              s.contactName,
+                                              { color: c.text },
+                                            ]}>
+                                            {ct.name}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      ))}
+                                    </View>
+                                  )}
+                              </>
                             )}
                           </View>
                         ))}
@@ -1731,8 +1654,7 @@ export default function TransactionScreen({
                         )}
                       </TouchableOpacity>
                     </View>
-                  </>
-                )}
+                </>
               </View>
             </TouchableWithoutFeedback>
           </TouchableOpacity>
@@ -2048,7 +1970,14 @@ const s = StyleSheet.create({
   saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
   saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
 
-  // CONTACTS MODAL
+  // SUGERENCIAS DE CONTACTOS (inline bajo el campo cliente)
+  sugerenciasBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 6,
+    paddingHorizontal: 12,
+    overflow: "hidden",
+  },
   contactRow: {
     flexDirection: "row",
     alignItems: "center",

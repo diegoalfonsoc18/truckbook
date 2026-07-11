@@ -11,6 +11,7 @@ import {
   Alert,
   Image,
   TextInput,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -27,7 +28,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
-import { useAuth } from "../../hooks/useAuth";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
@@ -120,6 +120,8 @@ function generarReporteHTML(params: {
     descripcion: string;
     monto: number;
     cliente?: string | null;
+    cantidad?: number | null;
+    estado?: string | null;
   }>;
   clienteFiltro?: string | null;
   view: ViewType;
@@ -131,6 +133,14 @@ function generarReporteHTML(params: {
       minimumFractionDigits: 0,
     }).format(n);
 
+  // Escapar datos del usuario interpolados en el HTML del PDF
+  const esc = (s: unknown) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
   const fmtFecha = (s: string) => {
     const d = new Date(s + "T12:00:00");
     const dd = String(d.getDate()).padStart(2, "0");
@@ -138,6 +148,11 @@ function generarReporteHTML(params: {
     const yyyy = d.getFullYear();
     return `${dd}/${mm}/${yyyy}`;
   };
+
+  // Fecha compacta dd/mm/aa para las filas de detalle (ahorra espacio en la
+  // tabla); directo del string YYYY-MM-DD, sin pasar por Date (sin saltos UTC)
+  const fmtFechaCorta = (s: string) =>
+    s?.length >= 10 ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(2, 4)}` : s;
 
   const labelPeriodo = (key: string) => {
     const meses = [
@@ -181,48 +196,66 @@ function generarReporteHTML(params: {
     .join("");
 
   const cleanDesc = (d: string) =>
-    (d || "—").replace(/\[TEL:[^\]]*\]/g, "").trim() || "—";
+    (d || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
 
-  const top10Ingresos = [...params.ingresosDetalle]
-    .sort(
-      (a, b) =>
-        b.monto * ((b as any).cantidad ?? 1) -
-        a.monto * ((a as any).cantidad ?? 1),
-    )
-    .slice(0, 15)
+  // Detalle cronológico completo (antes: solo top 15 por monto)
+  const MAX_FILAS = 100;
+
+  const esCuentaCliente = !!params.clienteFiltro;
+
+  const ingresosOrdenados = [...params.ingresosDetalle].sort((a, b) =>
+    a.fecha.localeCompare(b.fecha),
+  );
+  const filasIngresos = ingresosOrdenados
+    .slice(0, MAX_FILAS)
     .map((i) => {
-      const cant = (i as any).cantidad ?? 1;
+      const cant = i.cantidad ?? 1;
       const total = i.monto * cant;
-      const cantLabel = cant > 1 ? ` (x${cant})` : "";
-      const clienteLabel = i.cliente || (() => {
-        const d = (i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
-        return d.length > 1 ? d : "—";
-      })();
+      const desc = cleanDesc(i.descripcion);
+      const clienteLabel =
+        i.cliente || (desc.split(" · ")[0].trim().length > 1 ? desc.split(" · ")[0].trim() : "—");
+      // La descripción suele empezar con el cliente — no repetirlo en la tabla
+      const partes = desc.split(" · ");
+      const detalle =
+        partes[0]?.trim() === clienteLabel
+          ? partes.slice(1).join(" · ").trim()
+          : desc;
+      const pendiente = i.estado === "pendiente";
       return `<tr>
-      <td>${fmtFecha(i.fecha)}</td>
-      <td>${i.tipo_ingreso}${cantLabel}</td>
-      <td>${clienteLabel}</td>
-      <td>${cleanDesc(i.descripcion)}</td>
+      <td>${fmtFechaCorta(i.fecha)}</td>
+      <td>${esc(i.tipo_ingreso)}</td>
+      ${esCuentaCliente ? "" : `<td>${esc(clienteLabel)}</td>`}
+      <td>${esc(detalle) || "—"}</td>
+      <td><span class="badge ${pendiente ? "b-pend" : "b-pag"}">${pendiente ? "Por cobrar" : "Pagado"}</span></td>
+      <td class="center">${cant}</td>
+      <td class="right">${fmt(i.monto)}</td>
       <td class="right green">${fmt(total)}</td>
     </tr>`;
     })
     .join("");
 
-  const top10Gastos = [...params.gastosDetalle]
-    .sort((a, b) => b.monto - a.monto)
-    .slice(0, 15)
+  const filasGastos = [...params.gastosDetalle]
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .slice(0, MAX_FILAS)
     .map(
       (g) => `<tr>
-      <td>${fmtFecha(g.fecha)}</td>
-      <td>${g.tipo_gasto}</td>
-      <td>${cleanDesc(g.descripcion)}</td>
+      <td>${fmtFechaCorta(g.fecha)}</td>
+      <td>${esc(g.tipo_gasto)}</td>
+      <td>${esc(cleanDesc(g.descripcion)) || "—"}</td>
       <td class="right red">${fmt(g.monto)}</td>
     </tr>`,
     )
     .join("");
 
+  // Desglose recibido vs. por cobrar
+  const totalPorCobrar = params.ingresosDetalle
+    .filter((i) => i.estado === "pendiente")
+    .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
+  const totalRecibido = params.totalIngresos - totalPorCobrar;
+
   const rentNum = Number(params.rentabilidad);
   const balColor = params.balance >= 0 ? "#16A34A" : "#EF4444";
+  const tituloDoc = esCuentaCliente ? "Estado de cuenta" : "Informe de Finanzas";
 
   return `<!DOCTYPE html>
 <html>
@@ -247,12 +280,19 @@ function generarReporteHTML(params: {
     .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
 
     /* SUMMARY GRID */
-    .summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+    .summary { display: grid; grid-template-columns: repeat(${esCuentaCliente ? 3 : 4}, 1fr); gap: 12px; margin-bottom: 8px; }
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
     .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #000; margin-bottom: 6px; }
     .s-value { font-size: 15px; font-weight: 800; color: #000; }
     .green { color: #16A34A; }
     .red { color: #EF4444; }
+    .amber { color: #B45309; }
+    .summary-note { font-size: 10px; color: #92400E; text-align: right; margin-bottom: 20px; }
+
+    /* BADGES DE ESTADO */
+    .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+    .b-pend { background: #FEF3C7; color: #92400E; }
+    .b-pag { background: #DCFCE7; color: #166534; }
 
     /* SECTION */
     .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #000; margin: 24px 0 10px; }
@@ -261,14 +301,20 @@ function generarReporteHTML(params: {
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { background: #000; color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
     th.right { text-align: right; }
+    th.center { text-align: center; }
     td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; color: #000; vertical-align: middle; }
-    td.right { text-align: right; }
+    td.right { text-align: right; white-space: nowrap; }
+    td.center { text-align: center; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #F8FAFC; }
     .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; color: #000; }
 
     /* FOOTER */
-    .footer { text-align: center; font-size: 10px; color: #000; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 14px; }
+    .footer { text-align: center; font-size: 10px; color: #94A3B8; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 16px; }
+    .stores { display: flex; gap: 16px; justify-content: center; align-items: center; margin-top: 8px; }
+    .store-badge { display: inline-flex; align-items: center; gap: 5px; color: #94A3B8; }
+    .store-badge svg { width: 13px; height: 13px; flex-shrink: 0; fill: #94A3B8; }
+    .store-badge span { font-size: 9px; font-weight: 600; letter-spacing: 0.2px; }
   </style>
 </head>
 <body>
@@ -277,10 +323,10 @@ function generarReporteHTML(params: {
   <div class="doc-header">
     <div>
       <div class="brand">Truck<span>Book</span></div>
-      <div style="font-size:13px;color:#666;margin-top:4px;">Informe Financiero</div>
+      <div style="font-size:13px;color:#666;margin-top:4px;">${tituloDoc}</div>
     </div>
     <div class="doc-info">
-      <strong>Informe de Finanzas</strong>
+      <strong>${esCuentaCliente ? `Estado de cuenta — ${esc(params.clienteFiltro)}` : "Informe de Finanzas"}</strong>
       Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
     </div>
   </div>
@@ -292,16 +338,31 @@ function generarReporteHTML(params: {
     </div>
     <div class="meta-item">
       <strong>Vehículo(s)</strong>
-      <span>${params.placas.length > 0 ? params.placas.join(", ") : "Todos"}</span>
+      <span>${params.placas.length > 0 ? esc(params.placas.join(", ")) : "Todos"}</span>
     </div>
-    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${params.clienteFiltro}</span></div>` : ""}
-    <div class="meta-item">
-      <strong>Transacciones</strong>
-      <span>${params.gastosDetalle.length + params.ingresosDetalle.length}</span>
-    </div>
+    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
   </div>
 
   <!-- RESUMEN -->
+  ${
+    esCuentaCliente
+      ? `
+  <div class="summary">
+    <div class="s-card" style="border-color:#E2E8F0">
+      <div class="s-label">Total facturado</div>
+      <div class="s-value">${fmt(params.totalIngresos)}</div>
+    </div>
+    <div class="s-card" style="border-color:#16A34A40">
+      <div class="s-label">Recibido</div>
+      <div class="s-value green">${fmt(totalRecibido)}</div>
+    </div>
+    <div class="s-card" style="border-color:#F59E0B40">
+      <div class="s-label">Por cobrar</div>
+      <div class="s-value amber">${fmt(totalPorCobrar)}</div>
+    </div>
+  </div>
+  <div class="summary-note">&nbsp;</div>`
+      : `
   <div class="summary">
     <div class="s-card" style="border-color:#16A34A40">
       <div class="s-label">Ingresos</div>
@@ -320,10 +381,12 @@ function generarReporteHTML(params: {
       <div class="s-value" style="color:${rentNum >= 0 ? "#16A34A" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
     </div>
   </div>
+  <div class="summary-note">${totalPorCobrar > 0 ? `Los ingresos incluyen ${fmt(totalPorCobrar)} aún por cobrar` : "&nbsp;"}</div>`
+  }
 
-  <!-- POR PERÍODO -->
+  <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta) -->
   ${
-    params.periodos.length > 0
+    !esCuentaCliente && params.periodos.length > 0
       ? `
   <div class="section-title">Resumen por período</div>
   <table>
@@ -350,14 +413,20 @@ function generarReporteHTML(params: {
   ${
     params.ingresosDetalle.length > 0
       ? `
-  <div class="section-title">Ingresos del período (${params.ingresosDetalle.length})</div>
+  <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${params.ingresosDetalle.length})</div>
   <table>
     <thead><tr>
-      <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Descripción</th><th class="right">Monto</th>
+      <th>Fecha</th><th>Tipo</th>${esCuentaCliente ? "" : "<th>Cliente</th>"}<th>Descripción</th><th>Estado</th><th class="center">Cant.</th><th class="right">Vr. unitario</th><th class="right">Total</th>
     </tr></thead>
-    <tbody>${top10Ingresos}</tbody>
+    <tbody>
+      ${filasIngresos}
+      <tr class="total-tr">
+        <td colspan="${esCuentaCliente ? 6 : 7}">Total</td>
+        <td class="right green">${fmt(params.totalIngresos)}</td>
+      </tr>
+    </tbody>
   </table>
-  ${params.ingresosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.ingresosDetalle.length} registros</div>` : ""}
+  ${params.ingresosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.ingresosDetalle.length} registros</div>` : ""}
   `
       : ""
   }
@@ -371,14 +440,32 @@ function generarReporteHTML(params: {
     <thead><tr>
       <th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="right">Monto</th>
     </tr></thead>
-    <tbody>${top10Gastos}</tbody>
+    <tbody>
+      ${filasGastos}
+      <tr class="total-tr">
+        <td colspan="3">Total</td>
+        <td class="right red">${fmt(params.totalGastos)}</td>
+      </tr>
+    </tbody>
   </table>
-  ${params.gastosDetalle.length > 15 ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando 15 de ${params.gastosDetalle.length} registros</div>` : ""}
+  ${params.gastosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.gastosDetalle.length} registros</div>` : ""}
   `
       : ""
   }
 
-  <div class="footer">Generado con TruckBook</div>
+  <div class="footer">
+    Generado con <strong>TruckBook</strong>
+    <div class="stores">
+      <span class="store-badge">
+        <svg viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.86 2.33-4.23 2.44-4.3-1.33-1.95-3.4-2.22-4.14-2.25-1.76-.18-3.44 1.04-4.33 1.04-.89 0-2.27-1.02-3.73-.99-1.92.03-3.69 1.12-4.68 2.84-2 3.46-.51 8.58 1.43 11.39.95 1.37 2.08 2.91 3.56 2.86 1.43-.06 1.97-.92 3.7-.92 1.72 0 2.21.92 3.72.89 1.54-.03 2.51-1.4 3.45-2.78 1.09-1.59 1.54-3.13 1.56-3.21-.03-.02-2.99-1.15-3.02-4.56zM14.28 4.16c.79-.96 1.32-2.29 1.18-3.62-1.14.05-2.52.76-3.33 1.72-.73.85-1.37 2.21-1.2 3.51 1.27.1 2.57-.65 3.35-1.61z"/></svg>
+        <span>App Store</span>
+      </span>
+      <span class="store-badge">
+        <svg viewBox="0 0 24 24"><path d="M3.6 2.3c-.2.2-.3.5-.3.9v17.6c0 .4.1.7.3.9l.1.1 9.9-9.9v-.2zM17 15.3l-3.4-3.4L17 8.5l3.9 2.2c1.1.6 1.1 1.7 0 2.3zM17.1 15.2 13.6 11.9 3.7 21.8c.4.4 1 .4 1.6.1zM17.1 8.6 5.3 2C4.7 1.6 4.1 1.7 3.7 2.1l9.9 9.8z"/></svg>
+        <span>Google Play</span>
+      </span>
+    </div>
+  </div>
 </div>
 </body>
 </html>`;
@@ -388,10 +475,7 @@ export default function FinanzasGenerales() {
   const { colors, isDark } = useTheme();
   const c = colors;
   const { placa: placaActual } = useVehiculoStore();
-  const { user } = useAuth();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
   const [exportModal, setExportModal] = useState(false);
   const [view, setView] = useState<ViewType>("meses");
@@ -514,7 +598,6 @@ export default function FinanzasGenerales() {
   // Solo animamos la entrada — no hay que esperar queries.
   useEffect(() => {
     if (!placaActual) return;
-    setLoading(false);
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -653,14 +736,102 @@ export default function FinanzasGenerales() {
     type: "inicio" | "fin",
     target: "main" | "export" = "main",
   ) => {
+    // Si el teclado está abierto (input de cliente), cerrarlo — si no, el
+    // calendario queda empujado/tapado por el teclado
+    Keyboard.dismiss();
     setSelectingDate(type);
     setCalendarTarget(target);
     setCalendarVisible(true);
   };
 
+  // Contenido del calendario, reutilizado por el selector de la pantalla
+  // principal (Modal propio) y por el modal de exportar (overlay interno —
+  // en iOS no se puede montar un segundo Modal sobre el de exportar).
+  const renderCalendarSheet = () => (
+    <TouchableOpacity
+      style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
+      activeOpacity={1}
+      onPress={() => setCalendarVisible(false)}>
+      <TouchableOpacity activeOpacity={1}>
+        <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
+          <View style={[styles.modalHandle, { backgroundColor: c.textMuted }]} />
+          <Text style={[styles.modalTitle, { color: c.text }]}>
+            fecha {selectingDate === "inicio" ? "inicial" : "final"}
+          </Text>
+          <Calendar
+            current={
+              calendarTarget === "export"
+                ? selectingDate === "inicio"
+                  ? exportRango.inicio
+                  : exportRango.fin
+                : selectingDate === "inicio"
+                  ? rango.inicio
+                  : rango.fin
+            }
+            onDayPress={(day: any) => {
+              if (calendarTarget === "export") {
+                setExportRango((prev) => ({
+                  ...prev,
+                  [selectingDate]: day.dateString,
+                }));
+                setPeriodoRapido("personalizado");
+              } else {
+                setRango((prev) => ({
+                  ...prev,
+                  [selectingDate]: day.dateString,
+                }));
+              }
+              setCalendarVisible(false);
+            }}
+            markedDates={
+              calendarTarget === "export"
+                ? {
+                    [exportRango.inicio]: {
+                      selected: selectingDate === "inicio",
+                      selectedColor: c.accent,
+                    },
+                    [exportRango.fin]: {
+                      selected: selectingDate === "fin",
+                      selectedColor: c.accent,
+                    },
+                  }
+                : {
+                    [rango.inicio]: {
+                      selected: selectingDate === "inicio",
+                      selectedColor: c.accent,
+                    },
+                    [rango.fin]: {
+                      selected: selectingDate === "fin",
+                      selectedColor: c.accent,
+                    },
+                  }
+            }
+            theme={{
+              backgroundColor: c.modalBg,
+              calendarBackground: c.modalBg,
+              textSectionTitleColor: c.textSecondary,
+              selectedDayBackgroundColor: c.accent,
+              selectedDayTextColor: c.accentText,
+              todayTextColor: c.accent,
+              dayTextColor: c.text,
+              textDisabledColor: c.textMuted,
+              monthTextColor: c.text,
+              arrowColor: c.accent,
+            }}
+            style={styles.calendar}
+          />
+        </View>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
   const generarPDF = async () => {
     if (exportando) return;
-    const r = exportRango;
+    // Normalizar rango invertido (Desde > Hasta filtraba a vacío → "Sin datos")
+    const r =
+      exportRango.inicio <= exportRango.fin
+        ? exportRango
+        : { inicio: exportRango.fin, fin: exportRango.inicio };
     const gastosDetalle = exportCliente
       ? []
       : gastosPorPlaca.filter((g) => g.fecha >= r.inicio && g.fecha <= r.fin);
@@ -670,16 +841,37 @@ export default function FinanzasGenerales() {
       const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
       return parte.length > 1 ? parte : null;
     };
+    // Comparación insensible a mayúsculas y espacios (también dobles/invisibles:
+    // "h&h  ingenieros" encuentra "H&H Ingenieros")
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+    const clienteBuscado = exportCliente ? norm(exportCliente) : null;
+    // Un mismo cliente puede estar guardado en el campo `cliente` (registros
+    // nuevos) o solo al inicio de la descripción (facturas escaneadas, registros
+    // viejos, cuentas de cobro). Cotejar AMBOS para no dejar ingresos fuera.
+    const coincideCliente = (i: any): boolean => {
+      if (clienteBuscado === null) return true;
+      const cands: string[] = [];
+      if (i.cliente) cands.push(norm(String(i.cliente)));
+      const desc = String(i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "");
+      const seg = desc.split(" · ")[0].trim();
+      if (seg) cands.push(norm(seg));
+      return cands.includes(clienteBuscado);
+    };
     const ingresosDetalle = ingresosPorPlaca.filter(
-      (i) =>
-        i.fecha >= r.inicio &&
-        i.fecha <= r.fin &&
-        (exportCliente === null || getClienteIngreso(i) === exportCliente),
+      (i) => i.fecha >= r.inicio && i.fecha <= r.fin && coincideCliente(i),
     );
+    // Nombre real del cliente (con sus mayúsculas) para el PDF
+    const clienteReal = exportCliente
+      ? ingresosDetalle.length > 0
+        ? getClienteIngreso(ingresosDetalle[0])
+        : exportCliente
+      : null;
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
       Alert.alert(
         "Sin datos",
-        "No hay transacciones en el período seleccionado.",
+        exportCliente
+          ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
+          : "No hay transacciones en el período seleccionado.",
       );
       return;
     }
@@ -698,8 +890,16 @@ export default function FinanzasGenerales() {
       fecha: i.fecha,
       value: i.monto * ((i as any).cantidad ?? 1),
     }));
-    const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, 7));
-    const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, 7));
+    // Rangos cortos (≤31 días) se agrupan por día; antes siempre por mes,
+    // así que exportar "Esta semana" daba una sola fila mensual
+    const diasRango = Math.round(
+      (new Date(r.fin + "T12:00:00").getTime() -
+        new Date(r.inicio + "T12:00:00").getTime()) /
+        86_400_000,
+    );
+    const keyLen = diasRango <= 31 ? 10 : 7;
+    const gGrp = groupBy(gFilt, (g) => g.fecha.slice(0, keyLen));
+    const iGrp = groupBy(iFilt, (i) => i.fecha.slice(0, keyLen));
     const keys = Array.from(
       new Set([...Object.keys(gGrp), ...Object.keys(iGrp)]),
     ).sort();
@@ -726,8 +926,8 @@ export default function FinanzasGenerales() {
         gastosPorPeriodo: gasPeriodo,
         gastosDetalle,
         ingresosDetalle,
-        view: "meses",
-        clienteFiltro: exportCliente,
+        view: diasRango <= 31 ? "dias" : "meses",
+        clienteFiltro: clienteReal,
       });
 
       await new Promise((res) => setTimeout(res, 600));
@@ -741,7 +941,9 @@ export default function FinanzasGenerales() {
 
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
-        dialogTitle: "Compartir informe financiero",
+        dialogTitle: clienteReal
+          ? `Estado de cuenta — ${clienteReal}`
+          : "Compartir informe financiero",
         UTI: "com.adobe.pdf",
       });
     } catch (err: any) {
@@ -753,39 +955,6 @@ export default function FinanzasGenerales() {
       setExportando(false);
     }
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={c.accent} />
-            <Text style={[styles.loadingText, { color: c.textSecondary }]}>
-              cargando…
-            </Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.errorContainer}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={48}
-              color={c.danger}
-              style={{ marginBottom: 16 }}
-            />
-            <Text style={[styles.errorText, { color: c.danger }]}>{error}</Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
   if (!placaActual) {
     return (
@@ -1243,9 +1412,11 @@ export default function FinanzasGenerales() {
                       placeholderTextColor={c.textMuted}
                       value={texto}
                       onChangeText={(t) => {
-                        const limpio = t
-                          .replace(/[<>{}[\]\\\/`'"%;()&+]/g, "")
-                          .slice(0, 80);
+                        // Misma sanitización que al guardar el cliente
+                        // (sanitizarInput en Ingresos): solo se quitan < > { } [ ].
+                        // Nombres como "H&H" o "López & Cía" deben poder buscarse;
+                        // el PDF escapa estos caracteres al renderizar.
+                        const limpio = t.replace(/[<>{}[\]]/g, "").slice(0, 80);
                         setExportCliente(limpio.length > 0 ? limpio : null);
                       }}
                       onFocus={() => setClienteInputFocused(true)}
@@ -1287,90 +1458,25 @@ export default function FinanzasGenerales() {
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
+
         </KeyboardAvoidingView>
+
+        {/* Calendario como overlay DENTRO del modal de exportar, pero FUERA
+            del KeyboardAvoidingView para que el teclado no lo desplace */}
+        {calendarVisible && calendarTarget === "export" && (
+          <View style={StyleSheet.absoluteFill}>{renderCalendarSheet()}</View>
+        )}
       </Modal>
 
-      {/* MODAL CALENDARIO */}
+      {/* MODAL CALENDARIO — solo para el selector de la pantalla principal.
+          En el modal de exportar el calendario se renderiza como overlay
+          interno (iOS no monta un segundo Modal sobre otro). */}
       <Modal
-        visible={calendarVisible}
+        visible={calendarVisible && calendarTarget === "main"}
         transparent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
-          activeOpacity={1}
-          onPress={() => setCalendarVisible(false)}>
-          <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
-            <View
-              style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-            />
-            <Text style={[styles.modalTitle, { color: c.text }]}>
-              fecha {selectingDate === "inicio" ? "inicial" : "final"}
-            </Text>
-            <Calendar
-              current={
-                calendarTarget === "export"
-                  ? selectingDate === "inicio"
-                    ? exportRango.inicio
-                    : exportRango.fin
-                  : selectingDate === "inicio"
-                    ? rango.inicio
-                    : rango.fin
-              }
-              onDayPress={(day: any) => {
-                if (calendarTarget === "export") {
-                  setExportRango((prev) => ({
-                    ...prev,
-                    [selectingDate]: day.dateString,
-                  }));
-                  setPeriodoRapido("personalizado");
-                } else {
-                  setRango((prev) => ({
-                    ...prev,
-                    [selectingDate]: day.dateString,
-                  }));
-                }
-                setCalendarVisible(false);
-              }}
-              markedDates={
-                calendarTarget === "export"
-                  ? {
-                      [exportRango.inicio]: {
-                        selected: selectingDate === "inicio",
-                        selectedColor: c.accent,
-                      },
-                      [exportRango.fin]: {
-                        selected: selectingDate === "fin",
-                        selectedColor: c.accent,
-                      },
-                    }
-                  : {
-                      [rango.inicio]: {
-                        selected: selectingDate === "inicio",
-                        selectedColor: c.accent,
-                      },
-                      [rango.fin]: {
-                        selected: selectingDate === "fin",
-                        selectedColor: c.accent,
-                      },
-                    }
-              }
-              theme={{
-                backgroundColor: c.modalBg,
-                calendarBackground: c.modalBg,
-                textSectionTitleColor: c.textSecondary,
-                selectedDayBackgroundColor: c.accent,
-                selectedDayTextColor: c.accentText,
-                todayTextColor: c.accent,
-                dayTextColor: c.text,
-                textDisabledColor: c.textMuted,
-                monthTextColor: c.text,
-                arrowColor: c.accent,
-              }}
-              style={styles.calendar}
-            />
-          </View>
-        </TouchableOpacity>
+        {renderCalendarSheet()}
       </Modal>
     </View>
   );
@@ -1403,36 +1509,11 @@ const styles = StyleSheet.create({
   },
   exportarBtnText: { fontSize: 15, fontWeight: "600" },
 
-  // FILTER CHIPS
-  filterScroll: { marginBottom: 4 },
-  filterContent: { gap: 8, paddingVertical: 4 },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  filterChipActive: {},
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  filterChipTextActive: {},
-
   // SCROLL
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: HORIZONTAL_PADDING, paddingBottom: 110 },
 
-  // LOADING & ERROR
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 14 },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  errorText: { fontSize: 16, textAlign: "center" },
+  // EMPTY STATE
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -1463,7 +1544,6 @@ const styles = StyleSheet.create({
   dateButtonLabel: { fontSize: 10 },
   dateButtonValue: { fontSize: 15, fontWeight: "600", marginTop: 2 },
   rangeDivider: { paddingHorizontal: 10 },
-  rangeDividerText: { fontSize: 16 },
 
   // SUMMARY GRID
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },

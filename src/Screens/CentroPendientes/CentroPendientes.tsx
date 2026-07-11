@@ -13,6 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Clipboard from "expo-clipboard";
+import { formatearTel } from "../../utils/telefono";
+import { mensajeCuentaCobro } from "../../utils/cuentaCobro";
 
 import { useTheme } from "../../constants/Themecontext";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -33,8 +36,12 @@ import {
   generarInsights,
   InsightsPendientes,
 } from "../../services/insightsService";
+import { getAICache, writeAICache } from "../../utils/aiCache";
 
 type Tab = "cobrar" | "pagar";
+
+const CACHE_INSIGHTS = "@truckbook_centro_insights_v1";
+const TTL_INSIGHTS = 6 * 3_600_000; // 6 horas
 
 export default function CentroPendientes() {
   const { colors, isDark } = useTheme();
@@ -57,12 +64,27 @@ export default function CentroPendientes() {
     [porCobrar, porPagar]
   );
 
-  const cargarInsights = useCallback(async () => {
+  // Huella del resumen: si los pendientes no cambiaron, el insight cacheado sigue válido
+  const fpResumen = `${resumen.countPorCobrar}|${resumen.totalPorCobrar}|${resumen.countVencidosCobro}|${resumen.countVencidosPago}|${resumen.countProximosPago}|${resumen.totalPorPagar}`;
+
+  const cargarInsights = useCallback(async (force = false) => {
+    if (!force) {
+      const cached = await getAICache<InsightsPendientes>(
+        CACHE_INSIGHTS,
+        TTL_INSIGHTS,
+        fpResumen,
+      );
+      if (cached) {
+        setInsights(cached);
+        return;
+      }
+    }
     setLoadingIA(true);
     const result = await generarInsights(resumen);
+    if (result) await writeAICache(CACHE_INSIGHTS, result, fpResumen);
     setInsights(result);
     setLoadingIA(false);
-  }, [resumen]);
+  }, [resumen, fpResumen]);
 
   useEffect(() => {
     cargarInsights();
@@ -70,38 +92,63 @@ export default function CentroPendientes() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await cargarInsights();
+    await cargarInsights(true);
     setRefreshing(false);
   }, [cargarInsights]);
 
   const enviarWhatsApp = (telefono: string, mensaje: string) => {
-    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+    // Con teléfono válido abre el chat directo; sin él, WhatsApp deja elegir contacto
+    const base = telefono ? `https://wa.me/${telefono}` : "https://wa.me/";
+    const url = `${base}?text=${encodeURIComponent(mensaje)}`;
     Linking.openURL(url).catch(() =>
       Alert.alert("Error", "No se pudo abrir WhatsApp")
     );
   };
 
+  const copiarMensaje = async (mensaje: string) => {
+    try {
+      await Clipboard.setStringAsync(mensaje);
+      Alert.alert("Copiado", "Mensaje copiado al portapapeles");
+    } catch {
+      Alert.alert("Error", "No se pudo copiar el mensaje");
+    }
+  };
+
   const mostrarMensajeCobro = (item: PorCobrar) => {
-    const msg =
-      insights?.mensajeCobro ??
-      `Hola! Te recordamos que tienes una cuenta pendiente de pago por ${formatCOP(item.montoRestante)}. Por favor comunícate con nosotros. Gracias.`;
-    Alert.alert(
-      `Cobrar a ${item.cliente}`,
-      msg,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Enviar por WhatsApp",
-          onPress: () => enviarWhatsApp("", msg),
-        },
-        {
-          text: "Copiar",
-          onPress: () => {
-            Alert.alert("Copiado", "Mensaje copiado al portapapeles");
-          },
-        },
-      ]
+    // Cuenta de cobro resumida: una línea por cada pendiente del mismo cliente
+    const delCliente = porCobrar.filter(
+      (p) => p.cliente === item.cliente && p.estado !== "pagado",
     );
+    const detalleDe = (p: PorCobrar) => {
+      // La descripción suele empezar con el cliente ("Acme · cemento · ...")
+      const partes = (p.descripcion || "").split(" · ");
+      const resto = partes[0]?.trim() === p.cliente ? partes.slice(1) : partes;
+      return resto.join(" · ").trim();
+    };
+    const msg = mensajeCuentaCobro(
+      item.cliente,
+      delCliente.map((p) => ({
+        fecha: p.fecha,
+        detalle: detalleDe(p),
+        cantidad: p.cantidad,
+        monto: p.montoRestante,
+      })),
+    );
+    const tel = item.telefono ? formatearTel(item.telefono) : "";
+
+    const botones: Parameters<typeof Alert.alert>[2] = [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: tel ? "Enviar por WhatsApp" : "Abrir WhatsApp",
+        onPress: () => enviarWhatsApp(tel, msg),
+      },
+      {
+        text: "Copiar",
+        onPress: () => copiarMensaje(msg),
+      },
+    ];
+
+    Alert.alert(`Cobrar a ${item.cliente}`, msg, botones);
   };
 
   const styles = makeStyles(c, isDark);
@@ -152,7 +199,7 @@ export default function CentroPendientes() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={cargarInsights}
+              onPress={() => cargarInsights(true)}
               disabled={loadingIA}
               style={styles.iaRefresh}>
               {loadingIA ? (

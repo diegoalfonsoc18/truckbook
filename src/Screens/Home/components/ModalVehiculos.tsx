@@ -45,7 +45,7 @@ interface ModalVehiculosProps {
   visible: boolean;
   onClose: () => void;
   /** Called whenever the active vehicle's conductor name is resolved */
-  onConductorChange: (nombre: string | undefined) => void;
+  onConductorChange?: (nombre: string | undefined) => void;
 }
 
 export default function ModalVehiculos({
@@ -95,12 +95,12 @@ export default function ModalVehiculos({
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
     if (placaActual === vehiculo.placa) {
       useVehiculoStore.getState().clearVehiculo();
-      onConductorChange(undefined);
+      onConductorChange?.(undefined);
       return;
     }
     setPlaca(vehiculo.placa);
     setTipoCamion(vehiculo.tipo_camion);
-    onConductorChange(undefined);
+    onConductorChange?.(undefined);
   };
 
   const cerrarModal = () => {

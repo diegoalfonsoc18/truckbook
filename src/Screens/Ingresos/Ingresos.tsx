@@ -6,7 +6,6 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useIngresosConductor } from "../../hooks/UseingresosConductor";
 import { useTheme } from "../../constants/Themecontext";
-import NetInfo from "@react-native-community/netinfo";
 import TransactionScreen, { Categoria } from "../../components/TransactionScreen";
 import { IconName } from "../../components/ItemIcon";
 import { useNavigation } from "@react-navigation/native";
@@ -14,6 +13,7 @@ import {
   actualizarRecordatorioFletes,
   fletesPendientes,
 } from "../../services/fleteNotifications";
+import { extraerTelDesc } from "../../utils/telefono";
 
 const FLETE_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
@@ -95,8 +95,9 @@ export default function Ingresos() {
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
   const { user } = useAuth();
   const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
+  // La carga y el realtime viven en DataProvider (única fuente); aquí solo mutaciones
   const { agregarIngreso, actualizarIngreso, eliminarIngreso } =
-    useIngresosConductor(placaActual, user?.id);
+    useIngresosConductor(user?.id);
 
   const categoriasConIconoDinamico = INGRESOS_CATEGORIAS.map((cat) =>
     cat.id === "flete"
@@ -105,12 +106,6 @@ export default function Ingresos() {
       ? { ...cat, iconName: getMercanciaIcon(tipoCamion) }
       : cat
   );
-
-  useEffect(() => {
-    if (placaActual) {
-      useIngresosStore.getState().cargarIngresosDelDB(placaActual, user?.id);
-    }
-  }, [placaActual, user?.id]);
 
   // Sincroniza el recordatorio de fletes pendientes cada vez que cambian los ingresos
   useEffect(() => {
@@ -226,7 +221,7 @@ export default function Ingresos() {
         cliente: extras?.cliente ? sanitizarInput(extras.cliente) : undefined,
       });
     },
-    [placaActual, user?.id],
+    [placaActual, user?.id, agregarIngreso],
   );
 
   const onUpdate = useCallback(
@@ -239,11 +234,33 @@ export default function Ingresos() {
 
       const payload: Record<string, any> = { monto: parsearMonto(monto), fecha };
       if (descripcion !== undefined) {
-        payload.descripcion = descripcion.replace(/[<>{}]/g, "").slice(0, 500);
+        let desc = descripcion
+          .replace(/\[TEL:[^\]]*\]/g, "")
+          .replace(/[<>{}]/g, "")
+          .slice(0, 500);
+        // Teléfono: usar el del contacto recién elegido en la edición si lo
+        // hay; si no, conservar el del registro original (el modal reconstruye
+        // la descripción sin el tag [TEL:...] y antes lo perdía en silencio)
+        const original = useIngresosStore
+          .getState()
+          .ingresos.find((i) => i.id === id);
+        const { tel: telOriginal } = extraerTelDesc(original?.descripcion ?? "");
+        const telNuevo = extras?.telefono
+          ?.replace(/[^0-9+\- ]/g, "")
+          .slice(0, 20);
+        const tel = telNuevo || telOriginal;
+        if (tel) desc = `${desc}[TEL:${tel}]`;
+        payload.descripcion = desc;
       }
       if (extras?.cantidad) {
         const cant = parseInt(extras.cantidad, 10);
         if (!isNaN(cant) && cant >= 1 && cant <= 20) payload.cantidad = cant;
+      }
+      // Mantener el campo `cliente` sincronizado con la descripción editada
+      // (antes solo cambiaba la descripción y el filtro por cliente en Reportes
+      // dejaba de encontrar el ingreso).
+      if (extras?.cliente && extras.cliente.trim()) {
+        payload.cliente = sanitizarInput(extras.cliente);
       }
 
       return actualizarIngreso(id, payload);

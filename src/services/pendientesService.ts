@@ -1,6 +1,7 @@
 // src/services/pendientesService.ts
 import { Ingreso } from "../store/IngresosStore";
 import { Gasto } from "../store/GastosStore";
+import { extraerTelDesc } from "../utils/telefono";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,8 @@ export interface PorCobrar {
   id: string;
   cliente: string;
   descripcion: string;
+  telefono: string | null; // teléfono de contacto (crudo) extraído de [TEL:...]
+  cantidad: number; // fletes múltiples (x2, x3…)
   monto: number;
   montoPagado: number;
   montoRestante: number;
@@ -69,6 +72,8 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
       const fechaVenc = i.fecha_vencimiento
         ? new Date(i.fecha_vencimiento)
         : undefined;
+      // El teléfono va incrustado como [TEL:...] al final de la descripción.
+      const { desc: descLimpia, tel } = extraerTelDesc(i.descripcion ?? "");
 
       let estado: EstadoCobro;
       let diasVencido = 0;
@@ -88,8 +93,10 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
 
       return {
         id: i.id,
-        cliente: i.cliente ?? i.descripcion,
-        descripcion: i.descripcion,
+        cliente: i.cliente ?? descLimpia,
+        descripcion: descLimpia,
+        telefono: tel,
+        cantidad: i.cantidad ?? 1,
         monto: montoTotal,
         montoPagado,
         montoRestante,
