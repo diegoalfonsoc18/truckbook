@@ -189,45 +189,102 @@ function CatCard({
 }
 
 // ─── Swipe actions (edit + delete) ───────────────────────────────────────────
+const SWIPE_ACTIONS_WIDTH = 148; // ancho total revelado (2 botones + gaps)
+
+function SwipeActionButton({
+  onPress,
+  icon,
+  label,
+  color,
+  isDark,
+}: {
+  onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  color: string;
+  isDark: boolean;
+}) {
+  const scale = useSharedValue(1);
+  const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(0.88, { duration: 90 });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: 140 });
+      }}
+      style={[{ width: 64, alignItems: "center", justifyContent: "center" }, aStyle]}>
+      <View
+        style={{
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          backgroundColor: color,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.45 : 0.32,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+        <Ionicons name={icon} size={21} color="#fff" />
+      </View>
+      <Text
+        style={{
+          fontSize: 10.5,
+          fontWeight: "600",
+          color: isDark ? "rgba(255,255,255,0.75)" : color,
+          marginTop: 6,
+          letterSpacing: 0.2,
+        }}>
+        {label}
+      </Text>
+    </AnimatedPressable>
+  );
+}
+
 function SwipeRowActions({
   drag,
   onEdit,
   onDelete,
+  isDark,
 }: {
   drag: SharedValue<number>;
   onEdit: () => void;
   onDelete: () => void;
+  isDark: boolean;
 }) {
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: drag.value + 152 }],
+    transform: [{ translateX: drag.value + SWIPE_ACTIONS_WIDTH }],
   }));
   return (
-    <Reanimated.View style={[animStyle, { flexDirection: "row", gap: 8 }]}>
-      <TouchableOpacity
+    <Reanimated.View
+      style={[
+        animStyle,
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          width: SWIPE_ACTIONS_WIDTH,
+          paddingLeft: 10,
+        },
+      ]}>
+      <SwipeActionButton
         onPress={onEdit}
-        style={{
-          width: 68,
-          height: "100%",
-          backgroundColor: "#3B82F6",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 28,
-          marginLeft: 8,
-        }}>
-        <Ionicons name="pencil-outline" size={20} color="#fff" />
-      </TouchableOpacity>
-      <TouchableOpacity
+        icon="pencil"
+        label="Editar"
+        color="#3B82F6"
+        isDark={isDark}
+      />
+      <SwipeActionButton
         onPress={onDelete}
-        style={{
-          width: 68,
-          height: "100%",
-          backgroundColor: "#EF4444",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 28,
-        }}>
-        <Ionicons name="trash-outline" size={20} color="#fff" />
-      </TouchableOpacity>
+        icon="trash"
+        label="Eliminar"
+        color="#EF4444"
+        isDark={isDark}
+      />
     </Reanimated.View>
   );
 }
@@ -314,6 +371,7 @@ function TransactionRow({
       renderRightActions={(_, drag) => (
         <SwipeRowActions
           drag={drag}
+          isDark={isDark}
           onEdit={() => {
             swipeRef.current?.close();
             onPress(item.id);
