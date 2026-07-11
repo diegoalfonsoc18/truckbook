@@ -25,10 +25,13 @@ import Reanimated, {
   Easing,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { useVehiculoStore } from "../../store/VehiculoStore";
-import { useGastosStore } from "../../store/GastosStore";
-import { useIngresosStore } from "../../store/IngresosStore";
+import { useGastosStore, type Gasto } from "../../store/GastosStore";
+import { useIngresosStore, type Ingreso } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
+import { useAuth } from "../../hooks/useAuth";
+import { fetchTransaccionesRango } from "../../services/reporteService";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
@@ -646,8 +649,44 @@ export default function FinanzasGenerales() {
     );
   }, [placaActual]);
 
-  const gastos = useGastosStore(useShallow((state) => state.gastos));
-  const ingresos = useIngresosStore(useShallow((state) => state.ingresos));
+  const { user } = useAuth();
+  // Store en vivo (tope 200 recientes) — solo para fallback offline y sugerencias
+  const gastosStore = useGastosStore(useShallow((state) => state.gastos));
+  const ingresosStore = useIngresosStore(useShallow((state) => state.ingresos));
+
+  // Datos del rango consultados directo a Supabase (sin tope de 200). El informe
+  // se calcula sobre estos; si la consulta falla (offline), cae al store.
+  const [gastos, setGastos] = useState<Gasto[]>([]);
+  const [ingresos, setIngresos] = useState<Ingreso[]>([]);
+  const [cargandoRango, setCargandoRango] = useState(false);
+
+  const cargarRango = useCallback(async () => {
+    if (!placaActual || !user?.id) return;
+    setCargandoRango(true);
+    const res = await fetchTransaccionesRango(
+      placaActual,
+      user.id,
+      rango.inicio,
+      rango.fin,
+    );
+    if (res.error) {
+      // Sin conexión: usar el caché del store (recorta a 200, pero muestra algo)
+      setGastos(useGastosStore.getState().gastos);
+      setIngresos(useIngresosStore.getState().ingresos);
+    } else {
+      setGastos(res.gastos);
+      setIngresos(res.ingresos);
+    }
+    setCargandoRango(false);
+  }, [placaActual, user?.id, rango.inicio, rango.fin]);
+
+  // Recargar al enfocar la pantalla y cuando cambian placa/rango (así refleja
+  // registros nuevos al volver a Reportes, sin depender del realtime del store)
+  useFocusEffect(
+    useCallback(() => {
+      cargarRango();
+    }, [cargarRango]),
+  );
 
   // ── Todos los cálculos memorizados — solo se recalculan cuando cambian los datos o filtros ──
   const {
@@ -827,14 +866,33 @@ export default function FinanzasGenerales() {
 
   const generarPDF = async () => {
     if (exportando) return;
+    if (!placaActual || !user?.id) return;
     // Normalizar rango invertido (Desde > Hasta filtraba a vacío → "Sin datos")
     const r =
       exportRango.inicio <= exportRango.fin
         ? exportRango
         : { inicio: exportRango.fin, fin: exportRango.inicio };
-    const gastosDetalle = exportCliente
-      ? []
-      : gastosPorPlaca.filter((g) => g.fecha >= r.inicio && g.fecha <= r.fin);
+
+    setExportando(true);
+    // Consulta puntual del rango de export (sin tope de 200): un informe anual
+    // o de rango amplio ya no se queda corto por el caché del store.
+    const datos = await fetchTransaccionesRango(
+      placaActual,
+      user.id,
+      r.inicio,
+      r.fin,
+    );
+    if (datos.error) {
+      setExportando(false);
+      Alert.alert(
+        "Sin conexión",
+        "Necesitas internet para generar el informe. Intenta de nuevo.",
+      );
+      return;
+    }
+
+    // La consulta ya restringe a placa+conductor y al rango [inicio, fin]
+    const gastosDetalle = exportCliente ? [] : datos.gastos;
     const getClienteIngreso = (i: any): string | null => {
       if (i.cliente) return i.cliente;
       const desc: string = i.descripcion || "";
@@ -857,9 +915,7 @@ export default function FinanzasGenerales() {
       if (seg) cands.push(norm(seg));
       return cands.includes(clienteBuscado);
     };
-    const ingresosDetalle = ingresosPorPlaca.filter(
-      (i) => i.fecha >= r.inicio && i.fecha <= r.fin && coincideCliente(i),
-    );
+    const ingresosDetalle = datos.ingresos.filter(coincideCliente);
     // Nombre real del cliente (con sus mayúsculas) para el PDF
     const clienteReal = exportCliente
       ? ingresosDetalle.length > 0
@@ -867,6 +923,7 @@ export default function FinanzasGenerales() {
         : exportCliente
       : null;
     if (gastosDetalle.length === 0 && ingresosDetalle.length === 0) {
+      setExportando(false);
       Alert.alert(
         "Sin datos",
         exportCliente
@@ -878,6 +935,7 @@ export default function FinanzasGenerales() {
 
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
+      setExportando(false);
       Alert.alert("No disponible", "Tu dispositivo no soporta compartir archivos.");
       return;
     }
@@ -910,7 +968,6 @@ export default function FinanzasGenerales() {
     const bal = totIng - totGas;
     const rent = totIng === 0 ? "0" : ((bal / totIng) * 100).toFixed(1);
 
-    setExportando(true);
     setExportModal(false);
     try {
       const html = generarReporteHTML({
@@ -998,10 +1055,13 @@ export default function FinanzasGenerales() {
             { opacity: fadeAnim, transform: [{ translateY: headerY }] },
           ]}>
           <View style={styles.header}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Text style={[styles.headerTitle, { color: c.text }]}>
                 Finanzas
               </Text>
+              {cargandoRango && (
+                <ActivityIndicator size="small" color={c.textMuted} />
+              )}
             </View>
             <View
               style={[
@@ -1385,9 +1445,12 @@ export default function FinanzasGenerales() {
                   const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
                   return parte.length > 1 ? parte : null;
                 };
+                // Sugerencias desde el store en vivo (clientes recientes), no
+                // desde el rango en pantalla — así aparecen aunque el rango sea corto
                 const clientesDisponibles = Array.from(
                   new Set(
-                    ingresosPorPlaca
+                    ingresosStore
+                      .filter((i) => i.placa === placaActual)
                       .map(getCliente)
                       .filter((v): v is string => !!v),
                   ),

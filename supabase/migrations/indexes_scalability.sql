@@ -44,14 +44,15 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_active
 -- (usuarios.user_id ya tiene constraint único — lo usa onConflict en la app —
 --  por lo que ya está indexado; no se agrega índice extra.)
 
--- ─── FUTURO (no ejecutar aún) ─────────────────────────────────────────────────
--- Hoy los reportes filtran por rango de fechas EN EL CLIENTE sobre el caché
--- del DataProvider (máx. 200 filas). Si Reportes pasa a consultar rangos de
--- fecha server-side (necesario para historiales >200 registros), crear:
--- CREATE INDEX IF NOT EXISTS idx_gastos_conductor_placa_fecha
---   ON conductor_gastos (conductor_id, placa, fecha DESC);
--- CREATE INDEX IF NOT EXISTS idx_ingresos_conductor_placa_fecha
---   ON conductor_ingresos (conductor_id, placa, fecha DESC);
+-- ─── Reportes por rango de fecha (server-side) ───────────────────────────────
+-- Reportes/Exportar informe consultan por rango de fecha directo a Supabase
+-- (src/services/reporteService.ts) para no toparse con el límite de 200 del
+-- caché del store: WHERE placa = ? AND conductor_id = ? AND fecha BETWEEN ? AND ?
+-- ORDER BY fecha DESC. Estos índices cubren ese patrón.
+CREATE INDEX IF NOT EXISTS idx_gastos_placa_conductor_fecha_rango
+  ON conductor_gastos (placa, conductor_id, fecha DESC);
+CREATE INDEX IF NOT EXISTS idx_ingresos_placa_conductor_fecha_rango
+  ON conductor_ingresos (placa, conductor_id, fecha DESC);
 
 -- ─── Refrescar estadísticas para que el planificador use los índices ──────────
 ANALYZE usuarios;
