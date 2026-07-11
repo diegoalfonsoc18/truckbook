@@ -24,6 +24,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "run:android"],
       "port": 8081
+    },
+    {
+      "name": "Static Assets",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4599"],
+      "port": 4599
     }
   ]
 }
