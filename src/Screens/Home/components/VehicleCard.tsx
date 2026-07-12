@@ -283,7 +283,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   placa: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
     letterSpacing: 0.5,
     marginBottom: 2,

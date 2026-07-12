@@ -21,6 +21,7 @@ import WidgetClientes from "./widgets/WidgetClientes";
 import DashboardControlPanel from "./components/DashboardControlPanel";
 import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
+import ResumenSemanal from "./components/ResumenSemanal";
 
 const H_PAD = 20;
 
@@ -80,6 +81,18 @@ export default function HomeBaseAdapted({
                   vehicleCardTitle={vehicleCardTitle}
                   onPress={() => setModalVehiculosVisible(true)}
                 />
+              </View>
+            )}
+
+            {/* RESUMEN SEMANAL — Ingresos / Gastos / Viajes / Clientes */}
+            {placaActual && (
+              <View
+                style={
+                  Platform.OS === "android"
+                    ? { paddingHorizontal: 4 }
+                    : undefined
+                }>
+                <ResumenSemanal isDark={isDark} />
               </View>
             )}
 
