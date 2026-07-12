@@ -15,13 +15,12 @@ import {
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useTheme } from "../../constants/Themecontext";
 
-import WidgetResumen from "./widgets/WidgetResumen";
-import WidgetInsightIA from "./widgets/WidgetInsightIA";
 import WidgetClientes from "./widgets/WidgetClientes";
 import DashboardControlPanel from "./components/DashboardControlPanel";
 import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
+import ActividadCombustible from "./components/ActividadCombustible";
 
 const H_PAD = 20;
 
@@ -76,7 +75,12 @@ export default function HomeBaseAdapted({
             ]}>
             {/* VEHICLE CARD */}
             {showCamionHeader && (
-              <View style={Platform.OS === "android" ? { paddingHorizontal: 4, paddingVertical: 2 } : undefined}>
+              <View
+                style={
+                  Platform.OS === "android"
+                    ? { paddingHorizontal: 4, paddingVertical: 2 }
+                    : undefined
+                }>
                 <VehicleCard
                   vehicleCardTitle={vehicleCardTitle}
                   onPress={() => setModalVehiculosVisible(true)}
@@ -93,18 +97,9 @@ export default function HomeBaseAdapted({
                     : undefined
                 }>
                 <ResumenSemanal isDark={isDark} />
+                <ActividadCombustible isDark={isDark} />
               </View>
             )}
-
-            {/* WIDGETS — fila de dos columnas */}
-            <View
-              style={[
-                s.widgetRow,
-                Platform.OS === "android" && { paddingHorizontal: 4 },
-              ]}>
-              <WidgetResumen isDark={isDark} />
-              <WidgetInsightIA isDark={isDark} />
-            </View>
 
             {!placaActual ? (
               /* ONBOARDING — sin vehículo */
@@ -211,17 +206,6 @@ const s = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: Platform.OS === "android" ? 0 : -0.4,
-  },
-
-  widgetRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    marginTop: 6,
-    marginBottom: 12,
-    gap: 10,
-    zIndex: 1,
   },
 
   onboardingCard: {

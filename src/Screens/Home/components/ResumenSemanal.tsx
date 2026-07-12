@@ -2,7 +2,7 @@
 // Panel "RESUMEN SEMANAL" — 4 tarjetas (Ingresos, Gastos, Viajes, Clientes)
 // comparando esta semana vs. la anterior, más la card "Por cobrar" (total de
 // ingresos pendientes). Lee los stores igual que WidgetResumen / WidgetInsightIA.
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { inicioSemana, fmtI } from "../homeUtils";
 import { HOME_COLORS } from "../HomeConstants";
 import { ModalPendientes } from "./ModalPendientes";
 import ItemIcon from "../../../components/ItemIcon";
+import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 
 const COLORS = {
   green: "#16A34A",
@@ -212,6 +213,12 @@ export default function ResumenSemanal({ isDark }: Props) {
     return set.size;
   }, [pendientes]);
   const hayPendientes = pendientes.length > 0;
+
+  // Recordatorio IA de cobros: se reprograma cuando cambian los pendientes
+  // (antes vivía en WidgetInsightIA, ya retirado del Home).
+  useEffect(() => {
+    programarRecordatorioIACobros(pendientes).catch(() => {});
+  }, [pendientes]);
 
   const arrowIcon = (a: Delta["arrow"]) =>
     a === "up" ? "arrow-up" : a === "down" ? "arrow-down" : "remove";
