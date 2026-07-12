@@ -1,8 +1,18 @@
 // src/Screens/Home/vehicleConstants.ts
 // Shared vehicle constants used by Home and ModalVehiculos
+import type { ImageSourcePropType } from "react-native";
 import type { IconName } from "../../components/ItemIcon";
 import type { TipoCamion } from "../../store/VehiculoStore";
 import { HOME_COLORS } from "./HomeConstants";
+
+/**
+ * Fotos reales del camión por tipo (fondo transparente), usadas en la
+ * VehicleCard del Home. Solo los tipos con foto disponible aparecen aquí;
+ * el resto cae al ícono vectorial (ICON_MAP) automáticamente.
+ */
+export const VEHICLE_PHOTOS: Partial<Record<TipoCamion, ImageSourcePropType>> = {
+  volqueta: require("../../assets/img/volqueta.webp"),
+};
 
 export interface Vehiculo {
   id: string;

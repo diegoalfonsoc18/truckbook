@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform, Image } from "react-native";
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,16 +10,16 @@ import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
-import { useIngresosStore } from "../../../store/IngresosStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
-import { formatCOP } from "../homeUtils";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { HOME_COLORS } from "../HomeConstants";
-import { ICON_MAP, TIPOS_CAMION } from "../vehicleConstants";
+import { ICON_MAP, TIPOS_CAMION, VEHICLE_PHOTOS } from "../vehicleConstants";
 import { usePrecioDiesel } from "../../../hooks/usePrecioDiesel";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
+
+const FUEL_BAR_COLOR = "#F5A623";
 
 interface VehicleCardProps {
   vehicleCardTitle?: string;
@@ -33,7 +33,6 @@ export default function VehicleCard({
   const { colors: c, isDark } = useTheme();
   const vcShadow = getShadow(isDark, "md");
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
-  const ingresos = useIngresosStore((s) => s.ingresos);
   const gastos = useGastosStore((s) => s.gastos);
   const { precio: precioGalon } = usePrecioDiesel();
 
@@ -46,40 +45,29 @@ export default function VehicleCard({
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
     : "conductor";
+  const foto = tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined;
+  const subtitulo = vehicleCardTitle || tipoCamionData?.label || "";
 
-  // ── Stats ──
-  const vehicleStats = React.useMemo(() => {
-    const fletes = ingresos.filter((i) => i.tipo_ingreso === "Flete");
-    const totalViajes = fletes.length;
-    const totalIngresos = fletes.reduce((sum, i) => sum + (i.monto ?? 0) * (i.cantidad ?? 1), 0);
-    const clientesSet = new Set<string>();
-    for (const ing of fletes) {
-      if (ing.descripcion) {
-        const nombre = ing.descripcion.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0]?.trim();
-        if (nombre && nombre !== "Flete") clientesSet.add(nombre);
-      }
+  // ── Combustible ──
+  const fuel = React.useMemo(() => {
+    // Gasto combustible por mes → galones del mes actual y ratio vs. mes pico
+    const porMes = new Map<string, number>();
+    for (const g of gastos) {
+      if (g.tipo_gasto !== "Combustible") continue;
+      const mes = (g.fecha ?? g.created_at ?? "").slice(0, 7);
+      if (mes) porMes.set(mes, (porMes.get(mes) ?? 0) + (g.monto ?? 0));
     }
 
-    // Galones estimados del MES ACTUAL: gasto combustible / precio ACPM (Gemini)
     const now = new Date();
     const mesActual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const gastoCombustible = gastos
-      .filter(
-        (g) =>
-          g.tipo_gasto === "Combustible" &&
-          (g.fecha ?? g.created_at ?? "").startsWith(mesActual),
-      )
-      .reduce((sum, g) => sum + (g.monto ?? 0), 0);
-    const galones =
-      precioGalon > 0 ? Math.round(gastoCombustible / precioGalon) : 0;
+    const gastoMes = porMes.get(mesActual) ?? 0;
+    const gastoPico = Math.max(0, ...porMes.values());
 
-    return {
-      viajes: totalViajes,
-      clientes: clientesSet.size,
-      ingresos: totalIngresos,
-      galones,
-    };
-  }, [ingresos, gastos, precioGalon]);
+    const galones = precioGalon > 0 ? Math.round(gastoMes / precioGalon) : 0;
+    const ratio = gastoPico > 0 ? gastoMes / gastoPico : 0;
+
+    return { galones, ratio };
+  }, [gastos, precioGalon]);
 
   // ── SF Symbol helper ──
   const SFIcon = ({
@@ -103,10 +91,8 @@ export default function VehicleCard({
     <AnimatedPressable
       style={[
         s.card,
-        { backgroundColor: isDark ? `${c.accent}14` : "#FFFFFF" },
-        isDark
-          ? { borderWidth: 1, borderColor: `${c.accent}33` }
-          : vcShadow,
+        { backgroundColor: isDark ? `${c.accent}14` : "#F4F5F7" },
+        isDark ? { borderWidth: 1, borderColor: `${c.accent}33` } : vcShadow,
         vcAnimStyle,
       ]}
       onPressIn={() => {
@@ -123,118 +109,102 @@ export default function VehicleCard({
           : "Seleccionar vehículo"
       }
       accessibilityHint="Toca para cambiar de vehículo">
+      {/* Botón circular con chevron (arriba a la derecha) */}
+      <View style={[s.chevronBtn, { borderColor: HOME_COLORS.vehicleCardBorderColor }]}>
+        <SFIcon
+          name="chevron.right"
+          fallback="chevron-forward"
+          size={18}
+          color={HOME_COLORS.vehicleCardText}
+        />
+      </View>
+
       <View style={s.content}>
         {placaActual ? (
-          <View style={{ flex: 1 }}>
-            {/* Fila 1: vehículo activo ... ubicación */}
-            <View style={s.topRow}>
+          <View style={s.row}>
+            {/* Columna de texto */}
+            <View style={[s.textCol, foto ? s.textColWithPhoto : null]}>
               <Text
                 style={[s.label, { color: HOME_COLORS.vehicleCardTextMuted }]}>
-                vehículo activo
+                VEHÍCULO ACTIVO
               </Text>
-              <View style={s.statItem}>
-                <SFIcon
-                  name="fuelpump"
-                  fallback="flame-outline"
-                  size={15}
-                  color={HOME_COLORS.vehicleCardTextMuted}
+
+              <Text
+                style={[s.placa, { color: HOME_COLORS.vehicleCardText }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit>
+                {placaActual}
+              </Text>
+
+              {!!subtitulo && (
+                <Text style={[s.subtitulo, { color: HOME_COLORS.vehicleCardSubtitle }]}>
+                  {subtitulo}
+                </Text>
+              )}
+
+              {/* Chip de combustible */}
+              <View style={s.fuelChip}>
+                <View style={s.fuelRow}>
+                  <SFIcon
+                    name="fuelpump.fill"
+                    fallback="flame"
+                    size={16}
+                    color={HOME_COLORS.vehicleCardText}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[s.fuelValue, { color: HOME_COLORS.vehicleCardText }]}>
+                      {fuel.galones} gal
+                    </Text>
+                    <Text
+                      style={[
+                        s.fuelLabel,
+                        { color: HOME_COLORS.vehicleCardTextMuted },
+                      ]}>
+                      Combustible
+                    </Text>
+                  </View>
+                </View>
+                <View style={s.fuelTrack}>
+                  <View
+                    style={[
+                      s.fuelFill,
+                      {
+                        width: `${Math.round(Math.max(0, Math.min(1, fuel.ratio)) * 100)}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Foto real del camión (con fallback al ícono vectorial) */}
+            {foto ? (
+              <View style={s.photoWrap} pointerEvents="none">
+                <Image source={foto} style={s.photo} resizeMode="contain" />
+              </View>
+            ) : (
+              <View style={s.iconCol}>
+                <ItemIcon
+                  name={camionIconName}
+                  size={HOME_COLORS.vehicleIconSize}
                 />
-                <Text
-                  style={[
-                    s.statText,
-                    { color: HOME_COLORS.vehicleCardTextMuted },
-                  ]}
-                  numberOfLines={1}>
-                  {vehicleStats.galones > 0
-                    ? `${vehicleStats.galones} gal`
-                    : "0 gal"}
-                </Text>
               </View>
-            </View>
-
-            {/* Fila 2: Nombre + placa ... camión */}
-            <View style={s.middleRow}>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[s.typeName, { color: HOME_COLORS.vehicleCardText }]}>
-                  {vehicleCardTitle || tipoCamionData?.label || ""}
-                </Text>
-                <View
-                  style={[
-                    s.placaBadge,
-                    {
-                      backgroundColor: c.plateYellow,
-                      borderColor: c.plateBorder,
-                      borderWidth: 1,
-                      alignSelf: "flex-start",
-                    },
-                  ]}>
-                  <Text style={[s.placaText, { color: c.plateText }]}>
-                    {placaActual}
-                  </Text>
-                </View>
-              </View>
-              <ItemIcon
-                name={camionIconName}
-                size={HOME_COLORS.vehicleIconSize}
-              />
-            </View>
-
-            {/* Fila 3: viajes + clientes ... ingresos */}
-            <View style={s.bottomRow}>
-              <View style={s.statsRow}>
-                <View style={s.statItem}>
-                  <SFIcon
-                    name="shippingbox"
-                    fallback="cube-outline"
-                    size={16}
-                    color={HOME_COLORS.vehicleCardTextMuted}
-                  />
-                  <Text
-                    style={[
-                      s.statText,
-                      { color: HOME_COLORS.vehicleCardTextMuted },
-                    ]}>
-                    {vehicleStats.viajes} viajes
-                  </Text>
-                </View>
-                <View style={s.statItem}>
-                  <SFIcon
-                    name="person.2"
-                    fallback="people-outline"
-                    size={16}
-                    color={HOME_COLORS.vehicleCardTextMuted}
-                  />
-                  <Text
-                    style={[
-                      s.statText,
-                      { color: HOME_COLORS.vehicleCardTextMuted },
-                    ]}>
-                    {vehicleStats.clientes} clientes
-                  </Text>
-                </View>
-              </View>
-              <View style={s.statItem}>
-                <Text
-                  style={[s.statText, { color: c.accent, fontWeight: "700" }]}>
-                  Esta semana: {formatCOP(vehicleStats.ingresos)}
-                </Text>
-              </View>
-            </View>
+            )}
           </View>
         ) : (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[s.typeName, { color: HOME_COLORS.vehicleCardText }]}>
+          <View style={s.row}>
+            <View style={s.textCol}>
+              <Text style={[s.placaEmpty, { color: HOME_COLORS.vehicleCardText }]}>
                 Sin vehículo
               </Text>
-              <Text
-                style={[s.hint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+              <Text style={[s.hint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
                 Toca para seleccionar un camión
               </Text>
             </View>
-            <ItemIcon name="conductor" size={HOME_COLORS.vehicleIconSize} />
+            <View style={s.iconCol}>
+              <ItemIcon name="conductor" size={HOME_COLORS.vehicleIconSize} />
+            </View>
           </View>
         )}
       </View>
@@ -246,66 +216,118 @@ const s = StyleSheet.create({
   card: {
     borderRadius: 22,
     marginBottom: 20,
+    overflow: "hidden",
   },
   content: {
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
   },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  middleRow: {
+  row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: -2,
   },
-  bottomRow: {
-    flexDirection: "row",
+  textCol: {
+    flex: 1,
+  },
+  textColWithPhoto: {
+    marginRight: 178,
+  },
+  iconCol: {
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 6,
+    justifyContent: "center",
   },
-  statsRow: {
-    flexDirection: "row",
+  photoWrap: {
+    position: "absolute",
+    right: -20,
+    top: -24,
+    bottom: -24,
+    width: 250,
     alignItems: "center",
-    gap: 14,
+    justifyContent: "center",
   },
-  statItem: {
-    flexDirection: "row",
+  photo: {
+    width: 250,
+    height: 375,
+  },
+  chevronBtn: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
-    gap: 4,
-  },
-  statText: {
-    fontSize: 13,
-    fontWeight: "500",
+    justifyContent: "center",
+    zIndex: 2,
   },
   label: {
-    fontSize: HOME_COLORS.vehicleLabelSize,
-    fontWeight: HOME_COLORS.vehicleLabelWeight,
-    letterSpacing: HOME_COLORS.vehicleLabelLetterSpacing,
-    marginBottom: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 1,
+    marginBottom: 4,
   },
-  typeName: {
+  placa: {
+    fontSize: 38,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  placaEmpty: {
     fontSize: HOME_COLORS.vehicleTypeSize,
-    fontWeight: HOME_COLORS.vehicleTypeWeight,
+    fontWeight: "700",
     letterSpacing: -0.3,
     marginBottom: 4,
+  },
+  subtitulo: {
+    fontSize: 17,
+    fontWeight: "500",
+    letterSpacing: -0.2,
   },
   hint: {
     fontSize: HOME_COLORS.vehicleHintSize,
   },
-  placaBadge: {
-    borderRadius: HOME_COLORS.vehicleBadgeBorderRadius,
-    paddingHorizontal: HOME_COLORS.vehicleBadgePaddingH,
-    paddingVertical: HOME_COLORS.vehicleBadgePaddingV,
+  fuelChip: {
+    marginTop: 14,
+    alignSelf: "flex-start",
+    minWidth: 124,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  placaText: {
-    fontSize: HOME_COLORS.vehiclePlateSize,
-    fontWeight: HOME_COLORS.vehiclePlateWeight,
-    letterSpacing: HOME_COLORS.vehiclePlateLetterSpacing,
+  fuelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  fuelValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  fuelLabel: {
+    fontSize: 10,
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  fuelTrack: {
+    marginTop: 7,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+  fuelFill: {
+    height: "100%",
+    borderRadius: 3,
+    backgroundColor: FUEL_BAR_COLOR,
   },
 });

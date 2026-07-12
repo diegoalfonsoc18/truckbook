@@ -18,6 +18,7 @@ export const HOME_COLORS = {
   // Vehicle Card — texto
   vehicleCardText: "#000000",
   vehicleCardTextMuted: "#6B7280",
+  vehicleCardSubtitle: "#4B5563",
   vehicleCardChevronBg: "rgba(0,0,0,0.06)",
 
   // Vehicle Card — icono
