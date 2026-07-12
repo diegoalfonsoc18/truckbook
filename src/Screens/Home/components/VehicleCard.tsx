@@ -110,7 +110,11 @@ export default function VehicleCard({
       }
       accessibilityHint="Toca para cambiar de vehículo">
       {/* Botón circular con chevron (arriba a la derecha) */}
-      <View style={[s.chevronBtn, { borderColor: HOME_COLORS.vehicleCardBorderColor }]}>
+      <View
+        style={[
+          s.chevronBtn,
+          { borderColor: HOME_COLORS.vehicleCardBorderColor },
+        ]}>
         <SFIcon
           name="chevron.right"
           fallback="chevron-forward"
@@ -137,7 +141,11 @@ export default function VehicleCard({
               </Text>
 
               {!!subtitulo && (
-                <Text style={[s.subtitulo, { color: HOME_COLORS.vehicleCardSubtitle }]}>
+                <Text
+                  style={[
+                    s.subtitulo,
+                    { color: HOME_COLORS.vehicleCardSubtitle },
+                  ]}>
                   {subtitulo}
                 </Text>
               )}
@@ -153,7 +161,10 @@ export default function VehicleCard({
                   />
                   <View style={{ flex: 1 }}>
                     <Text
-                      style={[s.fuelValue, { color: HOME_COLORS.vehicleCardText }]}>
+                      style={[
+                        s.fuelValue,
+                        { color: HOME_COLORS.vehicleCardText },
+                      ]}>
                       {fuel.galones} gal
                     </Text>
                     <Text
@@ -195,10 +206,12 @@ export default function VehicleCard({
         ) : (
           <View style={s.row}>
             <View style={s.textCol}>
-              <Text style={[s.placaEmpty, { color: HOME_COLORS.vehicleCardText }]}>
+              <Text
+                style={[s.placaEmpty, { color: HOME_COLORS.vehicleCardText }]}>
                 Sin vehículo
               </Text>
-              <Text style={[s.hint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+              <Text
+                style={[s.hint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
                 Toca para seleccionar un camión
               </Text>
             </View>
@@ -239,16 +252,16 @@ const s = StyleSheet.create({
   },
   photoWrap: {
     position: "absolute",
-    right: -20,
-    top: -24,
-    bottom: -24,
-    width: 250,
+    right: -14,
+    top: 0,
+    bottom: 0,
+    width: 260,
     alignItems: "center",
     justifyContent: "center",
   },
   photo: {
-    width: 250,
-    height: 375,
+    width: 260,
+    height: 156,
   },
   chevronBtn: {
     position: "absolute",
@@ -270,13 +283,13 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   placa: {
-    fontSize: 38,
+    fontSize: 28,
     fontWeight: "800",
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   placaEmpty: {
-    fontSize: HOME_COLORS.vehicleTypeSize,
+    fontSize: 28,
     fontWeight: "700",
     letterSpacing: -0.3,
     marginBottom: 4,
@@ -292,7 +305,7 @@ const s = StyleSheet.create({
   fuelChip: {
     marginTop: 14,
     alignSelf: "flex-start",
-    minWidth: 124,
+    minWidth: 110,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 10,

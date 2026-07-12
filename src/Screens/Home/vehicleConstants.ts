@@ -12,6 +12,7 @@ import { HOME_COLORS } from "./HomeConstants";
  */
 export const VEHICLE_PHOTOS: Partial<Record<TipoCamion, ImageSourcePropType>> = {
   volqueta: require("../../assets/img/volqueta.webp"),
+  estacas: require("../../assets/img/estacas.webp"),
 };
 
 export interface Vehiculo {
