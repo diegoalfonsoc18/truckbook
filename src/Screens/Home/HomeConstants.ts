@@ -78,6 +78,6 @@ export const HOME_COLORS = {
     grua: "#E94560",
     cisterna: "#74B9FF",
     planchon: "#FDCB6E",
-    portacontenedor: "#00CEC9",
+    tractocamion: "#0984E3",
   },
 };

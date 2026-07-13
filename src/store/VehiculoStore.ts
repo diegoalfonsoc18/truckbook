@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
 
-export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua" | "cisterna" | "planchon" | "portacontenedor";
+export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua" | "cisterna" | "planchon" | "tractocamion";
 
 interface VehiculoStore {
   placa: string | null;

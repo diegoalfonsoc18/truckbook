@@ -95,16 +95,6 @@ const CONTEXTO_CAMION: Record<string, { descripcion: string; ejemplos: string }>
       `"contenedor" → "Contenedor"\n` +
       `"estructura metalica" → "Estructura metálica"`,
   },
-  portacontenedor: {
-    descripcion: "Portacontenedor (transporte de contenedores de carga)",
-    ejemplos:
-      `"contenedor 20 pies" → "Contenedor 20'"\n` +
-      `"contenedor 40" → "Contenedor 40'"\n` +
-      `"dry" → "Contenedor Dry"\n` +
-      `"refrigerado" → "Contenedor Refrigerado"\n` +
-      `"exportacion" → "Exportación"\n` +
-      `"importacion" → "Importación"`,
-  },
   planchon: {
     descripcion: "Planchón (transporte de carga extradimensional o pesada)",
     ejemplos:

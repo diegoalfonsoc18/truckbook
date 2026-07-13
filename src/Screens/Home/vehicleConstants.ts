@@ -16,6 +16,7 @@ export const VEHICLE_PHOTOS: Partial<Record<TipoCamion, ImageSourcePropType>> = 
   furgon: require("../../assets/img/furgon.webp"),
   planchon: require("../../assets/img/planchon.webp"),
   cisterna: require("../../assets/img/cisterna.webp"),
+  tractocamion: require("../../assets/img/tractocamion.webp"),
 };
 
 export interface Vehiculo {
@@ -31,7 +32,7 @@ export const ICON_MAP: Record<TipoCamion, IconName> = {
   grua: "grua",
   cisterna: "cisterna",
   planchon: "planchon",
-  portacontenedor: "portaContenedor",
+  tractocamion: "truck",
 };
 
 const VALID_TIPOS = new Set<string>(Object.keys(ICON_MAP));
@@ -49,11 +50,11 @@ export const TIPOS_CAMION: Array<{
   iconName: IconName;
   color: string;
 }> = [
+  { id: "tractocamion", label: "Tractocamión", iconName: "truck", color: HOME_COLORS.trucks.tractocamion },
   { id: "estacas", label: "Estacas", iconName: "estacas", color: HOME_COLORS.trucks.estacas },
   { id: "volqueta", label: "Volqueta", iconName: "volqueta2", color: HOME_COLORS.trucks.volqueta },
   { id: "furgon", label: "Furgón", iconName: "furgon", color: HOME_COLORS.trucks.furgon },
   { id: "grua", label: "Grúa", iconName: "grua", color: HOME_COLORS.trucks.grua },
   { id: "cisterna", label: "Cisterna", iconName: "cisterna", color: HOME_COLORS.trucks.cisterna },
   { id: "planchon", label: "Planchón", iconName: "planchon", color: HOME_COLORS.trucks.planchon },
-  { id: "portacontenedor", label: "Porta cont.", iconName: "portaContenedor", color: HOME_COLORS.trucks.portacontenedor },
 ];
