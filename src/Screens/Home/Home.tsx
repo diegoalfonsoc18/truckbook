@@ -16,7 +16,6 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useTheme } from "../../constants/Themecontext";
 
 import WidgetClientes from "./widgets/WidgetClientes";
-import DashboardControlPanel from "./components/DashboardControlPanel";
 import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
@@ -151,28 +150,8 @@ export default function HomeBaseAdapted({
                 </View>
               </TouchableOpacity>
             ) : (
-              <>
-                {/* PANEL DE CONTROL — tablero de testigos */}
-                {items.length > 0 && (
-                  <>
-                    <View style={s.sectionHeader}>
-                      <Text style={[s.sectionLabel, { color: c.text }]}>
-                        Actividad semanal
-                      </Text>
-                    </View>
-                    <DashboardControlPanel
-                      items={items}
-                      onItemPress={onItemPress ?? (() => {})}
-                      isDark={isDark}
-                      colors={c}
-                      renderBadge={renderBadge}
-                    />
-                  </>
-                )}
-
-                {/* CLIENTES FRECUENTES */}
-                <WidgetClientes isDark={isDark} />
-              </>
+              /* CLIENTES FRECUENTES */
+              <WidgetClientes isDark={isDark} />
             )}
           </ScrollView>
         </Animated.View>
