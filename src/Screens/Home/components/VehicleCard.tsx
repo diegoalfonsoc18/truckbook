@@ -41,6 +41,13 @@ export default function VehicleCard({
     transform: [{ scale: vcScale.value }],
   }));
 
+  // Ancho real de la fila → foto responsiva que nunca tapa el texto.
+  const [rowW, setRowW] = React.useState(0);
+  const BLEED = 12; // cuánto sangra la foto por el borde derecho (recortada por overflow)
+  const photoW = rowW ? Math.round(rowW * 0.57) : 168;
+  const photoH = Math.round((photoW * 156) / 260);
+  const photoReserve = rowW ? Math.max(96, photoW - BLEED + 6) : 150;
+
   const tipoCamionData = TIPOS_CAMION.find((t) => t.id === tipoCamion);
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
@@ -125,9 +132,11 @@ export default function VehicleCard({
 
       <View style={s.content}>
         {placaActual ? (
-          <View style={s.row}>
+          <View
+            style={s.row}
+            onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
             {/* Columna de texto */}
-            <View style={[s.textCol, foto ? s.textColWithPhoto : null]}>
+            <View style={[s.textCol, foto ? { marginRight: photoReserve } : null]}>
               <Text
                 style={[s.label, { color: HOME_COLORS.vehicleCardTextMuted }]}>
                 VEHÍCULO ACTIVO
@@ -191,8 +200,14 @@ export default function VehicleCard({
 
             {/* Foto real del camión (con fallback al ícono vectorial) */}
             {foto ? (
-              <View style={s.photoWrap} pointerEvents="none">
-                <Image source={foto} style={s.photo} resizeMode="contain" />
+              <View
+                style={[s.photoWrap, { width: photoW, right: -BLEED }]}
+                pointerEvents="none">
+                <Image
+                  source={foto}
+                  style={{ width: photoW, height: photoH }}
+                  resizeMode="contain"
+                />
               </View>
             ) : (
               <View style={s.iconCol}>
@@ -305,7 +320,7 @@ const s = StyleSheet.create({
   fuelChip: {
     marginTop: 14,
     alignSelf: "flex-start",
-    minWidth: 110,
+    minWidth: 104,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 10,

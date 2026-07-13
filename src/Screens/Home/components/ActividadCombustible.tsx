@@ -191,11 +191,13 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
   }, [gastos, placa, precioGalon]);
 
   return (
-    <View style={s.row}>
-      {/* ACTIVIDAD RECIENTE */}
-      <View style={[s.panel, s.panelActividad]}>
+    <View style={s.wrap}>
+      {/* ACTIVIDAD RECIENTE — full width */}
+      <View style={s.panel}>
         <View style={s.panelHeader}>
-          <Text style={s.panelLabel}>ACTIVIDAD RECIENTE</Text>
+          <Text style={s.panelLabel} numberOfLines={1}>
+            ACTIVIDAD RECIENTE
+          </Text>
           <Pressable onPress={onVerTodas} hitSlop={8}>
             <Text style={s.verTodas}>Ver todas</Text>
           </Pressable>
@@ -235,18 +237,24 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
         )}
       </View>
 
-      {/* COMBUSTIBLE */}
+      {/* COMBUSTIBLE — full width, horizontal (gauge + info) */}
       <View style={[s.panel, s.panelFuel]}>
-        <Text style={s.panelLabel}>COMBUSTIBLE</Text>
         <View style={s.gaugeWrap}>
           <FuelGauge ratio={galones / CAPACIDAD_GAL} />
           <View style={s.gaugeCenter} pointerEvents="none">
-            <SFIcon name="fuelpump.fill" fallback="flame" size={20} color={COLORS.ink} />
+            <SFIcon name="fuelpump.fill" fallback="flame" size={17} color={COLORS.ink} />
             <Text style={s.gaugeValue}>{galones}</Text>
             <Text style={s.gaugeUnit}>galones</Text>
           </View>
         </View>
-        <Text style={s.capacidad}>Capacidad: {CAPACIDAD_GAL} gal</Text>
+        <View style={s.fuelInfo}>
+          <Text style={s.panelLabel}>COMBUSTIBLE</Text>
+          <Text style={s.fuelBig}>
+            {galones}
+            <Text style={s.fuelBigUnit}> gal este mes</Text>
+          </Text>
+          <Text style={s.capacidad}>Capacidad estimada: {CAPACIDAD_GAL} gal</Text>
+        </View>
       </View>
     </View>
   );
@@ -263,9 +271,8 @@ const panelShadow = Platform.select({
 });
 
 const s = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: 10,
+  wrap: {
+    gap: 12,
     marginBottom: 12,
   },
   panel: {
@@ -274,12 +281,10 @@ const s = StyleSheet.create({
     padding: 14,
     ...panelShadow,
   },
-  panelActividad: {
-    flex: 1.7,
-  },
   panelFuel: {
-    flex: 1,
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
   panelHeader: {
     flexDirection: "row",
@@ -292,6 +297,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1,
     color: COLORS.muted,
+    flexShrink: 1,
   },
   verTodas: {
     fontSize: 12,
@@ -345,31 +351,48 @@ const s = StyleSheet.create({
     marginTop: 1,
   },
   gaugeWrap: {
-    width: "100%",
+    width: 116,
     aspectRatio: 120 / 84,
-    marginTop: 4,
   },
-  gaugeCenter: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 28,
+  fuelInfo: {
+    flex: 1,
+    paddingLeft: 4,
   },
-  gaugeValue: {
-    fontSize: 26,
+  fuelBig: {
+    fontSize: 22,
     fontWeight: "800",
     color: COLORS.ink,
     letterSpacing: -0.5,
     marginTop: 2,
   },
-  gaugeUnit: {
-    fontSize: 11,
+  fuelBigUnit: {
+    fontSize: 13,
+    fontWeight: "600",
     color: COLORS.muted,
-    marginTop: -2,
+    letterSpacing: 0,
+  },
+  gaugeCenter: {
+    position: "absolute",
+    top: "26%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  gaugeValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: COLORS.ink,
+    letterSpacing: -0.5,
+    marginTop: 1,
+  },
+  gaugeUnit: {
+    fontSize: 10,
+    color: COLORS.muted,
+    marginTop: -1,
   },
   capacidad: {
     fontSize: 12,
     color: COLORS.muted,
-    marginTop: 8,
+    marginTop: 4,
   },
 });
