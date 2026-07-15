@@ -44,7 +44,7 @@ export default function VehicleCard({
   // Ancho real de la fila → foto responsiva que nunca tapa el texto.
   const [rowW, setRowW] = React.useState(0);
   const BLEED = 12; // cuánto sangra la foto por el borde derecho (recortada por overflow)
-  const photoW = rowW ? Math.round(rowW * 0.57) : 168;
+  const photoW = rowW ? Math.round(rowW * 0.55) : 162;
   const photoH = Math.round((photoW * 156) / 260);
   const photoReserve = rowW ? Math.max(96, photoW - BLEED + 6) : 150;
 
@@ -173,14 +173,16 @@ export default function VehicleCard({
                       style={[
                         s.fuelValue,
                         { color: HOME_COLORS.vehicleCardText },
-                      ]}>
+                      ]}
+                      numberOfLines={1}>
                       {fuel.galones} gal
                     </Text>
                     <Text
                       style={[
                         s.fuelLabel,
                         { color: HOME_COLORS.vehicleCardTextMuted },
-                      ]}>
+                      ]}
+                      numberOfLines={1}>
                       Combustible
                     </Text>
                   </View>
