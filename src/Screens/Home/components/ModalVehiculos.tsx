@@ -130,28 +130,31 @@ export default function ModalVehiculos({
     setGuardando(true);
     try {
       if (placaNueva !== vehiculoEditando.placa) {
-        // Cambio de placa: crear/actualizar el vehículo nuevo con su tipo de
-        // camión y repuntar la relación usuario↔placa.
+        // Cambio de placa: crear el vehículo nuevo con su tipo de camión y
+        // repuntar la relación usuario↔placa.
         // (tipo_camion vive en `vehiculos`, no en `vehiculo_conductores`.)
-        await supabase
+        // INSERT plano (sin ON CONFLICT — con RLS dispara chequeos extra);
+        // 23505 = la placa ya existe, se conserva su tipo.
+        const { error: insertError } = await supabase
           .from("vehiculos")
-          .upsert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }], {
-            onConflict: "placa",
-          });
-        await supabase
+          .insert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }]);
+        if (insertError && insertError.code !== "23505") throw insertError;
+        const { error: linkError } = await supabase
           .from("vehiculo_conductores")
           .update({ vehiculo_placa: placaNueva })
           .eq("vehiculo_placa", vehiculoEditando.placa);
+        if (linkError) throw linkError;
         if (placaActual === vehiculoEditando.placa) {
           setPlaca(placaNueva);
           setTipoCamion(tipoCamionEditInput);
         }
       } else {
         // Misma placa: solo actualizar el tipo de camión en `vehiculos`.
-        await supabase
+        const { error: updateError } = await supabase
           .from("vehiculos")
           .update({ tipo_camion: tipoCamionEditInput })
           .eq("placa", vehiculoEditando.placa);
+        if (updateError) throw updateError;
         if (
           tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
           placaActual === vehiculoEditando.placa
@@ -202,6 +205,27 @@ export default function ModalVehiculos({
       return;
     }
     setGuardando(true);
+
+    // Guarda: no sobrescribir una placa que ya existe. "Agregar" usa upsert
+    // onConflict:"placa", así que escribir una placa existente le cambiaría el
+    // tipo al vehículo actual sin avisar. Para cambiar el tipo → editar.
+    const { data: existente } = await supabase
+      .from("vehiculos")
+      .select("placa, tipo_camion")
+      .eq("placa", placa)
+      .maybeSingle();
+    if (existente) {
+      setGuardando(false);
+      const tipoLabel =
+        getTipoCamionData(normalizarTipo(existente.tipo_camion))?.label ??
+        existente.tipo_camion;
+      Alert.alert(
+        "Placa ya registrada",
+        `La placa ${placa} ya existe (${tipoLabel}). Para cambiar su tipo, editá el vehículo desde la lista (deslizándolo a la izquierda).`,
+      );
+      return;
+    }
+
     const result = await registrarVehiculoPropietario(
       user.id,
       placa,

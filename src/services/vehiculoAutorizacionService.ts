@@ -1,4 +1,5 @@
 import supabase from "../config/SupaBaseConfig";
+import logger from "../utils/logger";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Servicio de vehículos.
@@ -11,26 +12,52 @@ import supabase from "../config/SupaBaseConfig";
 
 /**
  * Registrar un vehículo y vincular al usuario actual.
- * Upsert idempotente: si la placa ya existe actualiza el tipo de camión.
+ *
+ * INSERT plano (sin ON CONFLICT): con RLS, cualquier variante de ON CONFLICT
+ * dispara chequeos de políticas adicionales (UPDATE/SELECT) que un usuario no
+ * vinculado a la placa no puede pasar. El duplicado (23505) se trata como
+ * caso esperado — la fila ya existe y no se toca su tipo.
  */
 export async function registrarVehiculoPropietario(
   userId: string,
   placa: string,
   tipoCamion: string
 ): Promise<{ success: boolean; error?: string }> {
-  // 1. Upsert del vehículo
-  const { error: upsertError } = await supabase
+  // 1. Crear el vehículo si no existe. INSERT plano (sin ON CONFLICT):
+  //    el duplicado (23505) se tolera como "ya existe, no tocar su tipo".
+  const { error: insertError } = await supabase
     .from("vehiculos")
-    .upsert([{ placa, tipo_camion: tipoCamion }], { onConflict: "placa" });
-  if (upsertError) return { success: false, error: "Error al registrar el vehículo" };
+    .insert([{ placa, tipo_camion: tipoCamion }]);
+  if (insertError && insertError.code !== "23505") {
+    logger.error("❌ insert vehiculos:", {
+      placa,
+      tipoCamion,
+      code: insertError.code,
+      message: insertError.message,
+      details: insertError.details,
+      hint: insertError.hint,
+    });
+    return {
+      success: false,
+      error: `No se pudo registrar el vehículo: ${insertError.message}`,
+    };
+  }
 
-  // 2. Vincular usuario ↔ vehículo
+  // 2. Vincular usuario ↔ vehículo. INSERT plano: si el vínculo ya existe
+  //    (23505), no hay nada que hacer.
   const { error } = await supabase
     .from("vehiculo_conductores")
-    .upsert([{ vehiculo_placa: placa, conductor_id: userId }], {
-      onConflict: "vehiculo_placa,conductor_id",
+    .insert([{ vehiculo_placa: placa, conductor_id: userId }]);
+  if (error && error.code !== "23505") {
+    logger.error("❌ insert vehiculo_conductores:", {
+      placa,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
     });
-  if (error) return { success: false, error: error.message };
+    return { success: false, error: error.message };
+  }
 
   return { success: true };
 }

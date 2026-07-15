@@ -18,6 +18,7 @@ export const HOME_COLORS = {
   // Vehicle Card — texto
   vehicleCardText: "#000000",
   vehicleCardTextMuted: "#6B7280",
+  vehicleCardSubtitle: "#4B5563",
   vehicleCardChevronBg: "rgba(0,0,0,0.06)",
 
   // Vehicle Card — icono
@@ -77,6 +78,6 @@ export const HOME_COLORS = {
     grua: "#E94560",
     cisterna: "#74B9FF",
     planchon: "#FDCB6E",
-    portacontenedor: "#00CEC9",
+    tractocamion: "#0984E3",
   },
 };

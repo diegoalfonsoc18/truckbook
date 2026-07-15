@@ -62,7 +62,6 @@ const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
     case "grua": return "gruaFlete" as IconName;
     case "cisterna": return "cisterna" as IconName;
     case "planchon": return "planchosFlete" as IconName;
-    case "portacontenedor": return "portaContenedor" as IconName;
     default: return "freight" as IconName;
   }
 };
@@ -75,7 +74,6 @@ const getMercanciaIcon = (tipoCamion: TipoCamion | null): IconName => {
     case "grua": return "mercancia_carGrua" as IconName;
     case "cisterna": return "mercancia_gasStation" as IconName;
     case "planchon": return "mercancia_carGrua" as IconName;
-    case "portacontenedor": return "mercancia_box" as IconName;
     default: return "mercancia_box" as IconName;
   }
 };

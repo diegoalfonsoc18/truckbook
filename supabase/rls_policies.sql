@@ -138,9 +138,15 @@ CREATE POLICY "vehiculos_select_vinculado" ON vehiculos
     )
   );
 
--- Cualquier autenticado puede registrar un vehículo nuevo
+-- Cualquier autenticado puede registrar un vehículo nuevo.
+-- OJO (2026-07-13): el cliente debe usar INSERT plano, NUNCA upsert/ON CONFLICT
+-- sobre vehiculos — con RLS, ON CONFLICT exige pasar también la política de
+-- UPDATE (estar vinculado), lo que bloquea el registro de placas nuevas (42501).
 CREATE POLICY "vehiculos_insert_auth" ON vehiculos
-  FOR INSERT WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
 
 -- Un usuario vinculado al vehículo puede editarlo.
 -- (Sin sistema de roles: vehiculo_conductores es una relación pura usuario↔placa.)

@@ -36,7 +36,6 @@ const ICONS = {
   tire: require("../assets/icons/tire.webp"),
   wash: require("../assets/icons/wash.webp"),
   oil: require("../assets/icons/oil.webp"),
-  portaContenedor: require("../assets/icons/portaContenedor.webp"),
   parrilla: require("../assets/icons/parrilla.webp"),
   // Flete icons (dinámicos por tipo de camión)
   estacaFlete: require("../assets/icons/estacaFlete.webp"),

@@ -266,7 +266,7 @@ function generarReporteHTML(params: {
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { font-family: Arial, Helvetica, sans-serif; background: #F5F5F5; padding: 24px; color: #000; }
     .page { background: #fff; max-width: 680px; margin: 0 auto; padding: 32px; border-radius: 8px; }
 
@@ -990,7 +990,14 @@ export default function FinanzasGenerales() {
       await new Promise((res) => setTimeout(res, 600));
 
       const { uri } = await Promise.race([
-        Print.printToFileAsync({ html, base64: false }),
+        // iOS aplica márgenes de impresión por defecto (~1") que encogen el
+        // contenido y lo dejan menos legible que en Android (que no los mete).
+        // Ponerlos en 0 iguala iOS a Android; `margins` es no-op en Android.
+        Print.printToFileAsync({
+          html,
+          base64: false,
+          margins: { top: 0, right: 0, bottom: 0, left: 0 },
+        }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 12000),
         ),
