@@ -5,7 +5,7 @@ export default {
     name: "TruckBook",
     slug: "TruckBook",
     scheme: "truckbook",
-    version: "1.0.3",
+    version: "1.0.4",
     orientation: "portrait",
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",
@@ -41,6 +41,7 @@ export default {
     },
     plugins: [
       "./plugins/withModularHeaders",
+      "react-native-bottom-tabs",
       [
         "expo-splash-screen",
         {

@@ -1,27 +1,17 @@
-// src/Screens/Home/components/ActividadCombustible.tsx
-// Fila de dos paneles debajo de RESUMEN SEMANAL:
-//  · ACTIVIDAD RECIENTE — últimos movimientos (gastos + ingresos)
-//  · COMBUSTIBLE — gauge de galones del mes vs. capacidad estimada
+// src/Screens/Home/components/ActividadReciente.tsx
+// Panel de últimos movimientos (gastos + ingresos) de la placa activa.
+// (El combustible ya se muestra en la VehicleCard — aquí no se duplica.)
 import React from "react";
 import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { SymbolView, type SFSymbol } from "expo-symbols";
-import Svg, { Path } from "react-native-svg";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
-import { usePrecioDiesel } from "../../../hooks/usePrecioDiesel";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
-
-// Capacidad de tanque estimada (placeholder — no hay campo en BD todavía).
-const CAPACIDAD_GAL = 100;
 
 const COLORS = {
   ink: "#111827",
   muted: "#6B7280",
   panelBg: "#F4F5F7",
-  amber: "#F5A623",
-  track: "#E3E5E9",
   link: "#F5A623",
 };
 
@@ -48,11 +38,19 @@ const CATEGORIA_META: Record<string, { icon: IconName; color: string }> = {
   Otro: { icon: "otros", color: "#6C5CE7" },
 };
 const metaDe = (tipo?: string | null) =>
-  (tipo && CATEGORIA_META[tipo]) || { icon: "otros" as IconName, color: "#636E72" };
+  (tipo && CATEGORIA_META[tipo]) || {
+    icon: "otros" as IconName,
+    color: "#636E72",
+  };
 
 /** "$250.000" — COP con separador de miles */
 function fmtPesos(n: number): string {
-  return "$" + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (
+    "$" +
+    Math.round(n)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  );
 }
 
 /** Limpia la descripción (quita tags [TEL:...]) */
@@ -60,12 +58,31 @@ function limpiarDesc(desc?: string | null): string {
   return (desc ?? "").replace(/\[TEL:[^\]]*\]/g, "").trim();
 }
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
 
-/** "Hoy 7:45 a. m." / "Ayer 4:30 p. m." / "10 jul 3:00 p. m." */
-function fechaHora(iso?: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso.length === 10 ? iso + "T00:00:00" : iso);
+/**
+ * Etiqueta de fecha basada en la FECHA de la transacción (no en cuándo se
+ * registró). "Hoy 7:45 a. m." / "Ayer" / "10 jul". La hora solo se muestra
+ * cuando la transacción es de hoy (tomada de created_at).
+ */
+function fechaLabel(fecha?: string | null, createdAt?: string | null): string {
+  // Día relativo según la fecha de la transacción; si falta, cae a created_at.
+  const base = fecha && fecha.length >= 10 ? fecha : createdAt;
+  if (!base) return "";
+  const d = new Date(base.length === 10 ? base + "T00:00:00" : base);
   if (isNaN(d.getTime())) return "";
 
   const hoy = new Date();
@@ -73,18 +90,24 @@ function fechaHora(iso?: string | null): string {
   const hDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const dias = Math.round((hDia.getTime() - dDia.getTime()) / 86_400_000);
 
-  let h = d.getHours();
-  const ampm = h < 12 ? "a. m." : "p. m.";
-  h = h % 12 || 12;
-  const hora = `${h}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
-
   const dia =
     dias === 0
       ? "Hoy"
       : dias === 1
         ? "Ayer"
         : `${d.getDate()} ${MESES[d.getMonth()]}`;
-  return `${dia} ${hora}`;
+
+  // Hora solo para movimientos de hoy (de created_at, cuándo se registró)
+  if (dias === 0 && createdAt) {
+    const t = new Date(createdAt);
+    if (!isNaN(t.getTime())) {
+      let h = t.getHours();
+      const ampm = h < 12 ? "a. m." : "p. m.";
+      h = h % 12 || 12;
+      return `${dia} ${h}:${String(t.getMinutes()).padStart(2, "0")} ${ampm}`;
+    }
+  }
+  return dia;
 }
 
 interface Mov {
@@ -92,7 +115,8 @@ interface Mov {
   tipo: string;
   descripcion: string;
   monto: number;
-  ts: string;
+  fecha: string; // fecha de la transacción (para la etiqueta)
+  ts: string; // created_at (para ordenar por lo más reciente agregado)
 }
 
 interface Props {
@@ -100,57 +124,11 @@ interface Props {
   onVerTodas?: () => void;
 }
 
-const SFIcon = ({
-  name,
-  fallback,
-  size,
-  color,
-}: {
-  name: SFSymbol;
-  fallback: string;
-  size: number;
-  color: string;
-}) =>
-  Platform.OS === "ios" ? (
-    <SymbolView name={name} size={size} tintColor={color} weight="semibold" />
-  ) : (
-    <Ionicons name={fallback as any} size={size} color={color} />
-  );
-
-// ─── Gauge de combustible ───────────────────────────────────────────────
-function FuelGauge({ ratio }: { ratio: number }) {
-  const CX = 60,
-    CY = 60,
-    R = 46,
-    SW = 12;
-  const START = 160,
-    SPAN = 220;
-  const pt = (deg: number) => ({
-    x: CX + R * Math.cos((deg * Math.PI) / 180),
-    y: CY + R * Math.sin((deg * Math.PI) / 180),
-  });
-  const arc = (from: number, sweep: number) => {
-    if (sweep <= 0.1) return "";
-    const s = pt(from);
-    const e = pt(from + sweep);
-    return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${R} ${R} 0 ${sweep > 180 ? 1 : 0} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`;
-  };
-  const fill = Math.max(0, Math.min(1, ratio)) * SPAN;
-  return (
-    <Svg width="100%" height="100%" viewBox="0 0 120 84">
-      <Path d={arc(START, SPAN)} stroke={COLORS.track} strokeWidth={SW} fill="none" strokeLinecap="round" />
-      <Path d={arc(START, fill)} stroke={COLORS.amber} strokeWidth={SW} fill="none" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
+export default function ActividadReciente({ onVerTodas }: Props) {
   const placa = useVehiculoStore((s) => s.placa);
   const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
-  const { precio: precioGalon } = usePrecioDiesel();
 
-  // ── Movimientos recientes (gastos + ingresos) ──
   const recientes = React.useMemo<Mov[]>(() => {
     const gs: Mov[] = gastos
       .filter((g) => g.placa === placa)
@@ -159,6 +137,7 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
         tipo: g.tipo_gasto ?? "Otros",
         descripcion: limpiarDesc(g.descripcion),
         monto: g.monto ?? 0,
+        fecha: g.fecha ?? "",
         ts: g.created_at ?? g.fecha ?? "",
       }));
     const is: Mov[] = ingresos
@@ -168,35 +147,27 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
         tipo: i.tipo_ingreso ?? "Otro",
         descripcion: limpiarDesc(i.descripcion),
         monto: (i.monto ?? 0) * (i.cantidad ?? 1),
+        fecha: i.fecha ?? "",
         ts: i.created_at ?? i.fecha ?? "",
       }));
     return [...gs, ...is]
-      .sort((a, b) => (a.ts > b.ts ? -1 : 1))
-      .slice(0, 3);
+      .sort((a, b) => {
+        // 1º por fecha de la transacción (más reciente arriba)
+        const fa = a.fecha || a.ts.slice(0, 10);
+        const fb = b.fecha || b.ts.slice(0, 10);
+        if (fa !== fb) return fa > fb ? -1 : 1;
+        // 2º desempate: por hora en que se agregó (created_at)
+        return a.ts > b.ts ? -1 : 1;
+      })
+      .slice(0, 5);
   }, [gastos, ingresos, placa]);
-
-  // ── Galones del mes actual ──
-  const galones = React.useMemo(() => {
-    const now = new Date();
-    const mes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const gasto = gastos
-      .filter(
-        (g) =>
-          g.placa === placa &&
-          g.tipo_gasto === "Combustible" &&
-          (g.fecha ?? g.created_at ?? "").startsWith(mes),
-      )
-      .reduce((a, g) => a + (g.monto ?? 0), 0);
-    return precioGalon > 0 ? Math.round(gasto / precioGalon) : 0;
-  }, [gastos, placa, precioGalon]);
 
   return (
     <View style={s.wrap}>
-      {/* ACTIVIDAD RECIENTE — full width */}
       <View style={s.panel}>
         <View style={s.panelHeader}>
           <Text style={s.panelLabel} numberOfLines={1}>
-            ACTIVIDAD RECIENTE
+            Actividad reciente
           </Text>
           <Pressable onPress={onVerTodas} hitSlop={8}>
             <Text style={s.verTodas}>Ver todas</Text>
@@ -210,7 +181,8 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
             const meta = metaDe(m.tipo);
             return (
               <View key={m.id} style={s.movRow}>
-                <View style={[s.movIcon, { backgroundColor: meta.color + "22" }]}>
+                <View
+                  style={[s.movIcon, { backgroundColor: meta.color + "22" }]}>
                   <ItemIcon name={meta.icon} size={22} />
                 </View>
                 <View style={s.movMid}>
@@ -228,33 +200,13 @@ export default function ActividadCombustible({ isDark, onVerTodas }: Props) {
                     {fmtPesos(m.monto)}
                   </Text>
                   <Text style={s.movFecha} numberOfLines={1}>
-                    {fechaHora(m.ts)}
+                    {fechaLabel(m.fecha, m.ts)}
                   </Text>
                 </View>
               </View>
             );
           })
         )}
-      </View>
-
-      {/* COMBUSTIBLE — full width, horizontal (gauge + info) */}
-      <View style={[s.panel, s.panelFuel]}>
-        <View style={s.gaugeWrap}>
-          <FuelGauge ratio={galones / CAPACIDAD_GAL} />
-          <View style={s.gaugeCenter} pointerEvents="none">
-            <SFIcon name="fuelpump.fill" fallback="flame" size={17} color={COLORS.ink} />
-            <Text style={s.gaugeValue}>{galones}</Text>
-            <Text style={s.gaugeUnit}>galones</Text>
-          </View>
-        </View>
-        <View style={s.fuelInfo}>
-          <Text style={s.panelLabel}>COMBUSTIBLE</Text>
-          <Text style={s.fuelBig}>
-            {galones}
-            <Text style={s.fuelBigUnit}> gal este mes</Text>
-          </Text>
-          <Text style={s.capacidad}>Capacidad estimada: {CAPACIDAD_GAL} gal</Text>
-        </View>
       </View>
     </View>
   );
@@ -272,7 +224,6 @@ const panelShadow = Platform.select({
 
 const s = StyleSheet.create({
   wrap: {
-    gap: 12,
     marginBottom: 12,
   },
   panel: {
@@ -280,11 +231,6 @@ const s = StyleSheet.create({
     borderRadius: 20,
     padding: 14,
     ...panelShadow,
-  },
-  panelFuel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
   },
   panelHeader: {
     flexDirection: "row",
@@ -349,50 +295,5 @@ const s = StyleSheet.create({
     fontSize: 11,
     color: COLORS.muted,
     marginTop: 1,
-  },
-  gaugeWrap: {
-    width: 116,
-    aspectRatio: 120 / 84,
-  },
-  fuelInfo: {
-    flex: 1,
-    paddingLeft: 4,
-  },
-  fuelBig: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: COLORS.ink,
-    letterSpacing: -0.5,
-    marginTop: 2,
-  },
-  fuelBigUnit: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: COLORS.muted,
-    letterSpacing: 0,
-  },
-  gaugeCenter: {
-    position: "absolute",
-    top: "26%",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  gaugeValue: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: COLORS.ink,
-    letterSpacing: -0.5,
-    marginTop: 1,
-  },
-  gaugeUnit: {
-    fontSize: 10,
-    color: COLORS.muted,
-    marginTop: -1,
-  },
-  capacidad: {
-    fontSize: 12,
-    color: COLORS.muted,
-    marginTop: 4,
   },
 });

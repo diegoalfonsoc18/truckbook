@@ -44,7 +44,13 @@ export default function VehicleCard({
   // Ancho real de la fila → foto responsiva que nunca tapa el texto.
   const [rowW, setRowW] = React.useState(0);
   const BLEED = 12; // cuánto sangra la foto por el borde derecho (recortada por overflow)
-  const photoW = rowW ? Math.round(rowW * 0.55) : 162;
+  // En iOS el camión se muestra ~10% más grande (pantalla más ancha)
+  const PHOTO_FRAC = Platform.OS === "ios" ? 0.605 : 0.55;
+  const photoW = rowW
+    ? Math.round(rowW * PHOTO_FRAC)
+    : Platform.OS === "ios"
+      ? 178
+      : 162;
   const photoH = Math.round((photoW * 156) / 260);
   const photoReserve = rowW ? Math.max(96, photoW - BLEED + 6) : 150;
 
@@ -60,6 +66,7 @@ export default function VehicleCard({
     // Gasto combustible por mes → galones del mes actual y ratio vs. mes pico
     const porMes = new Map<string, number>();
     for (const g of gastos) {
+      if (g.placa !== placaActual) continue;
       if (g.tipo_gasto !== "Combustible") continue;
       const mes = (g.fecha ?? g.created_at ?? "").slice(0, 7);
       if (mes) porMes.set(mes, (porMes.get(mes) ?? 0) + (g.monto ?? 0));
@@ -74,7 +81,7 @@ export default function VehicleCard({
     const ratio = gastoPico > 0 ? gastoMes / gastoPico : 0;
 
     return { galones, ratio };
-  }, [gastos, precioGalon]);
+  }, [gastos, precioGalon, placaActual]);
 
   // ── SF Symbol helper ──
   const SFIcon = ({
@@ -321,8 +328,9 @@ const s = StyleSheet.create({
   },
   fuelChip: {
     marginTop: 14,
+    // Se ajusta al contenido (ancho de "Combustible"), con holgura para no cortar
     alignSelf: "flex-start",
-    minWidth: 104,
+    minWidth: 110,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 10,
