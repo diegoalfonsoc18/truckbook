@@ -19,7 +19,7 @@ import WidgetClientes from "./widgets/WidgetClientes";
 import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
-import ActividadCombustible from "./components/ActividadCombustible";
+import ActividadReciente from "./components/ActividadReciente";
 
 const H_PAD = 20;
 
@@ -96,7 +96,7 @@ export default function HomeBaseAdapted({
                     : undefined
                 }>
                 <ResumenSemanal isDark={isDark} />
-                <ActividadCombustible isDark={isDark} />
+                <ActividadReciente isDark={isDark} />
               </View>
             )}
 

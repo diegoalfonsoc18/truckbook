@@ -149,6 +149,9 @@ export default function ResumenSemanal({ isDark }: Props) {
 
     const fletes = (arr: typeof is) =>
       arr.filter((i) => i.tipo_ingreso === "Flete");
+    // Viajes = suma de cantidad de los fletes (un flete puede ser x2, x3…)
+    const viajes = (arr: typeof is) =>
+      fletes(arr).reduce((a, i) => a + (i.cantidad ?? 1), 0);
     const clientes = (arr: typeof is) => {
       const set = new Set<string>();
       for (const i of fletes(arr)) {
@@ -180,8 +183,8 @@ export default function ResumenSemanal({ isDark }: Props) {
         label: "Viajes",
         icon: "clipboard",
         iconBg: COLORS.blue,
-        value: String(fletes(iAct).length),
-        delta: countDelta(fletes(iAct).length, fletes(iAnt).length),
+        value: String(viajes(iAct)),
+        delta: countDelta(viajes(iAct), viajes(iAnt)),
       },
       {
         key: "clientes",
@@ -242,7 +245,7 @@ export default function ResumenSemanal({ isDark }: Props) {
 
   return (
     <View style={s.wrap}>
-      <Text style={s.sectionLabel}>RESUMEN SEMANAL</Text>
+      <Text style={s.sectionLabel}>Resumen semanal</Text>
 
       <View style={s.cardsRow}>
         {cards.map((card) => (
