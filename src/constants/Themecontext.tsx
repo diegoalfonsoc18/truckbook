@@ -373,6 +373,7 @@ export const getInputStyles = (isDark: boolean, colors: Colors) => ({
     flex: 1,
     fontSize: 16,
     fontWeight: "500" as const,
+    letterSpacing: 0, // iOS: evita el tracking raro del placeholder
     paddingVertical: 12,
   },
   // Label superior del input
