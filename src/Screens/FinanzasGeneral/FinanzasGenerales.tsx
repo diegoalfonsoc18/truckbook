@@ -35,9 +35,33 @@ import { fetchTransaccionesRango } from "../../services/reporteService";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
+import ItemIcon, { IconName } from "../../components/ItemIcon";
 import ChartComparativa from "./components/ChartComparativa";
 
 const HORIZONTAL_PADDING = 20;
+
+// Categorías para el filtro del informe (tipo_gasto / tipo_ingreso guardados)
+const CATEGORIAS_EXPORT: Array<{
+  tipo: string;
+  icon: IconName;
+  grupo: "gasto" | "ingreso";
+}> = [
+  { tipo: "Combustible", icon: "fuel", grupo: "gasto" },
+  { tipo: "Peajes", icon: "toll", grupo: "gasto" },
+  { tipo: "Comida", icon: "food", grupo: "gasto" },
+  { tipo: "Hospedaje", icon: "hotel", grupo: "gasto" },
+  { tipo: "Taller", icon: "tool", grupo: "gasto" },
+  { tipo: "Parqueo", icon: "parking", grupo: "gasto" },
+  { tipo: "Reparación", icon: "repair", grupo: "gasto" },
+  { tipo: "Llantas", icon: "tire", grupo: "gasto" },
+  { tipo: "Lavado", icon: "wash", grupo: "gasto" },
+  { tipo: "Aceite", icon: "oil", grupo: "gasto" },
+  { tipo: "Flete", icon: "freight", grupo: "ingreso" },
+  { tipo: "Mercancía", icon: "mercancia_box", grupo: "ingreso" },
+  { tipo: "Anticipo", icon: "advance", grupo: "ingreso" },
+  { tipo: "Reembolso", icon: "refund", grupo: "ingreso" },
+  { tipo: "Cobro", icon: "factura", grupo: "ingreso" },
+];
 
 function groupBy<T extends { fecha: string; value: number | string }>(
   items: T[],
@@ -106,8 +130,6 @@ function generarReporteHTML(params: {
   rangoFin: string;
   totalIngresos: number;
   totalGastos: number;
-  balance: number;
-  rentabilidad: string;
   periodos: string[]; // allKeys
   ingresosPorPeriodo: number[];
   gastosPorPeriodo: number[];
@@ -127,6 +149,8 @@ function generarReporteHTML(params: {
     estado?: string | null;
   }>;
   clienteFiltro?: string | null;
+  categoriaFiltro?: string | null;
+  categoriaEsGasto?: boolean;
   view: ViewType;
 }) {
   const fmt = (n: number) =>
@@ -183,9 +207,35 @@ function generarReporteHTML(params: {
     return key;
   };
 
+  // ── Criterio de caja ────────────────────────────────────────────────────
+  // En el informe general, balance y rentabilidad se calculan sobre lo
+  // efectivamente RECIBIDO; lo pendiente se muestra aparte como "Por cobrar".
+  const totalPorCobrar = params.ingresosDetalle
+    .filter((i) => i.estado === "pendiente")
+    .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
+  const totalRecibido = params.totalIngresos - totalPorCobrar;
+  const balanceReal = totalRecibido - params.totalGastos;
+  const rentReal =
+    totalRecibido === 0 ? 0 : (balanceReal / totalRecibido) * 100;
+
+  // Pendiente agrupado por período (misma clave fecha.slice que la serie)
+  const sliceLen =
+    params.view === "dias" ? 10 : params.view === "meses" ? 7 : 4;
+  const pendPorPeriodo = new Map<string, number>();
+  for (const i of params.ingresosDetalle) {
+    if (i.estado !== "pendiente") continue;
+    const k = i.fecha?.slice(0, sliceLen);
+    if (k)
+      pendPorPeriodo.set(
+        k,
+        (pendPorPeriodo.get(k) ?? 0) + i.monto * (i.cantidad ?? 1),
+      );
+  }
+
   const periodoRows = params.periodos
     .map((k, i) => {
-      const ing = params.ingresosPorPeriodo[i] || 0;
+      const ing =
+        (params.ingresosPorPeriodo[i] || 0) - (pendPorPeriodo.get(k) ?? 0);
       const gas = params.gastosPorPeriodo[i] || 0;
       const bal = ing - gas;
       const balColor = bal >= 0 ? "#16A34A" : "#EF4444";
@@ -216,7 +266,10 @@ function generarReporteHTML(params: {
       const total = i.monto * cant;
       const desc = cleanDesc(i.descripcion);
       const clienteLabel =
-        i.cliente || (desc.split(" · ")[0].trim().length > 1 ? desc.split(" · ")[0].trim() : "—");
+        i.cliente ||
+        (desc.split(" · ")[0].trim().length > 1
+          ? desc.split(" · ")[0].trim()
+          : "—");
       // La descripción suele empezar con el cliente — no repetirlo en la tabla
       const partes = desc.split(" · ");
       const detalle =
@@ -250,15 +303,20 @@ function generarReporteHTML(params: {
     )
     .join("");
 
-  // Desglose recibido vs. por cobrar
-  const totalPorCobrar = params.ingresosDetalle
-    .filter((i) => i.estado === "pendiente")
-    .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
-  const totalRecibido = params.totalIngresos - totalPorCobrar;
-
-  const rentNum = Number(params.rentabilidad);
-  const balColor = params.balance >= 0 ? "#16A34A" : "#EF4444";
-  const tituloDoc = esCuentaCliente ? "Estado de cuenta" : "Informe de Finanzas";
+  const balColor = balanceReal >= 0 ? "#16A34A" : "#EF4444";
+  const esCategoria = !!params.categoriaFiltro;
+  // Total y cantidad del rubro filtrado (según sea gasto o ingreso)
+  const catTotal = params.categoriaEsGasto
+    ? params.totalGastos
+    : params.totalIngresos;
+  const catCount = params.categoriaEsGasto
+    ? params.gastosDetalle.length
+    : params.ingresosDetalle.length;
+  const tituloDoc = esCuentaCliente
+    ? "Estado de cuenta"
+    : esCategoria
+      ? `Informe — ${params.categoriaFiltro}`
+      : "Informe de Finanzas";
 
   return `<!DOCTYPE html>
 <html>
@@ -329,7 +387,7 @@ function generarReporteHTML(params: {
       <div style="font-size:13px;color:#666;margin-top:4px;">${tituloDoc}</div>
     </div>
     <div class="doc-info">
-      <strong>${esCuentaCliente ? `Estado de cuenta — ${esc(params.clienteFiltro)}` : "Informe de Finanzas"}</strong>
+      <strong>${esCuentaCliente ? `Estado de cuenta — ${esc(params.clienteFiltro)}` : esCategoria ? `Informe — ${esc(params.categoriaFiltro)}` : "Informe de Finanzas"}</strong>
       Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
     </div>
   </div>
@@ -344,12 +402,26 @@ function generarReporteHTML(params: {
       <span>${params.placas.length > 0 ? esc(params.placas.join(", ")) : "Todos"}</span>
     </div>
     ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
+    ${esCategoria ? `<div class="meta-item"><strong>Categoría</strong><span>${esc(params.categoriaFiltro)}</span></div>` : ""}
   </div>
 
   <!-- RESUMEN -->
   ${
-    esCuentaCliente
+    esCategoria
       ? `
+  <div class="summary">
+    <div class="s-card" style="border-color:${params.categoriaEsGasto ? "#EF444440" : "#16A34A40"}">
+      <div class="s-label">Total ${esc(params.categoriaFiltro)}</div>
+      <div class="s-value ${params.categoriaEsGasto ? "red" : "green"}">${fmt(catTotal)}</div>
+    </div>
+    <div class="s-card" style="border-color:#E2E8F0">
+      <div class="s-label">Movimientos</div>
+      <div class="s-value">${catCount}</div>
+    </div>
+  </div>
+  <div class="summary-note">Informe filtrado por categoría: ${esc(params.categoriaFiltro)}</div>`
+      : esCuentaCliente
+        ? `
   <div class="summary">
     <div class="s-card" style="border-color:#E2E8F0">
       <div class="s-label">Total facturado</div>
@@ -368,8 +440,12 @@ function generarReporteHTML(params: {
       : `
   <div class="summary">
     <div class="s-card" style="border-color:#16A34A40">
-      <div class="s-label">Ingresos</div>
-      <div class="s-value green">${fmt(params.totalIngresos)}</div>
+      <div class="s-label">Ingresos recibidos</div>
+      <div class="s-value green">${fmt(totalRecibido)}</div>
+    </div>
+    <div class="s-card" style="border-color:#F59E0B40">
+      <div class="s-label">Por cobrar</div>
+      <div class="s-value amber">${fmt(totalPorCobrar)}</div>
     </div>
     <div class="s-card" style="border-color:#EF444440">
       <div class="s-label">Gastos</div>
@@ -377,25 +453,22 @@ function generarReporteHTML(params: {
     </div>
     <div class="s-card" style="border-color:${balColor}40">
       <div class="s-label">Balance</div>
-      <div class="s-value" style="color:${balColor}">${fmt(params.balance)}</div>
-    </div>
-    <div class="s-card" style="border-color:${rentNum >= 0 ? "#16A34A40" : "#EF444440"}">
-      <div class="s-label">Rentabilidad</div>
-      <div class="s-value" style="color:${rentNum >= 0 ? "#16A34A" : "#EF4444"}">${rentNum >= 0 ? "+" : ""}${params.rentabilidad}%</div>
+      <div class="s-value" style="color:${balColor}">${fmt(balanceReal)}</div>
     </div>
   </div>
-  <div class="summary-note">${totalPorCobrar > 0 ? `Los ingresos incluyen ${fmt(totalPorCobrar)} aún por cobrar` : "&nbsp;"}</div>`
+  <div class="summary-note">Rentabilidad: ${rentReal >= 0 ? "+" : ""}${rentReal.toFixed(1)}% · Balance de caja: solo ingresos recibidos${totalPorCobrar > 0 ? ` (no incluye ${fmt(totalPorCobrar)} por cobrar)` : ""}</div>`
   }
 
-  <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta) -->
+  <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta
+       ni en informe filtrado por una sola categoría) -->
   ${
-    !esCuentaCliente && params.periodos.length > 0
+    !esCuentaCliente && !esCategoria && params.periodos.length > 0
       ? `
   <div class="section-title">Resumen por período</div>
   <table>
     <thead><tr>
       <th>Período</th>
-      <th class="right">Ingresos</th>
+      <th class="right">Ingresos recibidos</th>
       <th class="right">Gastos</th>
       <th class="right">Balance</th>
     </tr></thead>
@@ -403,9 +476,9 @@ function generarReporteHTML(params: {
       ${periodoRows}
       <tr class="total-tr">
         <td>Total</td>
-        <td class="right green">${fmt(params.totalIngresos)}</td>
+        <td class="right green">${fmt(totalRecibido)}</td>
         <td class="right red">${fmt(params.totalGastos)}</td>
-        <td class="right" style="color:${balColor}">${fmt(params.balance)}</td>
+        <td class="right" style="color:${balColor}">${fmt(balanceReal)}</td>
       </tr>
     </tbody>
   </table>`
@@ -424,7 +497,7 @@ function generarReporteHTML(params: {
     <tbody>
       ${filasIngresos}
       <tr class="total-tr">
-        <td colspan="${esCuentaCliente ? 6 : 7}">Total</td>
+        <td colspan="${esCuentaCliente ? 6 : 7}">Total facturado</td>
         <td class="right green">${fmt(params.totalIngresos)}</td>
       </tr>
     </tbody>
@@ -500,6 +573,8 @@ export default function FinanzasGenerales() {
     | "personalizado";
   const [periodoRapido, setPeriodoRapido] = useState<PeriodoRapido>("mes");
   const [exportCliente, setExportCliente] = useState<string | null>(null);
+  // Filtro por categoría (tipo_gasto o tipo_ingreso) — null = todas
+  const [exportCategoria, setExportCategoria] = useState<string | null>(null);
   const [clienteInputFocused, setClienteInputFocused] = useState(false);
   const [exportRango, setExportRango] = useState<{
     inicio: string;
@@ -699,6 +774,7 @@ export default function FinanzasGenerales() {
     chartIngresosData,
     totalGastos,
     totalIngresos,
+    totalPorCobrar,
     balance,
     rentabilidad,
     formattedLabels,
@@ -711,16 +787,25 @@ export default function FinanzasGenerales() {
     const iTransf = iPorPlaca.map((i) => ({
       fecha: i.fecha,
       value: i.monto * ((i as any).cantidad ?? 1),
+      pendiente: i.estado === "pendiente",
     }));
 
     const gFilt = filtrarPorRango(gTransf, rango.inicio, rango.fin);
     const iFilt = filtrarPorRango(iTransf, rango.inicio, rango.fin);
 
+    // Criterio de caja: totales, balance y gráfico usan solo lo RECIBIDO;
+    // lo pendiente se reporta aparte como "por cobrar".
+    const iRecibidos = iFilt.filter((x) => !x.pendiente);
+    const porCobrar = iFilt.reduce(
+      (a, x) => a + (x.pendiente ? x.value : 0),
+      0,
+    );
+
     const sliceLen = view === "dias" ? 10 : view === "meses" ? 7 : 4;
     const keyFn = (item: { fecha: string }) => item.fecha?.slice(0, sliceLen);
 
     const groupedG = groupBy(gFilt, keyFn);
-    const groupedI = groupBy(iFilt, keyFn);
+    const groupedI = groupBy(iRecibidos, keyFn);
 
     const keys = Array.from(
       new Set([...Object.keys(groupedG), ...Object.keys(groupedI)]),
@@ -753,6 +838,7 @@ export default function FinanzasGenerales() {
       chartIngresosData: chartI,
       totalGastos: totG,
       totalIngresos: totI,
+      totalPorCobrar: porCobrar,
       balance: bal,
       rentabilidad: rent,
       formattedLabels: labels,
@@ -793,7 +879,9 @@ export default function FinanzasGenerales() {
       onPress={() => setCalendarVisible(false)}>
       <TouchableOpacity activeOpacity={1}>
         <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
-          <View style={[styles.modalHandle, { backgroundColor: c.textMuted }]} />
+          <View
+            style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
+          />
           <Text style={[styles.modalTitle, { color: c.text }]}>
             fecha {selectingDate === "inicio" ? "inicial" : "final"}
           </Text>
@@ -892,11 +980,24 @@ export default function FinanzasGenerales() {
     }
 
     // La consulta ya restringe a placa+conductor y al rango [inicio, fin]
-    const gastosDetalle = exportCliente ? [] : datos.gastos;
+    // Filtro por categoría: si es una categoría de gasto, no incluir ingresos
+    // (y viceversa) — así el informe queda enfocado en ese único tipo.
+    const catMeta = exportCategoria
+      ? CATEGORIAS_EXPORT.find((cc) => cc.tipo === exportCategoria)
+      : null;
+    const filtrarCat = (tipo: string | null | undefined) =>
+      !exportCategoria || tipo === exportCategoria;
+    const gastosDetalle =
+      exportCliente || catMeta?.grupo === "ingreso"
+        ? []
+        : datos.gastos.filter((g) => filtrarCat(g.tipo_gasto));
     const getClienteIngreso = (i: any): string | null => {
       if (i.cliente) return i.cliente;
       const desc: string = i.descripcion || "";
-      const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
+      const parte = desc
+        .replace(/\[TEL:[^\]]*\]/g, "")
+        .split(" · ")[0]
+        .trim();
       return parte.length > 1 ? parte : null;
     };
     // Comparación insensible a mayúsculas y espacios (también dobles/invisibles:
@@ -915,7 +1016,12 @@ export default function FinanzasGenerales() {
       if (seg) cands.push(norm(seg));
       return cands.includes(clienteBuscado);
     };
-    const ingresosDetalle = datos.ingresos.filter(coincideCliente);
+    const ingresosDetalle =
+      catMeta?.grupo === "gasto"
+        ? []
+        : datos.ingresos
+            .filter(coincideCliente)
+            .filter((i) => filtrarCat(i.tipo_ingreso));
     // Nombre real del cliente (con sus mayúsculas) para el PDF
     const clienteReal = exportCliente
       ? ingresosDetalle.length > 0
@@ -928,7 +1034,9 @@ export default function FinanzasGenerales() {
         "Sin datos",
         exportCliente
           ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
-          : "No hay transacciones en el período seleccionado.",
+          : exportCategoria
+            ? `No hay movimientos de "${exportCategoria}" en el período seleccionado.`
+            : "No hay transacciones en el período seleccionado.",
       );
       return;
     }
@@ -936,7 +1044,10 @@ export default function FinanzasGenerales() {
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
       setExportando(false);
-      Alert.alert("No disponible", "Tu dispositivo no soporta compartir archivos.");
+      Alert.alert(
+        "No disponible",
+        "Tu dispositivo no soporta compartir archivos.",
+      );
       return;
     }
 
@@ -965,8 +1076,6 @@ export default function FinanzasGenerales() {
     const gasPeriodo = keys.map((k) => Number(gGrp[k]) || 0);
     const totIng = ingPeriodo.reduce((a, b) => a + b, 0);
     const totGas = gasPeriodo.reduce((a, b) => a + b, 0);
-    const bal = totIng - totGas;
-    const rent = totIng === 0 ? "0" : ((bal / totIng) * 100).toFixed(1);
 
     setExportModal(false);
     try {
@@ -976,8 +1085,6 @@ export default function FinanzasGenerales() {
         rangoFin: r.fin,
         totalIngresos: totIng,
         totalGastos: totGas,
-        balance: bal,
-        rentabilidad: rent,
         periodos: keys,
         ingresosPorPeriodo: ingPeriodo,
         gastosPorPeriodo: gasPeriodo,
@@ -985,6 +1092,8 @@ export default function FinanzasGenerales() {
         ingresosDetalle,
         view: diasRango <= 31 ? "dias" : "meses",
         clienteFiltro: clienteReal,
+        categoriaFiltro: exportCategoria,
+        categoriaEsGasto: catMeta?.grupo === "gasto",
       });
 
       await new Promise((res) => setTimeout(res, 600));
@@ -1011,9 +1120,10 @@ export default function FinanzasGenerales() {
         UTI: "com.adobe.pdf",
       });
     } catch (err: any) {
-      const msg = err?.message === "timeout"
-        ? "La generación tardó demasiado. Intenta con un rango de fechas más corto."
-        : `No se pudo generar el informe: ${err?.message ?? "error desconocido"}`;
+      const msg =
+        err?.message === "timeout"
+          ? "La generación tardó demasiado. Intenta con un rango de fechas más corto."
+          : `No se pudo generar el informe: ${err?.message ?? "error desconocido"}`;
       Alert.alert("Error al exportar", msg);
     } finally {
       setExportando(false);
@@ -1062,7 +1172,13 @@ export default function FinanzasGenerales() {
             { opacity: fadeAnim, transform: [{ translateY: headerY }] },
           ]}>
           <View style={styles.header}>
-            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+              }}>
               <Text style={[styles.headerTitle, { color: c.text }]}>
                 Finanzas
               </Text>
@@ -1137,11 +1253,16 @@ export default function FinanzasGenerales() {
                 ]}>
                 <Text
                   style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Ingresos
+                  Ingresos recibidos
                 </Text>
                 <Text style={[styles.summaryCardValue, { color: c.income }]}>
                   {formatCurrency(totalIngresos)}
                 </Text>
+                {totalPorCobrar > 0 && (
+                  <Text style={styles.porCobrarNote} numberOfLines={1}>
+                    + {formatCurrency(totalPorCobrar)} por cobrar
+                  </Text>
+                )}
                 <Ionicons
                   name="trending-up-outline"
                   size={22}
@@ -1218,8 +1339,8 @@ export default function FinanzasGenerales() {
               </Text>
               <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
                 {balance >= 0
-                  ? "ganancia en el período"
-                  : "pérdida en el período"}
+                  ? "Ganancia en el período"
+                  : "Pérdida en el período"}
               </Text>
             </Reanimated.View>
 
@@ -1311,6 +1432,7 @@ export default function FinanzasGenerales() {
               onPress={() => {
                 seleccionarPeriodo("mes");
                 setExportCliente(null);
+                setExportCategoria(null);
                 setExportModal(true);
               }}
               disabled={exportando}
@@ -1350,185 +1472,284 @@ export default function FinanzasGenerales() {
             onPress={() => setExportModal(false)}>
             <TouchableOpacity activeOpacity={1}>
               <View
-                style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
-              <View
-                style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-              />
-              <View style={styles.exportModalHeader}>
-                <Text style={[styles.modalTitle, { color: c.text }]}>
-                  Exportar informe
-                </Text>
-                <TouchableOpacity onPress={() => setExportModal(false)}>
-                  <Ionicons name="close" size={22} color={c.textMuted} />
-                </TouchableOpacity>
-              </View>
+                style={[
+                  styles.exportModalSheet,
+                  { backgroundColor: c.modalBg },
+                ]}>
+                <View
+                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
+                />
+                <View style={styles.exportModalHeader}>
+                  <Text style={[styles.modalTitle, { color: c.text }]}>
+                    Exportar informe
+                  </Text>
+                  <TouchableOpacity onPress={() => setExportModal(false)}>
+                    <Ionicons name="close" size={22} color={c.textMuted} />
+                  </TouchableOpacity>
+                </View>
 
-              {/* OPCIONES RÁPIDAS */}
-              <Text style={[styles.exportSectionLabel, { color: c.textMuted, textTransform: "none" }]}>
-                Período
-              </Text>
-              <View style={styles.periodosGrid}>
-                {(
-                  [
-                    { key: "semana", label: "Esta semana" },
-                    { key: "mes", label: "Este mes" },
-                    { key: "mes_anterior", label: "Mes anterior" },
-                    { key: "trimestre", label: "Trimestre" },
-                    { key: "año", label: "Este año" },
-                    { key: "personalizado", label: "Personalizado" },
-                  ] as { key: PeriodoRapido; label: string }[]
-                ).map(({ key, label }) => (
+                {/* OPCIONES RÁPIDAS */}
+                <Text
+                  style={[
+                    styles.exportSectionLabel,
+                    { color: c.textMuted, textTransform: "none" },
+                  ]}>
+                  Período
+                </Text>
+                <View style={styles.periodosGrid}>
+                  {(
+                    [
+                      { key: "semana", label: "Esta semana" },
+                      { key: "mes", label: "Este mes" },
+                      { key: "mes_anterior", label: "Mes anterior" },
+                      { key: "trimestre", label: "Trimestre" },
+                      { key: "año", label: "Este año" },
+                      { key: "personalizado", label: "Personalizado" },
+                    ] as { key: PeriodoRapido; label: string }[]
+                  ).map(({ key, label }) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.periodoChip,
+                        { borderColor: c.border, backgroundColor: c.cardBg },
+                        periodoRapido === key && {
+                          backgroundColor: c.accent,
+                          borderColor: c.accent,
+                        },
+                      ]}
+                      onPress={() => seleccionarPeriodo(key)}
+                      activeOpacity={0.7}>
+                      <Text
+                        style={[
+                          styles.periodoChipText,
+                          { color: c.textSecondary },
+                          periodoRapido === key && { color: c.accentText },
+                        ]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* RANGO PERSONALIZADO */}
+                <View
+                  style={[
+                    styles.exportRangeRow,
+                    { backgroundColor: c.cardBg, borderColor: c.border },
+                  ]}>
                   <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.periodoChip,
-                      { borderColor: c.border, backgroundColor: c.cardBg },
-                      periodoRapido === key && {
-                        backgroundColor: c.accent,
-                        borderColor: c.accent,
-                      },
-                    ]}
-                    onPress={() => seleccionarPeriodo(key)}
+                    style={styles.exportDateBtn}
+                    onPress={() => openCalendar("inicio", "export")}
                     activeOpacity={0.7}>
                     <Text
-                      style={[
-                        styles.periodoChipText,
-                        { color: c.textSecondary },
-                        periodoRapido === key && { color: c.accentText },
-                      ]}>
-                      {label}
+                      style={[styles.exportDateLabel, { color: c.textMuted }]}>
+                      Desde
+                    </Text>
+                    <Text style={[styles.exportDateValue, { color: c.text }]}>
+                      {new Date(
+                        exportRango.inicio + "T12:00:00",
+                      ).toLocaleDateString("es-CO", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* RANGO PERSONALIZADO */}
-              <View
-                style={[
-                  styles.exportRangeRow,
-                  { backgroundColor: c.cardBg, borderColor: c.border },
-                ]}>
-                <TouchableOpacity
-                  style={styles.exportDateBtn}
-                  onPress={() => openCalendar("inicio", "export")}
-                  activeOpacity={0.7}>
-                  <Text
-                    style={[styles.exportDateLabel, { color: c.textMuted }]}>
-                    Desde
-                  </Text>
-                  <Text style={[styles.exportDateValue, { color: c.text }]}>
-                    {new Date(
-                      exportRango.inicio + "T12:00:00",
-                    ).toLocaleDateString("es-CO", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </Text>
-                </TouchableOpacity>
-                <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
-                <TouchableOpacity
-                  style={styles.exportDateBtn}
-                  onPress={() => openCalendar("fin", "export")}
-                  activeOpacity={0.7}>
-                  <Text
-                    style={[styles.exportDateLabel, { color: c.textMuted }]}>
-                    Hasta
-                  </Text>
-                  <Text style={[styles.exportDateValue, { color: c.text }]}>
-                    {new Date(exportRango.fin + "T12:00:00").toLocaleDateString(
-                      "es-CO",
-                      { day: "numeric", month: "short", year: "numeric" },
-                    )}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* FILTRO CLIENTE */}
-              {(() => {
-                const getCliente = (i: any): string | null => {
-                  if (i.cliente) return i.cliente;
-                  const desc: string = i.descripcion || "";
-                  const parte = desc.replace(/\[TEL:[^\]]*\]/g, "").split(" · ")[0].trim();
-                  return parte.length > 1 ? parte : null;
-                };
-                // Sugerencias desde el store en vivo (clientes recientes), no
-                // desde el rango en pantalla — así aparecen aunque el rango sea corto
-                const clientesDisponibles = Array.from(
-                  new Set(
-                    ingresosStore
-                      .filter((i) => i.placa === placaActual)
-                      .map(getCliente)
-                      .filter((v): v is string => !!v),
-                  ),
-                ).sort();
-                const texto = exportCliente ?? "";
-                const sugerencias = clienteInputFocused && texto.length >= 2
-                  ? clientesDisponibles.filter((cli) =>
-                      cli.toLowerCase().includes(texto.toLowerCase()),
-                    )
-                  : [];
-                return (
-                  <>
-                    <Text style={[styles.exportSectionLabel, { color: c.textMuted, marginTop: 14, textTransform: "none" }]}>
-                      Filtrar por cliente (opcional)
+                  <Ionicons
+                    name="arrow-forward"
+                    size={16}
+                    color={c.textMuted}
+                  />
+                  <TouchableOpacity
+                    style={styles.exportDateBtn}
+                    onPress={() => openCalendar("fin", "export")}
+                    activeOpacity={0.7}>
+                    <Text
+                      style={[styles.exportDateLabel, { color: c.textMuted }]}>
+                      Hasta
                     </Text>
-                    <TextInput
-                      style={[
-                        styles.exportClienteInput,
-                        { backgroundColor: c.cardBg, borderColor: exportCliente ? c.accent : c.border, color: c.text },
-                      ]}
-                      placeholder="Escribe el nombre del cliente..."
-                      placeholderTextColor={c.textMuted}
-                      value={texto}
-                      onChangeText={(t) => {
-                        // Misma sanitización que al guardar el cliente
-                        // (sanitizarInput en Ingresos): solo se quitan < > { } [ ].
-                        // Nombres como "H&H" o "López & Cía" deben poder buscarse;
-                        // el PDF escapa estos caracteres al renderizar.
-                        const limpio = t.replace(/[<>{}[\]]/g, "").slice(0, 80);
-                        setExportCliente(limpio.length > 0 ? limpio : null);
-                      }}
-                      onFocus={() => setClienteInputFocused(true)}
-                      onBlur={() => setTimeout(() => setClienteInputFocused(false), 150)}
-                      returnKeyType="done"
-                    />
-                    {sugerencias.length > 0 && (
-                      <View style={[styles.exportSugerencias, { backgroundColor: c.cardBg, borderColor: c.border }]}>
-                        {sugerencias.slice(0, 5).map((cli) => (
-                          <TouchableOpacity
-                            key={cli}
-                            style={[styles.exportSugerenciaItem, { borderBottomColor: c.border }]}
-                            onPress={() => { setExportCliente(cli); setClienteInputFocused(false); }}
-                            activeOpacity={0.7}>
-                            <Text style={{ color: c.text, fontSize: 14 }}>{cli}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </>
-                );
-              })()}
+                    <Text style={[styles.exportDateValue, { color: c.text }]}>
+                      {new Date(
+                        exportRango.fin + "T12:00:00",
+                      ).toLocaleDateString("es-CO", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-              {/* BOTÓN GENERAR */}
-              <TouchableOpacity
-                style={[styles.exportGenerarBtn, { backgroundColor: c.accent }]}
-                onPress={generarPDF}
-                activeOpacity={0.85}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={18}
-                  color={c.accentText}
-                />
-                <Text
-                  style={[styles.exportGenerarText, { color: c.accentText }]}>
-                  Generar PDF
+                {/* FILTRO CLIENTE */}
+                {(() => {
+                  const getCliente = (i: any): string | null => {
+                    if (i.cliente) return i.cliente;
+                    const desc: string = i.descripcion || "";
+                    const parte = desc
+                      .replace(/\[TEL:[^\]]*\]/g, "")
+                      .split(" · ")[0]
+                      .trim();
+                    return parte.length > 1 ? parte : null;
+                  };
+                  // Sugerencias desde el store en vivo (clientes recientes), no
+                  // desde el rango en pantalla — así aparecen aunque el rango sea corto
+                  const clientesDisponibles = Array.from(
+                    new Set(
+                      ingresosStore
+                        .filter((i) => i.placa === placaActual)
+                        .map(getCliente)
+                        .filter((v): v is string => !!v),
+                    ),
+                  ).sort();
+                  const texto = exportCliente ?? "";
+                  const sugerencias =
+                    clienteInputFocused && texto.length >= 2
+                      ? clientesDisponibles.filter((cli) =>
+                          cli.toLowerCase().includes(texto.toLowerCase()),
+                        )
+                      : [];
+                  return (
+                    <>
+                      <Text
+                        style={[
+                          styles.exportSectionLabel,
+                          {
+                            color: c.textMuted,
+                            marginTop: 14,
+                            textTransform: "none",
+                          },
+                        ]}>
+                        Filtrar por cliente (opcional)
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.exportClienteInput,
+                          {
+                            backgroundColor: c.cardBg,
+                            borderColor: exportCliente ? c.accent : c.border,
+                            color: c.text,
+                          },
+                        ]}
+                        placeholder="Escribe el nombre del cliente..."
+                        placeholderTextColor={c.textMuted}
+                        value={texto}
+                        onChangeText={(t) => {
+                          // Misma sanitización que al guardar el cliente
+                          // (sanitizarInput en Ingresos): solo se quitan < > { } [ ].
+                          // Nombres como "H&H" o "López & Cía" deben poder buscarse;
+                          // el PDF escapa estos caracteres al renderizar.
+                          const limpio = t
+                            .replace(/[<>{}[\]]/g, "")
+                            .slice(0, 80);
+                          setExportCliente(limpio.length > 0 ? limpio : null);
+                        }}
+                        onFocus={() => setClienteInputFocused(true)}
+                        onBlur={() =>
+                          setTimeout(() => setClienteInputFocused(false), 150)
+                        }
+                        returnKeyType="done"
+                      />
+                      {sugerencias.length > 0 && (
+                        <View
+                          style={[
+                            styles.exportSugerencias,
+                            {
+                              backgroundColor: c.cardBg,
+                              borderColor: c.border,
+                            },
+                          ]}>
+                          {sugerencias.slice(0, 5).map((cli) => (
+                            <TouchableOpacity
+                              key={cli}
+                              style={[
+                                styles.exportSugerenciaItem,
+                                { borderBottomColor: c.border },
+                              ]}
+                              onPress={() => {
+                                setExportCliente(cli);
+                                setClienteInputFocused(false);
+                              }}
+                              activeOpacity={0.7}>
+                              <Text style={{ color: c.text, fontSize: 14 }}>
+                                {cli}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </>
+                  );
+                })()}
+
+                {/* FILTRO CATEGORÍA */}
+                <Text style={[styles.exportSectionLabel, { color: c.text }]}>
+                  Filtrar por categoría (opcional)
                 </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  style={styles.exportCatScroll}
+                  contentContainerStyle={styles.exportCatContent}>
+                  {[{ tipo: null as string | null }, ...CATEGORIAS_EXPORT].map(
+                    (cat) => {
+                      const selected = exportCategoria === cat.tipo;
+                      const isTodas = cat.tipo === null;
+                      return (
+                        <TouchableOpacity
+                          key={cat.tipo ?? "__todas"}
+                          style={[
+                            styles.exportCatChip,
+                            {
+                              backgroundColor: c.cardBg,
+                              borderColor: selected ? c.accent : c.border,
+                            },
+                            selected && { borderWidth: 1.5 },
+                          ]}
+                          onPress={() => setExportCategoria(cat.tipo)}
+                          activeOpacity={0.7}>
+                          {!isTodas && (
+                            <ItemIcon
+                              name={(cat as (typeof CATEGORIAS_EXPORT)[0]).icon}
+                              size={20}
+                            />
+                          )}
+                          <Text
+                            style={[
+                              styles.exportCatChipText,
+                              {
+                                color: selected ? c.accent : c.textSecondary,
+                              },
+                            ]}>
+                            {isTodas ? "Todas" : cat.tipo}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    },
+                  )}
+                </ScrollView>
+
+                {/* BOTÓN GENERAR */}
+                <TouchableOpacity
+                  style={[
+                    styles.exportGenerarBtn,
+                    { backgroundColor: c.accent },
+                  ]}
+                  onPress={generarPDF}
+                  activeOpacity={0.85}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color={c.accentText}
+                  />
+                  <Text
+                    style={[styles.exportGenerarText, { color: c.accentText }]}>
+                    Generar PDF
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
-
         </KeyboardAvoidingView>
 
         {/* Calendario como overlay DENTRO del modal de exportar, pero FUERA
@@ -1626,6 +1847,12 @@ const styles = StyleSheet.create({
   },
   summaryCardLabel: { fontSize: 12, marginBottom: 4 },
   summaryCardValue: { fontSize: 18, fontWeight: "800" },
+  porCobrarNote: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#F59E0B",
+    marginTop: 2,
+  },
   cardIcon: {
     position: "absolute",
     right: 10,
@@ -1718,7 +1945,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    letterSpacing: 0, // iOS: evita el tracking raro del placeholder
     marginBottom: 20,
+  },
+  exportCatScroll: {
+    marginBottom: 20,
+    marginHorizontal: -HORIZONTAL_PADDING,
+  },
+  exportCatContent: {
+    gap: 8,
+    paddingHorizontal: HORIZONTAL_PADDING,
+  },
+  exportCatChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingLeft: 8,
+    paddingRight: 14,
+    paddingVertical: 7,
+  },
+  exportCatChipText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   exportSugerencias: {
     borderWidth: 1,
