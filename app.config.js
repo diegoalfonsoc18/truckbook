@@ -41,6 +41,7 @@ export default {
     },
     plugins: [
       "./plugins/withModularHeaders",
+      "react-native-bottom-tabs",
       [
         "expo-splash-screen",
         {
