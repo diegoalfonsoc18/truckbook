@@ -32,6 +32,7 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
 import { sanitizeText, sanitizePassword, sanitizePhone } from "../../utils/sanitize";
+import { marcarLogoutIntencional } from "../../utils/authIntent";
 
 const H_PAD = 20;
 
@@ -311,6 +312,7 @@ export default function Cuenta() {
                 .update({ push_token: null })
                 .eq("user_id", session.user.id);
             }
+            marcarLogoutIntencional();
             const { error } = await supabase.auth.signOut();
             if (error) Alert.alert("Error", error.message);
           } finally {
@@ -544,6 +546,7 @@ export default function Cuenta() {
                         data: { nombre: null, apellido: null, telefono: null },
                       });
 
+                      marcarLogoutIntencional();
                       await supabase.auth.signOut();
                     } catch (e: any) {
                       logger.error("❌ Error al eliminar cuenta:", e?.message ?? e);

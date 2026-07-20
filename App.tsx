@@ -32,13 +32,29 @@ import { useVehiculoStore } from "./src/store/VehiculoStore";
 import { useGastosStore } from "./src/store/GastosStore";
 import { useIngresosStore } from "./src/store/IngresosStore";
 import logger from "./src/utils/logger";
-import NetInfo from "@react-native-community/netinfo";
+import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
+import { consumirLogoutIntencional } from "./src/utils/authIntent";
 
 // Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
 // visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * ¿Hay internet REAL, no solo una interfaz de red levantada?
+ *
+ * `isConnected` solo dice que el dispositivo está asociado a una red: con una
+ * barra de señal en zona rural sigue en `true` aunque no pase un solo byte.
+ * `isInternetReachable` es el que confirma tráfico; puede ser `null` mientras
+ * NetInfo todavía no lo determinó, y en ese caso NO asumimos que hay internet.
+ *
+ * Se usa para decidir si un evento que implica desloguear al usuario es de fiar.
+ * Ante la duda preferimos dejarlo adentro: quedarse con una sesión que quizá
+ * expiró es recuperable, echarlo al Login en medio de la carretera no.
+ */
+const hayInternetConfirmado = (state: NetInfoState): boolean =>
+  state.isConnected === true && state.isInternetReachable === true;
 
 /** Sincroniza datos del usuario en la tabla `usuarios` (background, no bloquea UI) */
 const syncUsuarioDB = async (user: { id: string; email?: string; user_metadata?: any }) => {
@@ -272,7 +288,7 @@ function AppContent() {
       } else {
         NetInfo.fetch().then((state) => {
           if (!mounted) return;
-          if (!state.isConnected) {
+          if (!hayInternetConfirmado(state)) {
             // Sin red: mantener loading=true y esperar a que vuelva la conexión.
             // El listener de NetInfo reintentará getSession automáticamente.
             // Fallback: si sigue offline tras 30s, mostrar login.
@@ -319,22 +335,38 @@ function AppContent() {
             }
             break;
 
-          case "SIGNED_OUT":
-            // Solo cerrar sesión si hay conexión — offline puede ser un
-            // fallo de refresh de token, no un logout real del usuario
+          case "SIGNED_OUT": {
+            const cerrarSesion = () => {
+              useVehiculoStore.getState().clearVehiculo();
+              useGastosStore.getState().limpiarGastos();
+              useIngresosStore.getState().limpiarIngresos();
+              updateSession(null);
+              recoveryModeRef.current = false;
+              setRecoveryMode(false);
+            };
+
+            // Si el usuario pidió salir (botón Salir, eliminar cuenta, reset de
+            // contraseña), cerrar siempre — sin mirar la red.
+            if (consumirLogoutIntencional()) {
+              cerrarSesion();
+              break;
+            }
+
+            // Si no fue deliberado, es un fallo de refresh de token. Solo
+            // cerrar si hay internet CONFIRMADO: con señal débil el dispositivo
+            // reporta isConnected=true aunque no pase tráfico, y ese era el
+            // caso que deslogueaba al usuario sin motivo.
             NetInfo.fetch().then((state) => {
-              if (state.isConnected) {
-                useVehiculoStore.getState().clearVehiculo();
-                useGastosStore.getState().limpiarGastos();
-                useIngresosStore.getState().limpiarIngresos();
-                updateSession(null);
-                recoveryModeRef.current = false;
-                setRecoveryMode(false);
+              if (hayInternetConfirmado(state)) {
+                cerrarSesion();
               } else {
-                logger.log("⚠️ SIGNED_OUT ignorado — sin conexión");
+                logger.log(
+                  `⚠️ SIGNED_OUT ignorado — sin internet confirmado (isConnected=${state.isConnected}, reachable=${state.isInternetReachable})`,
+                );
               }
             });
             break;
+          }
 
           case "INITIAL_SESSION":
             if (newSession?.user) {
@@ -343,7 +375,7 @@ function AppContent() {
             } else if (!sessionRef.current) {
               NetInfo.fetch().then((state) => {
                 if (!mounted) return;
-                if (state.isConnected) {
+                if (hayInternetConfirmado(state)) {
                   updateSession(null);
                   setLoading(false);
                 } else {

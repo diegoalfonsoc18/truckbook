@@ -20,6 +20,7 @@ import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
 import { sanitizePassword } from "../../utils/sanitize";
 import logger from "../../utils/logger";
+import { marcarLogoutIntencional } from "../../utils/authIntent";
 
 type AuthStackParamList = {
   ResetPassword: undefined;
@@ -59,6 +60,7 @@ export default function ResetPassword({ navigation }: Props) {
           {
             text: "Iniciar sesión",
             onPress: async () => {
+              marcarLogoutIntencional();
               await supabase.auth.signOut();
               navigation.navigate("Login");
             },

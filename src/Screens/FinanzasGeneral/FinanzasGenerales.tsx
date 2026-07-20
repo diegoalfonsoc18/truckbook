@@ -151,6 +151,8 @@ function generarReporteHTML(params: {
   clienteFiltro?: string | null;
   categoriaFiltro?: string | null;
   categoriaEsGasto?: boolean;
+  /** Generado sin conexión desde el caché del teléfono: puede faltar data. */
+  desdeCache?: boolean;
   view: ViewType;
 }) {
   const fmt = (n: number) =>
@@ -340,6 +342,9 @@ function generarReporteHTML(params: {
     .meta-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 2px; }
     .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
 
+    /* Aviso de informe generado offline (datos posiblemente incompletos) */
+    .aviso-cache { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; line-height: 1.5; color: #78350F; }
+
     /* SUMMARY GRID */
     .summary { display: grid; grid-template-columns: repeat(${esCuentaCliente ? 3 : 4}, 1fr); gap: 12px; margin-bottom: 8px; }
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
@@ -391,6 +396,12 @@ function generarReporteHTML(params: {
       Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
     </div>
   </div>
+
+  ${
+    params.desdeCache
+      ? `<div class="aviso-cache">Informe generado sin conexión, con los datos guardados en el teléfono. Pueden faltar movimientos — verifícalo con internet antes de usarlo como soporte.</div>`
+      : ""
+  }
 
   <div class="meta-box">
     <div class="meta-item">
@@ -575,6 +586,9 @@ export default function FinanzasGenerales() {
   const [exportCliente, setExportCliente] = useState<string | null>(null);
   // Filtro por categoría (tipo_gasto o tipo_ingreso) — null = todas
   const [exportCategoria, setExportCategoria] = useState<string | null>(null);
+  // Filtro de categoría de la PANTALLA (independiente del que usa el export).
+  // null = todas.
+  const [catPantalla, setCatPantalla] = useState<string | null>(null);
   const [clienteInputFocused, setClienteInputFocused] = useState(false);
   const [exportRango, setExportRango] = useState<{
     inicio: string;
@@ -780,8 +794,27 @@ export default function FinanzasGenerales() {
     formattedLabels,
   } = React.useMemo(() => {
     const placasSet = new Set(placasActivas);
-    const gPorPlaca = gastos.filter((g) => placasSet.has(g.placa));
-    const iPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
+    // Filtro por categoría: una categoría de gasto vacía los ingresos y
+    // viceversa, igual que hace el export (así las tarjetas y el gráfico
+    // quedan enfocados en ese único rubro).
+    const catMetaPantalla = catPantalla
+      ? CATEGORIAS_EXPORT.find((cc) => cc.tipo === catPantalla)
+      : null;
+    const gPorPlaca = gastos
+      .filter((g) => placasSet.has(g.placa))
+      .filter(
+        (g) =>
+          !catPantalla ||
+          (catMetaPantalla?.grupo === "gasto" && g.tipo_gasto === catPantalla),
+      );
+    const iPorPlaca = ingresos
+      .filter((i) => placasSet.has(i.placa))
+      .filter(
+        (i) =>
+          !catPantalla ||
+          (catMetaPantalla?.grupo === "ingreso" &&
+            i.tipo_ingreso === catPantalla),
+      );
 
     const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
     const iTransf = iPorPlaca.map((i) => ({
@@ -850,7 +883,19 @@ export default function FinanzasGenerales() {
     rango.inicio,
     rango.fin,
     view,
+    catPantalla,
   ]);
+
+  // Categoría seleccionada en pantalla: define si el resumen se muestra en
+  // modo "enfocado" (un solo rubro) o el general de ingresos/gastos/balance.
+  const catMetaSel = catPantalla
+    ? (CATEGORIAS_EXPORT.find((cc) => cc.tipo === catPantalla) ?? null)
+    : null;
+  const catEsIngreso = catMetaSel?.grupo === "ingreso";
+  const totalCategoria = catEsIngreso ? totalIngresos : totalGastos;
+  const movimientosCategoria = catEsIngreso
+    ? ingresosFiltrados.length
+    : gastosFiltrados.length;
 
   const formatDateShort = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");
@@ -964,19 +1009,65 @@ export default function FinanzasGenerales() {
     setExportando(true);
     // Consulta puntual del rango de export (sin tope de 200): un informe anual
     // o de rango amplio ya no se queda corto por el caché del store.
-    const datos = await fetchTransaccionesRango(
+    let datos = await fetchTransaccionesRango(
       placaActual,
       user.id,
       r.inicio,
       r.fin,
     );
+
+    // Sin conexión: el PDF se arma en el dispositivo (expo-print no necesita
+    // internet), lo único que falta son los datos. Caemos al caché local igual
+    // que hace la pantalla — pero avisando, porque el caché está topado en 200
+    // filas por placa y un informe incompleto puede terminar donde un cliente.
+    let desdeCache = false;
     if (datos.error) {
-      setExportando(false);
-      Alert.alert(
-        "Sin conexión",
-        "Necesitas internet para generar el informe. Intenta de nuevo.",
+      const enRango = (f?: string | null) =>
+        !!f && f >= r.inicio && f <= r.fin;
+      const gCache = useGastosStore
+        .getState()
+        .gastos.filter(
+          (g) =>
+            g.placa === placaActual &&
+            g.conductor_id === user.id &&
+            enRango(g.fecha),
+        );
+      const iCache = useIngresosStore
+        .getState()
+        .ingresos.filter(
+          (i) =>
+            i.placa === placaActual &&
+            i.conductor_id === user.id &&
+            enRango(i.fecha),
+        );
+
+      if (gCache.length === 0 && iCache.length === 0) {
+        setExportando(false);
+        Alert.alert(
+          "Sin conexión",
+          "No hay datos guardados en el teléfono para ese período. Conéctate a internet para generar el informe.",
+        );
+        return;
+      }
+
+      const seguir = await new Promise<boolean>((resolve) =>
+        Alert.alert(
+          "Sin conexión",
+          `Puedo generar el informe con los ${gCache.length + iCache.length} movimientos guardados en el teléfono, pero pueden faltar registros. Revísalo antes de enviárselo a alguien.`,
+          [
+            { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+            { text: "Generar igual", onPress: () => resolve(true) },
+          ],
+          { cancelable: false },
+        ),
       );
-      return;
+      if (!seguir) {
+        setExportando(false);
+        return;
+      }
+
+      datos = { gastos: gCache, ingresos: iCache, error: false };
+      desdeCache = true;
     }
 
     // La consulta ya restringe a placa+conductor y al rango [inicio, fin]
@@ -1094,6 +1185,7 @@ export default function FinanzasGenerales() {
         clienteFiltro: clienteReal,
         categoriaFiltro: exportCategoria,
         categoriaEsGasto: catMeta?.grupo === "gasto",
+        desdeCache,
       });
 
       await new Promise((res) => setTimeout(res, 600));
@@ -1242,107 +1334,236 @@ export default function FinanzasGenerales() {
               </TouchableOpacity>
             </View>
 
-            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
-            <View style={styles.summaryGrid}>
-              <Reanimated.View
-                style={[
-                  styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.income + "40" },
-                  getShadow(isDark, "sm"),
-                  card1Style,
-                ]}>
-                <Text
-                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Ingresos recibidos
-                </Text>
-                <Text style={[styles.summaryCardValue, { color: c.income }]}>
-                  {formatCurrency(totalIngresos)}
-                </Text>
-                {totalPorCobrar > 0 && (
-                  <Text style={styles.porCobrarNote} numberOfLines={1}>
-                    + {formatCurrency(totalPorCobrar)} por cobrar
-                  </Text>
-                )}
-                <Ionicons
-                  name="trending-up-outline"
-                  size={22}
-                  color={c.income}
-                  style={styles.cardIcon}
-                />
-              </Reanimated.View>
-              <Reanimated.View
-                style={[
-                  styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.expense + "40" },
-                  getShadow(isDark, "sm"),
-                  card2Style,
-                ]}>
-                <Text
-                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Gastos
-                </Text>
-                <Text style={[styles.summaryCardValue, { color: c.expense }]}>
-                  {formatCurrency(totalGastos)}
-                </Text>
-                <Ionicons
-                  name="trending-down-outline"
-                  size={22}
-                  color={c.expense}
-                  style={styles.cardIcon}
-                />
-              </Reanimated.View>
-            </View>
-
-            {/* BALANCE CARD */}
-            <Reanimated.View
-              style={[
-                styles.balanceCard,
-                {
-                  backgroundColor: c.cardBg,
-                  borderColor: balance >= 0 ? c.income : c.expense,
+            {/* FILTRO POR CATEGORÍA */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.catScroll}
+              contentContainerStyle={styles.catContent}>
+              {[{ tipo: null as string | null }, ...CATEGORIAS_EXPORT].map(
+                (cat) => {
+                  const selected = catPantalla === cat.tipo;
+                  const isTodas = cat.tipo === null;
+                  return (
+                    <TouchableOpacity
+                      key={cat.tipo ?? "__todas"}
+                      style={[
+                        styles.catChip,
+                        {
+                          backgroundColor: c.cardBg,
+                          borderColor: selected ? c.accent : c.border,
+                        },
+                        selected && { borderWidth: 1.5 },
+                      ]}
+                      onPress={() => setCatPantalla(cat.tipo)}
+                      activeOpacity={0.7}>
+                      {!isTodas && (
+                        <ItemIcon
+                          name={(cat as (typeof CATEGORIAS_EXPORT)[0]).icon}
+                          size={18}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.catChipText,
+                          { color: selected ? c.accent : c.textSecondary },
+                        ]}
+                        numberOfLines={1}>
+                        {isTodas ? "Todas" : cat.tipo}
+                      </Text>
+                    </TouchableOpacity>
+                  );
                 },
-                getShadow(isDark, "md"),
-                balStyle,
-              ]}>
-              <View style={styles.balanceHeader}>
-                <Text style={[styles.balanceLabel, { color: c.textSecondary }]}>
-                  Balance neto
-                </Text>
-                <View
+              )}
+            </ScrollView>
+
+            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
+            {/* Con una categoría activa el resumen se enfoca en ese rubro:
+                mostrar "Ingresos $0" y un balance negativo sería engañoso. */}
+            {catPantalla ? (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
                   style={[
-                    styles.rentabilidadBadge,
+                    styles.summaryCard,
                     {
-                      backgroundColor:
-                        Number(rentabilidad) >= 0
-                          ? c.income + "20"
-                          : c.expense + "20",
+                      backgroundColor: c.cardBg,
+                      borderColor: (catEsIngreso ? c.income : c.expense) + "40",
                     },
+                    getShadow(isDark, "sm"),
+                    card1Style,
                   ]}>
                   <Text
                     style={[
-                      styles.rentabilidadText,
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}
+                    numberOfLines={1}>
+                    Total {catPantalla}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryCardValue,
+                      { color: catEsIngreso ? c.income : c.expense },
+                    ]}>
+                    {formatCurrency(totalCategoria)}
+                  </Text>
+                  {catEsIngreso && totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <Ionicons
+                    name={
+                      catEsIngreso
+                        ? "trending-up-outline"
+                        : "trending-down-outline"
+                    }
+                    size={22}
+                    color={catEsIngreso ? c.income : c.expense}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: c.cardBg, borderColor: c.border },
+                    getShadow(isDark, "sm"),
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Movimientos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.text }]}>
+                    {movimientosCategoria}
+                  </Text>
+                  <Ionicons
+                    name="receipt-outline"
+                    size={22}
+                    color={c.textMuted}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+              </View>
+            ) : (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: c.cardBg, borderColor: c.income + "40" },
+                    getShadow(isDark, "sm"),
+                    card1Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Ingresos recibidos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.income }]}>
+                    {formatCurrency(totalIngresos)}
+                  </Text>
+                  {totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <Ionicons
+                    name="trending-up-outline"
+                    size={22}
+                    color={c.income}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    {
+                      backgroundColor: c.cardBg,
+                      borderColor: c.expense + "40",
+                    },
+                    getShadow(isDark, "sm"),
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Gastos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.expense }]}>
+                    {formatCurrency(totalGastos)}
+                  </Text>
+                  <Ionicons
+                    name="trending-down-outline"
+                    size={22}
+                    color={c.expense}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+              </View>
+            )}
+
+            {/* BALANCE CARD — solo sin filtro de categoría: un balance de un
+                único rubro (gastos sin ingresos, o al revés) no significa nada */}
+            {!catPantalla && (
+              <Reanimated.View
+                style={[
+                  styles.balanceCard,
+                  {
+                    backgroundColor: c.cardBg,
+                    borderColor: balance >= 0 ? c.income : c.expense,
+                  },
+                  getShadow(isDark, "md"),
+                  balStyle,
+                ]}>
+                <View style={styles.balanceHeader}>
+                  <Text
+                    style={[styles.balanceLabel, { color: c.textSecondary }]}>
+                    Balance neto
+                  </Text>
+                  <View
+                    style={[
+                      styles.rentabilidadBadge,
                       {
-                        color: Number(rentabilidad) >= 0 ? c.income : c.expense,
+                        backgroundColor:
+                          Number(rentabilidad) >= 0
+                            ? c.income + "20"
+                            : c.expense + "20",
                       },
                     ]}>
-                    {Number(rentabilidad) >= 0 ? "+" : ""}
-                    {rentabilidad}%
-                  </Text>
+                    <Text
+                      style={[
+                        styles.rentabilidadText,
+                        {
+                          color:
+                            Number(rentabilidad) >= 0 ? c.income : c.expense,
+                        },
+                      ]}>
+                      {Number(rentabilidad) >= 0 ? "+" : ""}
+                      {rentabilidad}%
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Text
-                style={[
-                  styles.balanceValue,
-                  { color: balance >= 0 ? c.income : c.expense },
-                ]}>
-                {formatCurrency(balance)}
-              </Text>
-              <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
-                {balance >= 0
-                  ? "Ganancia en el período"
-                  : "Pérdida en el período"}
-              </Text>
-            </Reanimated.View>
+                <Text
+                  style={[
+                    styles.balanceValue,
+                    { color: balance >= 0 ? c.income : c.expense },
+                  ]}>
+                  {formatCurrency(balance)}
+                </Text>
+                <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
+                  {balance >= 0
+                    ? "Ganancia en el período"
+                    : "Pérdida en el período"}
+                </Text>
+              </Reanimated.View>
+            )}
 
             {/* TABS DE VISTA */}
             <View
@@ -1968,6 +2189,30 @@ const styles = StyleSheet.create({
   },
   exportCatChipText: {
     fontSize: 13,
+    fontWeight: "600",
+  },
+  // Chips de categoría de la pantalla (mismo look que los del export, algo
+  // más compactos porque van sobre las tarjetas de resumen).
+  catScroll: {
+    marginBottom: 16,
+    marginHorizontal: -HORIZONTAL_PADDING,
+  },
+  catContent: {
+    gap: 8,
+    paddingHorizontal: HORIZONTAL_PADDING,
+  },
+  catChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingLeft: 8,
+    paddingRight: 13,
+    paddingVertical: 6,
+  },
+  catChipText: {
+    fontSize: 12.5,
     fontWeight: "600",
   },
   exportSugerencias: {

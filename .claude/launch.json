@@ -8,6 +8,18 @@
       "port": 8081
     },
     {
+      "name": "Expo Go",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--go"],
+      "port": 8081
+    },
+    {
+      "name": "Expo Go (clear)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--go", "--clear"],
+      "port": 8081
+    },
+    {
       "name": "Expo Web",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web"],

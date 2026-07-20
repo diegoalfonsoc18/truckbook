@@ -92,6 +92,12 @@ export interface TransactionScreenProps {
       label: string;
       placeholder: string;
       numeric?: boolean;
+      /**
+       * Campo de teléfono: NO forma parte de la descripción (se guarda aparte
+       * como tag [TEL:...]). Se excluye del armado y del parseo posicional,
+       * que si no lo tomarían como un segmento más.
+       */
+      esTelefono?: boolean;
     }>
   >;
   tipoCamionActual?: any;
@@ -773,9 +779,16 @@ export default function TransactionScreen({
     const raw = (t.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
     const partes = raw.split(" · ");
     const extras: Record<string, string> = {};
+    // El teléfono vive fuera de la descripción, en el tag [TEL:...]. Se
+    // precarga aparte para poder editarlo (antes solo se podía cambiar
+    // eligiendo otro contacto).
+    const telGuardado = (t.descripcion || "").match(/\[TEL:([^\]]*)\]/)?.[1];
+    if (telGuardado) extras["telefono"] = telGuardado;
     if (catKey && camposExtra?.[catKey]) {
       const campos = camposExtra[catKey];
-      const textCampos = campos.filter((c) => !c.numeric);
+      // Los campos de teléfono no son segmentos de la descripción: incluirlos
+      // correría el mapeo posicional y metería el cliente en el campo de al lado.
+      const textCampos = campos.filter((c) => !c.numeric && !c.esTelefono);
       textCampos.forEach((campo, i) => {
         if (partes[i]) extras[campo.key] = partes[i].trim();
       });
@@ -787,8 +800,13 @@ export default function TransactionScreen({
       });
     } else if (partes.length > 0) {
       extras["descripcion"] = raw;
-      // Precargar la descripción editable (ej: "otros" en Gastos)
-      if (hasCustomDescription && catKey === "otros") setCustomDescription(raw);
+      // Precargar la descripción editable. Ojo: cuando se registra un gasto sin
+      // descripción se guarda el nombre de la categoría como relleno, así que
+      // ese eco no se precarga — si no, editar un Combustible mostraría
+      // "Combustible" escrito en el campo.
+      if (hasCustomDescription && catKey && raw.toLowerCase() !== catKey) {
+        setCustomDescription(raw);
+      }
     }
     setExtraValues(extras);
     setModalVisible(true);
@@ -808,7 +826,11 @@ export default function TransactionScreen({
       // Reconstruir descripción desde campos extra al editar
       let editDesc: string | undefined;
       if (isEditing && selectedCat && camposExtra?.[selectedCat]) {
-        const campos = camposExtra[selectedCat].filter((c) => !c.numeric);
+        // Sin el teléfono: va aparte, como tag [TEL:...] (lo re-adjunta la
+        // pantalla en onUpdate). Si entrara acá quedaría dentro del texto.
+        const campos = camposExtra[selectedCat].filter(
+          (c) => !c.numeric && !c.esTelefono,
+        );
         const partes = campos
           .map((c) => (extraValues[c.key] || "").trim())
           .filter(Boolean);
@@ -816,10 +838,12 @@ export default function TransactionScreen({
       } else if (
         isEditing &&
         hasCustomDescription &&
-        selectedCat === "otros" &&
-        customDescription.trim()
+        selectedCat &&
+        !camposExtra?.[selectedCat]
       ) {
-        // Descripción editable de "otros" — antes se descartaba silenciosamente
+        // Descripción editable — antes se descartaba silenciosamente.
+        // Se manda aunque quede vacía: así se puede borrar una descripción
+        // que ya no aplica (con `undefined` el update ni tocaba el campo).
         editDesc = customDescription.trim();
       }
 
@@ -1293,27 +1317,6 @@ export default function TransactionScreen({
                           );
                         })()}
 
-                      {/* Descripción personalizada (ej: "otros" en Gastos) */}
-                      {hasCustomDescription && selectedCat === "otros" && (
-                        <View style={s.inputGroup}>
-                          <Text
-                            style={[s.inputLabel, { color: c.textSecondary }]}>
-                            Descripción
-                          </Text>
-                          <View style={[s.inputRow, inputStyle]}>
-                            <TextInput
-                              keyboardAppearance="light"
-                              style={[s.textInput, { color: c.text }]}
-                              placeholder="Ej: Multa, Seguro..."
-                              placeholderTextColor={c.textMuted}
-                              value={customDescription}
-                              onChangeText={setCustomDescription}
-                              autoFocus
-                            />
-                          </View>
-                        </View>
-                      )}
-
                       {/* Campos extra (flete, otro, etc.) */}
                       {selectedCat &&
                         camposExtra?.[selectedCat]?.map((campo) => (
@@ -1397,6 +1400,9 @@ export default function TransactionScreen({
                                     style={[s.textInput, { color: c.text }]}
                                     placeholder={campo.placeholder}
                                     placeholderTextColor={c.textMuted}
+                                    keyboardType={
+                                      campo.esTelefono ? "phone-pad" : "default"
+                                    }
                                     value={extraValues[campo.key] || ""}
                                     onChangeText={(v) => {
                                       setExtraValues((prev) => ({
@@ -1515,14 +1521,47 @@ export default function TransactionScreen({
                             onChangeText={(text) =>
                               setEditValue(formatMontoInput(text))
                             }
-                            autoFocus={
-                              !(
-                                hasCustomDescription && selectedCat === "otros"
-                              ) && !camposExtra?.[selectedCat ?? ""]
-                            }
+                            autoFocus={!camposExtra?.[selectedCat ?? ""]}
                           />
                         </View>
                       </View>
+
+                      {/* Descripción, debajo del monto. Obligatoria en "otros"
+                          (si no, el registro no dice nada); opcional en el resto
+                          de categorías, que antes no tenían dónde anotar el
+                          detalle. No se muestra si la categoría ya trae campos
+                          extra, porque esos arman la descripción por su cuenta. */}
+                      {hasCustomDescription &&
+                        selectedCat &&
+                        !camposExtra?.[selectedCat] && (
+                          <View style={s.inputGroup}>
+                            <Text
+                              style={[s.inputLabel, { color: c.textSecondary }]}>
+                              Descripción
+                              {selectedCat !== "otros" && (
+                                <Text style={{ color: c.textMuted }}>
+                                  {" "}
+                                  (opcional)
+                                </Text>
+                              )}
+                            </Text>
+                            <View style={[s.inputRow, inputStyle]}>
+                              <TextInput
+                                keyboardAppearance="light"
+                                style={[s.textInput, { color: c.text }]}
+                                placeholder={
+                                  selectedCat === "otros"
+                                    ? "Ej: Multa, Seguro..."
+                                    : "Ej: estación, factura, detalle..."
+                                }
+                                placeholderTextColor={c.textMuted}
+                                value={customDescription}
+                                onChangeText={setCustomDescription}
+                                maxLength={200}
+                              />
+                            </View>
+                          </View>
+                        )}
 
                       {/* Estado (solo al agregar) */}
                       {!isEditing && (

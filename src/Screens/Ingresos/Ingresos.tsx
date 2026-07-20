@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { validarMonto, validarFecha, validarDescripcion, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
+import { getTruckIconName, getMercanciaIcon } from "../../utils/iconosCamion";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
@@ -15,35 +16,53 @@ import {
 } from "../../services/fleteNotifications";
 import { extraerTelDesc } from "../../utils/telefono";
 
+// El teléfono no se guarda como parte de la descripción sino como tag
+// [TEL:...]; `esTelefono` es lo que le avisa al modal que no lo mezcle.
+// Existe para poder registrar un cliente que NO está en los contactos del
+// dispositivo: elegir un contacto sigue autocompletándolo, pero ya no es la
+// única forma de tener su número (y sin número no hay cuenta de cobro).
+const CAMPO_TELEFONO = {
+  key: "telefono",
+  label: "Teléfono",
+  placeholder: "Opcional — para enviarle la cuenta de cobro",
+  esTelefono: true,
+};
+
 const FLETE_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Ruta, notas, detalles (opcional)" },
   { key: "cantidad",    label: "Cantidad de fletes", placeholder: "1", numeric: true },
 ];
 
 const MERCANCIA_CAMPOS = [
   { key: "cliente",     label: "Cliente",           placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
   { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
 ];
 
 const ANTICIPO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Motivo, detalles (opcional)" },
 ];
 
 const REEMBOLSO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Concepto, detalles (opcional)" },
 ];
 
 const OTRO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Detalle de ingreso (opcional)" },
 ];
 
 const CUENTA_COBRO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Servicio, detalles (opcional)" },
 ];
 
@@ -52,30 +71,6 @@ const sanitizarInput = (texto: string, maxLength: number = 500): string => {
     .replace(/[<>{}[\]]/g, "")
     .trim()
     .slice(0, maxLength);
-};
-
-const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
-  switch (tipoCamion) {
-    case "estacas": return "estacaFlete" as IconName;
-    case "volqueta": return "volquetaFlete" as IconName;
-    case "furgon": return "furgon" as IconName;
-    case "grua": return "gruaFlete" as IconName;
-    case "cisterna": return "cisterna" as IconName;
-    case "planchon": return "planchosFlete" as IconName;
-    default: return "freight" as IconName;
-  }
-};
-
-const getMercanciaIcon = (tipoCamion: TipoCamion | null): IconName => {
-  switch (tipoCamion) {
-    case "estacas": return "mercancia_box" as IconName;
-    case "volqueta": return "mercancia_gravel" as IconName;
-    case "furgon": return "mercancia_box" as IconName;
-    case "grua": return "mercancia_carGrua" as IconName;
-    case "cisterna": return "mercancia_gasStation" as IconName;
-    case "planchon": return "mercancia_carGrua" as IconName;
-    default: return "mercancia_box" as IconName;
-  }
 };
 
 const INGRESOS_CATEGORIAS: Categoria[] = [
@@ -243,10 +238,14 @@ export default function Ingresos() {
           .getState()
           .ingresos.find((i) => i.id === id);
         const { tel: telOriginal } = extraerTelDesc(original?.descripcion ?? "");
-        const telNuevo = extras?.telefono
-          ?.replace(/[^0-9+\- ]/g, "")
-          .slice(0, 20);
-        const tel = telNuevo || telOriginal;
+        // El modal precarga el teléfono guardado, así que si la clave viene
+        // definida lo que haya ahí es lo que el usuario dejó — incluido vacío,
+        // que significa borrarlo. Solo se conserva el original cuando el campo
+        // no estuvo en pantalla (categorías sin teléfono).
+        const tel =
+          extras?.telefono !== undefined
+            ? extras.telefono.replace(/[^0-9+\- ]/g, "").slice(0, 20)
+            : telOriginal;
         if (tel) desc = `${desc}[TEL:${tel}]`;
         payload.descripcion = desc;
       }
