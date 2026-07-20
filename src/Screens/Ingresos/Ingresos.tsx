@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { validarMonto, validarFecha, validarDescripcion, parsearMonto } from "../../utils/validacion";
 import { useVehiculoStore, TipoCamion } from "../../store/VehiculoStore";
+import { getTruckIconName, getMercanciaIcon } from "../../utils/iconosCamion";
 import { useAuth } from "../../hooks/useAuth";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
@@ -52,30 +53,6 @@ const sanitizarInput = (texto: string, maxLength: number = 500): string => {
     .replace(/[<>{}[\]]/g, "")
     .trim()
     .slice(0, maxLength);
-};
-
-const getTruckIconName = (tipoCamion: TipoCamion | null): IconName => {
-  switch (tipoCamion) {
-    case "estacas": return "estacaFlete" as IconName;
-    case "volqueta": return "volquetaFlete" as IconName;
-    case "furgon": return "furgon" as IconName;
-    case "grua": return "gruaFlete" as IconName;
-    case "cisterna": return "cisterna" as IconName;
-    case "planchon": return "planchosFlete" as IconName;
-    default: return "freight" as IconName;
-  }
-};
-
-const getMercanciaIcon = (tipoCamion: TipoCamion | null): IconName => {
-  switch (tipoCamion) {
-    case "estacas": return "mercancia_box" as IconName;
-    case "volqueta": return "mercancia_gravel" as IconName;
-    case "furgon": return "mercancia_box" as IconName;
-    case "grua": return "mercancia_carGrua" as IconName;
-    case "cisterna": return "mercancia_gasStation" as IconName;
-    case "planchon": return "mercancia_carGrua" as IconName;
-    default: return "mercancia_box" as IconName;
-  }
 };
 
 const INGRESOS_CATEGORIAS: Categoria[] = [

@@ -7,6 +7,11 @@ import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
+import {
+  getTruckIconName,
+  getMercanciaIcon,
+} from "../../../utils/iconosCamion";
+import type { TipoCamion } from "../../../store/VehiculoStore";
 
 const COLORS = {
   ink: "#111827",
@@ -37,11 +42,20 @@ const CATEGORIA_META: Record<string, { icon: IconName; color: string }> = {
   Otros: { icon: "otros", color: "#636E72" },
   Otro: { icon: "otros", color: "#6C5CE7" },
 };
-const metaDe = (tipo?: string | null) =>
-  (tipo && CATEGORIA_META[tipo]) || {
+/**
+ * Flete y Mercancía no tienen un ícono fijo: dependen del camión de la placa
+ * activa (una volqueta carga grava, una cisterna combustible). Misma regla que
+ * usa la pantalla de Ingresos, compartida desde utils/iconosCamion.
+ */
+const metaDe = (tipo: string | null | undefined, tipoCamion: TipoCamion | null) => {
+  const base = (tipo && CATEGORIA_META[tipo]) || {
     icon: "otros" as IconName,
     color: "#636E72",
   };
+  if (tipo === "Flete") return { ...base, icon: getTruckIconName(tipoCamion) };
+  if (tipo === "Mercancía") return { ...base, icon: getMercanciaIcon(tipoCamion) };
+  return base;
+};
 
 /** "$250.000" — COP con separador de miles */
 function fmtPesos(n: number): string {
@@ -126,6 +140,7 @@ interface Props {
 
 export default function ActividadReciente({ onVerTodas }: Props) {
   const placa = useVehiculoStore((s) => s.placa);
+  const tipoCamion = useVehiculoStore((s) => s.tipoCamion);
   const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
 
@@ -178,7 +193,7 @@ export default function ActividadReciente({ onVerTodas }: Props) {
           <Text style={s.vacio}>Sin movimientos aún</Text>
         ) : (
           recientes.map((m) => {
-            const meta = metaDe(m.tipo);
+            const meta = metaDe(m.tipo, tipoCamion);
             return (
               <View key={m.id} style={s.movRow}>
                 <View
