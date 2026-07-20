@@ -151,6 +151,8 @@ function generarReporteHTML(params: {
   clienteFiltro?: string | null;
   categoriaFiltro?: string | null;
   categoriaEsGasto?: boolean;
+  /** Generado sin conexión desde el caché del teléfono: puede faltar data. */
+  desdeCache?: boolean;
   view: ViewType;
 }) {
   const fmt = (n: number) =>
@@ -340,6 +342,9 @@ function generarReporteHTML(params: {
     .meta-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 2px; }
     .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
 
+    /* Aviso de informe generado offline (datos posiblemente incompletos) */
+    .aviso-cache { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; line-height: 1.5; color: #78350F; }
+
     /* SUMMARY GRID */
     .summary { display: grid; grid-template-columns: repeat(${esCuentaCliente ? 3 : 4}, 1fr); gap: 12px; margin-bottom: 8px; }
     .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
@@ -391,6 +396,12 @@ function generarReporteHTML(params: {
       Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
     </div>
   </div>
+
+  ${
+    params.desdeCache
+      ? `<div class="aviso-cache">Informe generado sin conexión, con los datos guardados en el teléfono. Pueden faltar movimientos — verifícalo con internet antes de usarlo como soporte.</div>`
+      : ""
+  }
 
   <div class="meta-box">
     <div class="meta-item">
@@ -998,19 +1009,65 @@ export default function FinanzasGenerales() {
     setExportando(true);
     // Consulta puntual del rango de export (sin tope de 200): un informe anual
     // o de rango amplio ya no se queda corto por el caché del store.
-    const datos = await fetchTransaccionesRango(
+    let datos = await fetchTransaccionesRango(
       placaActual,
       user.id,
       r.inicio,
       r.fin,
     );
+
+    // Sin conexión: el PDF se arma en el dispositivo (expo-print no necesita
+    // internet), lo único que falta son los datos. Caemos al caché local igual
+    // que hace la pantalla — pero avisando, porque el caché está topado en 200
+    // filas por placa y un informe incompleto puede terminar donde un cliente.
+    let desdeCache = false;
     if (datos.error) {
-      setExportando(false);
-      Alert.alert(
-        "Sin conexión",
-        "Necesitas internet para generar el informe. Intenta de nuevo.",
+      const enRango = (f?: string | null) =>
+        !!f && f >= r.inicio && f <= r.fin;
+      const gCache = useGastosStore
+        .getState()
+        .gastos.filter(
+          (g) =>
+            g.placa === placaActual &&
+            g.conductor_id === user.id &&
+            enRango(g.fecha),
+        );
+      const iCache = useIngresosStore
+        .getState()
+        .ingresos.filter(
+          (i) =>
+            i.placa === placaActual &&
+            i.conductor_id === user.id &&
+            enRango(i.fecha),
+        );
+
+      if (gCache.length === 0 && iCache.length === 0) {
+        setExportando(false);
+        Alert.alert(
+          "Sin conexión",
+          "No hay datos guardados en el teléfono para ese período. Conéctate a internet para generar el informe.",
+        );
+        return;
+      }
+
+      const seguir = await new Promise<boolean>((resolve) =>
+        Alert.alert(
+          "Sin conexión",
+          `Puedo generar el informe con los ${gCache.length + iCache.length} movimientos guardados en el teléfono, pero pueden faltar registros. Revísalo antes de enviárselo a alguien.`,
+          [
+            { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+            { text: "Generar igual", onPress: () => resolve(true) },
+          ],
+          { cancelable: false },
+        ),
       );
-      return;
+      if (!seguir) {
+        setExportando(false);
+        return;
+      }
+
+      datos = { gastos: gCache, ingresos: iCache, error: false };
+      desdeCache = true;
     }
 
     // La consulta ya restringe a placa+conductor y al rango [inicio, fin]
@@ -1128,6 +1185,7 @@ export default function FinanzasGenerales() {
         clienteFiltro: clienteReal,
         categoriaFiltro: exportCategoria,
         categoriaEsGasto: catMeta?.grupo === "gasto",
+        desdeCache,
       });
 
       await new Promise((res) => setTimeout(res, 600));
