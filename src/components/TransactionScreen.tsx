@@ -1300,47 +1300,6 @@ export default function TransactionScreen({
                           );
                         })()}
 
-                      {/* Descripción. Obligatoria en "otros" (si no, el registro
-                          no dice nada); opcional en el resto de categorías, que
-                          antes no tenían dónde anotar el detalle. No se muestra
-                          si la categoría ya trae campos extra, porque esos
-                          arman la descripción por su cuenta. */}
-                      {hasCustomDescription &&
-                        selectedCat &&
-                        !camposExtra?.[selectedCat] && (
-                          <View style={s.inputGroup}>
-                            <Text
-                              style={[s.inputLabel, { color: c.textSecondary }]}>
-                              Descripción
-                              {selectedCat !== "otros" && (
-                                <Text style={{ color: c.textMuted }}>
-                                  {" "}
-                                  (opcional)
-                                </Text>
-                              )}
-                            </Text>
-                            <View style={[s.inputRow, inputStyle]}>
-                              <TextInput
-                                keyboardAppearance="light"
-                                style={[s.textInput, { color: c.text }]}
-                                placeholder={
-                                  selectedCat === "otros"
-                                    ? "Ej: Multa, Seguro..."
-                                    : "Ej: estación, factura, detalle..."
-                                }
-                                placeholderTextColor={c.textMuted}
-                                value={customDescription}
-                                onChangeText={setCustomDescription}
-                                maxLength={200}
-                                // Solo robar el foco cuando la descripción es
-                                // obligatoria; si no, el usuario viene a
-                                // escribir el monto.
-                                autoFocus={selectedCat === "otros"}
-                              />
-                            </View>
-                          </View>
-                        )}
-
                       {/* Campos extra (flete, otro, etc.) */}
                       {selectedCat &&
                         camposExtra?.[selectedCat]?.map((campo) => (
@@ -1542,14 +1501,47 @@ export default function TransactionScreen({
                             onChangeText={(text) =>
                               setEditValue(formatMontoInput(text))
                             }
-                            autoFocus={
-                              !(
-                                hasCustomDescription && selectedCat === "otros"
-                              ) && !camposExtra?.[selectedCat ?? ""]
-                            }
+                            autoFocus={!camposExtra?.[selectedCat ?? ""]}
                           />
                         </View>
                       </View>
+
+                      {/* Descripción, debajo del monto. Obligatoria en "otros"
+                          (si no, el registro no dice nada); opcional en el resto
+                          de categorías, que antes no tenían dónde anotar el
+                          detalle. No se muestra si la categoría ya trae campos
+                          extra, porque esos arman la descripción por su cuenta. */}
+                      {hasCustomDescription &&
+                        selectedCat &&
+                        !camposExtra?.[selectedCat] && (
+                          <View style={s.inputGroup}>
+                            <Text
+                              style={[s.inputLabel, { color: c.textSecondary }]}>
+                              Descripción
+                              {selectedCat !== "otros" && (
+                                <Text style={{ color: c.textMuted }}>
+                                  {" "}
+                                  (opcional)
+                                </Text>
+                              )}
+                            </Text>
+                            <View style={[s.inputRow, inputStyle]}>
+                              <TextInput
+                                keyboardAppearance="light"
+                                style={[s.textInput, { color: c.text }]}
+                                placeholder={
+                                  selectedCat === "otros"
+                                    ? "Ej: Multa, Seguro..."
+                                    : "Ej: estación, factura, detalle..."
+                                }
+                                placeholderTextColor={c.textMuted}
+                                value={customDescription}
+                                onChangeText={setCustomDescription}
+                                maxLength={200}
+                              />
+                            </View>
+                          </View>
+                        )}
 
                       {/* Estado (solo al agregar) */}
                       {!isEditing && (
