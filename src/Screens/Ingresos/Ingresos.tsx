@@ -16,35 +16,53 @@ import {
 } from "../../services/fleteNotifications";
 import { extraerTelDesc } from "../../utils/telefono";
 
+// El teléfono no se guarda como parte de la descripción sino como tag
+// [TEL:...]; `esTelefono` es lo que le avisa al modal que no lo mezcle.
+// Existe para poder registrar un cliente que NO está en los contactos del
+// dispositivo: elegir un contacto sigue autocompletándolo, pero ya no es la
+// única forma de tener su número (y sin número no hay cuenta de cobro).
+const CAMPO_TELEFONO = {
+  key: "telefono",
+  label: "Teléfono",
+  placeholder: "Opcional — para enviarle la cuenta de cobro",
+  esTelefono: true,
+};
+
 const FLETE_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Ruta, notas, detalles (opcional)" },
   { key: "cantidad",    label: "Cantidad de fletes", placeholder: "1", numeric: true },
 ];
 
 const MERCANCIA_CAMPOS = [
   { key: "cliente",     label: "Cliente",           placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
   { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
 ];
 
 const ANTICIPO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Motivo, detalles (opcional)" },
 ];
 
 const REEMBOLSO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Concepto, detalles (opcional)" },
 ];
 
 const OTRO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Detalle de ingreso (opcional)" },
 ];
 
 const CUENTA_COBRO_CAMPOS = [
   { key: "cliente",     label: "Cliente",     placeholder: "Nombre del cliente o empresa" },
+  CAMPO_TELEFONO,
   { key: "descripcion", label: "Descripción", placeholder: "Servicio, detalles (opcional)" },
 ];
 
@@ -220,10 +238,14 @@ export default function Ingresos() {
           .getState()
           .ingresos.find((i) => i.id === id);
         const { tel: telOriginal } = extraerTelDesc(original?.descripcion ?? "");
-        const telNuevo = extras?.telefono
-          ?.replace(/[^0-9+\- ]/g, "")
-          .slice(0, 20);
-        const tel = telNuevo || telOriginal;
+        // El modal precarga el teléfono guardado, así que si la clave viene
+        // definida lo que haya ahí es lo que el usuario dejó — incluido vacío,
+        // que significa borrarlo. Solo se conserva el original cuando el campo
+        // no estuvo en pantalla (categorías sin teléfono).
+        const tel =
+          extras?.telefono !== undefined
+            ? extras.telefono.replace(/[^0-9+\- ]/g, "").slice(0, 20)
+            : telOriginal;
         if (tel) desc = `${desc}[TEL:${tel}]`;
         payload.descripcion = desc;
       }

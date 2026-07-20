@@ -92,6 +92,12 @@ export interface TransactionScreenProps {
       label: string;
       placeholder: string;
       numeric?: boolean;
+      /**
+       * Campo de teléfono: NO forma parte de la descripción (se guarda aparte
+       * como tag [TEL:...]). Se excluye del armado y del parseo posicional,
+       * que si no lo tomarían como un segmento más.
+       */
+      esTelefono?: boolean;
     }>
   >;
   tipoCamionActual?: any;
@@ -773,9 +779,16 @@ export default function TransactionScreen({
     const raw = (t.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
     const partes = raw.split(" · ");
     const extras: Record<string, string> = {};
+    // El teléfono vive fuera de la descripción, en el tag [TEL:...]. Se
+    // precarga aparte para poder editarlo (antes solo se podía cambiar
+    // eligiendo otro contacto).
+    const telGuardado = (t.descripcion || "").match(/\[TEL:([^\]]*)\]/)?.[1];
+    if (telGuardado) extras["telefono"] = telGuardado;
     if (catKey && camposExtra?.[catKey]) {
       const campos = camposExtra[catKey];
-      const textCampos = campos.filter((c) => !c.numeric);
+      // Los campos de teléfono no son segmentos de la descripción: incluirlos
+      // correría el mapeo posicional y metería el cliente en el campo de al lado.
+      const textCampos = campos.filter((c) => !c.numeric && !c.esTelefono);
       textCampos.forEach((campo, i) => {
         if (partes[i]) extras[campo.key] = partes[i].trim();
       });
@@ -813,7 +826,11 @@ export default function TransactionScreen({
       // Reconstruir descripción desde campos extra al editar
       let editDesc: string | undefined;
       if (isEditing && selectedCat && camposExtra?.[selectedCat]) {
-        const campos = camposExtra[selectedCat].filter((c) => !c.numeric);
+        // Sin el teléfono: va aparte, como tag [TEL:...] (lo re-adjunta la
+        // pantalla en onUpdate). Si entrara acá quedaría dentro del texto.
+        const campos = camposExtra[selectedCat].filter(
+          (c) => !c.numeric && !c.esTelefono,
+        );
         const partes = campos
           .map((c) => (extraValues[c.key] || "").trim())
           .filter(Boolean);
@@ -1383,6 +1400,9 @@ export default function TransactionScreen({
                                     style={[s.textInput, { color: c.text }]}
                                     placeholder={campo.placeholder}
                                     placeholderTextColor={c.textMuted}
+                                    keyboardType={
+                                      campo.esTelefono ? "phone-pad" : "default"
+                                    }
                                     value={extraValues[campo.key] || ""}
                                     onChangeText={(v) => {
                                       setExtraValues((prev) => ({
