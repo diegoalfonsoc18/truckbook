@@ -60,10 +60,13 @@ export function calcularPorCobrar(ingresos: Ingreso[]): PorCobrar[] {
 
   return ingresos
     .filter((i) => {
-      // Incluir si no está completamente pagado
+      // Incluir si no está completamente pagado.
+      // Ojo: hoy `monto_pagado` no se escribe en ningún lado (siempre null),
+      // así que en la práctica esto filtra por `estado`. El segundo término
+      // queda por si más adelante se registran abonos parciales.
       const montoTotal = i.monto * (i.cantidad ?? 1);
       const montoPagado = i.monto_pagado ?? 0;
-      return i.estado !== "pagado" || montoPagado < montoTotal;
+      return i.estado !== "pagado" && montoPagado < montoTotal;
     })
     .map((i) => {
       const montoTotal = i.monto * (i.cantidad ?? 1);
