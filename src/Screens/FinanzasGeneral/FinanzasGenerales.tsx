@@ -575,6 +575,9 @@ export default function FinanzasGenerales() {
   const [exportCliente, setExportCliente] = useState<string | null>(null);
   // Filtro por categoría (tipo_gasto o tipo_ingreso) — null = todas
   const [exportCategoria, setExportCategoria] = useState<string | null>(null);
+  // Filtro de categoría de la PANTALLA (independiente del que usa el export).
+  // null = todas.
+  const [catPantalla, setCatPantalla] = useState<string | null>(null);
   const [clienteInputFocused, setClienteInputFocused] = useState(false);
   const [exportRango, setExportRango] = useState<{
     inicio: string;
@@ -780,8 +783,27 @@ export default function FinanzasGenerales() {
     formattedLabels,
   } = React.useMemo(() => {
     const placasSet = new Set(placasActivas);
-    const gPorPlaca = gastos.filter((g) => placasSet.has(g.placa));
-    const iPorPlaca = ingresos.filter((i) => placasSet.has(i.placa));
+    // Filtro por categoría: una categoría de gasto vacía los ingresos y
+    // viceversa, igual que hace el export (así las tarjetas y el gráfico
+    // quedan enfocados en ese único rubro).
+    const catMetaPantalla = catPantalla
+      ? CATEGORIAS_EXPORT.find((cc) => cc.tipo === catPantalla)
+      : null;
+    const gPorPlaca = gastos
+      .filter((g) => placasSet.has(g.placa))
+      .filter(
+        (g) =>
+          !catPantalla ||
+          (catMetaPantalla?.grupo === "gasto" && g.tipo_gasto === catPantalla),
+      );
+    const iPorPlaca = ingresos
+      .filter((i) => placasSet.has(i.placa))
+      .filter(
+        (i) =>
+          !catPantalla ||
+          (catMetaPantalla?.grupo === "ingreso" &&
+            i.tipo_ingreso === catPantalla),
+      );
 
     const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
     const iTransf = iPorPlaca.map((i) => ({
@@ -850,7 +872,19 @@ export default function FinanzasGenerales() {
     rango.inicio,
     rango.fin,
     view,
+    catPantalla,
   ]);
+
+  // Categoría seleccionada en pantalla: define si el resumen se muestra en
+  // modo "enfocado" (un solo rubro) o el general de ingresos/gastos/balance.
+  const catMetaSel = catPantalla
+    ? (CATEGORIAS_EXPORT.find((cc) => cc.tipo === catPantalla) ?? null)
+    : null;
+  const catEsIngreso = catMetaSel?.grupo === "ingreso";
+  const totalCategoria = catEsIngreso ? totalIngresos : totalGastos;
+  const movimientosCategoria = catEsIngreso
+    ? ingresosFiltrados.length
+    : gastosFiltrados.length;
 
   const formatDateShort = (dateString: string) => {
     const date = new Date(dateString + "T12:00:00");
@@ -1242,107 +1276,236 @@ export default function FinanzasGenerales() {
               </TouchableOpacity>
             </View>
 
-            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
-            <View style={styles.summaryGrid}>
-              <Reanimated.View
-                style={[
-                  styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.income + "40" },
-                  getShadow(isDark, "sm"),
-                  card1Style,
-                ]}>
-                <Text
-                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Ingresos recibidos
-                </Text>
-                <Text style={[styles.summaryCardValue, { color: c.income }]}>
-                  {formatCurrency(totalIngresos)}
-                </Text>
-                {totalPorCobrar > 0 && (
-                  <Text style={styles.porCobrarNote} numberOfLines={1}>
-                    + {formatCurrency(totalPorCobrar)} por cobrar
-                  </Text>
-                )}
-                <Ionicons
-                  name="trending-up-outline"
-                  size={22}
-                  color={c.income}
-                  style={styles.cardIcon}
-                />
-              </Reanimated.View>
-              <Reanimated.View
-                style={[
-                  styles.summaryCard,
-                  { backgroundColor: c.cardBg, borderColor: c.expense + "40" },
-                  getShadow(isDark, "sm"),
-                  card2Style,
-                ]}>
-                <Text
-                  style={[styles.summaryCardLabel, { color: c.textSecondary }]}>
-                  Gastos
-                </Text>
-                <Text style={[styles.summaryCardValue, { color: c.expense }]}>
-                  {formatCurrency(totalGastos)}
-                </Text>
-                <Ionicons
-                  name="trending-down-outline"
-                  size={22}
-                  color={c.expense}
-                  style={styles.cardIcon}
-                />
-              </Reanimated.View>
-            </View>
-
-            {/* BALANCE CARD */}
-            <Reanimated.View
-              style={[
-                styles.balanceCard,
-                {
-                  backgroundColor: c.cardBg,
-                  borderColor: balance >= 0 ? c.income : c.expense,
+            {/* FILTRO POR CATEGORÍA */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.catScroll}
+              contentContainerStyle={styles.catContent}>
+              {[{ tipo: null as string | null }, ...CATEGORIAS_EXPORT].map(
+                (cat) => {
+                  const selected = catPantalla === cat.tipo;
+                  const isTodas = cat.tipo === null;
+                  return (
+                    <TouchableOpacity
+                      key={cat.tipo ?? "__todas"}
+                      style={[
+                        styles.catChip,
+                        {
+                          backgroundColor: c.cardBg,
+                          borderColor: selected ? c.accent : c.border,
+                        },
+                        selected && { borderWidth: 1.5 },
+                      ]}
+                      onPress={() => setCatPantalla(cat.tipo)}
+                      activeOpacity={0.7}>
+                      {!isTodas && (
+                        <ItemIcon
+                          name={(cat as (typeof CATEGORIAS_EXPORT)[0]).icon}
+                          size={18}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.catChipText,
+                          { color: selected ? c.accent : c.textSecondary },
+                        ]}
+                        numberOfLines={1}>
+                        {isTodas ? "Todas" : cat.tipo}
+                      </Text>
+                    </TouchableOpacity>
+                  );
                 },
-                getShadow(isDark, "md"),
-                balStyle,
-              ]}>
-              <View style={styles.balanceHeader}>
-                <Text style={[styles.balanceLabel, { color: c.textSecondary }]}>
-                  Balance neto
-                </Text>
-                <View
+              )}
+            </ScrollView>
+
+            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
+            {/* Con una categoría activa el resumen se enfoca en ese rubro:
+                mostrar "Ingresos $0" y un balance negativo sería engañoso. */}
+            {catPantalla ? (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
                   style={[
-                    styles.rentabilidadBadge,
+                    styles.summaryCard,
                     {
-                      backgroundColor:
-                        Number(rentabilidad) >= 0
-                          ? c.income + "20"
-                          : c.expense + "20",
+                      backgroundColor: c.cardBg,
+                      borderColor: (catEsIngreso ? c.income : c.expense) + "40",
                     },
+                    getShadow(isDark, "sm"),
+                    card1Style,
                   ]}>
                   <Text
                     style={[
-                      styles.rentabilidadText,
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}
+                    numberOfLines={1}>
+                    Total {catPantalla}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryCardValue,
+                      { color: catEsIngreso ? c.income : c.expense },
+                    ]}>
+                    {formatCurrency(totalCategoria)}
+                  </Text>
+                  {catEsIngreso && totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <Ionicons
+                    name={
+                      catEsIngreso
+                        ? "trending-up-outline"
+                        : "trending-down-outline"
+                    }
+                    size={22}
+                    color={catEsIngreso ? c.income : c.expense}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: c.cardBg, borderColor: c.border },
+                    getShadow(isDark, "sm"),
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Movimientos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.text }]}>
+                    {movimientosCategoria}
+                  </Text>
+                  <Ionicons
+                    name="receipt-outline"
+                    size={22}
+                    color={c.textMuted}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+              </View>
+            ) : (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: c.cardBg, borderColor: c.income + "40" },
+                    getShadow(isDark, "sm"),
+                    card1Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Ingresos recibidos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.income }]}>
+                    {formatCurrency(totalIngresos)}
+                  </Text>
+                  {totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <Ionicons
+                    name="trending-up-outline"
+                    size={22}
+                    color={c.income}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    {
+                      backgroundColor: c.cardBg,
+                      borderColor: c.expense + "40",
+                    },
+                    getShadow(isDark, "sm"),
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Gastos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.expense }]}>
+                    {formatCurrency(totalGastos)}
+                  </Text>
+                  <Ionicons
+                    name="trending-down-outline"
+                    size={22}
+                    color={c.expense}
+                    style={styles.cardIcon}
+                  />
+                </Reanimated.View>
+              </View>
+            )}
+
+            {/* BALANCE CARD — solo sin filtro de categoría: un balance de un
+                único rubro (gastos sin ingresos, o al revés) no significa nada */}
+            {!catPantalla && (
+              <Reanimated.View
+                style={[
+                  styles.balanceCard,
+                  {
+                    backgroundColor: c.cardBg,
+                    borderColor: balance >= 0 ? c.income : c.expense,
+                  },
+                  getShadow(isDark, "md"),
+                  balStyle,
+                ]}>
+                <View style={styles.balanceHeader}>
+                  <Text
+                    style={[styles.balanceLabel, { color: c.textSecondary }]}>
+                    Balance neto
+                  </Text>
+                  <View
+                    style={[
+                      styles.rentabilidadBadge,
                       {
-                        color: Number(rentabilidad) >= 0 ? c.income : c.expense,
+                        backgroundColor:
+                          Number(rentabilidad) >= 0
+                            ? c.income + "20"
+                            : c.expense + "20",
                       },
                     ]}>
-                    {Number(rentabilidad) >= 0 ? "+" : ""}
-                    {rentabilidad}%
-                  </Text>
+                    <Text
+                      style={[
+                        styles.rentabilidadText,
+                        {
+                          color:
+                            Number(rentabilidad) >= 0 ? c.income : c.expense,
+                        },
+                      ]}>
+                      {Number(rentabilidad) >= 0 ? "+" : ""}
+                      {rentabilidad}%
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Text
-                style={[
-                  styles.balanceValue,
-                  { color: balance >= 0 ? c.income : c.expense },
-                ]}>
-                {formatCurrency(balance)}
-              </Text>
-              <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
-                {balance >= 0
-                  ? "Ganancia en el período"
-                  : "Pérdida en el período"}
-              </Text>
-            </Reanimated.View>
+                <Text
+                  style={[
+                    styles.balanceValue,
+                    { color: balance >= 0 ? c.income : c.expense },
+                  ]}>
+                  {formatCurrency(balance)}
+                </Text>
+                <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
+                  {balance >= 0
+                    ? "Ganancia en el período"
+                    : "Pérdida en el período"}
+                </Text>
+              </Reanimated.View>
+            )}
 
             {/* TABS DE VISTA */}
             <View
@@ -1968,6 +2131,30 @@ const styles = StyleSheet.create({
   },
   exportCatChipText: {
     fontSize: 13,
+    fontWeight: "600",
+  },
+  // Chips de categoría de la pantalla (mismo look que los del export, algo
+  // más compactos porque van sobre las tarjetas de resumen).
+  catScroll: {
+    marginBottom: 16,
+    marginHorizontal: -HORIZONTAL_PADDING,
+  },
+  catContent: {
+    gap: 8,
+    paddingHorizontal: HORIZONTAL_PADDING,
+  },
+  catChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingLeft: 8,
+    paddingRight: 13,
+    paddingVertical: 6,
+  },
+  catChipText: {
+    fontSize: 12.5,
     fontWeight: "600",
   },
   exportSugerencias: {
