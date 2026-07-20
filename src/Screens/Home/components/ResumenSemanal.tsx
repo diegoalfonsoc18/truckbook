@@ -45,13 +45,26 @@ function fmtPesos(n: number): string {
 }
 
 /** Nombre de cliente a partir de la descripción del flete */
-function clienteDeDesc(desc?: string | null): string | null {
-  if (!desc) return null;
-  const nombre = desc
+function clienteDeIngreso(i: {
+  cliente?: string | null;
+  descripcion?: string | null;
+  tipo_ingreso?: string | null;
+}): string | null {
+  // Los registros nuevos guardan el cliente en su propia columna; los viejos
+  // (y las facturas escaneadas) solo lo tienen al inicio de la descripción.
+  const directo = (i.cliente ?? "").trim();
+  if (directo) return directo;
+
+  const nombre = (i.descripcion ?? "")
     .replace(/\[TEL:[^\]]*\]/g, "")
     .split(" · ")[0]
     ?.trim();
-  return nombre && nombre !== "Flete" ? nombre : null;
+  if (!nombre) return null;
+
+  // Cuando no se carga cliente se guarda el nombre de la categoría como
+  // relleno ("Flete", "Mercancía"…). Ese eco no es un cliente.
+  const tipo = (i.tipo_ingreso ?? "").trim();
+  return nombre.toLowerCase() === tipo.toLowerCase() ? null : nombre;
 }
 
 /** Nombre de cliente de un pendiente (fallback a tipo) */
@@ -152,11 +165,15 @@ export default function ResumenSemanal({ isDark }: Props) {
     // Viajes = suma de cantidad de los fletes (un flete puede ser x2, x3…)
     const viajes = (arr: typeof is) =>
       fletes(arr).reduce((a, i) => a + (i.cantidad ?? 1), 0);
+    // Clientes: cualquier ingreso con cliente cargado, no solo fletes. Una
+    // venta de mercancía (o un anticipo, un cobro) también es un cliente y
+    // antes no se contaba. Se comparan en minúsculas para no duplicar el
+    // mismo cliente escrito distinto.
     const clientes = (arr: typeof is) => {
       const set = new Set<string>();
-      for (const i of fletes(arr)) {
-        const n = clienteDeDesc(i.descripcion);
-        if (n) set.add(n);
+      for (const i of arr) {
+        const n = clienteDeIngreso(i);
+        if (n) set.add(n.toLowerCase());
       }
       return set.size;
     };
