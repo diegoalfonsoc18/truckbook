@@ -18,6 +18,10 @@ const COLORS = {
   muted: "#6B7280",
   panelBg: "#F4F5F7",
   link: "#F5A623",
+  // Mismos verde/rojo que usa ResumenSemanal para no tener dos criterios de
+  // "entra plata / sale plata" en el mismo Home.
+  ingreso: "#16A34A",
+  gasto: "#EF4444",
 };
 
 /** tipo (nombre guardado) → ícono + color. Fuente: Gastos.tsx / Ingresos.tsx */
@@ -70,6 +74,15 @@ function fmtPesos(n: number): string {
 /** Limpia la descripción (quita tags [TEL:...]) */
 function limpiarDesc(desc?: string | null): string {
   return (desc ?? "").replace(/\[TEL:[^\]]*\]/g, "").trim();
+}
+
+/**
+ * Al registrar un gasto sin descripción se guarda el nombre de la categoría
+ * como relleno, así que la fila mostraba "Combustible" arriba y "Combustible"
+ * otra vez debajo en gris. Ese eco no aporta nada: se descarta.
+ */
+function descripcionUtil(desc: string, tipo: string): string {
+  return desc.toLowerCase() === tipo.toLowerCase() ? "" : desc;
 }
 
 const MESES = [
@@ -129,6 +142,7 @@ interface Mov {
   tipo: string;
   descripcion: string;
   monto: number;
+  esIngreso: boolean; // define el signo y el color del monto
   fecha: string; // fecha de la transacción (para la etiqueta)
   ts: string; // created_at (para ordenar por lo más reciente agregado)
 }
@@ -147,24 +161,32 @@ export default function ActividadReciente({ onVerTodas }: Props) {
   const recientes = React.useMemo<Mov[]>(() => {
     const gs: Mov[] = gastos
       .filter((g) => g.placa === placa)
-      .map((g) => ({
-        id: `g-${g.id}`,
-        tipo: g.tipo_gasto ?? "Otros",
-        descripcion: limpiarDesc(g.descripcion),
-        monto: g.monto ?? 0,
-        fecha: g.fecha ?? "",
-        ts: g.created_at ?? g.fecha ?? "",
-      }));
+      .map((g) => {
+        const tipo = g.tipo_gasto ?? "Otros";
+        return {
+          id: `g-${g.id}`,
+          tipo,
+          descripcion: descripcionUtil(limpiarDesc(g.descripcion), tipo),
+          monto: g.monto ?? 0,
+          esIngreso: false,
+          fecha: g.fecha ?? "",
+          ts: g.created_at ?? g.fecha ?? "",
+        };
+      });
     const is: Mov[] = ingresos
       .filter((i) => i.placa === placa)
-      .map((i) => ({
-        id: `i-${i.id}`,
-        tipo: i.tipo_ingreso ?? "Otro",
-        descripcion: limpiarDesc(i.descripcion),
-        monto: (i.monto ?? 0) * (i.cantidad ?? 1),
-        fecha: i.fecha ?? "",
-        ts: i.created_at ?? i.fecha ?? "",
-      }));
+      .map((i) => {
+        const tipo = i.tipo_ingreso ?? "Otro";
+        return {
+          id: `i-${i.id}`,
+          tipo,
+          descripcion: descripcionUtil(limpiarDesc(i.descripcion), tipo),
+          monto: (i.monto ?? 0) * (i.cantidad ?? 1),
+          esIngreso: true,
+          fecha: i.fecha ?? "",
+          ts: i.created_at ?? i.fecha ?? "",
+        };
+      });
     return [...gs, ...is]
       .sort((a, b) => {
         // 1º por fecha de la transacción (más reciente arriba)
@@ -211,7 +233,15 @@ export default function ActividadReciente({ onVerTodas }: Props) {
                   )}
                 </View>
                 <View style={s.movRight}>
-                  <Text style={s.movMonto} numberOfLines={1}>
+                  {/* El panel mezcla ingresos y gastos: sin signo ni color, un
+                      monto suelto no dice si la plata entró o salió. */}
+                  <Text
+                    style={[
+                      s.movMonto,
+                      { color: m.esIngreso ? COLORS.ingreso : COLORS.gasto },
+                    ]}
+                    numberOfLines={1}>
+                    {m.esIngreso ? "+" : "−"}
                     {fmtPesos(m.monto)}
                   </Text>
                   <Text style={s.movFecha} numberOfLines={1}>
@@ -301,9 +331,9 @@ const s = StyleSheet.create({
     alignItems: "flex-end",
   },
   movMonto: {
+    // El color lo pone la fila según sea ingreso o gasto.
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.ink,
     letterSpacing: -0.2,
   },
   movFecha: {
