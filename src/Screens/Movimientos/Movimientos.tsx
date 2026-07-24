@@ -19,6 +19,7 @@ import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchTransaccionesRango } from "../../services/reporteService";
+import { H_PAD_COMPACT } from "../../constants/layout";
 import {
   MovimientoRow,
   construirMovimientos,
@@ -265,7 +266,8 @@ export default function Movimientos() {
   );
 }
 
-const H_PAD = 16;
+// Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
+const H_PAD = H_PAD_COMPACT;
 
 const st = StyleSheet.create({
   root: { flex: 1 },
