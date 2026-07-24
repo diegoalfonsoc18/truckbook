@@ -23,6 +23,16 @@ import ActividadReciente from "./components/ActividadReciente";
 
 const H_PAD = 20;
 
+// Colchón para que la sombra de las tarjetas no salga cortada.
+//
+// iOS lo resuelve sacando el ScrollView H_PAD hacia afuera con un margen
+// negativo y devolviendo ese espacio como padding del contenido: la sombra se
+// dibuja fuera del área de contenido sin robarle ancho. En Android eso no
+// sirve porque recorta lo que se sale del contenedor, así que el aire tiene
+// que ir por dentro — y se descuenta del padding exterior para que el ancho
+// útil termine siendo el mismo H_PAD en las dos plataformas.
+const SHADOW_PAD = Platform.OS === "android" ? 4 : 0;
+
 import type { Item } from "./Items";
 export type { Item } from "./Items";
 
@@ -69,7 +79,12 @@ export default function HomeBaseAdapted({
               s.gridContainer,
               {
                 paddingBottom: insets.bottom + 100,
-                paddingHorizontal: Platform.OS === "ios" ? H_PAD : 0,
+                // El colchón de la sombra va aquí, una sola vez, y no en un
+                // wrapper por bloque: así todos los hijos quedan alineados al
+                // mismo margen. Antes VehicleCard y ResumenSemanal lo llevaban
+                // y WidgetClientes no, así que en Android no coincidían.
+                paddingHorizontal:
+                  Platform.OS === "ios" ? H_PAD : SHADOW_PAD,
               },
             ]}>
             {/* VEHICLE CARD */}
@@ -77,7 +92,7 @@ export default function HomeBaseAdapted({
               <View
                 style={
                   Platform.OS === "android"
-                    ? { paddingHorizontal: 4, paddingVertical: 2 }
+                    ? { paddingVertical: 2 }
                     : undefined
                 }>
                 <VehicleCard
@@ -89,12 +104,7 @@ export default function HomeBaseAdapted({
 
             {/* RESUMEN SEMANAL — Ingresos / Gastos / Viajes / Clientes */}
             {placaActual && (
-              <View
-                style={
-                  Platform.OS === "android"
-                    ? { paddingHorizontal: 4 }
-                    : undefined
-                }>
+              <View>
                 <ResumenSemanal isDark={isDark} />
                 <ActividadReciente isDark={isDark} />
               </View>
@@ -169,7 +179,9 @@ export default function HomeBaseAdapted({
 const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: H_PAD },
+  // En Android el colchón de la sombra ya va dentro del ScrollView, así que
+  // se descuenta de aquí: 16 + 4 = los mismos 20 de iOS, sin perder ancho.
+  content: { flex: 1, paddingHorizontal: H_PAD - SHADOW_PAD },
 
   gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
