@@ -31,6 +31,7 @@ import {
   getShadow,
 } from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
+import ModalFotoCamion from "./ModalFotoCamion";
 import { validarPlaca } from "../../../utils/validacion";
 import { sanitizePlaca } from "../../../utils/sanitize";
 import logger from "../../../utils/logger";
@@ -71,6 +72,8 @@ export default function ModalVehiculos({
     null,
   );
   const [placaEditInput, setPlacaEditInput] = useState("");
+  // Vehículo cuya foto se está cambiando (null = modal de foto cerrado)
+  const [fotoDe, setFotoDe] = useState<Vehiculo | null>(null);
   const [tipoCamionEditInput, setTipoCamionEditInput] =
     useState<TipoCamion | null>(null);
 
@@ -299,6 +302,18 @@ export default function ModalVehiculos({
                             overshootRight={false}
                             renderRightActions={() => (
                               <View style={s.swipeActions}>
+                                <TouchableOpacity
+                                  style={[
+                                    s.swipeActionBtn,
+                                    { backgroundColor: "#16A34A" },
+                                  ]}
+                                  onPress={() => setFotoDe(v)}>
+                                  <Ionicons
+                                    name="camera-outline"
+                                    size={20}
+                                    color="#fff"
+                                  />
+                                </TouchableOpacity>
                                 <TouchableOpacity
                                   style={[
                                     s.swipeActionBtn,
@@ -580,6 +595,23 @@ export default function ModalVehiculos({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      {/* Foto del camión. Va como overlay y no como <Modal>: iOS no monta un
+          modal encima de otro, y este ya está dentro de uno. */}
+      {fotoDe && user?.id && (
+        <ModalFotoCamion
+          comoOverlay
+          visible={!!fotoDe}
+          onClose={() => setFotoDe(null)}
+          userId={user.id}
+          placa={fotoDe.placa}
+          tipoCamion={fotoDe.tipo_camion}
+          onGuardada={() => {
+            // Recargar para que la tarjeta del Home tome la foto nueva
+            if (user?.id) cargarVehiculos(user.id);
+          }}
+        />
+      )}
     </Modal>
   );
 }

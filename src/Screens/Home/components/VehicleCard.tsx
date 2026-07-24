@@ -16,6 +16,7 @@ import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { HOME_COLORS } from "../HomeConstants";
 import { ICON_MAP, TIPOS_CAMION, VEHICLE_PHOTOS } from "../vehicleConstants";
 import { usePrecioDiesel } from "../../../hooks/usePrecioDiesel";
+import { useFotoCamion } from "../../../hooks/useFotoCamion";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -33,6 +34,7 @@ export default function VehicleCard({
   const { colors: c, isDark } = useTheme();
   const vcShadow = getShadow(isDark, "md");
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
+  const fotoUsuario = useFotoCamion(placaActual);
   const gastos = useGastosStore((s) => s.gastos);
   const { precio: precioGalon } = usePrecioDiesel();
 
@@ -58,7 +60,9 @@ export default function VehicleCard({
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
     : "conductor";
-  const foto = tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined;
+  // La foto que subió el usuario manda; si no hay, la del catálogo por tipo;
+  // y si tampoco, el ícono vectorial más abajo.
+  const foto = fotoUsuario ?? (tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined);
   const subtitulo = vehicleCardTitle || tipoCamionData?.label || "";
 
   // ── Combustible ──

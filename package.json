@@ -53,6 +53,7 @@
     "lucide-react-native": "^0.575.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-background-remover": "^0.3.2",
     "react-native-bottom-tabs": "^1.4.0",
     "react-native-calendars": "^1.1311.0",
     "react-native-chart-kit": "^6.12.0",
