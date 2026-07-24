@@ -3,8 +3,10 @@
 // Sin JSX ni hooks: los comparten la pantalla, el modal de exportar y el
 // generador del PDF (reporteHTML.ts).
 import type { IconName } from "../../components/ItemIcon";
+import { H_PAD_COMPACT } from "../../constants/layout";
 
-export const HORIZONTAL_PADDING = 20;
+// Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
+export const HORIZONTAL_PADDING = H_PAD_COMPACT;
 
 
 /**

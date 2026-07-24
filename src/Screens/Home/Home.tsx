@@ -14,24 +14,13 @@ import {
 } from "react-native-safe-area-context";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useTheme } from "../../constants/Themecontext";
+import { useContentLayout } from "../../constants/layout";
 
 import WidgetClientes from "./widgets/WidgetClientes";
 import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
 import ActividadReciente from "./components/ActividadReciente";
-
-const H_PAD = 20;
-
-// Colchón para que la sombra de las tarjetas no salga cortada.
-//
-// iOS lo resuelve sacando el ScrollView H_PAD hacia afuera con un margen
-// negativo y devolviendo ese espacio como padding del contenido: la sombra se
-// dibuja fuera del área de contenido sin robarle ancho. En Android eso no
-// sirve porque recorta lo que se sale del contenedor, así que el aire tiene
-// que ir por dentro — y se descuenta del padding exterior para que el ancho
-// útil termine siendo el mismo H_PAD en las dos plataformas.
-const SHADOW_PAD = Platform.OS === "android" ? 4 : 0;
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -53,6 +42,7 @@ export default function HomeBaseAdapted({
 }: HomeBaseAdaptedProps) {
   const { colors: c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { hPad, maxWidth } = useContentLayout();
   const { placa: placaActual } = useVehiculoStore();
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
 
@@ -72,19 +62,22 @@ export default function HomeBaseAdapted({
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            style={
-              Platform.OS === "ios" ? { marginHorizontal: -H_PAD } : undefined
-            }
             contentContainerStyle={[
               s.gridContainer,
               {
                 paddingBottom: insets.bottom + 100,
-                // El colchón de la sombra va aquí, una sola vez, y no en un
-                // wrapper por bloque: así todos los hijos quedan alineados al
-                // mismo margen. Antes VehicleCard y ResumenSemanal lo llevaban
-                // y WidgetClientes no, así que en Android no coincidían.
-                paddingHorizontal:
-                  Platform.OS === "ios" ? H_PAD : SHADOW_PAD,
+                // Todo el margen vive AQUÍ, dentro del ScrollView. Cuando el
+                // padding estaba en el contenedor de afuera, las tarjetas
+                // tocaban el borde del scroll y la sombra se recortaba: iOS lo
+                // tapaba con un margen negativo y Android con un relleno extra
+                // por bloque. Metiéndolo adentro, esos mismos píxeles son el
+                // aire de la sombra, sin hacks ni ramas por plataforma.
+                paddingHorizontal: hPad,
+                // En tablet el contenido se topa y se centra en vez de
+                // estirarse de borde a borde.
+                maxWidth,
+                width: "100%",
+                alignSelf: "center",
               },
             ]}>
             {/* VEHICLE CARD */}
@@ -179,9 +172,9 @@ export default function HomeBaseAdapted({
 const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  // En Android el colchón de la sombra ya va dentro del ScrollView, así que
-  // se descuenta de aquí: 16 + 4 = los mismos 20 de iOS, sin perder ancho.
-  content: { flex: 1, paddingHorizontal: H_PAD - SHADOW_PAD },
+  // Sin padding horizontal: el margen lo pone el contentContainer del
+  // ScrollView, para que la sombra de las tarjetas no quede contra el borde.
+  content: { flex: 1 },
 
   gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
