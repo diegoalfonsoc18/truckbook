@@ -15,9 +15,22 @@ import logger from "../utils/logger";
 
 const BUCKET = "vehiculos-fotos";
 
-/** Mismas proporciones que las fotos por tipo que ya trae la app. */
+/** Proporciones de las fotos por tipo que ya trae la app (para el ejemplo). */
 export const FOTO_ANCHO = 1000;
 export const FOTO_ALTO = 600;
+
+/**
+ * Lado mayor de la imagen que se guarda.
+ *
+ * La VehicleCard la pinta a ~180 pt, así que 720 px cubre de sobra hasta una
+ * pantalla @3x. El PNG con alfa es sin pérdida y no se puede comprimir con
+ * calidad, así que el peso depende solo de los píxeles: a 1000 px una foto
+ * vertical daba 1000x1333 y se pasaba del límite del bucket.
+ */
+const LADO_MAX = 720;
+
+/** Debe coincidir con `file_size_limit` del bucket (ver foto_vehiculo.sql). */
+const LIMITE_BYTES = 6 * 1024 * 1024;
 
 /** Las URLs firmadas caducan; se piden cuando se necesitan. */
 const TTL_URL_FIRMADA = 60 * 60 * 24; // 24 h
@@ -47,12 +60,32 @@ async function recortarFondo(
 }
 
 /**
- * Normaliza a las proporciones de las fotos del catálogo.
- * PNG siempre: JPEG no tiene canal alfa y se comería la transparencia.
+ * Escala para que el lado MAYOR quede en LADO_MAX.
+ *
+ * Fijar solo el ancho no basta: una foto vertical acaba más alta que ancha y
+ * con más píxeles —y más peso— que una horizontal del mismo ancho. Se mira
+ * cuál lado manda antes de escalar.
+ *
+ * PNG siempre: JPEG no tiene canal alfa y se comería la transparencia que
+ * acabamos de conseguir. Al ser sin pérdida no admite `compress`, así que el
+ * único modo de bajar el peso es bajar los píxeles.
  */
 async function normalizar(uri: string): Promise<string> {
+  const original = await ImageManipulator.ImageManipulator.manipulate(
+    uri,
+  ).renderAsync();
+
+  const { width, height } = original;
+  const ladoMayor = Math.max(width, height);
+
+  // Nunca agrandar: si ya es chica se deja como está.
   const ctx = ImageManipulator.ImageManipulator.manipulate(uri);
-  ctx.resize({ width: FOTO_ANCHO });
+  if (ladoMayor > LADO_MAX) {
+    ctx.resize(
+      width >= height ? { width: LADO_MAX } : { height: LADO_MAX },
+    );
+  }
+
   const imagen = await ctx.renderAsync();
   const salida = await imagen.saveAsync({
     format: ImageManipulator.SaveFormat.PNG,
@@ -78,6 +111,14 @@ export async function subirFotoCamion(
     // fetch() sobre un file:// local da el binario sin necesitar expo-file-system
     const respuesta = await fetch(uriFinal);
     const bytes = await respuesta.arrayBuffer();
+
+    // El bucket rechaza lo que se pase de tamaño con un mensaje en inglés que
+    // no le dice nada al conductor. Se comprueba antes para avisar en español.
+    if (bytes.byteLength > LIMITE_BYTES) {
+      return {
+        error: `La foto quedó muy pesada (${(bytes.byteLength / 1_048_576).toFixed(1)} MB). Intenta con una foto menos grande.`,
+      };
+    }
 
     const path = `${userId}/${placa}.png`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {

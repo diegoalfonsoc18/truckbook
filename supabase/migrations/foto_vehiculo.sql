@@ -23,7 +23,10 @@ VALUES (
   'vehiculos-fotos',
   'vehiculos-fotos',
   false,
-  3145728,                      -- 3 MB: de sobra para un PNG de 1000x600
+  -- 6 MB. La app escala el lado mayor a 720 px antes de subir, así que en la
+  -- práctica el PNG ronda 1 MB; esto es colchón. Con 3 MB y fotos verticales
+  -- de cámara moderna el upload se rechazaba.
+  6291456,
   ARRAY['image/png', 'image/jpeg', 'image/webp']
 )
 ON CONFLICT (id) DO UPDATE
