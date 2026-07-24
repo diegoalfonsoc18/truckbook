@@ -40,6 +40,30 @@ import ChartComparativa from "./components/ChartComparativa";
 
 const HORIZONTAL_PADDING = 20;
 
+/**
+ * Filtro de estado de los ingresos al exportar.
+ * `null` = ambos (por defecto): un informe general debe mostrar la foto
+ * completa, lo cobrado y lo que falta por cobrar.
+ */
+type EstadoFiltro = "pendiente" | "pagado" | null;
+
+const ESTADOS_EXPORT: Array<{ key: EstadoFiltro; label: string }> = [
+  { key: null, label: "Ambas" },
+  { key: "pendiente", label: "Por cobrar" },
+  { key: "pagado", label: "Pagadas" },
+];
+
+/** Un ingreso está pendiente de cobro cuando su estado es "pendiente". */
+const esPendiente = (i: { estado?: string | null }) => i.estado === "pendiente";
+
+/**
+ * Viajes/servicios que representa un ingreso. Un registro puede ser el mismo
+ * flete repetido varias veces (campo `cantidad`), así que contar registros
+ * subestima el trabajo hecho: 1 fila "x3" son 3 viajes, no 1.
+ */
+const contarServicios = (lista: Array<{ cantidad?: number | null }>) =>
+  lista.reduce((a, i) => a + (i.cantidad ?? 1), 0);
+
 // Categorías para el filtro del informe (tipo_gasto / tipo_ingreso guardados)
 const CATEGORIAS_EXPORT: Array<{
   tipo: string;
@@ -151,6 +175,8 @@ function generarReporteHTML(params: {
   clienteFiltro?: string | null;
   categoriaFiltro?: string | null;
   categoriaEsGasto?: boolean;
+  /** Filtro de estado aplicado a los ingresos: null = por cobrar + pagados. */
+  estadoFiltro?: EstadoFiltro;
   /** Generado sin conexión desde el caché del teléfono: puede faltar data. */
   desdeCache?: boolean;
   view: ViewType;
@@ -258,6 +284,10 @@ function generarReporteHTML(params: {
 
   const esCuentaCliente = !!params.clienteFiltro;
 
+  // Servicios prestados = suma de cantidades. Un registro "x3" son 3 viajes,
+  // así que el conteo por filas de la tabla mentía sobre el trabajo hecho.
+  const totalServicios = contarServicios(params.ingresosDetalle);
+
   const ingresosOrdenados = [...params.ingresosDetalle].sort((a, b) =>
     a.fecha.localeCompare(b.fecha),
   );
@@ -311,14 +341,23 @@ function generarReporteHTML(params: {
   const catTotal = params.categoriaEsGasto
     ? params.totalGastos
     : params.totalIngresos;
+  // Los ingresos se cuentan por servicios (sumando `cantidad`), no por filas:
+  // un flete registrado "x3" son 3 viajes. Los gastos no tienen cantidad.
   const catCount = params.categoriaEsGasto
     ? params.gastosDetalle.length
-    : params.ingresosDetalle.length;
+    : contarServicios(params.ingresosDetalle);
   const tituloDoc = esCuentaCliente
     ? "Estado de cuenta"
     : esCategoria
       ? `Informe — ${params.categoriaFiltro}`
       : "Informe de Finanzas";
+
+  // Nota al pie del resumen cuando se exportó solo una parte de las cuentas.
+  // Va en el documento, no solo en la app: estos informes se le mandan a
+  // clientes, y quien lo recibe tiene que ver que está filtrado.
+  const notaEstado = params.estadoFiltro
+    ? ` · Solo cuentas ${params.estadoFiltro === "pendiente" ? "por cobrar" : "pagadas"}`
+    : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -414,6 +453,7 @@ function generarReporteHTML(params: {
     </div>
     ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
     ${esCategoria ? `<div class="meta-item"><strong>Categoría</strong><span>${esc(params.categoriaFiltro)}</span></div>` : ""}
+    ${params.estadoFiltro ? `<div class="meta-item"><strong>Estado</strong><span>${params.estadoFiltro === "pendiente" ? "Solo por cobrar" : "Solo pagadas"}</span></div>` : ""}
   </div>
 
   <!-- RESUMEN -->
@@ -426,11 +466,11 @@ function generarReporteHTML(params: {
       <div class="s-value ${params.categoriaEsGasto ? "red" : "green"}">${fmt(catTotal)}</div>
     </div>
     <div class="s-card" style="border-color:#E2E8F0">
-      <div class="s-label">Movimientos</div>
+      <div class="s-label">${params.categoriaEsGasto ? "Movimientos" : "Servicios"}</div>
       <div class="s-value">${catCount}</div>
     </div>
   </div>
-  <div class="summary-note">Informe filtrado por categoría: ${esc(params.categoriaFiltro)}</div>`
+  <div class="summary-note">Informe filtrado por categoría: ${esc(params.categoriaFiltro)}${notaEstado}</div>`
       : esCuentaCliente
         ? `
   <div class="summary">
@@ -447,7 +487,7 @@ function generarReporteHTML(params: {
       <div class="s-value amber">${fmt(totalPorCobrar)}</div>
     </div>
   </div>
-  <div class="summary-note">&nbsp;</div>`
+  <div class="summary-note">${notaEstado ? notaEstado.replace(/^ · /, "") : "&nbsp;"}</div>`
       : `
   <div class="summary">
     <div class="s-card" style="border-color:#16A34A40">
@@ -467,7 +507,7 @@ function generarReporteHTML(params: {
       <div class="s-value" style="color:${balColor}">${fmt(balanceReal)}</div>
     </div>
   </div>
-  <div class="summary-note">Rentabilidad: ${rentReal >= 0 ? "+" : ""}${rentReal.toFixed(1)}% · Balance de caja: solo ingresos recibidos${totalPorCobrar > 0 ? ` (no incluye ${fmt(totalPorCobrar)} por cobrar)` : ""}</div>`
+  <div class="summary-note">Rentabilidad: ${rentReal >= 0 ? "+" : ""}${rentReal.toFixed(1)}% · Balance de caja: solo ingresos recibidos${totalPorCobrar > 0 ? ` (no incluye ${fmt(totalPorCobrar)} por cobrar)` : ""}${notaEstado}</div>`
   }
 
   <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta
@@ -500,7 +540,7 @@ function generarReporteHTML(params: {
   ${
     params.ingresosDetalle.length > 0
       ? `
-  <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${params.ingresosDetalle.length})</div>
+  <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${totalServicios}${totalServicios !== params.ingresosDetalle.length ? ` en ${params.ingresosDetalle.length} registro${params.ingresosDetalle.length !== 1 ? "s" : ""}` : ""})</div>
   <table>
     <thead><tr>
       <th>Fecha</th><th>Tipo</th>${esCuentaCliente ? "" : "<th>Cliente</th>"}<th>Descripción</th><th>Estado</th><th class="center">Cant.</th><th class="right">Vr. unitario</th><th class="right">Total</th>
@@ -586,6 +626,8 @@ export default function FinanzasGenerales() {
   const [exportCliente, setExportCliente] = useState<string | null>(null);
   // Filtro por categoría (tipo_gasto o tipo_ingreso) — null = todas
   const [exportCategoria, setExportCategoria] = useState<string | null>(null);
+  // Estado de las cuentas a exportar. null = ambas (por cobrar + pagadas).
+  const [exportEstado, setExportEstado] = useState<EstadoFiltro>(null);
   // Filtro de categoría de la PANTALLA (independiente del que usa el export).
   // null = todas.
   const [catPantalla, setCatPantalla] = useState<string | null>(null);
@@ -1078,8 +1120,12 @@ export default function FinanzasGenerales() {
       : null;
     const filtrarCat = (tipo: string | null | undefined) =>
       !exportCategoria || tipo === exportCategoria;
+    // Filtrar por estado es filtrar la cartera de ingresos, así que los gastos
+    // salen del informe — mismo criterio que ya se aplica al elegir una
+    // categoría de ingreso. Con "solo por cobrar" además sería engañoso:
+    // el balance saldría negativo contra una cartera a medias.
     const gastosDetalle =
-      exportCliente || catMeta?.grupo === "ingreso"
+      exportCliente || catMeta?.grupo === "ingreso" || exportEstado !== null
         ? []
         : datos.gastos.filter((g) => filtrarCat(g.tipo_gasto));
     const getClienteIngreso = (i: any): string | null => {
@@ -1107,12 +1153,19 @@ export default function FinanzasGenerales() {
       if (seg) cands.push(norm(seg));
       return cands.includes(clienteBuscado);
     };
+    // Filtro de estado: solo aplica a ingresos (un gasto no se "cobra").
+    // Con "solo por cobrar" o "solo pagadas" se excluyen además los gastos:
+    // mezclarlos daría un balance sin sentido contra media cartera.
+    const filtrarEstado = (i: { estado?: string | null }) =>
+      exportEstado === null ||
+      (exportEstado === "pendiente" ? esPendiente(i) : !esPendiente(i));
     const ingresosDetalle =
       catMeta?.grupo === "gasto"
         ? []
         : datos.ingresos
             .filter(coincideCliente)
-            .filter((i) => filtrarCat(i.tipo_ingreso));
+            .filter((i) => filtrarCat(i.tipo_ingreso))
+            .filter(filtrarEstado);
     // Nombre real del cliente (con sus mayúsculas) para el PDF
     const clienteReal = exportCliente
       ? ingresosDetalle.length > 0
@@ -1123,11 +1176,13 @@ export default function FinanzasGenerales() {
       setExportando(false);
       Alert.alert(
         "Sin datos",
-        exportCliente
-          ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
-          : exportCategoria
-            ? `No hay movimientos de "${exportCategoria}" en el período seleccionado.`
-            : "No hay transacciones en el período seleccionado.",
+        exportEstado
+          ? `No hay cuentas ${exportEstado === "pendiente" ? "por cobrar" : "pagadas"} en el período seleccionado.`
+          : exportCliente
+            ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
+            : exportCategoria
+              ? `No hay movimientos de "${exportCategoria}" en el período seleccionado.`
+              : "No hay transacciones en el período seleccionado.",
       );
       return;
     }
@@ -1185,6 +1240,7 @@ export default function FinanzasGenerales() {
         clienteFiltro: clienteReal,
         categoriaFiltro: exportCategoria,
         categoriaEsGasto: catMeta?.grupo === "gasto",
+        estadoFiltro: exportEstado,
         desdeCache,
       });
 
@@ -1654,6 +1710,7 @@ export default function FinanzasGenerales() {
                 seleccionarPeriodo("mes");
                 setExportCliente(null);
                 setExportCategoria(null);
+                setExportEstado(null);
                 setExportModal(true);
               }}
               disabled={exportando}
@@ -1901,6 +1958,39 @@ export default function FinanzasGenerales() {
                     </>
                   );
                 })()}
+
+                {/* FILTRO ESTADO DE LAS CUENTAS */}
+                <Text style={[styles.exportSectionLabel, { color: c.text }]}>
+                  Estado de las cuentas
+                </Text>
+                <View style={styles.estadoRow}>
+                  {ESTADOS_EXPORT.map(({ key, label }) => {
+                    const selected = exportEstado === key;
+                    return (
+                      <TouchableOpacity
+                        key={key ?? "__ambas"}
+                        style={[
+                          styles.estadoChip,
+                          {
+                            backgroundColor: selected ? c.accent : c.cardBg,
+                            borderColor: selected ? c.accent : c.border,
+                          },
+                        ]}
+                        onPress={() => setExportEstado(key)}
+                        activeOpacity={0.7}>
+                        <Text
+                          style={[
+                            styles.estadoChipText,
+                            {
+                              color: selected ? c.accentText : c.textSecondary,
+                            },
+                          ]}>
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
                 {/* FILTRO CATEGORÍA */}
                 <Text style={[styles.exportSectionLabel, { color: c.text }]}>
@@ -2188,6 +2278,24 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   exportCatChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  // Chips de estado de cuenta. Son 3 opciones fijas y excluyentes, así que van
+  // en una fila que reparte el ancho, no en un scroll horizontal.
+  estadoRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 4,
+  },
+  estadoChip: {
+    flex: 1,
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 9,
+  },
+  estadoChipText: {
     fontSize: 13,
     fontWeight: "600",
   },
