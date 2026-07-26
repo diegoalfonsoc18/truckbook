@@ -4,7 +4,7 @@
 // El bucket es privado (la foto muestra la placa), así que hay que pedir una
 // URL firmada. Por eso se guarda el path en la base y no la URL: las firmadas
 // caducan y una guardada quedaría rota a las pocas horas.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 import { useVehiculosListStore } from "../store/VehiculosListStore";
 import { urlFotoCamion } from "../services/fotoVehiculoService";
@@ -39,5 +39,11 @@ export function useFotoCamion(
     };
   }, [path]);
 
-  return url ? { uri: url } : undefined;
+  // Memoizar por la URL: si se devolviera `{ uri: url }` crudo, sería un objeto
+  // nuevo en cada render y la <Image> reiniciaría la carga sin terminar nunca
+  // (tarjeta en blanco). Con useMemo el `source` solo cambia cuando cambia la URL.
+  return useMemo(
+    () => (url ? { uri: url } : undefined),
+    [url],
+  );
 }

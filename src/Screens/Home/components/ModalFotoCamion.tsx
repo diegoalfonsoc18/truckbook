@@ -62,13 +62,6 @@ export default function ModalFotoCamion({
       Alert.alert("No se pudo guardar", res.error);
       return;
     }
-    if (res.sinRecorte) {
-      // Pasa en simulador de iOS y si el recortador no encuentra el sujeto.
-      Alert.alert(
-        "Foto guardada, pero con fondo",
-        "No se pudo separar el camión del fondo. Se ve mejor con luz de día y el camión completo dentro del encuadre.",
-      );
-    }
     if (res.path) onGuardada(res.path);
     onClose();
   };
@@ -94,8 +87,9 @@ export default function ModalFotoCamion({
   const desdeGaleria = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [5, 3],
+      // Sin editor de recorte: aplanaría un PNG transparente (el recorte que el
+      // usuario hizo en su galería) y le pondría fondo. Se toma tal cual.
+      allowsEditing: false,
       quality: 1,
     });
     if (!r.canceled && r.assets?.[0]?.uri) procesar(r.assets[0].uri);
@@ -119,10 +113,7 @@ export default function ModalFotoCamion({
             <View style={st.cargando}>
               <ActivityIndicator size="large" color={c.accent} />
               <Text style={[st.cargandoTexto, { color: c.textSecondary }]}>
-                Quitando el fondo…
-              </Text>
-              <Text style={[st.cargandoNota, { color: c.textMuted }]}>
-                Se hace en tu teléfono; la foto no se manda a ningún servicio.
+                Guardando la foto…
               </Text>
             </View>
           ) : (
@@ -144,9 +135,11 @@ export default function ModalFotoCamion({
               )}
 
               <Text style={[st.ayuda, { color: c.textSecondary }]}>
-                Toma la foto <Text style={{ fontWeight: "700" }}>de lado y un
-                poco de frente</Text>, con el camión completo y luz de día. El
-                fondo se quita solo.
+                <Text style={{ fontWeight: "700" }}>¿La quieres sin fondo?</Text>{" "}
+                Primero recórtala en tus fotos: mantén presionado el camión hasta
+                que se levante, compártelo → Guardar imagen, y elígela aquí desde
+                Galería.
+                {"\n"}También puedes usar una foto normal (con fondo).
               </Text>
 
               <View style={st.botones}>
