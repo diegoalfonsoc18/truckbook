@@ -24,8 +24,10 @@ import { useTheme } from "../../constants/Themecontext";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { sanitizeText, sanitizePhone } from "../../utils/sanitize";
+import { H_PAD_COMPACT } from "../../constants/layout";
 
-const H_PAD = 20;
+// Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
+const H_PAD = H_PAD_COMPACT;
 
 interface Servicio {
   id: string;

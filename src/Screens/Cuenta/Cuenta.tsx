@@ -33,8 +33,10 @@ import { useIngresosStore } from "../../store/IngresosStore";
 import logger from "../../utils/logger";
 import { sanitizeText, sanitizePassword, sanitizePhone } from "../../utils/sanitize";
 import { marcarLogoutIntencional } from "../../utils/authIntent";
+import { H_PAD_COMPACT } from "../../constants/layout";
 
-const H_PAD = 20;
+// Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
+const H_PAD = H_PAD_COMPACT;
 
 const AVATAR_COLOR = "#111827";
 

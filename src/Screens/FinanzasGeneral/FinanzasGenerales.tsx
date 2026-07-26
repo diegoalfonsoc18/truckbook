@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Text,
   View,
@@ -10,9 +10,7 @@ import {
   Modal,
   Alert,
   Image,
-  TextInput,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import * as Print from "expo-print";
@@ -35,528 +33,21 @@ import { fetchTransaccionesRango } from "../../services/reporteService";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
-import ItemIcon, { IconName } from "../../components/ItemIcon";
 import ChartComparativa from "./components/ChartComparativa";
-
-const HORIZONTAL_PADDING = 20;
-
-// Categorías para el filtro del informe (tipo_gasto / tipo_ingreso guardados)
-const CATEGORIAS_EXPORT: Array<{
-  tipo: string;
-  icon: IconName;
-  grupo: "gasto" | "ingreso";
-}> = [
-  { tipo: "Combustible", icon: "fuel", grupo: "gasto" },
-  { tipo: "Peajes", icon: "toll", grupo: "gasto" },
-  { tipo: "Comida", icon: "food", grupo: "gasto" },
-  { tipo: "Hospedaje", icon: "hotel", grupo: "gasto" },
-  { tipo: "Taller", icon: "tool", grupo: "gasto" },
-  { tipo: "Parqueo", icon: "parking", grupo: "gasto" },
-  { tipo: "Reparación", icon: "repair", grupo: "gasto" },
-  { tipo: "Llantas", icon: "tire", grupo: "gasto" },
-  { tipo: "Lavado", icon: "wash", grupo: "gasto" },
-  { tipo: "Aceite", icon: "oil", grupo: "gasto" },
-  { tipo: "Flete", icon: "freight", grupo: "ingreso" },
-  { tipo: "Mercancía", icon: "mercancia_box", grupo: "ingreso" },
-  { tipo: "Anticipo", icon: "advance", grupo: "ingreso" },
-  { tipo: "Reembolso", icon: "refund", grupo: "ingreso" },
-  { tipo: "Cobro", icon: "factura", grupo: "ingreso" },
-];
-
-function groupBy<T extends { fecha: string; value: number | string }>(
-  items: T[],
-  keyFn: (item: T) => string,
-) {
-  return items.reduce<Record<string, number>>((acc, item) => {
-    const key = keyFn(item);
-    acc[key] = (acc[key] || 0) + Number(item.value);
-    return acc;
-  }, {});
-}
-
-function filtrarPorRango<T extends { fecha: string }>(
-  items: T[],
-  inicio: string,
-  fin: string,
-) {
-  if (!inicio && !fin) return items;
-  return items.filter((item) => {
-    if (inicio && item.fecha < inicio) return false;
-    if (fin && item.fecha > fin) return false;
-    return true;
-  });
-}
-
-function formatLabel(fecha: string, view: string) {
-  const meses = [
-    "Ene",
-    "Feb",
-    "Mar",
-    "Abr",
-    "May",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dic",
-  ];
-  if (view === "dias") {
-    const [, mes, dia] = fecha.split("-");
-    return `${dia}/${mes}`;
-  }
-  if (view === "meses") {
-    const [anio, mes] = fecha.split("-");
-    return `${meses[parseInt(mes, 10) - 1]} ${anio?.slice(2)}`;
-  }
-  return fecha;
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(value);
-}
-
-type ViewType = "dias" | "meses" | "años";
-
-// ─── Generación del informe PDF ───────────────────────────────────────────────
-function generarReporteHTML(params: {
-  placas: string[];
-  rangoInicio: string;
-  rangoFin: string;
-  totalIngresos: number;
-  totalGastos: number;
-  periodos: string[]; // allKeys
-  ingresosPorPeriodo: number[];
-  gastosPorPeriodo: number[];
-  gastosDetalle: Array<{
-    fecha: string;
-    tipo_gasto: string;
-    descripcion: string;
-    monto: number;
-  }>;
-  ingresosDetalle: Array<{
-    fecha: string;
-    tipo_ingreso: string;
-    descripcion: string;
-    monto: number;
-    cliente?: string | null;
-    cantidad?: number | null;
-    estado?: string | null;
-  }>;
-  clienteFiltro?: string | null;
-  categoriaFiltro?: string | null;
-  categoriaEsGasto?: boolean;
-  /** Generado sin conexión desde el caché del teléfono: puede faltar data. */
-  desdeCache?: boolean;
-  view: ViewType;
-}) {
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(n);
-
-  // Escapar datos del usuario interpolados en el HTML del PDF
-  const esc = (s: unknown) =>
-    String(s ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-
-  const fmtFecha = (s: string) => {
-    const d = new Date(s + "T12:00:00");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
-
-  // Fecha compacta dd/mm/aa para las filas de detalle (ahorra espacio en la
-  // tabla); directo del string YYYY-MM-DD, sin pasar por Date (sin saltos UTC)
-  const fmtFechaCorta = (s: string) =>
-    s?.length >= 10 ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(2, 4)}` : s;
-
-  const labelPeriodo = (key: string) => {
-    const meses = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
-    if (params.view === "dias") {
-      const [, m, d] = key.split("-");
-      return `${d}/${m}`;
-    }
-    if (params.view === "meses") {
-      const [a, m] = key.split("-");
-      return `${meses[parseInt(m) - 1]} ${a}`;
-    }
-    return key;
-  };
-
-  // ── Criterio de caja ────────────────────────────────────────────────────
-  // En el informe general, balance y rentabilidad se calculan sobre lo
-  // efectivamente RECIBIDO; lo pendiente se muestra aparte como "Por cobrar".
-  const totalPorCobrar = params.ingresosDetalle
-    .filter((i) => i.estado === "pendiente")
-    .reduce((a, i) => a + i.monto * (i.cantidad ?? 1), 0);
-  const totalRecibido = params.totalIngresos - totalPorCobrar;
-  const balanceReal = totalRecibido - params.totalGastos;
-  const rentReal =
-    totalRecibido === 0 ? 0 : (balanceReal / totalRecibido) * 100;
-
-  // Pendiente agrupado por período (misma clave fecha.slice que la serie)
-  const sliceLen =
-    params.view === "dias" ? 10 : params.view === "meses" ? 7 : 4;
-  const pendPorPeriodo = new Map<string, number>();
-  for (const i of params.ingresosDetalle) {
-    if (i.estado !== "pendiente") continue;
-    const k = i.fecha?.slice(0, sliceLen);
-    if (k)
-      pendPorPeriodo.set(
-        k,
-        (pendPorPeriodo.get(k) ?? 0) + i.monto * (i.cantidad ?? 1),
-      );
-  }
-
-  const periodoRows = params.periodos
-    .map((k, i) => {
-      const ing =
-        (params.ingresosPorPeriodo[i] || 0) - (pendPorPeriodo.get(k) ?? 0);
-      const gas = params.gastosPorPeriodo[i] || 0;
-      const bal = ing - gas;
-      const balColor = bal >= 0 ? "#16A34A" : "#EF4444";
-      return `<tr>
-      <td>${labelPeriodo(k)}</td>
-      <td class="right green">${fmt(ing)}</td>
-      <td class="right red">${fmt(gas)}</td>
-      <td class="right" style="color:${balColor};font-weight:700">${fmt(bal)}</td>
-    </tr>`;
-    })
-    .join("");
-
-  const cleanDesc = (d: string) =>
-    (d || "").replace(/\[TEL:[^\]]*\]/g, "").trim();
-
-  // Detalle cronológico completo (antes: solo top 15 por monto)
-  const MAX_FILAS = 100;
-
-  const esCuentaCliente = !!params.clienteFiltro;
-
-  const ingresosOrdenados = [...params.ingresosDetalle].sort((a, b) =>
-    a.fecha.localeCompare(b.fecha),
-  );
-  const filasIngresos = ingresosOrdenados
-    .slice(0, MAX_FILAS)
-    .map((i) => {
-      const cant = i.cantidad ?? 1;
-      const total = i.monto * cant;
-      const desc = cleanDesc(i.descripcion);
-      const clienteLabel =
-        i.cliente ||
-        (desc.split(" · ")[0].trim().length > 1
-          ? desc.split(" · ")[0].trim()
-          : "—");
-      // La descripción suele empezar con el cliente — no repetirlo en la tabla
-      const partes = desc.split(" · ");
-      const detalle =
-        partes[0]?.trim() === clienteLabel
-          ? partes.slice(1).join(" · ").trim()
-          : desc;
-      const pendiente = i.estado === "pendiente";
-      return `<tr>
-      <td>${fmtFechaCorta(i.fecha)}</td>
-      <td>${esc(i.tipo_ingreso)}</td>
-      ${esCuentaCliente ? "" : `<td>${esc(clienteLabel)}</td>`}
-      <td>${esc(detalle) || "—"}</td>
-      <td><span class="badge ${pendiente ? "b-pend" : "b-pag"}">${pendiente ? "Por cobrar" : "Pagado"}</span></td>
-      <td class="center">${cant}</td>
-      <td class="right">${fmt(i.monto)}</td>
-      <td class="right green">${fmt(total)}</td>
-    </tr>`;
-    })
-    .join("");
-
-  const filasGastos = [...params.gastosDetalle]
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))
-    .slice(0, MAX_FILAS)
-    .map(
-      (g) => `<tr>
-      <td>${fmtFechaCorta(g.fecha)}</td>
-      <td>${esc(g.tipo_gasto)}</td>
-      <td>${esc(cleanDesc(g.descripcion)) || "—"}</td>
-      <td class="right red">${fmt(g.monto)}</td>
-    </tr>`,
-    )
-    .join("");
-
-  const balColor = balanceReal >= 0 ? "#16A34A" : "#EF4444";
-  const esCategoria = !!params.categoriaFiltro;
-  // Total y cantidad del rubro filtrado (según sea gasto o ingreso)
-  const catTotal = params.categoriaEsGasto
-    ? params.totalGastos
-    : params.totalIngresos;
-  const catCount = params.categoriaEsGasto
-    ? params.gastosDetalle.length
-    : params.ingresosDetalle.length;
-  const tituloDoc = esCuentaCliente
-    ? "Estado de cuenta"
-    : esCategoria
-      ? `Informe — ${params.categoriaFiltro}`
-      : "Informe de Finanzas";
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body { font-family: Arial, Helvetica, sans-serif; background: #F5F5F5; padding: 24px; color: #000; }
-    .page { background: #fff; max-width: 680px; margin: 0 auto; padding: 32px; border-radius: 8px; }
-
-    /* HEADER */
-    .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #000; padding-bottom: 16px; }
-    .brand { font-size: 24px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
-    .brand span { color: #000; }
-    .doc-info { text-align: right; font-size: 12px; color: #000; }
-    .doc-info strong { color: #000; display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-
-    /* META */
-    .meta-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 32px; font-size: 12px; color: #000; }
-    .meta-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 2px; }
-    .meta-item span { font-size: 13px; font-weight: 600; color: #000; }
-
-    /* Aviso de informe generado offline (datos posiblemente incompletos) */
-    .aviso-cache { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; line-height: 1.5; color: #78350F; }
-
-    /* SUMMARY GRID */
-    .summary { display: grid; grid-template-columns: repeat(${esCuentaCliente ? 3 : 4}, 1fr); gap: 12px; margin-bottom: 8px; }
-    .s-card { border-radius: 10px; padding: 14px; border: 1px solid #E2E8F0; text-align: center; }
-    .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #000; margin-bottom: 6px; }
-    .s-value { font-size: 15px; font-weight: 800; color: #000; }
-    .green { color: #16A34A; }
-    .red { color: #EF4444; }
-    .amber { color: #B45309; }
-    .summary-note { font-size: 10px; color: #92400E; text-align: right; margin-bottom: 20px; }
-
-    /* BADGES DE ESTADO */
-    .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
-    .b-pend { background: #FEF3C7; color: #92400E; }
-    .b-pag { background: #DCFCE7; color: #166534; }
-
-    /* SECTION */
-    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #000; margin: 24px 0 10px; }
-
-    /* TABLES */
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { background: #000; color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
-    th.right { text-align: right; }
-    th.center { text-align: center; }
-    td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; color: #000; vertical-align: middle; }
-    td.right { text-align: right; white-space: nowrap; }
-    td.center { text-align: center; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #F8FAFC; }
-    .total-tr td { background: #F1F5F9; font-weight: 700; font-size: 13px; border-top: 2px solid #CBD5E1; color: #000; }
-
-    /* FOOTER */
-    .footer { text-align: center; font-size: 10px; color: #94A3B8; margin-top: 28px; border-top: 1px solid #E2E8F0; padding-top: 16px; }
-    .stores { display: flex; gap: 16px; justify-content: center; align-items: center; margin-top: 8px; }
-    .store-badge { display: inline-flex; align-items: center; gap: 5px; color: #94A3B8; }
-    .store-badge svg { width: 13px; height: 13px; flex-shrink: 0; fill: #94A3B8; }
-    .store-badge span { font-size: 9px; font-weight: 600; letter-spacing: 0.2px; }
-  </style>
-</head>
-<body>
-<div class="page">
-
-  <div class="doc-header">
-    <div>
-      <div class="brand">Truck<span>Book</span></div>
-      <div style="font-size:13px;color:#666;margin-top:4px;">${tituloDoc}</div>
-    </div>
-    <div class="doc-info">
-      <strong>${esCuentaCliente ? `Estado de cuenta — ${esc(params.clienteFiltro)}` : esCategoria ? `Informe — ${esc(params.categoriaFiltro)}` : "Informe de Finanzas"}</strong>
-      Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}
-    </div>
-  </div>
-
-  ${
-    params.desdeCache
-      ? `<div class="aviso-cache">Informe generado sin conexión, con los datos guardados en el teléfono. Pueden faltar movimientos — verifícalo con internet antes de usarlo como soporte.</div>`
-      : ""
-  }
-
-  <div class="meta-box">
-    <div class="meta-item">
-      <strong>Período</strong>
-      <span>${fmtFecha(params.rangoInicio)} — ${fmtFecha(params.rangoFin)}</span>
-    </div>
-    <div class="meta-item">
-      <strong>Vehículo(s)</strong>
-      <span>${params.placas.length > 0 ? esc(params.placas.join(", ")) : "Todos"}</span>
-    </div>
-    ${params.clienteFiltro ? `<div class="meta-item"><strong>Cliente</strong><span>${esc(params.clienteFiltro)}</span></div>` : ""}
-    ${esCategoria ? `<div class="meta-item"><strong>Categoría</strong><span>${esc(params.categoriaFiltro)}</span></div>` : ""}
-  </div>
-
-  <!-- RESUMEN -->
-  ${
-    esCategoria
-      ? `
-  <div class="summary">
-    <div class="s-card" style="border-color:${params.categoriaEsGasto ? "#EF444440" : "#16A34A40"}">
-      <div class="s-label">Total ${esc(params.categoriaFiltro)}</div>
-      <div class="s-value ${params.categoriaEsGasto ? "red" : "green"}">${fmt(catTotal)}</div>
-    </div>
-    <div class="s-card" style="border-color:#E2E8F0">
-      <div class="s-label">Movimientos</div>
-      <div class="s-value">${catCount}</div>
-    </div>
-  </div>
-  <div class="summary-note">Informe filtrado por categoría: ${esc(params.categoriaFiltro)}</div>`
-      : esCuentaCliente
-        ? `
-  <div class="summary">
-    <div class="s-card" style="border-color:#E2E8F0">
-      <div class="s-label">Total facturado</div>
-      <div class="s-value">${fmt(params.totalIngresos)}</div>
-    </div>
-    <div class="s-card" style="border-color:#16A34A40">
-      <div class="s-label">Recibido</div>
-      <div class="s-value green">${fmt(totalRecibido)}</div>
-    </div>
-    <div class="s-card" style="border-color:#F59E0B40">
-      <div class="s-label">Por cobrar</div>
-      <div class="s-value amber">${fmt(totalPorCobrar)}</div>
-    </div>
-  </div>
-  <div class="summary-note">&nbsp;</div>`
-      : `
-  <div class="summary">
-    <div class="s-card" style="border-color:#16A34A40">
-      <div class="s-label">Ingresos recibidos</div>
-      <div class="s-value green">${fmt(totalRecibido)}</div>
-    </div>
-    <div class="s-card" style="border-color:#F59E0B40">
-      <div class="s-label">Por cobrar</div>
-      <div class="s-value amber">${fmt(totalPorCobrar)}</div>
-    </div>
-    <div class="s-card" style="border-color:#EF444440">
-      <div class="s-label">Gastos</div>
-      <div class="s-value red">${fmt(params.totalGastos)}</div>
-    </div>
-    <div class="s-card" style="border-color:${balColor}40">
-      <div class="s-label">Balance</div>
-      <div class="s-value" style="color:${balColor}">${fmt(balanceReal)}</div>
-    </div>
-  </div>
-  <div class="summary-note">Rentabilidad: ${rentReal >= 0 ? "+" : ""}${rentReal.toFixed(1)}% · Balance de caja: solo ingresos recibidos${totalPorCobrar > 0 ? ` (no incluye ${fmt(totalPorCobrar)} por cobrar)` : ""}</div>`
-  }
-
-  <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta
-       ni en informe filtrado por una sola categoría) -->
-  ${
-    !esCuentaCliente && !esCategoria && params.periodos.length > 0
-      ? `
-  <div class="section-title">Resumen por período</div>
-  <table>
-    <thead><tr>
-      <th>Período</th>
-      <th class="right">Ingresos recibidos</th>
-      <th class="right">Gastos</th>
-      <th class="right">Balance</th>
-    </tr></thead>
-    <tbody>
-      ${periodoRows}
-      <tr class="total-tr">
-        <td>Total</td>
-        <td class="right green">${fmt(totalRecibido)}</td>
-        <td class="right red">${fmt(params.totalGastos)}</td>
-        <td class="right" style="color:${balColor}">${fmt(balanceReal)}</td>
-      </tr>
-    </tbody>
-  </table>`
-      : ""
-  }
-
-  <!-- INGRESOS DETALLE -->
-  ${
-    params.ingresosDetalle.length > 0
-      ? `
-  <div class="section-title">${esCuentaCliente ? "Detalle de servicios" : "Ingresos del período"} (${params.ingresosDetalle.length})</div>
-  <table>
-    <thead><tr>
-      <th>Fecha</th><th>Tipo</th>${esCuentaCliente ? "" : "<th>Cliente</th>"}<th>Descripción</th><th>Estado</th><th class="center">Cant.</th><th class="right">Vr. unitario</th><th class="right">Total</th>
-    </tr></thead>
-    <tbody>
-      ${filasIngresos}
-      <tr class="total-tr">
-        <td colspan="${esCuentaCliente ? 6 : 7}">Total facturado</td>
-        <td class="right green">${fmt(params.totalIngresos)}</td>
-      </tr>
-    </tbody>
-  </table>
-  ${params.ingresosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.ingresosDetalle.length} registros</div>` : ""}
-  `
-      : ""
-  }
-
-  <!-- GASTOS DETALLE -->
-  ${
-    params.gastosDetalle.length > 0
-      ? `
-  <div class="section-title">Gastos del período (${params.gastosDetalle.length})</div>
-  <table>
-    <thead><tr>
-      <th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="right">Monto</th>
-    </tr></thead>
-    <tbody>
-      ${filasGastos}
-      <tr class="total-tr">
-        <td colspan="3">Total</td>
-        <td class="right red">${fmt(params.totalGastos)}</td>
-      </tr>
-    </tbody>
-  </table>
-  ${params.gastosDetalle.length > MAX_FILAS ? `<div style="font-size:10px;color:#999;margin-top:4px;text-align:right">Mostrando los primeros ${MAX_FILAS} de ${params.gastosDetalle.length} registros</div>` : ""}
-  `
-      : ""
-  }
-
-  <div class="footer">
-    Generado con <strong>TruckBook</strong>
-    <div class="stores">
-      <span class="store-badge">
-        <svg viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.86 2.33-4.23 2.44-4.3-1.33-1.95-3.4-2.22-4.14-2.25-1.76-.18-3.44 1.04-4.33 1.04-.89 0-2.27-1.02-3.73-.99-1.92.03-3.69 1.12-4.68 2.84-2 3.46-.51 8.58 1.43 11.39.95 1.37 2.08 2.91 3.56 2.86 1.43-.06 1.97-.92 3.7-.92 1.72 0 2.21.92 3.72.89 1.54-.03 2.51-1.4 3.45-2.78 1.09-1.59 1.54-3.13 1.56-3.21-.03-.02-2.99-1.15-3.02-4.56zM14.28 4.16c.79-.96 1.32-2.29 1.18-3.62-1.14.05-2.52.76-3.33 1.72-.73.85-1.37 2.21-1.2 3.51 1.27.1 2.57-.65 3.35-1.61z"/></svg>
-        <span>App Store</span>
-      </span>
-      <span class="store-badge">
-        <svg viewBox="0 0 24 24"><path d="M3.6 2.3c-.2.2-.3.5-.3.9v17.6c0 .4.1.7.3.9l.1.1 9.9-9.9v-.2zM17 15.3l-3.4-3.4L17 8.5l3.9 2.2c1.1.6 1.1 1.7 0 2.3zM17.1 15.2 13.6 11.9 3.7 21.8c.4.4 1 .4 1.6.1zM17.1 8.6 5.3 2C4.7 1.6 4.1 1.7 3.7 2.1l9.9 9.8z"/></svg>
-        <span>Google Play</span>
-      </span>
-    </div>
-  </div>
-</div>
-</body>
-</html>`;
-}
+import ChipsCategoria from "./components/ChipsCategoria";
+import ModalExportar, { type PeriodoRapido } from "./components/ModalExportar";
+import { generarReporteHTML } from "./reporteHTML";
+import {
+  CATEGORIAS_EXPORT,
+  HORIZONTAL_PADDING,
+  esPendiente,
+  filtrarPorRango,
+  formatCurrency,
+  formatLabel,
+  groupBy,
+  type EstadoFiltro,
+  type ViewType,
+} from "./finanzasUtils";
 
 export default function FinanzasGenerales() {
   const { colors, isDark } = useTheme();
@@ -574,22 +65,16 @@ export default function FinanzasGenerales() {
     "main",
   );
 
-  // Estado del modal de exportación
-  type PeriodoRapido =
-    | "semana"
-    | "mes"
-    | "mes_anterior"
-    | "trimestre"
-    | "año"
-    | "personalizado";
+  // Estado del modal de exportación (el tipo vive en ModalExportar)
   const [periodoRapido, setPeriodoRapido] = useState<PeriodoRapido>("mes");
   const [exportCliente, setExportCliente] = useState<string | null>(null);
   // Filtro por categoría (tipo_gasto o tipo_ingreso) — null = todas
   const [exportCategoria, setExportCategoria] = useState<string | null>(null);
+  // Estado de las cuentas a exportar. null = ambas (por cobrar + pagadas).
+  const [exportEstado, setExportEstado] = useState<EstadoFiltro>(null);
   // Filtro de categoría de la PANTALLA (independiente del que usa el export).
   // null = todas.
   const [catPantalla, setCatPantalla] = useState<string | null>(null);
-  const [clienteInputFocused, setClienteInputFocused] = useState(false);
   const [exportRango, setExportRango] = useState<{
     inicio: string;
     fin: string;
@@ -742,6 +227,28 @@ export default function FinanzasGenerales() {
   // Store en vivo (tope 200 recientes) — solo para fallback offline y sugerencias
   const gastosStore = useGastosStore(useShallow((state) => state.gastos));
   const ingresosStore = useIngresosStore(useShallow((state) => state.ingresos));
+
+  // Sugerencias de cliente para el modal de exportar. Salen del store en vivo
+  // (clientes recientes) y no del rango en pantalla, así aparecen aunque el
+  // rango sea corto.
+  const clientesDisponibles = useMemo(() => {
+    const nombre = (i: (typeof ingresosStore)[number]): string | null => {
+      if (i.cliente) return i.cliente;
+      const parte = (i.descripcion || "")
+        .replace(/\[TEL:[^\]]*\]/g, "")
+        .split(" · ")[0]
+        .trim();
+      return parte.length > 1 ? parte : null;
+    };
+    return Array.from(
+      new Set(
+        ingresosStore
+          .filter((i) => i.placa === placaActual)
+          .map(nombre)
+          .filter((v): v is string => !!v),
+      ),
+    ).sort();
+  }, [ingresosStore, placaActual]);
 
   // Datos del rango consultados directo a Supabase (sin tope de 200). El informe
   // se calcula sobre estos; si la consulta falla (offline), cae al store.
@@ -1078,8 +585,12 @@ export default function FinanzasGenerales() {
       : null;
     const filtrarCat = (tipo: string | null | undefined) =>
       !exportCategoria || tipo === exportCategoria;
+    // Filtrar por estado es filtrar la cartera de ingresos, así que los gastos
+    // salen del informe — mismo criterio que ya se aplica al elegir una
+    // categoría de ingreso. Con "solo por cobrar" además sería engañoso:
+    // el balance saldría negativo contra una cartera a medias.
     const gastosDetalle =
-      exportCliente || catMeta?.grupo === "ingreso"
+      exportCliente || catMeta?.grupo === "ingreso" || exportEstado !== null
         ? []
         : datos.gastos.filter((g) => filtrarCat(g.tipo_gasto));
     const getClienteIngreso = (i: any): string | null => {
@@ -1107,12 +618,19 @@ export default function FinanzasGenerales() {
       if (seg) cands.push(norm(seg));
       return cands.includes(clienteBuscado);
     };
+    // Filtro de estado: solo aplica a ingresos (un gasto no se "cobra").
+    // Con "solo por cobrar" o "solo pagadas" se excluyen además los gastos:
+    // mezclarlos daría un balance sin sentido contra media cartera.
+    const filtrarEstado = (i: { estado?: string | null }) =>
+      exportEstado === null ||
+      (exportEstado === "pendiente" ? esPendiente(i) : !esPendiente(i));
     const ingresosDetalle =
       catMeta?.grupo === "gasto"
         ? []
         : datos.ingresos
             .filter(coincideCliente)
-            .filter((i) => filtrarCat(i.tipo_ingreso));
+            .filter((i) => filtrarCat(i.tipo_ingreso))
+            .filter(filtrarEstado);
     // Nombre real del cliente (con sus mayúsculas) para el PDF
     const clienteReal = exportCliente
       ? ingresosDetalle.length > 0
@@ -1123,11 +641,13 @@ export default function FinanzasGenerales() {
       setExportando(false);
       Alert.alert(
         "Sin datos",
-        exportCliente
-          ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
-          : exportCategoria
-            ? `No hay movimientos de "${exportCategoria}" en el período seleccionado.`
-            : "No hay transacciones en el período seleccionado.",
+        exportEstado
+          ? `No hay cuentas ${exportEstado === "pendiente" ? "por cobrar" : "pagadas"} en el período seleccionado.`
+          : exportCliente
+            ? `No hay ingresos de "${exportCliente}" en el período seleccionado.`
+            : exportCategoria
+              ? `No hay movimientos de "${exportCategoria}" en el período seleccionado.`
+              : "No hay transacciones en el período seleccionado.",
       );
       return;
     }
@@ -1185,6 +705,7 @@ export default function FinanzasGenerales() {
         clienteFiltro: clienteReal,
         categoriaFiltro: exportCategoria,
         categoriaEsGasto: catMeta?.grupo === "gasto",
+        estadoFiltro: exportEstado,
         desdeCache,
       });
 
@@ -1335,47 +856,7 @@ export default function FinanzasGenerales() {
             </View>
 
             {/* FILTRO POR CATEGORÍA */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.catScroll}
-              contentContainerStyle={styles.catContent}>
-              {[{ tipo: null as string | null }, ...CATEGORIAS_EXPORT].map(
-                (cat) => {
-                  const selected = catPantalla === cat.tipo;
-                  const isTodas = cat.tipo === null;
-                  return (
-                    <TouchableOpacity
-                      key={cat.tipo ?? "__todas"}
-                      style={[
-                        styles.catChip,
-                        {
-                          backgroundColor: c.cardBg,
-                          borderColor: selected ? c.accent : c.border,
-                        },
-                        selected && { borderWidth: 1.5 },
-                      ]}
-                      onPress={() => setCatPantalla(cat.tipo)}
-                      activeOpacity={0.7}>
-                      {!isTodas && (
-                        <ItemIcon
-                          name={(cat as (typeof CATEGORIAS_EXPORT)[0]).icon}
-                          size={18}
-                        />
-                      )}
-                      <Text
-                        style={[
-                          styles.catChipText,
-                          { color: selected ? c.accent : c.textSecondary },
-                        ]}
-                        numberOfLines={1}>
-                        {isTodas ? "Todas" : cat.tipo}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                },
-              )}
-            </ScrollView>
+            <ChipsCategoria value={catPantalla} onChange={setCatPantalla} />
 
             {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
             {/* Con una categoría activa el resumen se enfoca en ese rubro:
@@ -1654,6 +1135,7 @@ export default function FinanzasGenerales() {
                 seleccionarPeriodo("mes");
                 setExportCliente(null);
                 setExportCategoria(null);
+                setExportEstado(null);
                 setExportModal(true);
               }}
               disabled={exportando}
@@ -1679,306 +1161,27 @@ export default function FinanzasGenerales() {
       </SafeAreaView>
 
       {/* MODAL EXPORTAR */}
-      <Modal
+      <ModalExportar
         visible={exportModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setExportModal(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}>
-          <TouchableOpacity
-            style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
-            activeOpacity={1}
-            onPress={() => setExportModal(false)}>
-            <TouchableOpacity activeOpacity={1}>
-              <View
-                style={[
-                  styles.exportModalSheet,
-                  { backgroundColor: c.modalBg },
-                ]}>
-                <View
-                  style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
-                />
-                <View style={styles.exportModalHeader}>
-                  <Text style={[styles.modalTitle, { color: c.text }]}>
-                    Exportar informe
-                  </Text>
-                  <TouchableOpacity onPress={() => setExportModal(false)}>
-                    <Ionicons name="close" size={22} color={c.textMuted} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* OPCIONES RÁPIDAS */}
-                <Text
-                  style={[
-                    styles.exportSectionLabel,
-                    { color: c.textMuted, textTransform: "none" },
-                  ]}>
-                  Período
-                </Text>
-                <View style={styles.periodosGrid}>
-                  {(
-                    [
-                      { key: "semana", label: "Esta semana" },
-                      { key: "mes", label: "Este mes" },
-                      { key: "mes_anterior", label: "Mes anterior" },
-                      { key: "trimestre", label: "Trimestre" },
-                      { key: "año", label: "Este año" },
-                      { key: "personalizado", label: "Personalizado" },
-                    ] as { key: PeriodoRapido; label: string }[]
-                  ).map(({ key, label }) => (
-                    <TouchableOpacity
-                      key={key}
-                      style={[
-                        styles.periodoChip,
-                        { borderColor: c.border, backgroundColor: c.cardBg },
-                        periodoRapido === key && {
-                          backgroundColor: c.accent,
-                          borderColor: c.accent,
-                        },
-                      ]}
-                      onPress={() => seleccionarPeriodo(key)}
-                      activeOpacity={0.7}>
-                      <Text
-                        style={[
-                          styles.periodoChipText,
-                          { color: c.textSecondary },
-                          periodoRapido === key && { color: c.accentText },
-                        ]}>
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* RANGO PERSONALIZADO */}
-                <View
-                  style={[
-                    styles.exportRangeRow,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
-                  ]}>
-                  <TouchableOpacity
-                    style={styles.exportDateBtn}
-                    onPress={() => openCalendar("inicio", "export")}
-                    activeOpacity={0.7}>
-                    <Text
-                      style={[styles.exportDateLabel, { color: c.textMuted }]}>
-                      Desde
-                    </Text>
-                    <Text style={[styles.exportDateValue, { color: c.text }]}>
-                      {new Date(
-                        exportRango.inicio + "T12:00:00",
-                      ).toLocaleDateString("es-CO", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={16}
-                    color={c.textMuted}
-                  />
-                  <TouchableOpacity
-                    style={styles.exportDateBtn}
-                    onPress={() => openCalendar("fin", "export")}
-                    activeOpacity={0.7}>
-                    <Text
-                      style={[styles.exportDateLabel, { color: c.textMuted }]}>
-                      Hasta
-                    </Text>
-                    <Text style={[styles.exportDateValue, { color: c.text }]}>
-                      {new Date(
-                        exportRango.fin + "T12:00:00",
-                      ).toLocaleDateString("es-CO", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* FILTRO CLIENTE */}
-                {(() => {
-                  const getCliente = (i: any): string | null => {
-                    if (i.cliente) return i.cliente;
-                    const desc: string = i.descripcion || "";
-                    const parte = desc
-                      .replace(/\[TEL:[^\]]*\]/g, "")
-                      .split(" · ")[0]
-                      .trim();
-                    return parte.length > 1 ? parte : null;
-                  };
-                  // Sugerencias desde el store en vivo (clientes recientes), no
-                  // desde el rango en pantalla — así aparecen aunque el rango sea corto
-                  const clientesDisponibles = Array.from(
-                    new Set(
-                      ingresosStore
-                        .filter((i) => i.placa === placaActual)
-                        .map(getCliente)
-                        .filter((v): v is string => !!v),
-                    ),
-                  ).sort();
-                  const texto = exportCliente ?? "";
-                  const sugerencias =
-                    clienteInputFocused && texto.length >= 2
-                      ? clientesDisponibles.filter((cli) =>
-                          cli.toLowerCase().includes(texto.toLowerCase()),
-                        )
-                      : [];
-                  return (
-                    <>
-                      <Text
-                        style={[
-                          styles.exportSectionLabel,
-                          {
-                            color: c.textMuted,
-                            marginTop: 14,
-                            textTransform: "none",
-                          },
-                        ]}>
-                        Filtrar por cliente (opcional)
-                      </Text>
-                      <TextInput
-                        style={[
-                          styles.exportClienteInput,
-                          {
-                            backgroundColor: c.cardBg,
-                            borderColor: exportCliente ? c.accent : c.border,
-                            color: c.text,
-                          },
-                        ]}
-                        placeholder="Escribe el nombre del cliente..."
-                        placeholderTextColor={c.textMuted}
-                        value={texto}
-                        onChangeText={(t) => {
-                          // Misma sanitización que al guardar el cliente
-                          // (sanitizarInput en Ingresos): solo se quitan < > { } [ ].
-                          // Nombres como "H&H" o "López & Cía" deben poder buscarse;
-                          // el PDF escapa estos caracteres al renderizar.
-                          const limpio = t
-                            .replace(/[<>{}[\]]/g, "")
-                            .slice(0, 80);
-                          setExportCliente(limpio.length > 0 ? limpio : null);
-                        }}
-                        onFocus={() => setClienteInputFocused(true)}
-                        onBlur={() =>
-                          setTimeout(() => setClienteInputFocused(false), 150)
-                        }
-                        returnKeyType="done"
-                      />
-                      {sugerencias.length > 0 && (
-                        <View
-                          style={[
-                            styles.exportSugerencias,
-                            {
-                              backgroundColor: c.cardBg,
-                              borderColor: c.border,
-                            },
-                          ]}>
-                          {sugerencias.slice(0, 5).map((cli) => (
-                            <TouchableOpacity
-                              key={cli}
-                              style={[
-                                styles.exportSugerenciaItem,
-                                { borderBottomColor: c.border },
-                              ]}
-                              onPress={() => {
-                                setExportCliente(cli);
-                                setClienteInputFocused(false);
-                              }}
-                              activeOpacity={0.7}>
-                              <Text style={{ color: c.text, fontSize: 14 }}>
-                                {cli}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </>
-                  );
-                })()}
-
-                {/* FILTRO CATEGORÍA */}
-                <Text style={[styles.exportSectionLabel, { color: c.text }]}>
-                  Filtrar por categoría (opcional)
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  style={styles.exportCatScroll}
-                  contentContainerStyle={styles.exportCatContent}>
-                  {[{ tipo: null as string | null }, ...CATEGORIAS_EXPORT].map(
-                    (cat) => {
-                      const selected = exportCategoria === cat.tipo;
-                      const isTodas = cat.tipo === null;
-                      return (
-                        <TouchableOpacity
-                          key={cat.tipo ?? "__todas"}
-                          style={[
-                            styles.exportCatChip,
-                            {
-                              backgroundColor: c.cardBg,
-                              borderColor: selected ? c.accent : c.border,
-                            },
-                            selected && { borderWidth: 1.5 },
-                          ]}
-                          onPress={() => setExportCategoria(cat.tipo)}
-                          activeOpacity={0.7}>
-                          {!isTodas && (
-                            <ItemIcon
-                              name={(cat as (typeof CATEGORIAS_EXPORT)[0]).icon}
-                              size={20}
-                            />
-                          )}
-                          <Text
-                            style={[
-                              styles.exportCatChipText,
-                              {
-                                color: selected ? c.accent : c.textSecondary,
-                              },
-                            ]}>
-                            {isTodas ? "Todas" : cat.tipo}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    },
-                  )}
-                </ScrollView>
-
-                {/* BOTÓN GENERAR */}
-                <TouchableOpacity
-                  style={[
-                    styles.exportGenerarBtn,
-                    { backgroundColor: c.accent },
-                  ]}
-                  onPress={generarPDF}
-                  activeOpacity={0.85}>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={18}
-                    color={c.accentText}
-                  />
-                  <Text
-                    style={[styles.exportGenerarText, { color: c.accentText }]}>
-                    Generar PDF
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-
-        {/* Calendario como overlay DENTRO del modal de exportar, pero FUERA
-            del KeyboardAvoidingView para que el teclado no lo desplace */}
-        {calendarVisible && calendarTarget === "export" && (
-          <View style={StyleSheet.absoluteFill}>{renderCalendarSheet()}</View>
-        )}
-      </Modal>
+        onClose={() => setExportModal(false)}
+        periodoRapido={periodoRapido}
+        onPeriodo={seleccionarPeriodo}
+        rango={exportRango}
+        onAbrirCalendario={(campo) => openCalendar(campo, "export")}
+        cliente={exportCliente}
+        onCliente={setExportCliente}
+        clientesDisponibles={clientesDisponibles}
+        estado={exportEstado}
+        onEstado={setExportEstado}
+        categoria={exportCategoria}
+        onCategoria={setExportCategoria}
+        onGenerar={generarPDF}
+        slotCalendario={
+          calendarVisible && calendarTarget === "export"
+            ? renderCalendarSheet()
+            : null
+        }
+      />
 
       {/* MODAL CALENDARIO — solo para el selector de la pantalla principal.
           En el modal de exportar el calendario se renderiza como overlay
@@ -2140,134 +1343,10 @@ const styles = StyleSheet.create({
   detailValue: { fontSize: 14, fontWeight: "600" },
 
   // MODAL EXPORTAR
-  exportModalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 10,
-    paddingBottom: 36,
-    paddingHorizontal: 20,
-  },
-  exportModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  exportSectionLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.4,
-    marginBottom: 10,
-    textTransform: "uppercase",
-  },
-  exportClienteInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    letterSpacing: 0, // iOS: evita el tracking raro del placeholder
-    marginBottom: 20,
-  },
-  exportCatScroll: {
-    marginBottom: 20,
-    marginHorizontal: -HORIZONTAL_PADDING,
-  },
-  exportCatContent: {
-    gap: 8,
-    paddingHorizontal: HORIZONTAL_PADDING,
-  },
-  exportCatChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingLeft: 8,
-    paddingRight: 14,
-    paddingVertical: 7,
-  },
-  exportCatChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  // Chips de estado de cuenta. Son 3 opciones fijas y excluyentes, así que van
+  // en una fila que reparte el ancho, no en un scroll horizontal.
   // Chips de categoría de la pantalla (mismo look que los del export, algo
   // más compactos porque van sobre las tarjetas de resumen).
-  catScroll: {
-    marginBottom: 16,
-    marginHorizontal: -HORIZONTAL_PADDING,
-  },
-  catContent: {
-    gap: 8,
-    paddingHorizontal: HORIZONTAL_PADDING,
-  },
-  catChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingLeft: 8,
-    paddingRight: 13,
-    paddingVertical: 6,
-  },
-  catChipText: {
-    fontSize: 12.5,
-    fontWeight: "600",
-  },
-  exportSugerencias: {
-    borderWidth: 1,
-    borderRadius: 10,
-    marginTop: 4,
-    overflow: "hidden",
-  },
-  exportSugerenciaItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  periodosGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 16,
-  },
-  periodoChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  periodoChipText: { fontSize: 13, fontWeight: "600" },
-  exportRangeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 20,
-    gap: 8,
-  },
-  exportDateBtn: { flex: 1, alignItems: "center" },
-  exportDateLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    letterSpacing: 0.3,
-    marginBottom: 3,
-  },
-  exportDateValue: { fontSize: 14, fontWeight: "600" },
-  exportGenerarBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 15,
-  },
-  exportGenerarText: { fontSize: 16, fontWeight: "700" },
-
   // MODAL CALENDARIO
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   calendarModal: {
