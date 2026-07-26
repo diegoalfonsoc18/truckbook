@@ -1,14 +1,16 @@
 // src/services/fotoVehiculoService.ts
-// Foto del camión subida por el usuario: recorte, subida y lectura.
+// Foto del camión subida por el usuario: normaliza y sube.
 //
-// El recorte de fondo corre EN EL DISPOSITIVO — Vision en iOS (15+), ML Kit en
-// Android. No se usa un modelo generativo a propósito: los de imagen devuelven
-// RGB plano sin canal alfa, y además reinventan detalles como la placa. Aquí la
-// foto sigue siendo la del camión del usuario, solo sin fondo.
+// NO se recorta el fondo dentro de la app. El recorte automático on-device
+// (Vision/ML Kit vía react-native-background-remover) devolvía la imagen casi
+// vacía con fotos de camión — se comía el camión entero. En su lugar, el
+// usuario recorta en su galería (en iOS: mantener presionado el camión →
+// "levantar sujeto", que es el mismo Vision pero GUIADO y sale perfecto; en
+// Android: "Copiar objeto"/recortar de Google Fotos o Samsung) y elige aquí el
+// PNG ya transparente. La app lo sube tal cual, conservando el alfa. Si elige
+// una foto normal, se sube con fondo — también sirve.
 //
-// Todo el trato con el recortador vive en `recortarFondo`, así que cambiar de
-// motor (otro paquete, o un servicio propio tipo rembg) toca un solo sitio.
-import { removeBackground } from "react-native-background-remover";
+// Ventaja de fondo: sin módulo nativo, todo esto corre incluso en Expo Go.
 import * as ImageManipulator from "expo-image-manipulator";
 import {
   uploadAsync,
@@ -32,8 +34,7 @@ export const FOTO_ALTO = 600;
  *
  * La VehicleCard la pinta a ~180 pt, así que 720 px cubre de sobra hasta una
  * pantalla @3x. El PNG con alfa es sin pérdida y no se puede comprimir con
- * calidad, así que el peso depende solo de los píxeles: a 1000 px una foto
- * vertical daba 1000x1333 y se pasaba del límite del bucket.
+ * calidad, así que el peso depende solo de los píxeles.
  */
 const LADO_MAX = 720;
 
@@ -46,37 +47,13 @@ const TTL_URL_FIRMADA = 60 * 60 * 24; // 24 h
 export interface ResultadoFoto {
   path?: string;
   error?: string;
-  /** true si el fondo NO se pudo quitar y se subió la foto tal cual. */
-  sinRecorte?: boolean;
 }
 
 /**
- * Quita el fondo. Si falla, devuelve la imagen original en vez de reventar:
- * más vale una foto con fondo que ninguna, y el llamador avisa al usuario.
- */
-async function recortarFondo(
-  uri: string,
-): Promise<{ uri: string; recortada: boolean }> {
-  try {
-    const salida = await removeBackground(uri);
-    // En simulador de iOS el paquete devuelve la misma URI sin tocar nada.
-    return { uri: salida, recortada: salida !== uri };
-  } catch (err: any) {
-    logger.warn("No se pudo quitar el fondo:", err?.message ?? err);
-    return { uri, recortada: false };
-  }
-}
-
-/**
- * Escala para que el lado MAYOR quede en LADO_MAX.
+ * Escala para que el lado MAYOR quede en LADO_MAX y guarda como PNG.
  *
- * Fijar solo el ancho no basta: una foto vertical acaba más alta que ancha y
- * con más píxeles —y más peso— que una horizontal del mismo ancho. Se mira
- * cuál lado manda antes de escalar.
- *
- * PNG siempre: JPEG no tiene canal alfa y se comería la transparencia que
- * acabamos de conseguir. Al ser sin pérdida no admite `compress`, así que el
- * único modo de bajar el peso es bajar los píxeles.
+ * PNG siempre: conserva el canal alfa si el usuario trajo un recorte
+ * transparente. JPEG lo aplanaría y le pondría fondo negro.
  */
 async function normalizar(uri: string): Promise<string> {
   const original = await ImageManipulator.ImageManipulator.manipulate(
@@ -89,9 +66,7 @@ async function normalizar(uri: string): Promise<string> {
   // Nunca agrandar: si ya es chica se deja como está.
   const ctx = ImageManipulator.ImageManipulator.manipulate(uri);
   if (ladoMayor > LADO_MAX) {
-    ctx.resize(
-      width >= height ? { width: LADO_MAX } : { height: LADO_MAX },
-    );
+    ctx.resize(width >= height ? { width: LADO_MAX } : { height: LADO_MAX });
   }
 
   const imagen = await ctx.renderAsync();
@@ -112,9 +87,7 @@ export async function subirFotoCamion(
   uriOriginal: string,
 ): Promise<ResultadoFoto> {
   try {
-    const { uri: recortada, recortada: seRecorto } =
-      await recortarFondo(uriOriginal);
-    const uriFinal = await normalizar(recortada);
+    const uriFinal = await normalizar(uriOriginal);
 
     // Comprobar el tamaño antes de subir.
     const info = await getInfoAsync(uriFinal);
@@ -130,8 +103,8 @@ export async function subirFotoCamion(
 
     // Subir con uploadAsync (nativo), NO con supabase.storage.upload: el fetch
     // de React Native no manda bien un body binario grande y falla con
-    // "Network request failed" (con un Uint8Array lo mandaba vacío). uploadAsync
-    // POSTea el archivo directo al endpoint REST de Storage, sin pasar por fetch.
+    // "Network request failed". uploadAsync POSTea el archivo directo al
+    // endpoint REST de Storage.
     const path = `${userId}/${placa}.png`;
     const {
       data: { session },
@@ -167,7 +140,7 @@ export async function subirFotoCamion(
       .eq("vehiculo_placa", placa);
     if (errDB) return { error: errDB.message };
 
-    return { path, sinRecorte: !seRecorto };
+    return { path };
   } catch (err: any) {
     logger.error("Error subiendo foto del camión:", err);
     return { error: err?.message ?? "No se pudo guardar la foto." };
