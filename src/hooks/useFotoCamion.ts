@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 import { useVehiculosListStore } from "../store/VehiculosListStore";
 import { urlFotoCamion } from "../services/fotoVehiculoService";
+import logger from "../utils/logger";
 
 /**
  * Devuelve el `source` de la foto que subió el usuario para esa placa, o
@@ -30,6 +31,7 @@ export function useFotoCamion(
     }
     let cancelado = false;
     urlFotoCamion(path).then((u) => {
+      logger.log("🖼️ foto camión", path, "→ URL firmada:", u ? "ok" : "null");
       if (!cancelado) setUrl(u);
     });
     return () => {
