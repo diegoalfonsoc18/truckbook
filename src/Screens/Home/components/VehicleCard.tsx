@@ -60,9 +60,17 @@ export default function VehicleCard({
   const camionIconName: IconName = tipoCamion
     ? ICON_MAP[tipoCamion]
     : "conductor";
-  // La foto que subió el usuario manda; si no hay, la del catálogo por tipo;
-  // y si tampoco, el ícono vectorial más abajo.
-  const foto = fotoUsuario ?? (tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined);
+  // La foto del catálogo por tipo, respaldo cuando no hay foto del usuario.
+  const fotoCatalogo = tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined;
+  // Si la foto del usuario no carga (URL firmada expirada, sin señal, objeto
+  // vacío) se descarta y se cae al catálogo, en vez de dejar la tarjeta en
+  // blanco: un `source` con uri roto no dispara el fallback por sí solo.
+  const [fotoUsuarioFallo, setFotoUsuarioFallo] = React.useState(false);
+  React.useEffect(() => setFotoUsuarioFallo(false), [fotoUsuario]);
+  const usarFotoUsuario = !!fotoUsuario && !fotoUsuarioFallo;
+  // La que subió el usuario manda; si no hay o falla, la del catálogo; y si
+  // tampoco, el ícono vectorial más abajo.
+  const foto = usarFotoUsuario ? fotoUsuario : fotoCatalogo;
   const subtitulo = vehicleCardTitle || tipoCamionData?.label || "";
 
   // ── Combustible ──
@@ -220,6 +228,11 @@ export default function VehicleCard({
                   source={foto}
                   style={{ width: photoW, height: photoH }}
                   resizeMode="contain"
+                  onError={
+                    usarFotoUsuario
+                      ? () => setFotoUsuarioFallo(true)
+                      : undefined
+                  }
                 />
               </View>
             ) : (

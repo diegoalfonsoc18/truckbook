@@ -10,7 +10,15 @@
 // motor (otro paquete, o un servicio propio tipo rembg) toca un solo sitio.
 import { removeBackground } from "react-native-background-remover";
 import * as ImageManipulator from "expo-image-manipulator";
-import supabase from "../config/SupaBaseConfig";
+import {
+  uploadAsync,
+  getInfoAsync,
+  FileSystemUploadType,
+} from "expo-file-system/legacy";
+import supabase, {
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+} from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
 
 const BUCKET = "vehiculos-fotos";
@@ -108,25 +116,48 @@ export async function subirFotoCamion(
       await recortarFondo(uriOriginal);
     const uriFinal = await normalizar(recortada);
 
-    // fetch() sobre un file:// local da el binario sin necesitar expo-file-system
-    const respuesta = await fetch(uriFinal);
-    const bytes = await respuesta.arrayBuffer();
-
-    // El bucket rechaza lo que se pase de tamaño con un mensaje en inglés que
-    // no le dice nada al conductor. Se comprueba antes para avisar en español.
-    if (bytes.byteLength > LIMITE_BYTES) {
+    // Comprobar el tamaño antes de subir.
+    const info = await getInfoAsync(uriFinal);
+    const size = info.exists ? (info.size ?? 0) : 0;
+    if (size === 0) {
+      return { error: "La foto quedó vacía al procesarla. Intenta de nuevo." };
+    }
+    if (size > LIMITE_BYTES) {
       return {
-        error: `La foto quedó muy pesada (${(bytes.byteLength / 1_048_576).toFixed(1)} MB). Intenta con una foto menos grande.`,
+        error: `La foto quedó muy pesada (${(size / 1_048_576).toFixed(1)} MB). Intenta con una foto menos grande.`,
       };
     }
 
+    // Subir con uploadAsync (nativo), NO con supabase.storage.upload: el fetch
+    // de React Native no manda bien un body binario grande y falla con
+    // "Network request failed" (con un Uint8Array lo mandaba vacío). uploadAsync
+    // POSTea el archivo directo al endpoint REST de Storage, sin pasar por fetch.
     const path = `${userId}/${placa}.png`;
-    const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
-      contentType: "image/png",
-      // La foto de una placa se reemplaza, no se acumula
-      upsert: true,
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      return { error: "Tu sesión expiró. Vuelve a entrar e intenta de nuevo." };
+    }
+
+    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
+    const res = await uploadAsync(uploadUrl, uriFinal, {
+      httpMethod: "POST",
+      uploadType: FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
+        "Content-Type": "image/png",
+        // Reemplaza la foto anterior de esa placa en vez de chocar con 409
+        "x-upsert": "true",
+      },
     });
-    if (error) return { error: error.message };
+    logger.log("📸 subida foto:", res.status, `(${size} bytes)`);
+    if (res.status !== 200) {
+      logger.error("Upload storage falló:", res.status, res.body?.slice(0, 200));
+      return { error: `No se pudo subir la foto (código ${res.status}).` };
+    }
 
     // Guardar el path en el vínculo del usuario con esa placa
     const { error: errDB } = await supabase
