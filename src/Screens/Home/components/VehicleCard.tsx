@@ -14,9 +14,14 @@ import { useGastosStore } from "../../../store/GastosStore";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { HOME_COLORS } from "../HomeConstants";
-import { ICON_MAP, TIPOS_CAMION, VEHICLE_PHOTOS } from "../vehicleConstants";
+import {
+  ICON_MAP,
+  VEHICLE_PHOTOS,
+  carroceriaBase,
+  infoTipo,
+  normalizarTipo,
+} from "../vehicleConstants";
 import { usePrecioDiesel } from "../../../hooks/usePrecioDiesel";
-import { useFotoCamion } from "../../../hooks/useFotoCamion";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -34,7 +39,6 @@ export default function VehicleCard({
   const { colors: c, isDark } = useTheme();
   const vcShadow = getShadow(isDark, "md");
   const { placa: placaActual, tipoCamion } = useVehiculoStore();
-  const fotoUsuario = useFotoCamion(placaActual);
   const gastos = useGastosStore((s) => s.gastos);
   const { precio: precioGalon } = usePrecioDiesel();
 
@@ -56,21 +60,16 @@ export default function VehicleCard({
   const photoH = Math.round((photoW * 156) / 260);
   const photoReserve = rowW ? Math.max(96, photoW - BLEED + 6) : 150;
 
-  const tipoCamionData = TIPOS_CAMION.find((t) => t.id === tipoCamion);
-  const camionIconName: IconName = tipoCamion
-    ? ICON_MAP[tipoCamion]
+  // Normalizar: el valor persistido puede ser una variante nueva
+  // ("estacasTresEjes") o un valor viejo ("estacas") de antes de este cambio;
+  // normalizarTipo lo lleva a una variante válida para no perder la foto.
+  const variante = tipoCamion ? normalizarTipo(tipoCamion) : null;
+  const tipoCamionData = infoTipo(variante);
+  const camionIconName: IconName = variante
+    ? ICON_MAP[carroceriaBase(variante)]
     : "conductor";
-  // La foto del catálogo por tipo, respaldo cuando no hay foto del usuario.
-  const fotoCatalogo = tipoCamion ? VEHICLE_PHOTOS[tipoCamion] : undefined;
-  // Si la foto del usuario no carga (URL firmada expirada, sin señal, objeto
-  // vacío) se descarta y se cae al catálogo, en vez de dejar la tarjeta en
-  // blanco: un `source` con uri roto no dispara el fallback por sí solo.
-  const [fotoUsuarioFallo, setFotoUsuarioFallo] = React.useState(false);
-  React.useEffect(() => setFotoUsuarioFallo(false), [fotoUsuario]);
-  const usarFotoUsuario = !!fotoUsuario && !fotoUsuarioFallo;
-  // La que subió el usuario manda; si no hay o falla, la del catálogo; y si
-  // tampoco, el ícono vectorial más abajo.
-  const foto = usarFotoUsuario ? fotoUsuario : fotoCatalogo;
+  // Foto de la variante; si no hay, cae al ícono vectorial.
+  const foto = variante ? VEHICLE_PHOTOS[variante] : undefined;
   const subtitulo = vehicleCardTitle || tipoCamionData?.label || "";
 
   // ── Combustible ──
@@ -219,7 +218,7 @@ export default function VehicleCard({
               </View>
             </View>
 
-            {/* Foto real del camión (con fallback al ícono vectorial) */}
+            {/* Foto del camión por tipo (con fallback al ícono vectorial) */}
             {foto ? (
               <View
                 style={[s.photoWrap, { width: photoW, right: -BLEED }]}
@@ -228,11 +227,6 @@ export default function VehicleCard({
                   source={foto}
                   style={{ width: photoW, height: photoH }}
                   resizeMode="contain"
-                  onError={
-                    usarFotoUsuario
-                      ? () => setFotoUsuarioFallo(true)
-                      : undefined
-                  }
                 />
               </View>
             ) : (

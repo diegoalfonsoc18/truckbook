@@ -9,7 +9,6 @@ export interface VehiculoItem {
   placa: string;
   tipo_camion: string;
   /** Ruta dentro del bucket `vehiculos-fotos`; null si el usuario no subió foto. */
-  foto_path?: string | null;
 }
 
 interface VehiculosListState {
@@ -37,7 +36,7 @@ export const useVehiculosListStore = create<VehiculosListState>()(
           // Vehículos del usuario con tipo_camion desde vehiculos
           const { data, error } = await supabase
             .from("vehiculo_conductores")
-            .select("id, vehiculo_placa, foto_path, vehiculos!fk_vc_placa(tipo_camion)")
+            .select("id, vehiculo_placa, vehiculos!fk_vc_placa(tipo_camion)")
             .eq("conductor_id", userId)
             .order("created_at", { ascending: false });
 
@@ -47,7 +46,6 @@ export const useVehiculosListStore = create<VehiculosListState>()(
             id: rel.id,
             placa: rel.vehiculo_placa,
             tipo_camion: (rel.vehiculos as any)?.tipo_camion || "estacas",
-            foto_path: (rel as any).foto_path ?? null,
           }));
 
           set({ vehiculos });

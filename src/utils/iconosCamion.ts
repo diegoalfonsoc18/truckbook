@@ -5,12 +5,14 @@
 // Ingresos.tsx; ahora son una sola fuente para que Ingresos y el panel de
 // Actividad reciente del Home no se desincronicen.
 
-import { TipoCamion } from "../store/VehiculoStore";
 import { IconName } from "../components/ItemIcon";
+import { carroceriaBase } from "../Screens/Home/vehicleConstants";
 
-/** Ícono de la categoría "Flete" según el camión. */
-export function getTruckIconName(tipoCamion: TipoCamion | null): IconName {
-  switch (tipoCamion) {
+/** Ícono de la categoría "Flete" según el camión.
+ *  Acepta la variante (p. ej. "estacasTresEjes") y deriva la carrocería. */
+export function getTruckIconName(tipo: string | null): IconName {
+  if (!tipo) return "freight" as IconName;
+  switch (carroceriaBase(tipo)) {
     case "estacas":
       return "estacaFlete" as IconName;
     case "volqueta":
@@ -32,8 +34,8 @@ export function getTruckIconName(tipoCamion: TipoCamion | null): IconName {
 }
 
 /** Ícono de la categoría "Mercancía" según lo que carga ese camión. */
-export function getMercanciaIcon(tipoCamion: TipoCamion | null): IconName {
-  switch (tipoCamion) {
+export function getMercanciaIcon(tipo: string | null): IconName {
+  switch (carroceriaBase(tipo)) {
     case "volqueta":
       return "mercancia_gravel" as IconName;
     case "grua":
