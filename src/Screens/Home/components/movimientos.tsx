@@ -8,7 +8,6 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { getTruckIconName, getMercanciaIcon } from "../../../utils/iconosCamion";
-import type { TipoCamion } from "../../../store/VehiculoStore";
 import type { Gasto } from "../../../store/GastosStore";
 import type { Ingreso } from "../../../store/IngresosStore";
 
@@ -52,7 +51,7 @@ export const CATEGORIA_META: Record<string, { icon: IconName; color: string }> =
  */
 export function metaDe(
   tipo: string | null | undefined,
-  tipoCamion: TipoCamion | null,
+  tipoCamion: string | null,
 ) {
   const base = (tipo && CATEGORIA_META[tipo]) || {
     icon: "otros" as IconName,
@@ -224,7 +223,7 @@ export function MovimientoRow({
   tipoCamion,
 }: {
   mov: Mov;
-  tipoCamion: TipoCamion | null;
+  tipoCamion: string | null;
 }) {
   const meta = metaDe(mov.tipo, tipoCamion);
   return (

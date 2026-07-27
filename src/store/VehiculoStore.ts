@@ -6,13 +6,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import supabase from "../config/SupaBaseConfig";
 import logger from "../utils/logger";
 
+// Carrocería base. La VARIANTE que se guarda por vehículo (p. ej.
+// "estacasTresEjes") es un string; ver vehicleConstants (normalizarTipo,
+// carroceriaBase).
 export type TipoCamion = "estacas" | "volqueta" | "furgon" | "grua" | "cisterna" | "planchon" | "tractocamion";
 
 interface VehiculoStore {
   placa: string | null;
-  tipoCamion: TipoCamion | null;
+  /** Variante del camión (id de TIPOS_CAMION), no solo la carrocería. */
+  tipoCamion: string | null;
   setPlaca: (placa: string) => Promise<void>;
-  setTipoCamion: (tipo: TipoCamion) => void;
+  setTipoCamion: (tipo: string) => void;
   clearVehiculo: () => void;
   /** Verifica que la placa guardada pertenezca al usuario actual.
    *  Si no existe ninguna asignación activa la limpia automáticamente. */
@@ -67,7 +71,7 @@ export const useVehiculoStore = create<VehiculoStore>()(
         }
       },
 
-      setTipoCamion: (tipoCamion: TipoCamion) => set({ tipoCamion }),
+      setTipoCamion: (tipoCamion: string) => set({ tipoCamion }),
       clearVehiculo: () => set({ placa: null, tipoCamion: null }),
 
       validarPlacaParaUsuario: async (userId: string) => {

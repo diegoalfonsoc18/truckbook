@@ -10,6 +10,7 @@
 //
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { callGemini } from "../config/aiConfig";
+import { carroceriaBase } from "../Screens/Home/vehicleConstants";
 
 const CACHE_KEY = "@truckbook_mercancias_norm_v3"; // v3: incluye tipoCamion en clave
 const TTL_MS    = 30 * 24 * 3_600_000; // 30 días por entrada
@@ -167,7 +168,8 @@ async function geminiNormalize(
   // Si el tipo de camión tiene contexto predefinido lo usa; si no, construye
   // un fallback dinámico que al menos incluye el nombre del tipo de camión
   // para que Gemini pueda inferir qué cargas son típicas para ese vehículo.
-  const ctx = CONTEXTO_CAMION[tipoCamion];
+  // El contexto va por carrocería base (la variante por ejes no cambia la carga).
+  const ctx = CONTEXTO_CAMION[carroceriaBase(tipoCamion)];
   const descripcion = ctx?.descripcion
     ?? `Camión tipo "${tipoCamion}" (Colombia) — tipo de vehículo no catalogado aún`;
   const ejemplosSection = ctx

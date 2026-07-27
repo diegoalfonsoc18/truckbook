@@ -9,11 +9,6 @@ import { SecureStoreAdapter } from "./secureStoreChunked";
 const supabaseUrl: string = Constants.expoConfig?.extra?.supabaseUrl ?? "";
 const supabaseAnonKey: string = Constants.expoConfig?.extra?.supabaseAnonKey ?? "";
 
-// Se exportan para la subida nativa de archivos (expo-file-system uploadAsync),
-// que va directo al endpoint REST de Storage sin pasar por el cliente JS.
-export const SUPABASE_URL = supabaseUrl;
-export const SUPABASE_ANON_KEY = supabaseAnonKey;
-
 // ─── Cliente Supabase ─────────────────────────────────────────────────────────
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

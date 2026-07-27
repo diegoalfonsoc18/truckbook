@@ -4,6 +4,7 @@ import {
   Modal,
   View,
   Text,
+  Image,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -31,7 +32,6 @@ import {
   getShadow,
 } from "../../../constants/Themecontext";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
-import ModalFotoCamion from "./ModalFotoCamion";
 import { validarPlaca } from "../../../utils/validacion";
 import { sanitizePlaca } from "../../../utils/sanitize";
 import logger from "../../../utils/logger";
@@ -39,6 +39,8 @@ import {
   Vehiculo,
   ICON_MAP,
   TIPOS_CAMION,
+  CATEGORIAS_EJES,
+  VEHICLE_PHOTOS,
   normalizarTipo,
 } from "../vehicleConstants";
 
@@ -64,18 +66,16 @@ export default function ModalVehiculos({
     cargar: cargarVehiculos,
   } = useVehiculosListStore();
   const [placaInput, setPlacaInput] = useState("");
-  const [tipoCamionInput, setTipoCamionInput] = useState<TipoCamion | null>(
-    null,
-  );
+  // Guarda la VARIANTE (id de TIPOS_CAMION), no solo la carrocería.
+  const [tipoCamionInput, setTipoCamionInput] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [vehiculoEditando, setVehiculoEditando] = useState<Vehiculo | null>(
     null,
   );
   const [placaEditInput, setPlacaEditInput] = useState("");
-  // Vehículo cuya foto se está cambiando (null = modal de foto cerrado)
-  const [fotoDe, setFotoDe] = useState<Vehiculo | null>(null);
-  const [tipoCamionEditInput, setTipoCamionEditInput] =
-    useState<TipoCamion | null>(null);
+  const [tipoCamionEditInput, setTipoCamionEditInput] = useState<string | null>(
+    null,
+  );
 
   // Refrescar al abrir modal (el store ya tiene datos pre-cargados desde DataProvider)
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function ModalVehiculos({
     if (user?.id) cargarVehiculos(user.id);
   };
 
-  const getTipoCamionData = (tipo: TipoCamion | null) =>
+  const getTipoCamionData = (tipo: string | null) =>
     TIPOS_CAMION.find((t) => t.id === tipo);
 
   const handleSeleccionarVehiculo = (vehiculo: Vehiculo) => {
@@ -258,6 +258,69 @@ export default function ModalVehiculos({
         : getShadow(false, "sm")),
   };
 
+  // Selector de tipo de camión agrupado por número de ejes (2 ejes / 3 ejes /
+  // Tractocamión). Lo usan el alta y la edición, por eso está factorizado aquí.
+  const renderSelectorTipo = (
+    value: string | null,
+    onChange: (t: string) => void,
+  ) => (
+    <View style={s.tipoGrupos}>
+      {CATEGORIAS_EJES.map((cat) => {
+        const tipos = TIPOS_CAMION.filter((t) => t.categoria === cat.id);
+        if (tipos.length === 0) return null;
+        return (
+          <View key={cat.id} style={s.tipoGrupo}>
+            <Text style={[s.tipoGrupoLabel, { color: c.textMuted }]}>
+              {cat.label}
+            </Text>
+            <View style={s.tipoGrupoChips}>
+              {tipos.map((tipo) => {
+                const selected = value === tipo.id;
+                // Foto del catálogo si el tipo la tiene; si no (p. ej. grúa),
+                // cae al ícono vectorial para no romper la consistencia.
+                const foto = VEHICLE_PHOTOS[tipo.id];
+                return (
+                  <TouchableOpacity
+                    key={tipo.id}
+                    style={[
+                      s.tipoChip,
+                      chipCard,
+                      selected && {
+                        borderWidth: 1.5,
+                        borderColor: c.accent,
+                        shadowOpacity: 0,
+                        elevation: 0,
+                      },
+                    ]}
+                    onPress={() => onChange(tipo.id)}>
+                    {foto ? (
+                      <Image
+                        source={foto}
+                        style={s.tipoFoto}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={s.tipoFoto}>
+                        <ItemIcon name={ICON_MAP[tipo.carroceria]} size={52} />
+                      </View>
+                    )}
+                    <Text
+                      style={[
+                        s.tipoChipLabel,
+                        { color: selected ? tipo.color : c.textSecondary },
+                      ]}>
+                      {tipo.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+
   return (
     <Modal
       visible={visible}
@@ -293,8 +356,10 @@ export default function ModalVehiculos({
                       {vehiculos.map((v) => {
                         const tipo = getTipoCamionData(v.tipo_camion);
                         const isActive = placaActual === v.placa;
+                        // Foto de la variante; ícono solo como respaldo.
+                        const vFoto = VEHICLE_PHOTOS[v.tipo_camion];
                         const vIconName: IconName = tipo
-                          ? ICON_MAP[tipo.id]
+                          ? ICON_MAP[tipo.carroceria]
                           : "conductor";
                         return (
                           <Swipeable
@@ -302,18 +367,6 @@ export default function ModalVehiculos({
                             overshootRight={false}
                             renderRightActions={() => (
                               <View style={s.swipeActions}>
-                                <TouchableOpacity
-                                  style={[
-                                    s.swipeActionBtn,
-                                    { backgroundColor: "#16A34A" },
-                                  ]}
-                                  onPress={() => setFotoDe(v)}>
-                                  <Ionicons
-                                    name="camera-outline"
-                                    size={20}
-                                    color="#fff"
-                                  />
-                                </TouchableOpacity>
                                 <TouchableOpacity
                                   style={[
                                     s.swipeActionBtn,
@@ -356,10 +409,15 @@ export default function ModalVehiculos({
                               onPress={() => handleSeleccionarVehiculo(v)}
                               activeOpacity={0.7}>
                               <View style={s.vehicleOptionIcon}>
-                                <ItemIcon
-                                  name={vIconName}
-                                  size={Platform.OS === "ios" ? 48 : 48}
-                                />
+                                {vFoto ? (
+                                  <Image
+                                    source={vFoto}
+                                    style={s.vehicleOptionFoto}
+                                    resizeMode="contain"
+                                  />
+                                ) : (
+                                  <ItemIcon name={vIconName} size={48} />
+                                )}
                               </View>
                               <View
                                 style={{
@@ -427,46 +485,10 @@ export default function ModalVehiculos({
                         onSubmitEditing={Keyboard.dismiss}
                       />
 
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                        style={s.tipoScroll}>
-                        {TIPOS_CAMION.map((tipo) => {
-                          const selected = tipoCamionEditInput === tipo.id;
-                          return (
-                            <TouchableOpacity
-                              key={tipo.id}
-                              style={[
-                                s.tipoChip,
-                                chipCard,
-                                selected && {
-                                  borderWidth: 1.5,
-                                  borderColor: c.accent,
-                                  shadowOpacity: 0,
-                                  elevation: 0,
-                                },
-                              ]}
-                              onPress={() => setTipoCamionEditInput(tipo.id)}>
-                              <ItemIcon
-                                name={tipo.iconName}
-                                size={Platform.OS === "ios" ? 52 : 52}
-                              />
-                              <Text
-                                style={[
-                                  s.tipoChipLabel,
-                                  {
-                                    color: selected
-                                      ? tipo.color
-                                      : c.textSecondary,
-                                  },
-                                ]}>
-                                {tipo.label}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </ScrollView>
+                      {renderSelectorTipo(
+                        tipoCamionEditInput,
+                        setTipoCamionEditInput,
+                      )}
 
                       <TouchableOpacity
                         style={[
@@ -522,42 +544,7 @@ export default function ModalVehiculos({
                       onSubmitEditing={Keyboard.dismiss}
                     />
 
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      keyboardShouldPersistTaps="handled"
-                      style={s.tipoScroll}>
-                      {TIPOS_CAMION.map((tipo) => {
-                        const selected = tipoCamionInput === tipo.id;
-                        return (
-                          <TouchableOpacity
-                            key={tipo.id}
-                            style={[
-                              s.tipoChip,
-                              chipCard,
-                              selected && {
-                                borderWidth: 1.5,
-                                borderColor: c.accent,
-                                shadowOpacity: 0,
-                                elevation: 0,
-                              },
-                            ]}
-                            onPress={() => setTipoCamionInput(tipo.id)}>
-                            <ItemIcon
-                              name={tipo.iconName}
-                              size={Platform.OS === "ios" ? 52 : 52}
-                            />
-                            <Text
-                              style={[
-                                s.tipoChipLabel,
-                                { color: c.textSecondary },
-                              ]}>
-                              {tipo.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
+                    {renderSelectorTipo(tipoCamionInput, setTipoCamionInput)}
 
                     <TouchableOpacity
                       style={[
@@ -595,23 +582,6 @@ export default function ModalVehiculos({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-
-      {/* Foto del camión. Va como overlay y no como <Modal>: iOS no monta un
-          modal encima de otro, y este ya está dentro de uno. */}
-      {fotoDe && user?.id && (
-        <ModalFotoCamion
-          comoOverlay
-          visible={!!fotoDe}
-          onClose={() => setFotoDe(null)}
-          userId={user.id}
-          placa={fotoDe.placa}
-          tipoCamion={fotoDe.tipo_camion}
-          onGuardada={() => {
-            // Recargar para que la tarjeta del Home tome la foto nueva
-            if (user?.id) cargarVehiculos(user.id);
-          }}
-        />
-      )}
     </Modal>
   );
 }
@@ -649,11 +619,17 @@ const s = StyleSheet.create({
     position: "relative" as const,
   },
   vehicleOptionIcon: {
-    width: 52,
-    height: 52,
+    width: 64,
+    height: 48,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
+  },
+  // Foto de la variante en la fila: ancha (las fotos son ~5:3) para que el
+  // camión se vea, no un cuadrito.
+  vehicleOptionFoto: {
+    width: 64,
+    height: 48,
   },
   vehicleOptionType: {
     ...TYPOGRAPHY.bodyBold,
@@ -709,14 +685,28 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   selectorLabel: { ...TYPOGRAPHY.captionBold, marginBottom: 10 },
-  tipoScroll: { marginBottom: 24 },
+  tipoGrupos: { marginBottom: 16, gap: 14 },
+  tipoGrupo: { gap: 8 },
+  tipoGrupoLabel: {
+    ...TYPOGRAPHY.small,
+    fontWeight: "700" as const,
+  },
+  tipoGrupoChips: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tipoChip: {
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     borderRadius: 14,
-    padding: 12,
-    marginRight: 10,
-    minWidth: 72,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    width: 108,
+  },
+  // Caja de la foto: ancha (las fotos del catálogo son ~5:3) y de alto fijo,
+  // así todos los chips quedan parejos aunque un tipo caiga al ícono.
+  tipoFoto: {
+    width: 84,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
   },
   tipoChipLabel: {
     ...TYPOGRAPHY.small,
