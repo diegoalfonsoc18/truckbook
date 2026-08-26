@@ -34,15 +34,19 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     const ingresosPropios = ingresos.filter((i) => i.conductor_id === userId);
     if (ingresosPropios.length !== ingresos.length) setIngresos(ingresosPropios);
   }, [userId]);
-  const { setGastosPorPlaca, agregarGasto, editarGasto, eliminarGasto } =
-    useGastosStore();
-  const {
-    setIngresosPorPlaca,
-    agregarIngreso,
-    editarIngreso,
-    eliminarIngreso,
-  } = useIngresosStore();
-  const { cargar: cargarVehiculos } = useVehiculosListStore();
+  // Selectores por acción: las acciones de Zustand son referencias estables, así
+  // que DataProvider no se re-renderiza en cada cambio de gasto/ingreso (que con
+  // realtime puede ser muy seguido). Con `useGastosStore()` sin selector sí lo
+  // haría, al suscribirse al store completo.
+  const setGastosPorPlaca = useGastosStore((s) => s.setGastosPorPlaca);
+  const agregarGasto = useGastosStore((s) => s.agregarGasto);
+  const editarGasto = useGastosStore((s) => s.editarGasto);
+  const eliminarGasto = useGastosStore((s) => s.eliminarGasto);
+  const setIngresosPorPlaca = useIngresosStore((s) => s.setIngresosPorPlaca);
+  const agregarIngreso = useIngresosStore((s) => s.agregarIngreso);
+  const editarIngreso = useIngresosStore((s) => s.editarIngreso);
+  const eliminarIngreso = useIngresosStore((s) => s.eliminarIngreso);
+  const cargarVehiculos = useVehiculosListStore((s) => s.cargar);
 
   // ✅ CARGAR VEHÍCULOS AL MONTAR
   useEffect(() => {

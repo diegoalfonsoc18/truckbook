@@ -611,6 +611,11 @@ export default function TransactionScreen({
   const contactsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  // Token de búsqueda: cada búsqueda se sella con un id. Al elegir un contacto
+  // (o iniciar otra búsqueda) se incrementa, así un `getContactsAsync` que ya
+  // estaba en vuelo resuelve con un id viejo y NO vuelve a poblar la lista.
+  // Sin esto, tras seleccionar reaparecían las sugerencias.
+  const contactsReqRef = useRef(0);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-10)).current;
@@ -696,6 +701,7 @@ export default function TransactionScreen({
   const closeModal = () => {
     Keyboard.dismiss();
     if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+    contactsReqRef.current++; // invalida búsquedas en vuelo
     setContactsList([]);
     setContactsLoading(false);
     setModalVisible(false);
@@ -712,6 +718,8 @@ export default function TransactionScreen({
   // ofrece como sugerencias inline debajo del input
   const buscarContactos = (query: string) => {
     if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+    // Sella esta búsqueda; invalida cualquier resultado anterior en vuelo.
+    const reqId = ++contactsReqRef.current;
     const q = query.trim();
     if (q.length < 2) {
       setContactsList([]);
@@ -727,13 +735,16 @@ export default function TransactionScreen({
           contactsPermRef.current = status === "granted" ? "granted" : "denied";
         }
         if (contactsPermRef.current !== "granted") {
-          setContactsList([]);
+          if (reqId === contactsReqRef.current) setContactsList([]);
           return;
         }
         const { data } = await Contacts.getContactsAsync({
           fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
           name: q, // filtro nativo en iOS/Android
         });
+        // Si mientras tanto se eligió un contacto o se tecleó de nuevo, este
+        // resultado quedó obsoleto: no repoblar la lista.
+        if (reqId !== contactsReqRef.current) return;
         setContactsList(
           data
             .filter((ct) => !!ct.name)
@@ -745,9 +756,9 @@ export default function TransactionScreen({
             .slice(0, 5),
         );
       } catch {
-        setContactsList([]);
+        if (reqId === contactsReqRef.current) setContactsList([]);
       } finally {
-        setContactsLoading(false);
+        if (reqId === contactsReqRef.current) setContactsLoading(false);
       }
     }, 280);
   };
@@ -1455,6 +1466,9 @@ export default function TransactionScreen({
                                               clearTimeout(
                                                 contactsDebounceRef.current,
                                               );
+                                            // Invalida cualquier búsqueda en vuelo
+                                            // para que su resultado no reabra la lista.
+                                            contactsReqRef.current++;
                                             setExtraValues((prev) => ({
                                               ...prev,
                                               cliente: ct.name ?? "",

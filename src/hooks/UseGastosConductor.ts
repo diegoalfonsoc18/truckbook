@@ -9,8 +9,12 @@ import logger from "../utils/logger";
  * La carga inicial y el realtime viven en DataProvider — única fuente de datos.
  */
 export const useGastosConductor = (conductorId?: string | null) => {
-  const { agregarGasto, editarGasto, eliminarGasto } = useGastosStore();
-  const { enqueue } = useOfflineQueueStore();
+  // Selectores por acción (referencias estables): evita que el componente que
+  // usa este hook se re-renderice en cada cambio del store de gastos.
+  const agregarGasto = useGastosStore((s) => s.agregarGasto);
+  const editarGasto = useGastosStore((s) => s.editarGasto);
+  const eliminarGasto = useGastosStore((s) => s.eliminarGasto);
+  const enqueue = useOfflineQueueStore((s) => s.enqueue);
 
   const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">

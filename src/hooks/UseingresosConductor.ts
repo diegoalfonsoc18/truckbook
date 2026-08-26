@@ -9,8 +9,12 @@ import logger from "../utils/logger";
  * La carga inicial y el realtime viven en DataProvider — única fuente de datos.
  */
 export const useIngresosConductor = (conductorId?: string | null) => {
-  const { agregarIngreso, editarIngreso, eliminarIngreso } = useIngresosStore();
-  const { enqueue } = useOfflineQueueStore();
+  // Selectores por acción (referencias estables): evita que el componente que
+  // usa este hook se re-renderice en cada cambio del store de ingresos.
+  const agregarIngreso = useIngresosStore((s) => s.agregarIngreso);
+  const editarIngreso = useIngresosStore((s) => s.editarIngreso);
+  const eliminarIngreso = useIngresosStore((s) => s.eliminarIngreso);
+  const enqueue = useOfflineQueueStore((s) => s.enqueue);
 
   const agregarIngresoAsync = async (
     ingreso: Omit<Ingreso, "id" | "created_at">
