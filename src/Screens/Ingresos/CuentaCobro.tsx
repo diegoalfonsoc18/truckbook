@@ -892,7 +892,8 @@ const s = StyleSheet.create({
   divider: { height: 1 },
   inputRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 4 },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, paddingVertical: 12 },
+  // letterSpacing: 0 evita el tracking raro de iOS que separa las letras.
+  input: { flex: 1, fontSize: 15, paddingVertical: 12, letterSpacing: 0 },
 
   // Servicios
   servicioHeader: {

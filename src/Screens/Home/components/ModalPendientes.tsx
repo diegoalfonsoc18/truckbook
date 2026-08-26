@@ -54,6 +54,11 @@ interface Grupo {
 /** Monto real de un ingreso: un registro puede ser el mismo flete repetido. */
 const montoTotal = (i: Ingreso) => (i.monto ?? 0) * (i.cantidad ?? 1);
 
+/** Número de fletes: un registro con `cantidad` es ese flete repetido N veces,
+ *  no un solo flete. Contar registros (`.length`) subestima los viajes. */
+const contarFletes = (items: Ingreso[]) =>
+  items.reduce((n, i) => n + (i.cantidad ?? 1), 0);
+
 /** Nombre del cliente: columna `cliente` o el primer segmento de la descripción. */
 function nombreCliente(i: Ingreso): string {
   const { desc } = extraerTelDesc(i.descripcion ?? "");
@@ -129,6 +134,8 @@ export function ModalPendientes({
     () => pendientes.reduce((a, p) => a + montoTotal(p), 0),
     [pendientes],
   );
+  // Viajes reales, sumando `cantidad` — no número de registros.
+  const totalFletes = useMemo(() => contarFletes(pendientes), [pendientes]);
   const nVencidos = useMemo(
     () => grupos.filter((g) => g.diasMax >= DIAS_VENCIDO).length,
     [grupos],
@@ -293,8 +300,8 @@ export function ModalPendientes({
                   {fmtI(totalPend)}
                 </Text>
                 <Text style={[st.subtitulo, { color: c.textSecondary }]}>
-                  {pendientes.length} flete{pendientes.length !== 1 ? "s" : ""}
-                  {grupos.length !== pendientes.length
+                  {totalFletes} flete{totalFletes !== 1 ? "s" : ""}
+                  {grupos.length !== totalFletes
                     ? ` · ${grupos.length} cliente${grupos.length !== 1 ? "s" : ""}`
                     : ""}
                 </Text>
@@ -367,6 +374,9 @@ export function ModalPendientes({
               {grupos.map((g) => {
                 const color = colorPorDias(g.diasMax);
                 const varios = g.items.length > 1;
+                // Fletes reales del cliente (suma `cantidad`), no registros:
+                // un solo registro ×3 son 3 fletes.
+                const nFletes = contarFletes(g.items);
                 const esEmpresa = clientTypes[g.cliente] === "empresa";
 
                 return (
@@ -410,10 +420,10 @@ export function ModalPendientes({
                               {etiquetaDias(g.diasMax)}
                             </Text>
                           </View>
-                          {varios && (
+                          {nFletes > 1 && (
                             <Text
                               style={[st.meta, { color: c.textSecondary }]}>
-                              {g.items.length} fletes
+                              {nFletes} fletes
                             </Text>
                           )}
                         </View>
