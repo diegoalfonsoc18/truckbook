@@ -616,7 +616,10 @@ export default function FinanzasGenerales() {
       const desc = String(i.descripcion || "").replace(/\[TEL:[^\]]*\]/g, "");
       const seg = desc.split(" · ")[0].trim();
       if (seg) cands.push(norm(seg));
-      return cands.includes(clienteBuscado);
+      // Coincidencia por substring, no exacta: escribir "juan" debe encontrar
+      // "Juan Pérez". Antes se exigía igualdad, así que un nombre parcial (sin
+      // elegir sugerencia) no encontraba nada y el informe salía vacío.
+      return cands.some((cand) => cand.includes(clienteBuscado));
     };
     // Filtro de estado: solo aplica a ingresos (un gasto no se "cobra").
     // Con "solo por cobrar" o "solo pagadas" se excluyen además los gastos:
