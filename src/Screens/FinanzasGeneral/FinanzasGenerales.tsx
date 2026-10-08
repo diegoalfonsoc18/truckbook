@@ -59,7 +59,7 @@ export default function FinanzasGenerales() {
 
   const [exportando, setExportando] = useState(false);
   const [exportModal, setExportModal] = useState(false);
-  const [view, setView] = useState<ViewType>("meses");
+  const [view, setView] = useState<ViewType>("dias");
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">(
     "inicio",
