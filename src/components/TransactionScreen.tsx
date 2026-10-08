@@ -21,7 +21,7 @@ import {
   TextInput,
   Modal,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   ActivityIndicator,
   StyleSheet,
   Platform,
@@ -50,7 +50,6 @@ import { TipoTransaccion } from "../services/geminiService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
-const { width } = Dimensions.get("window");
 const H_PAD = 20;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -171,7 +170,7 @@ function CatCard({
   }));
 
   return (
-    <AnimatedPressable
+    <AnimatedPressable accessibilityRole="button"
       style={[cardStyle, animStyle]}
       onPressIn={() => {
         scale.value = withTiming(0.91, { duration: 100 });
@@ -213,7 +212,7 @@ function SwipeActionButton({
   const scale = useSharedValue(1);
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
-    <AnimatedPressable
+    <AnimatedPressable accessibilityRole="button" accessibilityLabel={label}
       onPress={onPress}
       onPressIn={() => {
         scale.value = withTiming(0.88, { duration: 90 });
@@ -389,7 +388,7 @@ function TransactionRow({
         />
       )}
       containerStyle={{ marginBottom: 6, paddingVertical: 4 }}>
-      <AnimatedPressable
+      <AnimatedPressable accessibilityRole="button"
         style={[s.row, cardStyle, animStyle]}
         onPressIn={() => {
           scale.value = withTiming(0.97, { duration: 110 });
@@ -433,7 +432,7 @@ function TransactionRow({
           })()}
           <View style={s.rowMeta}>
             {/* Badge de estado — tappable si canToggle */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole={canToggle ? "button" : "text"} accessibilityLabel={`Estado: ${getStatusLabel(item.estado)}`} accessibilityState={{ disabled: !canToggle }}
               activeOpacity={canToggle ? 0.65 : 1}
               onPress={
                 canToggle
@@ -519,7 +518,7 @@ function EscanearButton({
   };
 
   return (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button"
       style={[
         {
           flexDirection: "row",
@@ -581,6 +580,7 @@ export default function TransactionScreen({
   onCategoryAction,
   tipoTransaccion,
 }: TransactionScreenProps) {
+  const { width } = useWindowDimensions();
   const { colors: c, isDark } = useTheme();
   const shadow = getShadow(isDark, "md");
 
@@ -976,7 +976,7 @@ export default function TransactionScreen({
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               {headerAction && (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={headerAction.label}
                   style={[
                     s.headerActionBtn,
                     {
@@ -1012,7 +1012,7 @@ export default function TransactionScreen({
             </View>
           </View>
           {/* Date badge debajo */}
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Seleccionar fecha"
             onPress={() => setCalendarVisible(true)}
             activeOpacity={0.7}
             style={[
@@ -1091,7 +1091,7 @@ export default function TransactionScreen({
                   index={index}
                   isDark={isDark}
                   accentColor={accentColor}
-                  cardStyle={[s.catCard, card]}
+                  cardStyle={[s.catCard, { width: (width - H_PAD * 2 - 10 * 3) / 4 }, card]}
                   textColor={c.text}
                   onPress={openAdd}
                 />
@@ -1168,7 +1168,7 @@ export default function TransactionScreen({
         navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityViewIsModal
           style={[s.overlay, { backgroundColor: c.overlay }]}
           activeOpacity={1}
           onPress={() => setCalendarVisible(false)}>
@@ -1220,7 +1220,7 @@ export default function TransactionScreen({
           navigationBarTranslucent
           animationType="slide"
           onRequestClose={() => setSubModalVisible(false)}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityViewIsModal
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
             onPress={() => setSubModalVisible(false)}>
@@ -1237,7 +1237,7 @@ export default function TransactionScreen({
                 <Text style={[s.sheetTitle, { color: c.text }]}>Taller</Text>
                 <View style={s.subGrid}>
                   {subcategorias.map((sub) => (
-                    <TouchableOpacity
+                    <TouchableOpacity accessibilityRole="button"
                       key={sub.id}
                       onPress={() => {
                         setSubModalVisible(false);
@@ -1278,7 +1278,7 @@ export default function TransactionScreen({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityViewIsModal
             style={[s.overlay, { backgroundColor: c.overlay }]}
             activeOpacity={1}
             onPress={closeModal}>
@@ -1365,7 +1365,7 @@ export default function TransactionScreen({
                                   inputStyle,
                                   { justifyContent: "space-between" },
                                 ]}>
-                                <TouchableOpacity
+                                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Disminuir cantidad"
                                   style={[
                                     s.qtyBtn,
                                     { backgroundColor: c.border },
@@ -1391,7 +1391,7 @@ export default function TransactionScreen({
                                 <Text style={[s.qtyText, { color: c.text }]}>
                                   {extraValues[campo.key] || "1"}
                                 </Text>
-                                <TouchableOpacity
+                                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Aumentar cantidad"
                                   style={[
                                     s.qtyBtn,
                                     { backgroundColor: c.border },
@@ -1419,7 +1419,7 @@ export default function TransactionScreen({
                               /* ─── Campo de texto normal ─── */
                               <>
                                 <View style={[s.inputRow, inputStyle]}>
-                                  <TextInput
+                                  <TextInput accessibilityLabel={campo.label ?? campo.placeholder}
                                     keyboardAppearance="light"
                                     style={[s.textInput, { color: c.text }]}
                                     placeholder={campo.placeholder}
@@ -1458,7 +1458,7 @@ export default function TransactionScreen({
                                         },
                                       ]}>
                                       {contactsList.map((ct, i) => (
-                                        <TouchableOpacity
+                                        <TouchableOpacity accessibilityRole="button"
                                           key={(ct as any).id ?? `${i}`}
                                           style={[
                                             s.contactRow,
@@ -1534,7 +1534,7 @@ export default function TransactionScreen({
                           <Text style={[s.inputPrefix, { color: c.textMuted }]}>
                             $
                           </Text>
-                          <TextInput
+                          <TextInput accessibilityLabel="Monto"
                             keyboardAppearance="light"
                             style={[
                               s.textInput,
@@ -1573,7 +1573,7 @@ export default function TransactionScreen({
                               )}
                             </Text>
                             <View style={[s.inputRow, inputStyle]}>
-                              <TextInput
+                              <TextInput accessibilityLabel="Descripción"
                                 keyboardAppearance="light"
                                 style={[s.textInput, { color: c.text }]}
                                 placeholder={
@@ -1609,7 +1609,7 @@ export default function TransactionScreen({
                                   : c.border,
                               },
                             ]}>
-                            <TouchableOpacity
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Pagado" accessibilityState={{ selected: editEstado === "pagado" }}
                               style={[
                                 s.estadoBtn,
                                 editEstado === "pagado" && {
@@ -1639,7 +1639,7 @@ export default function TransactionScreen({
                                 Pagado
                               </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Pendiente" accessibilityState={{ selected: editEstado === "pendiente" }}
                               style={[
                                 s.estadoBtn,
                                 editEstado === "pendiente" && {
@@ -1678,7 +1678,7 @@ export default function TransactionScreen({
 
                     {/* Botones — fuera del scroll, siempre visibles */}
                     <View style={[s.modalBtns, { marginTop: 10 }]}>
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button"
                         style={[
                           s.cancelBtn,
                           { backgroundColor: c.surface, borderColor: c.border },
@@ -1689,7 +1689,7 @@ export default function TransactionScreen({
                           Cancelar
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button" accessibilityState={{ busy: loading }}
                         style={[
                           s.saveBtn,
                           { backgroundColor: accentColor },
@@ -1828,7 +1828,6 @@ const s = StyleSheet.create({
     marginBottom: 28,
   },
   catCard: {
-    width: (width - H_PAD * 2 - 10 * 3) / 4,
     alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 4,

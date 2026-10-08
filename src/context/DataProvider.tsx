@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
 import supabase from "../config/SupaBaseConfig";
 import { useSyncManager } from "../hooks/useSyncManager";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
@@ -162,6 +163,42 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!placa || !userId) return;
 
+    let activo = true;
+    // Descarta respuestas tardías de refetch: solo la última consulta aplica.
+    let seqGastos = 0;
+    let seqIngresos = 0;
+    let huboCaida = false;
+
+    // Re-consulta de la placa activa (mismo tope de 200 filas que la carga inicial).
+    const refrescar = async () => {
+      const miGastos = ++seqGastos;
+      const miIngresos = ++seqIngresos;
+      try {
+        const { data, error } = await supabase
+          .from("conductor_gastos")
+          .select("*")
+          .eq("placa", placa)
+          .eq("conductor_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (!error && data && activo && miGastos === seqGastos) setGastosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error re-consultando gastos:", err?.message ?? err);
+      }
+      try {
+        const { data, error } = await supabase
+          .from("conductor_ingresos")
+          .select("*")
+          .eq("placa", placa)
+          .eq("conductor_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (!error && data && activo && miIngresos === seqIngresos) setIngresosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error re-consultando ingresos:", err?.message ?? err);
+      }
+    };
+
     const subscription = supabase
       .channel(`data-${userId}-${placa}`)
       .on(
@@ -172,6 +209,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           table: "conductor_gastos",
           // Filtrar por conductor_id (seguridad): evita recibir filas de otras
           // cuentas que comparten la misma placa. La placa se valida en el handler.
+          // OJO: realtime NO aplica filtros de columna a los DELETE; esos se
+          // manejan en el handler dedicado de abajo.
           filter: `conductor_id=eq.${userId}`,
         },
         (payload) => {
@@ -181,9 +220,21 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (payload.eventType === "UPDATE") {
             if (payload.new.placa !== placa) return;
             editarGasto(payload.new.id, payload.new);
-          } else if (payload.eventType === "DELETE") {
-            eliminarGasto(payload.old.id);
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "conductor_gastos" },
+        (payload) => {
+          // Sin filtro: llega cualquier borrado de la tabla (solo trae el id).
+          // Solo se aplica si el id existe en el store del usuario actual.
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (!id) return;
+          const propio = useGastosStore
+            .getState()
+            .gastos.some((g) => g.id === id && g.conductor_id === userId);
+          if (propio) eliminarGasto(id);
         }
       )
       .on(
@@ -201,14 +252,46 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (payload.eventType === "UPDATE") {
             if (payload.new.placa !== placa) return;
             editarIngreso(payload.new.id, payload.new);
-          } else if (payload.eventType === "DELETE") {
-            eliminarIngreso(payload.old.id);
           }
         }
       )
-      .subscribe();
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "conductor_ingresos" },
+        (payload) => {
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (!id) return;
+          const propio = useIngresosStore
+            .getState()
+            .ingresos.some((i) => i.id === id && i.conductor_id === userId);
+          if (propio) eliminarIngreso(id);
+        }
+      )
+      .subscribe((status) => {
+        // Tras una caída del canal, los eventos ocurridos mientras estuvo
+        // caído se perdieron: al volver a SUBSCRIBED se re-consulta todo.
+        if (status === "SUBSCRIBED") {
+          if (huboCaida) {
+            huboCaida = false;
+            refrescar();
+          }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          huboCaida = true;
+        }
+      });
+
+    // Al recuperar conexión también se re-consulta (el canal puede reconectar
+    // solo, pero los eventos del intervalo offline no se reenvían).
+    let estabaOnline: boolean | null = null;
+    const unsubNet = NetInfo.addEventListener((state) => {
+      const online = !!(state.isConnected && state.isInternetReachable);
+      if (online && estabaOnline === false) refrescar();
+      estabaOnline = online;
+    });
 
     return () => {
+      activo = false;
+      unsubNet();
       supabase.removeChannel(subscription);
     };
   }, [placa, userId]);

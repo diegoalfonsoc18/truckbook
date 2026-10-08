@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   TextInput,
@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -53,8 +53,6 @@ if (!isExpoGo) {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const { width, height } = Dimensions.get("window");
-const COMPACT = height < 680;
 
 type RootStackParamList = {
   Login: undefined;
@@ -67,6 +65,9 @@ type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 export default function LoginScreen({ navigation }: Props) {
   const { colors: c, isDark } = useTheme();
+  const { width, height } = useWindowDimensions();
+  const COMPACT = height < 680;
+  const s = useMemo(() => makeStyles(width, height), [width, height]);
   const shadow = getShadow(isDark, "sm");
   const inputSty = getInputStyles(isDark, c);
 
@@ -292,7 +293,7 @@ export default function LoginScreen({ navigation }: Props) {
                   color={c.textMuted}
                   style={s.inputIcon}
                 />
-                <TextInput
+                <TextInput accessibilityLabel="Correo electrónico"
                   keyboardAppearance="light"
                   style={[inputSty.text, { color: c.text }]}
                   placeholder="tu@correo.com"
@@ -322,7 +323,7 @@ export default function LoginScreen({ navigation }: Props) {
                   color={c.textMuted}
                   style={s.inputIcon}
                 />
-                <TextInput
+                <TextInput accessibilityLabel="Contraseña"
                   keyboardAppearance="light"
                   style={[inputSty.text, { color: c.text }]}
                   placeholder="••••••••"
@@ -336,7 +337,7 @@ export default function LoginScreen({ navigation }: Props) {
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
                 />
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                   onPress={() => setShowPwd(!showPwd)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons
@@ -348,7 +349,7 @@ export default function LoginScreen({ navigation }: Props) {
               </View>
 
               {/* FORGOT */}
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={s.forgot}
                 onPress={() => {
                   Keyboard.dismiss();
@@ -362,7 +363,7 @@ export default function LoginScreen({ navigation }: Props) {
               </TouchableOpacity>
 
               {/* CTA */}
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                 style={[
                   s.cta,
                   { backgroundColor: c.accent },
@@ -392,7 +393,7 @@ export default function LoginScreen({ navigation }: Props) {
               {/* SOCIAL */}
               <View style={s.socialRow}>
                 {Platform.OS === "ios" && (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={[
                       s.socialBtn,
                       { backgroundColor: c.cardBg, borderColor: c.border },
@@ -406,7 +407,7 @@ export default function LoginScreen({ navigation }: Props) {
                   </TouchableOpacity>
                 )}
 
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={[
                     s.socialBtn,
                     { backgroundColor: c.cardBg, borderColor: c.border },
@@ -445,9 +446,10 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
+const makeStyles = (width: number, height: number) => {
+const COMPACT = height < 680;
 const IMG_H = Math.min(height * 0.18, 200);
-
-const s = StyleSheet.create({
+return StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
   kav: { flex: 1 },
@@ -539,3 +541,4 @@ const s = StyleSheet.create({
   footerText: { fontSize: 14 },
   footerLink: { fontSize: 14, fontWeight: "700" },
 });
+};

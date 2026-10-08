@@ -67,9 +67,12 @@ export async function enviarPushNotificacion(
   body: string,
   data?: Record<string, any>
 ): Promise<void> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
   try {
     const { error } = await supabase.functions.invoke("send-push-notification", {
       body: { targetUserId, title, body, data },
+      signal: controller.signal,
     });
 
     if (error) {
@@ -77,6 +80,8 @@ export async function enviarPushNotificacion(
     }
   } catch (err) {
     logger.error("Error enviando push:", err);
+  } finally {
+    clearTimeout(timer);
   }
 }
 

@@ -1,4 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
+import { v4 as uuidv4 } from "uuid";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
@@ -24,12 +25,16 @@ export const useGastosConductor = (conductorId?: string | null) => {
     const netState = await NetInfo.fetch();
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
+    // Clave de idempotencia: viaja en el insert (online u offline) para que un
+    // reintento tras perder la respuesta no duplique el registro.
+    const clientId = uuidv4();
+
     if (isOnline) {
       // Online: guardar directo en Supabase
       try {
         const { data, error: err } = await supabase
           .from("conductor_gastos")
-          .insert([gasto])
+          .insert([{ ...gasto, client_id: clientId }])
           .select();
 
         if (err) throw err;
@@ -43,6 +48,7 @@ export const useGastosConductor = (conductorId?: string | null) => {
       const tempId = `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const gastoLocal: Gasto = {
         ...gasto,
+        client_id: clientId,
         id: tempId,
         created_at: new Date().toISOString(),
       };

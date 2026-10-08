@@ -61,10 +61,10 @@ export default function IngresGast({
               </View>
 
               <View style={styles.actionButtons}>
-                <TouchableOpacity onPress={() => onEdit(item.id)}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Editar" onPress={() => onEdit(item.id)}>
                   <MaterialIcons name="edit" size={24} color={colors.primary} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => onDelete(item.id)}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Eliminar" onPress={() => onDelete(item.id)}>
                   <MaterialIcons
                     name="delete"
                     size={24}

@@ -12,6 +12,8 @@ export interface Ingreso {
   fecha: string;
   estado: "pendiente" | "confirmado" | "pagado" | "vencido" | "parcial";
   created_at: string;
+  /** Clave de idempotencia del insert (uuid generado en el cliente). */
+  client_id?: string | null;
   cantidad?: number; // Fletes múltiples: x2, x3, etc. Default 1
   // Campos para Centro de Pendientes
   fecha_vencimiento?: string | null;
@@ -41,8 +43,12 @@ export const useIngresosStore = create<IngresosState>()(
           ingresos: [
             ...state.ingresos.filter((i) => i.placa !== placa),
             // Conservar los ingresos creados offline pendientes de sincronizar.
+            // Salvo que el servidor ya trajo la fila real (mismo client_id).
             ...state.ingresos.filter(
-              (i) => i.placa === placa && i.id.startsWith("offline_"),
+              (i) =>
+                i.placa === placa &&
+                i.id.startsWith("offline_") &&
+                !(i.client_id && ingresosNuevos.some((n) => n.client_id === i.client_id)),
             ),
             ...ingresosNuevos,
           ],
@@ -52,7 +58,13 @@ export const useIngresosStore = create<IngresosState>()(
         set((state) => {
           // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
           if (state.ingresos.some((i) => i.id === ingreso.id)) return state;
-          return { ingresos: [ingreso, ...state.ingresos] };
+          // Si llega la fila real de un insert offline (mismo client_id), reemplaza el temporal.
+          const base = ingreso.client_id
+            ? state.ingresos.filter(
+                (i) => !(i.id.startsWith("offline_") && i.client_id === ingreso.client_id),
+              )
+            : state.ingresos;
+          return { ingresos: [ingreso, ...base] };
         }),
 
       editarIngreso: (id, updates) =>

@@ -113,11 +113,11 @@ export default function ModalExportar({
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityViewIsModal
           style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
           activeOpacity={1}
           onPress={onClose}>
-          <TouchableOpacity activeOpacity={1}>
+          <TouchableOpacity accessible={false} activeOpacity={1}>
             <View
               style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
               <View
@@ -127,7 +127,7 @@ export default function ModalExportar({
                 <Text style={[styles.modalTitle, { color: c.text }]}>
                   Exportar informe
                 </Text>
-                <TouchableOpacity onPress={onClose}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose}>
                   <Ionicons name="close" size={22} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
@@ -142,7 +142,7 @@ export default function ModalExportar({
               </Text>
               <View style={styles.periodosGrid}>
                 {PERIODOS.map(({ key, label }) => (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: periodoRapido === key }}
                     key={key}
                     style={[
                       styles.periodoChip,
@@ -172,7 +172,7 @@ export default function ModalExportar({
                   styles.exportRangeRow,
                   { backgroundColor: c.cardBg, borderColor: c.border },
                 ]}>
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={styles.exportDateBtn}
                   onPress={() => onAbrirCalendario("inicio")}
                   activeOpacity={0.7}>
@@ -184,7 +184,7 @@ export default function ModalExportar({
                   </Text>
                 </TouchableOpacity>
                 <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={styles.exportDateBtn}
                   onPress={() => onAbrirCalendario("fin")}
                   activeOpacity={0.7}>
@@ -205,7 +205,7 @@ export default function ModalExportar({
                 ]}>
                 Filtrar por cliente (opcional)
               </Text>
-              <TextInput
+              <TextInput accessibilityLabel="Filtrar por cliente (opcional)"
                 style={[
                   styles.exportClienteInput,
                   {
@@ -236,7 +236,7 @@ export default function ModalExportar({
                     { backgroundColor: c.cardBg, borderColor: c.border },
                   ]}>
                   {sugerencias.slice(0, 5).map((cli) => (
-                    <TouchableOpacity
+                    <TouchableOpacity accessibilityRole="button"
                       key={cli}
                       style={[
                         styles.exportSugerenciaItem,
@@ -261,7 +261,7 @@ export default function ModalExportar({
                 {ESTADOS_EXPORT.map(({ key, label }) => {
                   const selected = estado === key;
                   return (
-                    <TouchableOpacity
+                    <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: selected }}
                       key={key ?? "__ambas"}
                       style={[
                         styles.estadoChip,
@@ -295,7 +295,7 @@ export default function ModalExportar({
               />
 
               {/* GENERAR */}
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[styles.exportGenerarBtn, { backgroundColor: c.accent }]}
                 onPress={onGenerar}
                 activeOpacity={0.85}>

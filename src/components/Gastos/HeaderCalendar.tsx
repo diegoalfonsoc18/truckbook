@@ -53,7 +53,7 @@ export default function HeaderCalendar({
       </View>
 
       {/* Fecha seleccionada, placa y botón para mostrar el calendario */}
-      <TouchableOpacity onPress={toggleCalendar} style={styles.dateContainer}>
+      <TouchableOpacity accessibilityRole="button" onPress={toggleCalendar} style={styles.dateContainer}>
         {/* ✅ MOSTRAR PLACA AQUÍ */}
         {placa && <Text style={[styles.placaImage]}>{placa}</Text>}
 

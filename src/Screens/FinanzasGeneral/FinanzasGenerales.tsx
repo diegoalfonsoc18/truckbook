@@ -425,11 +425,11 @@ export default function FinanzasGenerales() {
   // principal (Modal propio) y por el modal de exportar (overlay interno —
   // en iOS no se puede montar un segundo Modal sobre el de exportar).
   const renderCalendarSheet = () => (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityViewIsModal
       style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
       activeOpacity={1}
       onPress={() => setCalendarVisible(false)}>
-      <TouchableOpacity activeOpacity={1}>
+      <TouchableOpacity accessible={false} activeOpacity={1}>
         <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
           <View
             style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
@@ -831,7 +831,7 @@ export default function FinanzasGenerales() {
                 { backgroundColor: c.cardBg, borderColor: c.border },
                 getShadow(isDark, "sm"),
               ]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
                 onPress={() => openCalendar("inicio")}
                 activeOpacity={0.8}>
@@ -845,7 +845,7 @@ export default function FinanzasGenerales() {
               <View style={styles.rangeDivider}>
                 <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
                 onPress={() => openCalendar("fin")}
                 activeOpacity={0.8}>
@@ -1056,7 +1056,7 @@ export default function FinanzasGenerales() {
                 { backgroundColor: c.cardBg, borderColor: c.border },
               ]}>
               {(["dias", "meses", "años"] as ViewType[]).map((v) => (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: view === v }}
                   key={v}
                   style={[
                     styles.viewTab,
@@ -1132,7 +1132,7 @@ export default function FinanzasGenerales() {
             </View>
 
             {/* BOTÓN EXPORTAR */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.exportarBtn, { backgroundColor: c.accent }]}
               onPress={() => {
                 seleccionarPeriodo("mes");

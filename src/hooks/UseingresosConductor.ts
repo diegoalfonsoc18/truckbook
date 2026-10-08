@@ -1,4 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
+import { v4 as uuidv4 } from "uuid";
 import supabase from "../config/SupaBaseConfig";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
@@ -24,12 +25,15 @@ export const useIngresosConductor = (conductorId?: string | null) => {
     const netState = await NetInfo.fetch();
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
+    // Clave de idempotencia (ver UseGastosConductor).
+    const clientId = uuidv4();
+
     if (isOnline) {
       // Online: guardar directo en Supabase
       try {
         const { data, error: err } = await supabase
           .from("conductor_ingresos")
-          .insert([ingreso])
+          .insert([{ ...ingreso, client_id: clientId }])
           .select();
 
         if (err) throw err;
@@ -43,6 +47,7 @@ export const useIngresosConductor = (conductorId?: string | null) => {
       const tempId = `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const ingresoLocal: Ingreso = {
         ...ingreso,
+        client_id: clientId,
         id: tempId,
         created_at: new Date().toISOString(),
       };

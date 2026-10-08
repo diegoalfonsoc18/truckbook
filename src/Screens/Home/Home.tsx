@@ -105,7 +105,7 @@ export default function HomeBaseAdapted({
 
             {!placaActual ? (
               /* ONBOARDING — sin vehículo */
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 activeOpacity={0.82}
                 onPress={() => setModalVehiculosVisible(true)}
                 style={[

@@ -296,7 +296,7 @@ export default function Register({ navigation }: Props) {
 
               {/* HEADER */}
               <View style={s.header}>
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver al inicio de sesión"
                   style={[s.backBtn, { backgroundColor: c.surface, borderColor: c.border }]}
                   onPress={() => navigation.navigate("Login")}
                   disabled={loading}>
@@ -343,7 +343,7 @@ export default function Register({ navigation }: Props) {
                   <Text style={[inputSty.label, { color: c.textSecondary }]}>Contraseña</Text>
                   <View style={[inputSty.wrap, shadow, errors.password && s.inputError]}>
                     <Ionicons name="lock-closed-outline" size={18} color={c.textMuted} style={s.icon} />
-                    <TextInput
+                    <TextInput accessibilityLabel="Contraseña"
                   keyboardAppearance="light"
                       style={[inputSty.text, { color: c.text }]}
                       placeholder="Mín. 8 caracteres"
@@ -358,11 +358,11 @@ export default function Register({ navigation }: Props) {
                       }}
                       editable={!loading}
                     />
-                    <TouchableOpacity onPress={() => setShowPwd(!showPwd)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setShowPwd(!showPwd)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Ionicons name={showPwd ? "eye-off-outline" : "eye-outline"} size={18} color={c.textMuted} />
                     </TouchableOpacity>
                   </View>
-                  {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
+                  {errors.password && <Text style={s.errorText} accessibilityRole="alert" accessibilityLiveRegion="polite">{errors.password}</Text>}
 
                   {showStrength && password.length > 0 && (
                     <View style={s.strengthBox}>
@@ -406,7 +406,7 @@ export default function Register({ navigation }: Props) {
                   <Text style={[inputSty.label, { color: c.textSecondary }]}>Confirmar contraseña</Text>
                   <View style={[inputSty.wrap, shadow, errors.confirmPassword && s.inputError]}>
                     <Ionicons name="lock-closed-outline" size={18} color={c.textMuted} style={s.icon} />
-                    <TextInput
+                    <TextInput accessibilityLabel="Confirmar contraseña"
                   keyboardAppearance="light"
                       style={[inputSty.text, { color: c.text }]}
                       placeholder="Repite tu contraseña"
@@ -416,11 +416,11 @@ export default function Register({ navigation }: Props) {
                       onChangeText={(t) => { setConfirmPassword(sanitizePassword(t)); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined }); }}
                       editable={!loading}
                     />
-                    <TouchableOpacity onPress={() => setShowConfirmPwd(!showConfirmPwd)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirmPwd ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setShowConfirmPwd(!showConfirmPwd)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Ionicons name={showConfirmPwd ? "eye-off-outline" : "eye-outline"} size={18} color={c.textMuted} />
                     </TouchableOpacity>
                   </View>
-                  {errors.confirmPassword && <Text style={s.errorText}>{errors.confirmPassword}</Text>}
+                  {errors.confirmPassword && <Text style={s.errorText} accessibilityRole="alert" accessibilityLiveRegion="polite">{errors.confirmPassword}</Text>}
                 </View>
 
               </View>
@@ -436,7 +436,7 @@ export default function Register({ navigation }: Props) {
               </Text>
 
               {/* CTA */}
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                 style={[s.cta, { backgroundColor: c.accent }, loading && s.ctaOff]}
                 onPress={register}
                 disabled={loading}
@@ -456,7 +456,7 @@ export default function Register({ navigation }: Props) {
               {/* SOCIAL */}
               <View style={s.socialRow}>
                 {Platform.OS === "ios" && (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
                     onPress={handleAppleLogin}
                     disabled={loading} activeOpacity={0.8}>
@@ -464,7 +464,7 @@ export default function Register({ navigation }: Props) {
                     <Text style={[s.socialText, { color: c.text }]}>Apple</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
                   onPress={handleGoogleLogin}
                   disabled={loading} activeOpacity={0.8}>
@@ -474,7 +474,7 @@ export default function Register({ navigation }: Props) {
               </View>
 
               {/* FOOTER */}
-              <TouchableOpacity style={s.footer} onPress={() => navigation.navigate("Login")} disabled={loading}>
+              <TouchableOpacity accessibilityRole="button" style={s.footer} onPress={() => navigation.navigate("Login")} disabled={loading}>
                 <Text style={[s.footerText, { color: c.textSecondary }]}>
                   ¿Ya tienes cuenta?{" "}
                   <Text style={{ color: c.accent, fontWeight: "700" }}>Inicia sesión</Text>
@@ -505,7 +505,7 @@ function Field({
       <Text style={[inputSty.label, { color: c.textSecondary }]}>{label}</Text>
       <View style={[inputSty.wrap, shadow, error && s.inputError]}>
         <Ionicons name={icon} size={18} color={c.textMuted} style={s.icon} />
-        <TextInput
+        <TextInput accessibilityLabel={label}
                   keyboardAppearance="light"
           style={[inputSty.text, { color: c.text }]}
           placeholder={placeholder}
@@ -518,7 +518,7 @@ function Field({
           editable={editable}
         />
       </View>
-      {error && <Text style={s.errorText}>{error}</Text>}
+      {error && <Text style={s.errorText} accessibilityRole="alert" accessibilityLiveRegion="polite">{error}</Text>}
     </View>
   );
 }

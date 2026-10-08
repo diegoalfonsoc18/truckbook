@@ -30,7 +30,7 @@ export default function GradientButton({
   const { colors: c } = useTheme();
 
   return (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} accessibilityLabel={label}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.82}

@@ -112,7 +112,7 @@ export default function ResetPassword({ navigation }: Props) {
                       color={colors.textMuted}
                       style={styles.inputIcon}
                     />
-                    <TextInput
+                    <TextInput accessibilityLabel="Nueva contraseña"
                       style={[styles.input, ds.text]}
                       placeholder="Mínimo 6 caracteres"
                       placeholderTextColor={colors.textMuted}
@@ -134,7 +134,7 @@ export default function ResetPassword({ navigation }: Props) {
                       color={colors.textMuted}
                       style={styles.inputIcon}
                     />
-                    <TextInput
+                    <TextInput accessibilityLabel="Confirmar contraseña"
                       style={[styles.input, ds.text]}
                       placeholder="Repite tu contraseña"
                       placeholderTextColor={colors.textMuted}
@@ -147,7 +147,7 @@ export default function ResetPassword({ navigation }: Props) {
                   </View>
                 </View>
 
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                   style={[styles.submitButton, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
                   onPress={handleReset}
                   disabled={loading}

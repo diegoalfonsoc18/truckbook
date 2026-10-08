@@ -53,30 +53,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Verificar que emisor y destinatario comparten al menos un vehículo.
-    // Esto evita que cualquier usuario autenticado pueda enviar push a cualquier otro.
-    const { data: placasEmisor } = await supabaseAdmin
-      .from("vehiculo_conductores")
-      .select("vehiculo_placa")
-      .eq("conductor_id", user.id);
-
-    const placas = (placasEmisor || []).map((r: any) => r.vehiculo_placa);
-
-    if (placas.length === 0) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: relacionCompartida } = await supabaseAdmin
-      .from("vehiculo_conductores")
-      .select("vehiculo_placa")
-      .eq("conductor_id", targetUserId)
-      .in("vehiculo_placa", placas)
-      .limit(1);
-
-    if (!relacionCompartida || relacionCompartida.length === 0) {
+    // Sin sistema de roles no existe relación entre usuarios: solo se permite
+    // notificar al propio usuario autenticado (el id sale del JWT, no del body).
+    if (targetUserId !== user.id) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -98,6 +77,7 @@ serve(async (req) => {
     // Enviar notificación a Expo Push API
     const expoPushRes = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
+      signal: AbortSignal.timeout(10_000),
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",

@@ -67,11 +67,33 @@ async function procesarCola() {
 
         if (op.action === "insert") {
           const { id: _tempId, ...dataToInsert } = op.data ?? {};
-          const { data, error: err } = await supabase
+          let { data, error: err } = await supabase
             .from(op.table)
             .insert([{ ...dataToInsert, conductor_id: userId }])
             .select()
             .maybeSingle();
+
+          // Idempotencia: 23505 = el insert anterior sí llegó al servidor pero
+          // se perdió la respuesta. Se trata como éxito buscando la fila real
+          // por client_id (sin upsert/ON CONFLICT: falla 42501 con RLS).
+          if (err?.code === "23505" && dataToInsert.client_id) {
+            const { data: existente, error: errBusqueda } = await supabase
+              .from(op.table)
+              .select("*")
+              .eq("conductor_id", userId)
+              .eq("client_id", dataToInsert.client_id)
+              .maybeSingle();
+            if (existente) {
+              data = existente;
+              err = null;
+              logger.log("♻️ Insert offline ya existía en el servidor (idempotente)");
+            } else if (errBusqueda) {
+              // No se pudo confirmar (p. ej. red caída): se propaga ese error
+              // para reintentar luego en vez de contar un fallo definitivo.
+              logger.warn("⚠️ No se pudo verificar duplicado:", errBusqueda.message);
+              err = errBusqueda;
+            }
+          }
           error = err;
 
           if (!err && data) {

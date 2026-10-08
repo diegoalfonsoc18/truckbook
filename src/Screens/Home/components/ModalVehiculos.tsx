@@ -289,7 +289,7 @@ export default function ModalVehiculos({
                 // cae al ícono vectorial para no romper la consistencia.
                 const foto = VEHICLE_PHOTOS[tipo.id];
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: selected }}
                     key={tipo.id}
                     style={[
                       s.tipoChip,
@@ -342,7 +342,7 @@ export default function ModalVehiculos({
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <TouchableWithoutFeedback onPress={cerrarModal}>
-          <View style={[s.overlay, { backgroundColor: c.overlay }]}>
+          <View accessibilityViewIsModal style={[s.overlay, { backgroundColor: c.overlay }]}>
             <TouchableWithoutFeedback>
               <View style={[s.sheetBase, sheet]}>
                 <View style={[s.handle, { backgroundColor: c.border }]} />
@@ -378,7 +378,7 @@ export default function ModalVehiculos({
                             overshootRight={false}
                             renderRightActions={() => (
                               <View style={s.swipeActions}>
-                                <TouchableOpacity
+                                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Editar vehículo"
                                   style={[
                                     s.swipeActionBtn,
                                     { backgroundColor: "#3B82F6" },
@@ -390,7 +390,7 @@ export default function ModalVehiculos({
                                     color="#fff"
                                   />
                                 </TouchableOpacity>
-                                <TouchableOpacity
+                                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Eliminar vehículo"
                                   style={[
                                     s.swipeActionBtn,
                                     { backgroundColor: "#EF4444" },
@@ -404,7 +404,7 @@ export default function ModalVehiculos({
                                 </TouchableOpacity>
                               </View>
                             )}>
-                            <TouchableOpacity
+                            <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: isActive }}
                               style={[
                                 s.vehicleOption,
                                 {
@@ -466,7 +466,7 @@ export default function ModalVehiculos({
                           ]}>
                           Editar — {vehiculoEditando.placa}
                         </Text>
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar edición"
                           onPress={() => setVehiculoEditando(null)}>
                           <Ionicons
                             name="close"
@@ -476,7 +476,7 @@ export default function ModalVehiculos({
                         </TouchableOpacity>
                       </View>
 
-                      <TextInput
+                      <TextInput accessibilityLabel="Placa del vehículo"
                         style={[
                           s.placaInputField,
                           {
@@ -501,7 +501,7 @@ export default function ModalVehiculos({
                         setTipoCamionEditInput,
                       )}
 
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: !placaEditInput.trim() || !tipoCamionEditInput }}
                         style={[
                           s.confirmBtn,
                           { backgroundColor: "#3B82F6" },
@@ -536,7 +536,7 @@ export default function ModalVehiculos({
                       Agregar vehículo
                     </Text>
 
-                    <TextInput
+                    <TextInput accessibilityLabel="Placa del vehículo"
                       style={[
                         s.placaInputField,
                         {
@@ -557,7 +557,7 @@ export default function ModalVehiculos({
 
                     {renderSelectorTipo(tipoCamionInput, setTipoCamionInput)}
 
-                    <TouchableOpacity
+                    <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: !placaInput.trim() || !tipoCamionInput }}
                       style={[
                         s.confirmBtn,
                         { backgroundColor: c.accent },
@@ -580,7 +580,7 @@ export default function ModalVehiculos({
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={s.cancelTouchable}
                     onPress={cerrarModal}>
                     <Text style={[s.cancelText, { color: c.textSecondary }]}>

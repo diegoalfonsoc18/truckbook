@@ -60,7 +60,7 @@ export function ModalGastIngre({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.modalOverlay}>
+          <View style={styles.modalOverlay} accessibilityViewIsModal>
             <ScrollView
               scrollEnabled={true}
               contentContainerStyle={styles.scrollViewContainer}
@@ -100,7 +100,7 @@ export function ModalGastIngre({
                   <Text style={styles.inputLabel}>Monto (COP)</Text>
                   <View style={styles.inputRow}>
                     <Text style={styles.currencySymbol}>$</Text>
-                    <TextInput
+                    <TextInput accessibilityLabel="Monto en pesos colombianos"
                   keyboardAppearance="light"
                       value={editValue}
                       onChangeText={setEditValue}
@@ -127,7 +127,7 @@ export function ModalGastIngre({
                 {isEditing && (
                   <View style={styles.modalDateContainer}>
                     <Text style={styles.inputLabel}>Fecha</Text>
-                    <Pressable
+                    <Pressable accessibilityRole="button"
                       onPress={() => setShowDatePicker(true)}
                       disabled={loading}
                       style={styles.dateButton}>
@@ -162,7 +162,7 @@ export function ModalGastIngre({
 
                 {/* Botones */}
                 <View style={styles.buttonRow}>
-                  <Pressable
+                  <Pressable accessibilityRole="button"
                     onPress={onClose}
                     disabled={loading}
                     style={[
@@ -172,7 +172,7 @@ export function ModalGastIngre({
                     <Text style={styles.cancelButtonText}>Cancelar</Text>
                   </Pressable>
 
-                  <Pressable
+                  <Pressable accessibilityRole="button"
                     onPress={() => {
                       if (!editValue) {
                         Alert.alert("Error", "Por favor ingresa un monto");

@@ -22,6 +22,8 @@ export function usePrecioDiesel(): { precio: number; cargando: boolean } {
 
   useEffect(() => {
     let cancelled = false;
+    // Tope de seguridad: si algo cuelga, nunca dejar el spinner infinito
+    const safety = setTimeout(() => { if (!cancelled) setCargando(false); }, 25_000);
 
     (async () => {
       try {
@@ -56,7 +58,7 @@ export function usePrecioDiesel(): { precio: number; cargando: boolean } {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(safety); };
   }, []);
 
   return { precio, cargando };

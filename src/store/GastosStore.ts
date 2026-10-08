@@ -12,6 +12,8 @@ export interface Gasto {
   fecha: string;
   estado: "pendiente" | "aprobado" | "rechazado" | "proximo" | "vencido" | "pagado";
   created_at: string;
+  /** Clave de idempotencia del insert (uuid generado en el cliente). */
+  client_id?: string | null;
   // Campos para Centro de Pendientes
   fecha_vencimiento?: string | null;
 }
@@ -40,8 +42,13 @@ export const useGastosStore = create<GastosState>()(
             // Conservar los gastos creados offline que aún no se sincronizaron
             // (ids "offline_*"); si no, el refetch los borra de la UI aunque
             // sigan en la cola.
+            // Salvo que el servidor ya trajo la fila real (mismo client_id):
+            // el insert llegó pero se perdió la respuesta; evita verla doble.
             ...state.gastos.filter(
-              (g) => g.placa === placa && g.id.startsWith("offline_"),
+              (g) =>
+                g.placa === placa &&
+                g.id.startsWith("offline_") &&
+                !(g.client_id && gastosNuevos.some((n) => n.client_id === g.client_id)),
             ),
             ...gastosNuevos,
           ],
@@ -51,7 +58,13 @@ export const useGastosStore = create<GastosState>()(
         set((state) => {
           // Evita duplicados si el realtime y el insert local llegan al mismo tiempo
           if (state.gastos.some((g) => g.id === gasto.id)) return state;
-          return { gastos: [gasto, ...state.gastos] };
+          // Si llega la fila real de un insert offline (mismo client_id), reemplaza el temporal.
+          const base = gasto.client_id
+            ? state.gastos.filter(
+                (g) => !(g.id.startsWith("offline_") && g.client_id === gasto.client_id),
+              )
+            : state.gastos;
+          return { gastos: [gasto, ...base] };
         }),
 
       editarGasto: (id, updates) =>

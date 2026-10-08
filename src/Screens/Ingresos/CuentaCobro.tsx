@@ -424,7 +424,7 @@ export default function CuentaCobro() {
       <SafeAreaView style={s.safe} edges={["top"]}>
         {/* HEADER */}
         <View style={s.header}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
             style={[s.backBtn, { backgroundColor: c.cardBg, borderColor: c.border }]}
             onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={20} color={c.text} />
@@ -433,7 +433,7 @@ export default function CuentaCobro() {
             <Text style={[s.headerTitle, { color: c.text }]}>Cuenta de Cobro</Text>
             <Text style={[s.headerSub, { color: c.textMuted }]}>{numero}</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[s.shareBtn, { backgroundColor: ACCENT }]}
             onPress={compartir}
             disabled={cargando}
@@ -459,7 +459,7 @@ export default function CuentaCobro() {
 
             {/* FECHA */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Fecha del documento</Text>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[s.card, s.fechaRow, { backgroundColor: c.cardBg, borderColor: c.border }]}
               onPress={() => setShowDatePicker(true)}
               activeOpacity={0.7}>
@@ -484,7 +484,7 @@ export default function CuentaCobro() {
             {/* CLIENTE */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Cliente</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[s.contactBtn, { borderColor: ACCENT + "40", backgroundColor: ACCENT + "0D" }]}
                 onPress={abrirContactos}
                 activeOpacity={0.7}>
@@ -498,7 +498,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="person-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Nombre de quien paga"
                   style={[s.input, { color: c.text }]}
                   placeholder="Nombre de quien paga"
                   placeholderTextColor={c.textMuted}
@@ -511,7 +511,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="business-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Empresa (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Empresa (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -524,7 +524,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="card-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="NIT o documento"
                   style={[s.input, { color: c.text }]}
                   placeholder="NIT o documento"
                   placeholderTextColor={c.textMuted}
@@ -538,7 +538,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="call-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Teléfono"
                   style={[s.input, { color: c.text }]}
                   placeholder="Teléfono"
                   placeholderTextColor={c.textMuted}
@@ -552,7 +552,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="location-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Dirección (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Dirección (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -565,7 +565,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="map-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Ciudad (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Ciudad (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -580,7 +580,7 @@ export default function CuentaCobro() {
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               <View style={s.inputRow}>
                 <Ionicons name="card-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Mi NIT o cédula"
                   style={[s.input, { color: c.text }]}
                   placeholder="Mi NIT o cédula"
                   placeholderTextColor={c.textMuted}
@@ -592,7 +592,7 @@ export default function CuentaCobro() {
               <View style={[s.divider, { backgroundColor: c.divider }]} />
               <View style={s.inputRow}>
                 <Ionicons name="map-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Mi ciudad"
                   style={[s.input, { color: c.text }]}
                   placeholder="Mi ciudad"
                   placeholderTextColor={c.textMuted}
@@ -605,7 +605,7 @@ export default function CuentaCobro() {
             {/* SERVICIOS */}
             <View style={s.sectionRow}>
               <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Servicios</Text>
-              <TouchableOpacity onPress={agregarServicio} style={s.addBtn}>
+              <TouchableOpacity accessibilityRole="button" onPress={agregarServicio} style={s.addBtn}>
                 <Ionicons name="add" size={16} color={ACCENT} />
                 <Text style={[s.addBtnText, { color: ACCENT }]}>Agregar</Text>
               </TouchableOpacity>
@@ -620,7 +620,7 @@ export default function CuentaCobro() {
                       Servicio {index + 1}
                     </Text>
                     {servicios.length > 1 && (
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Eliminar servicio"
                         onPress={() => eliminarServicio(item.id)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Ionicons name="trash-outline" size={16} color={c.danger} />
@@ -631,7 +631,7 @@ export default function CuentaCobro() {
                   {/* Descripción */}
                   <View style={s.inputRow}>
                     <Ionicons name="document-text-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                    <TextInput
+                    <TextInput accessibilityLabel="Descripción (ej. Flete Bogotá–Medellín)"
                       style={[s.input, { color: c.text }]}
                       placeholder="Descripción (ej. Flete Bogotá–Medellín)"
                       placeholderTextColor={c.textMuted}
@@ -648,7 +648,7 @@ export default function CuentaCobro() {
                       <Text style={[s.servicioMontoLabel, { color: c.textMuted }]}>Precio unitario</Text>
                       <View style={s.servicioMontoInput}>
                         <Text style={[s.currencySign, { color: c.textMuted, fontSize: 14 }]}>$</Text>
-                        <TextInput
+                        <TextInput accessibilityLabel="Precio unitario"
                           style={[s.input, { color: c.text, fontWeight: "600", flex: 1 }]}
                           placeholder="0"
                           placeholderTextColor={c.textMuted}
@@ -661,7 +661,7 @@ export default function CuentaCobro() {
                     <View style={s.servicioMontoCol}>
                       <Text style={[s.servicioMontoLabel, { color: c.textMuted }]}>Cantidad</Text>
                       <View style={s.servicioMontoInput}>
-                        <TextInput
+                        <TextInput accessibilityLabel="Cantidad"
                           style={[s.input, { color: c.text, flex: 1 }]}
                           placeholder="1"
                           placeholderTextColor={c.textMuted}
@@ -691,7 +691,7 @@ export default function CuentaCobro() {
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               <View style={s.inputRow}>
                 <Ionicons name="business-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Entidad bancaria (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Entidad bancaria (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -702,7 +702,7 @@ export default function CuentaCobro() {
               <View style={[s.divider, { backgroundColor: c.divider }]} />
               <View style={s.inputRow}>
                 <Ionicons name="wallet-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Número de cuenta (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Número de cuenta (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -716,7 +716,7 @@ export default function CuentaCobro() {
             {/* NOTA */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Nota (opcional)</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border, padding: 14 }]}>
-              <TextInput
+              <TextInput accessibilityLabel="Nota (opcional)"
                 style={[s.notaInput, { color: c.text }]}
                 placeholder="Ej. Pago contra entrega, transferencia a cuenta..."
                 placeholderTextColor={c.textMuted}
@@ -729,7 +729,7 @@ export default function CuentaCobro() {
             </View>
 
             {/* BOTÓN COMPARTIR (bottom) */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[s.shareBtnBottom, { backgroundColor: ACCENT }]}
               onPress={compartir}
               disabled={cargando}
@@ -754,11 +754,11 @@ export default function CuentaCobro() {
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setContactosModal(false)}>
-        <View style={[s.contactModal, { backgroundColor: c.primary }]}>
+        <View accessibilityViewIsModal style={[s.contactModal, { backgroundColor: c.primary }]}>
           {/* Header modal */}
           <View style={[s.contactModalHeader, { borderBottomColor: c.border }]}>
             <Text style={[s.contactModalTitle, { color: c.text }]}>Contactos</Text>
-            <TouchableOpacity onPress={() => setContactosModal(false)}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setContactosModal(false)}>
               <Ionicons name="close" size={24} color={c.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -766,7 +766,7 @@ export default function CuentaCobro() {
           {/* Búsqueda */}
           <View style={[s.searchBox, { backgroundColor: c.surface }]}>
             <Ionicons name="search-outline" size={16} color={c.textMuted} />
-            <TextInput
+            <TextInput accessibilityLabel="Buscar contacto"
               style={[s.searchInput, { color: c.text }]}
               placeholder="Buscar contacto..."
               placeholderTextColor={c.textMuted}
@@ -790,7 +790,7 @@ export default function CuentaCobro() {
               const inicial = item.name?.charAt(0).toUpperCase() || "?";
               const telefono = item.phoneNumbers?.[0]?.number || "";
               return (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={s.contactRow}
                   onPress={() => seleccionarContacto(item)}
                   activeOpacity={0.6}>

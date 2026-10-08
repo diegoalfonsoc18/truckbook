@@ -90,7 +90,7 @@ export default function FilterCalendar({
           </View>
         )}
 
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={styles.containerFilter}
           activeOpacity={0.3}
           onPress={() => setModalVisible(true)}>
@@ -110,7 +110,7 @@ export default function FilterCalendar({
           navigationBarTranslucent
           animationType="slide"
           onRequestClose={() => setModalVisible(false)}>
-          <View
+          <View accessibilityViewIsModal
             style={{
               flex: 1,
               justifyContent: "center",
@@ -137,7 +137,7 @@ export default function FilterCalendar({
                 }}>
                 <View style={{ flex: 1, alignItems: "center" }}>
                   <Text>Desde</Text>
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={{
                       borderWidth: 1,
                       borderColor: "#ccc",
@@ -161,7 +161,7 @@ export default function FilterCalendar({
                 </View>
                 <View style={{ flex: 1, alignItems: "center" }}>
                   <Text>Hasta</Text>
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={{
                       borderWidth: 1,
                       borderColor: "#ccc",
@@ -184,7 +184,7 @@ export default function FilterCalendar({
                   )}
                 </View>
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={{
                   marginTop: 20,
                   backgroundColor: colors.secondary,
