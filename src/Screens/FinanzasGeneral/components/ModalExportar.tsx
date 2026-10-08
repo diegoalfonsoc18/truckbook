@@ -86,6 +86,17 @@ export default function ModalExportar({
 }: Props) {
   const { colors: c } = useTheme();
   const [clienteInputFocused, setClienteInputFocused] = React.useState(false);
+  const clienteInputRef = React.useRef<TextInput>(null);
+  const blurTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelarOcultar = () => {
+    if (blurTimerRef.current) {
+      clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+  };
+  // No dejar el temporizador de blur vivo si el modal se desmonta
+  React.useEffect(() => cancelarOcultar, []);
 
   const fechaLarga = (f: string) =>
     new Date(f + "T12:00:00").toLocaleDateString("es-CO", {
@@ -97,9 +108,12 @@ export default function ModalExportar({
   const texto = cliente ?? "";
   const sugerencias =
     clienteInputFocused && texto.length >= 2
-      ? clientesDisponibles.filter((cli) =>
-          cli.toLowerCase().includes(texto.toLowerCase()),
-        )
+      ? clientesDisponibles.filter((cli) => {
+          const a = cli.toLowerCase();
+          const b = texto.toLowerCase();
+          // Si ya está escrito completo, no sugerirlo otra vez
+          return a.includes(b) && a !== b;
+        })
       : [];
 
   return (
@@ -206,6 +220,7 @@ export default function ModalExportar({
                 Filtrar por cliente (opcional)
               </Text>
               <TextInput accessibilityLabel="Filtrar por cliente (opcional)"
+                ref={clienteInputRef}
                 style={[
                   styles.exportClienteInput,
                   {
@@ -224,9 +239,24 @@ export default function ModalExportar({
                   // el PDF escapa estos caracteres al renderizar.
                   const limpio = t.replace(/[<>{}[\]]/g, "").slice(0, 80);
                   onCliente(limpio.length > 0 ? limpio : null);
+                  // Escribir siempre reactiva las sugerencias: tras elegir una
+                  // el input sigue enfocado y onFocus no se vuelve a disparar.
+                  cancelarOcultar();
+                  setClienteInputFocused(true);
                 }}
-                onFocus={() => setClienteInputFocused(true)}
-                onBlur={() => setTimeout(() => setClienteInputFocused(false), 150)}
+                onFocus={() => {
+                  cancelarOcultar();
+                  setClienteInputFocused(true);
+                }}
+                // Margen para que el toque en una sugerencia llegue antes de
+                // ocultar la lista; se cancela si el input vuelve a enfocarse.
+                onBlur={() => {
+                  cancelarOcultar();
+                  blurTimerRef.current = setTimeout(
+                    () => setClienteInputFocused(false),
+                    300,
+                  );
+                }}
                 returnKeyType="done"
               />
               {sugerencias.length > 0 && (
@@ -243,8 +273,12 @@ export default function ModalExportar({
                         { borderBottomColor: c.border },
                       ]}
                       onPress={() => {
+                        cancelarOcultar();
                         onCliente(cli);
                         setClienteInputFocused(false);
+                        // Cerrar el teclado: al volver a tocar el input se
+                        // enfoca de nuevo y las sugerencias reaparecen.
+                        clienteInputRef.current?.blur();
                       }}
                       activeOpacity={0.7}>
                       <Text style={{ color: c.text, fontSize: 14 }}>{cli}</Text>
