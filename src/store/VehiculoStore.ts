@@ -31,13 +31,19 @@ export const useVehiculoStore = create<VehiculoStore>()(
 
       setPlaca: async (placa: string) => {
         try {
+          placa = placa.trim().toUpperCase();
           logger.log("🔍 Insertando placa:", placa);
 
-          // 1️⃣ Verificar si ya existe
+          const { data: sess } = await supabase.auth.getSession();
+          const userId = sess.session?.user.id;
+          if (!userId) throw new Error("Sin sesión");
+
+          // 1️⃣ Verificar si ya existe (la placa es por usuario)
           const { data: existe, error: checkError } = await supabase
             .from("vehiculos")
             .select("placa")
             .eq("placa", placa)
+            .eq("conductor_id", userId)
             .maybeSingle();
 
           if (checkError) {
@@ -49,10 +55,11 @@ export const useVehiculoStore = create<VehiculoStore>()(
             logger.log("📝 Placa no existe, insertando...");
             const { data, error } = await supabase
               .from("vehiculos")
-              .insert([{ placa }])
+              .insert([{ placa, conductor_id: userId }])
               .select();
 
-            if (error) {
+            // 23505 = otro cliente la creó entre el SELECT y el INSERT: es válido
+            if (error && error.code !== "23505") {
               logger.error("❌ Error al insertar placa:", error);
               throw error;
             }

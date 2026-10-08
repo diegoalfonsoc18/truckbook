@@ -106,6 +106,8 @@ export default function FilterCalendar({
         <Modal
           visible={modalVisible}
           transparent
+          statusBarTranslucent
+          navigationBarTranslucent
           animationType="slide"
           onRequestClose={() => setModalVisible(false)}>
           <View

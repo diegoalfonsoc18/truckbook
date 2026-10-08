@@ -1316,7 +1316,7 @@ const s = StyleSheet.create({
   // ── MODAL SHARED ──
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
   modalSheet: {

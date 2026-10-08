@@ -15,6 +15,8 @@ export const useGastosConductor = (conductorId?: string | null) => {
   const editarGasto = useGastosStore((s) => s.editarGasto);
   const eliminarGasto = useGastosStore((s) => s.eliminarGasto);
   const enqueue = useOfflineQueueStore((s) => s.enqueue);
+  const removerPorRecordId = useOfflineQueueStore((s) => s.removerPorRecordId);
+  const actualizarInsertPendiente = useOfflineQueueStore((s) => s.actualizarInsertPendiente);
 
   const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">
@@ -66,6 +68,9 @@ export const useGastosConductor = (conductorId?: string | null) => {
     // Si es un ID temporal (offline), solo actualizar localmente
     if (id.startsWith("offline_")) {
       editarGasto(id, updates);
+      // Reflejar la edición en el insert encolado; si no, al sincronizar se
+      // subirían los datos viejos.
+      actualizarInsertPendiente(id, updates);
       return { success: true };
     }
 
@@ -105,6 +110,8 @@ export const useGastosConductor = (conductorId?: string | null) => {
 
     if (id.startsWith("offline_")) {
       eliminarGasto(id);
+      // Cancelar el insert encolado; si no, el registro borrado "resucita" al sincronizar.
+      removerPorRecordId(id);
       return { success: true };
     }
 

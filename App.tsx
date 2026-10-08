@@ -31,9 +31,14 @@ import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
 import { useGastosStore } from "./src/store/GastosStore";
 import { useIngresosStore } from "./src/store/IngresosStore";
+import { useOfflineQueueStore } from "./src/store/OfflineQueueStore";
+import { useVehiculosListStore } from "./src/store/VehiculosListStore";
 import logger from "./src/utils/logger";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 import { consumirLogoutIntencional } from "./src/utils/authIntent";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cancelarRecordatoriosPendientes } from "./src/services/pendientesNotificacionService";
+import { cancelarRecordatorioFletes } from "./src/services/fleteNotifications";
 
 // Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
 // visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
@@ -167,8 +172,11 @@ function AppContent() {
   // ─── Deep link handler (password recovery) ────────────────────────────
   useEffect(() => {
     const handleUrl = async (url: string) => {
+      // Solo nuestro scheme / el de Expo Go: evita procesar URLs https ajenas.
+      if (!/^(truckbook|exp|exps):\/\//.test(url)) return;
       if (!url.includes("auth/callback")) return;
-      logger.log("🔗 Deep link recibido:", url);
+      // NO loguear la URL completa: lleva token_hash / code / access_token.
+      logger.log("🔗 Deep link auth/callback recibido");
       try {
         // Unir params de query (?a=b) y de hash (#a=b) en un solo objeto
         const params: Record<string, string> = {};
@@ -185,8 +193,6 @@ function AppContent() {
 
         const code         = params["code"];
         const tokenHash    = params["token_hash"];
-        const accessToken  = params["access_token"];
-        const refreshToken = params["refresh_token"];
         const type         = params["type"];
 
         // El link de recuperación es de un solo uso: si expiró o ya fue
@@ -234,23 +240,11 @@ function AppContent() {
           return;
         }
 
-        // Flujo implícito: #access_token=xxx&refresh_token=yyy&type=recovery
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token:  accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) {
-            logger.error("❌ setSession:", error.message);
-            return;
-          }
-          logger.log("✅ setSession OK, type:", type);
-          if (data.session) updateSession(data.session);
-          if (type === "recovery") enterRecoveryMode();
-          return;
-        }
+        // El flujo implícito (#access_token&refresh_token) NO se acepta: el
+        // cliente usa PKCE, y setSession con tokens de un deep link permitiría
+        // que otra app instale una sesión ajena (session fixation).
 
-        logger.error("❌ Deep link sin tokens ni code:", url);
+        logger.error("❌ Deep link sin token_hash ni code");
       } catch (e: any) {
         logger.error("❌ deep link handler:", e?.message);
       }
@@ -340,6 +334,14 @@ function AppContent() {
               useVehiculoStore.getState().clearVehiculo();
               useGastosStore.getState().limpiarGastos();
               useIngresosStore.getState().limpiarIngresos();
+              // Evita que operaciones offline / vehículos de esta cuenta
+              // queden en el dispositivo para la siguiente.
+              useOfflineQueueStore.getState().clearQueue();
+              useVehiculosListStore.getState().limpiar();
+              // Las notificaciones locales programadas son de la cuenta anterior.
+              cancelarRecordatoriosPendientes().catch(() => {});
+              cancelarRecordatorioFletes().catch(() => {});
+              AsyncStorage.removeItem("@truckbook_pend_ia_notif_v1").catch(() => {});
               updateSession(null);
               recoveryModeRef.current = false;
               setRecoveryMode(false);
@@ -434,8 +436,6 @@ function AppContent() {
     <View style={[styles.container, { backgroundColor: colors.primary }]}>
       <StatusBar
         style={isDark ? "light" : "dark"}
-        translucent={Platform.OS === "android"}
-        backgroundColor="transparent"
       />
       {session && !recoveryMode ? (
         <DataProvider>

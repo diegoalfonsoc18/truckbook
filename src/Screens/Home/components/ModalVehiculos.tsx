@@ -140,12 +140,19 @@ export default function ModalVehiculos({
         // 23505 = la placa ya existe, se conserva su tipo.
         const { error: insertError } = await supabase
           .from("vehiculos")
-          .insert([{ placa: placaNueva, tipo_camion: tipoCamionEditInput }]);
+          .insert([
+            {
+              placa: placaNueva,
+              tipo_camion: tipoCamionEditInput,
+              conductor_id: user?.id,
+            },
+          ]);
         if (insertError && insertError.code !== "23505") throw insertError;
         const { error: linkError } = await supabase
           .from("vehiculo_conductores")
           .update({ vehiculo_placa: placaNueva })
-          .eq("vehiculo_placa", vehiculoEditando.placa);
+          .eq("vehiculo_placa", vehiculoEditando.placa)
+          .eq("conductor_id", user?.id ?? "");
         if (linkError) throw linkError;
         if (placaActual === vehiculoEditando.placa) {
           setPlaca(placaNueva);
@@ -156,7 +163,8 @@ export default function ModalVehiculos({
         const { error: updateError } = await supabase
           .from("vehiculos")
           .update({ tipo_camion: tipoCamionEditInput })
-          .eq("placa", vehiculoEditando.placa);
+          .eq("placa", vehiculoEditando.placa)
+          .eq("conductor_id", user?.id ?? "");
         if (updateError) throw updateError;
         if (
           tipoCamionEditInput !== vehiculoEditando.tipo_camion &&
@@ -216,6 +224,7 @@ export default function ModalVehiculos({
       .from("vehiculos")
       .select("placa, tipo_camion")
       .eq("placa", placa)
+      .eq("conductor_id", user.id)
       .maybeSingle();
     if (existente) {
       setGuardando(false);
@@ -325,6 +334,8 @@ export default function ModalVehiculos({
     <Modal
       visible={visible}
       transparent
+      statusBarTranslucent
+      navigationBarTranslucent
       animationType="slide"
       onRequestClose={cerrarModal}>
       <KeyboardAvoidingView

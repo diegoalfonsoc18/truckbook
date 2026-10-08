@@ -40,6 +40,10 @@ export const useIngresosStore = create<IngresosState>()(
         set((state) => ({
           ingresos: [
             ...state.ingresos.filter((i) => i.placa !== placa),
+            // Conservar los ingresos creados offline pendientes de sincronizar.
+            ...state.ingresos.filter(
+              (i) => i.placa === placa && i.id.startsWith("offline_"),
+            ),
             ...ingresosNuevos,
           ],
         })),

@@ -5,6 +5,7 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import type { Ingreso } from "../store/IngresosStore";
+import logger from "../utils/logger";
 
 const CHANNEL_ID = "fletes-pendientes";
 const NOTIF_ID_KEY = "flete-daily-reminder"; // identificador único para cancelar/reemplazar
@@ -65,7 +66,7 @@ export async function actualizarRecordatorioFletes(pendingCount: number): Promis
     });
   } catch (err) {
     // No bloqueamos el flujo principal si las notificaciones fallan
-    console.warn("[fleteNotifications] Error al programar recordatorio:", err);
+    logger.warn("[fleteNotifications] Error al programar recordatorio:", err);
   }
 }
 

@@ -22,6 +22,9 @@ interface VehiculosListState {
   limpiar: () => void;
 }
 
+// Descarta respuestas de cargas anteriores (cambio de cuenta / recargas solapadas).
+let cargaSeq = 0;
+
 export const useVehiculosListStore = create<VehiculosListState>()(
   persist(
     (set, get) => ({
@@ -31,6 +34,7 @@ export const useVehiculosListStore = create<VehiculosListState>()(
       setVehiculos: (vehiculos) => set({ vehiculos }),
 
       cargar: async (userId: string) => {
+        const miSeq = ++cargaSeq;
         set({ cargando: true });
         try {
           // Vehículos del usuario con tipo_camion desde vehiculos
@@ -48,11 +52,12 @@ export const useVehiculosListStore = create<VehiculosListState>()(
             tipo_camion: (rel.vehiculos as any)?.tipo_camion || "estacas",
           }));
 
+          if (miSeq !== cargaSeq) return;
           set({ vehiculos });
         } catch (err) {
           logger.error("Error cargando vehículos:", err);
         } finally {
-          set({ cargando: false });
+          if (miSeq === cargaSeq) set({ cargando: false });
         }
       },
 
@@ -74,7 +79,10 @@ export const useVehiculosListStore = create<VehiculosListState>()(
           vehiculos: state.vehiculos.filter((v) => v.id !== id),
         })),
 
-      limpiar: () => set({ vehiculos: [], cargando: false }),
+      limpiar: () => {
+        cargaSeq++;
+        set({ vehiculos: [], cargando: false });
+      },
     }),
     {
       name: "vehiculos-list-storage",

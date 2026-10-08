@@ -12,7 +12,6 @@ function isExpoGo(): boolean {
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
     shouldShowBanner: true,
@@ -48,10 +47,11 @@ export async function registrarPushToken(userId: string): Promise<void> {
       projectId: "494c025d-768e-41f8-a040-ee0dd05aaaf0",
     });
 
-    await supabase
+    const { error } = await supabase
       .from("usuarios")
       .update({ push_token: tokenData.data })
       .eq("user_id", userId);
+    if (error) logger.error("Error guardando push token:", error.message);
   } catch (err) {
     logger.error("Error registrando push token:", err);
   }
@@ -77,5 +77,22 @@ export async function enviarPushNotificacion(
     }
   } catch (err) {
     logger.error("Error enviando push:", err);
+  }
+}
+
+/**
+ * Desvincula el push token de la cuenta al cerrar sesión, para que el
+ * dispositivo no siga recibiendo notificaciones de la cuenta anterior.
+ * Debe llamarse ANTES de signOut (necesita sesión válida por RLS).
+ */
+export async function limpiarPushToken(userId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("usuarios")
+      .update({ push_token: null })
+      .eq("user_id", userId);
+    if (error) logger.error("Error limpiando push token:", error.message);
+  } catch (err) {
+    logger.error("Error limpiando push token:", err);
   }
 }

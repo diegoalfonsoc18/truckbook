@@ -15,6 +15,8 @@ export const useIngresosConductor = (conductorId?: string | null) => {
   const editarIngreso = useIngresosStore((s) => s.editarIngreso);
   const eliminarIngreso = useIngresosStore((s) => s.eliminarIngreso);
   const enqueue = useOfflineQueueStore((s) => s.enqueue);
+  const removerPorRecordId = useOfflineQueueStore((s) => s.removerPorRecordId);
+  const actualizarInsertPendiente = useOfflineQueueStore((s) => s.actualizarInsertPendiente);
 
   const agregarIngresoAsync = async (
     ingreso: Omit<Ingreso, "id" | "created_at">
@@ -66,6 +68,9 @@ export const useIngresosConductor = (conductorId?: string | null) => {
     // Si es un ID temporal (offline), solo actualizar localmente
     if (id.startsWith("offline_")) {
       editarIngreso(id, updates);
+      // Reflejar la edición en el insert encolado; si no, al sincronizar se
+      // subirían los datos viejos.
+      actualizarInsertPendiente(id, updates);
       return { success: true };
     }
 
@@ -105,6 +110,8 @@ export const useIngresosConductor = (conductorId?: string | null) => {
 
     if (id.startsWith("offline_")) {
       eliminarIngreso(id);
+      // Cancelar el insert encolado; si no, el registro borrado "resucita" al sincronizar.
+      removerPorRecordId(id);
       return { success: true };
     }
 

@@ -279,6 +279,7 @@ export function ModalPendientes({
       transparent
       animationType="slide"
       statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={onClose}>
       <View style={[st.overlay, { backgroundColor: c.overlay }]}>
         <TouchableWithoutFeedback onPress={onClose}>

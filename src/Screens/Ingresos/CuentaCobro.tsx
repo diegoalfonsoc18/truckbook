@@ -16,7 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Contacts from "expo-contacts";
+import * as Contacts from "expo-contacts/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -79,6 +79,14 @@ function numeroALetras(num: number): string {
   return (conv(entero) || "Cero") + " de 00/100";
 }
 
+const esc = (v: unknown): string =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 function generarHTML(
   numero: string,
   fecha: string,
@@ -101,7 +109,7 @@ function generarHTML(
       const subtotal = precio * cant;
       return `
       <tr>
-        <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;">${s.descripcion}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;">${esc(s.descripcion)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:center;">${formatCOP(precio)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:center;">${cant % 1 === 0 ? cant.toFixed(0) : cant.toFixed(1)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:right;font-weight:600;">${formatCOP(subtotal)}</td>
@@ -179,16 +187,16 @@ function generarHTML(
     <!-- ENCABEZADO: emisor izq / número der -->
     <div class="top">
       <div>
-        <div class="emisor-name">${conductor}${placa ? ` · ${placa}` : ""}</div>
-        ${nitConductor ? `<div class="emisor-detail">NIT / CC: ${nitConductor}</div>` : ""}
+        <div class="emisor-name">${esc(conductor)}${placa ? ` · ${esc(placa)}` : ""}</div>
+        ${nitConductor ? `<div class="emisor-detail">NIT / CC: ${esc(nitConductor)}</div>` : ""}
         <div class="emisor-detail">Régimen Simplificado</div>
-        ${ciudadConductor ? `<div class="emisor-detail">${ciudadConductor}</div>` : ""}
+        ${ciudadConductor ? `<div class="emisor-detail">${esc(ciudadConductor)}</div>` : ""}
       </div>
       <div class="doc-meta">
         <div class="label">Cuenta de Cobro</div>
-        <div class="num">${numero}</div>
-        <div style="margin-top:4px;">Ciudad: ${ciudadConductor || "—"}</div>
-        <div>Fecha: ${fecha}</div>
+        <div class="num">${esc(numero)}</div>
+        <div style="margin-top:4px;">Ciudad: ${esc(ciudadConductor) || "—"}</div>
+        <div>Fecha: ${esc(fecha)}</div>
       </div>
     </div>
 
@@ -198,28 +206,28 @@ function generarHTML(
     <div class="client-grid">
       <div class="client-cell">
         <div class="client-label">Nombre / Pagador</div>
-        <div class="client-value">${cliente.nombre || "—"}</div>
+        <div class="client-value">${esc(cliente.nombre) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Empresa</div>
-        <div class="client-value">${cliente.empresa || "—"}</div>
+        <div class="client-value">${esc(cliente.empresa) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">NIT / Documento</div>
-        <div class="client-value">${cliente.nit || "—"}</div>
+        <div class="client-value">${esc(cliente.nit) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Teléfono</div>
-        <div class="client-value">${cliente.telefono || "—"}</div>
+        <div class="client-value">${esc(cliente.telefono) || "—"}</div>
       </div>
       ${cliente.direccion ? `
       <div class="client-cell">
         <div class="client-label">Dirección</div>
-        <div class="client-value">${cliente.direccion}</div>
+        <div class="client-value">${esc(cliente.direccion)}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Ciudad</div>
-        <div class="client-value">${cliente.ciudad || "—"}</div>
+        <div class="client-value">${esc(cliente.ciudad) || "—"}</div>
       </div>` : ""}
     </div>
 
@@ -227,7 +235,7 @@ function generarHTML(
     <div class="suma-row">
       <div class="suma-label">Pagar la Suma de:</div>
       <div class="suma-value">${formatCOP(total)}</div>
-      <div class="suma-letras">${letras}</div>
+      <div class="suma-letras">${esc(letras)}</div>
     </div>
 
     <!-- TABLA DE SERVICIOS -->
@@ -250,7 +258,7 @@ function generarHTML(
       </tbody>
     </table>
 
-    ${nota.trim() ? `<div class="nota-box">${nota}</div>` : ""}
+    ${nota.trim() ? `<div class="nota-box">${esc(nota)}</div>` : ""}
 
     <!-- PIE -->
     <div class="footer-section">
@@ -260,8 +268,8 @@ function generarHTML(
       <div style="font-size:12px;color:#555;margin-top:4px;">Cordialmente,</div>
       ${(banco || numeroCuenta) ? `
       <div class="bank-info">
-        Por favor consignar a la cuenta de ahorros: <span>${numeroCuenta || "—"}</span><br/>
-        Entidad Bancaria: <span>${banco || "—"}</span>
+        Por favor consignar a la cuenta de ahorros: <span>${esc(numeroCuenta) || "—"}</span><br/>
+        Entidad Bancaria: <span>${esc(banco) || "—"}</span>
       </div>` : ""}
     </div>
 

@@ -17,9 +17,22 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // getSession() lee la sesión local (sin red); getUser() la validaría contra
     // el servidor y dejaría userId=null offline, rompiendo carga y suscripciones.
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user?.id ?? null);
+    let activo = true;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (activo) setUserId(data.session?.user?.id ?? null);
+      })
+      .catch(() => {});
+    // Si la sesión cambia de usuario sin desmontar el provider, re-apuntar
+    // suscripciones y purga a la nueva cuenta.
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (activo) setUserId(session?.user?.id ?? null);
     });
+    return () => {
+      activo = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   // 🔒 Defensa: purgar cualquier fila persistida que no pertenezca al usuario
@@ -76,7 +89,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, [userId]);
 
@@ -84,6 +97,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!placa || !userId) return;
 
+    let cancelado = false;
     const cargar = async () => {
       try {
         const { data, error } = await supabase
@@ -98,19 +112,23 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           logger.warn("⚠️ DataProvider: sin conexión para gastos, usando caché:", error.message);
           return;
         }
-        if (data) setGastosPorPlaca(placa, data);
+        if (data && !cancelado) setGastosPorPlaca(placa, data);
       } catch (err: any) {
         logger.warn("⚠️ DataProvider: error cargando gastos:", err?.message ?? err);
       }
     };
 
     cargar();
+    return () => {
+      cancelado = true;
+    };
   }, [placa, userId, setGastosPorPlaca]);
 
   // ✅ CARGAR INGRESOS AL MONTAR
   useEffect(() => {
     if (!placa || !userId) return;
 
+    let cancelado = false;
     const cargar = async () => {
       try {
         const { data, error } = await supabase
@@ -125,13 +143,16 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           logger.warn("⚠️ DataProvider: sin conexión para ingresos, usando caché:", error.message);
           return;
         }
-        if (data) setIngresosPorPlaca(placa, data);
+        if (data && !cancelado) setIngresosPorPlaca(placa, data);
       } catch (err: any) {
         logger.warn("⚠️ DataProvider: error cargando ingresos:", err?.message ?? err);
       }
     };
 
     cargar();
+    return () => {
+      cancelado = true;
+    };
   }, [placa, userId, setIngresosPorPlaca]);
 
   // ✅ SUSCRIBIRSE A GASTOS + INGRESOS EN UN SOLO CANAL
@@ -188,7 +209,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, [placa, userId]);
 

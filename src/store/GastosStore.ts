@@ -37,6 +37,12 @@ export const useGastosStore = create<GastosState>()(
         set((state) => ({
           gastos: [
             ...state.gastos.filter((g) => g.placa !== placa),
+            // Conservar los gastos creados offline que aún no se sincronizaron
+            // (ids "offline_*"); si no, el refetch los borra de la UI aunque
+            // sigan en la cola.
+            ...state.gastos.filter(
+              (g) => g.placa === placa && g.id.startsWith("offline_"),
+            ),
             ...gastosNuevos,
           ],
         })),

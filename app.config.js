@@ -38,6 +38,13 @@ export default {
       package: "com.truckbook.app",
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
       // Los permisos los gestionan los plugins (expo-location, expo-contacts, etc.)
+      // Permisos que algún plugin añade pero la app no usa (mínimo privilegio).
+      blockedPermissions: [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+      ],
     },
     plugins: [
       "./plugins/withModularHeaders",
@@ -93,6 +100,9 @@ export default {
         },
       ],
       "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      "expo-status-bar",
       [
         "expo-image-picker",
         {

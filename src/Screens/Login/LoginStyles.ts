@@ -320,7 +320,7 @@ export default (colors: Colors) => StyleSheet.create({
 
   // ✅ ESTILO PARA LOADING OVERLAY (si lo necesitas)
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",

@@ -44,7 +44,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SymbolView } from "expo-symbols";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
-import * as Contacts from "expo-contacts";
+import * as Contacts from "expo-contacts/legacy";
 import { useEscanearFactura } from "../hooks/useEscanearFactura";
 import { TipoTransaccion } from "../services/geminiService";
 
@@ -616,6 +616,13 @@ export default function TransactionScreen({
   // estaba en vuelo resuelve con un id viejo y NO vuelve a poblar la lista.
   // Sin esto, tras seleccionar reaparecían las sugerencias.
   const contactsReqRef = useRef(0);
+  // Evita que el debounce dispare tras desmontar
+  useEffect(
+    () => () => {
+      if (contactsDebounceRef.current) clearTimeout(contactsDebounceRef.current);
+    },
+    [],
+  );
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-10)).current;
@@ -1157,6 +1164,8 @@ export default function TransactionScreen({
       <Modal
         visible={calendarVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
         <TouchableOpacity
@@ -1207,6 +1216,8 @@ export default function TransactionScreen({
         <Modal
           visible={subModalVisible}
           transparent
+          statusBarTranslucent
+          navigationBarTranslucent
           animationType="slide"
           onRequestClose={() => setSubModalVisible(false)}>
           <TouchableOpacity
@@ -1260,6 +1271,8 @@ export default function TransactionScreen({
       <Modal
         visible={modalVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="slide"
         onRequestClose={closeModal}>
         <KeyboardAvoidingView

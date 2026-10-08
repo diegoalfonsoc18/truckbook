@@ -1192,6 +1192,8 @@ export default function FinanzasGenerales() {
       <Modal
         visible={calendarVisible && calendarTarget === "main"}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
         {renderCalendarSheet()}

@@ -93,6 +93,8 @@ export default function FabEscanear() {
       <Modal
         visible={selectorVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={cerrarTodo}>
         <Pressable
@@ -168,6 +170,8 @@ export default function FabEscanear() {
       <Modal
         visible={fuenteVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setFuenteVisible(false)}
         onDismiss={Platform.OS === "ios" ? onFuenteDismiss : undefined}>

@@ -41,11 +41,13 @@ export async function programarRecordatorioIACobros(
   try {
     const huella = pendientes.map((p) => `${p.id}:${p.monto ?? 0}`).join("|");
     if (huella === ultimaHuella) return; // nada cambió — no reprogramar
-    ultimaHuella = huella;
 
     // Si no hay nada pendiente, cancelar y salir
     await Notifications.cancelScheduledNotificationAsync(ID_IA_COBRO).catch(() => {});
-    if (pendientes.length === 0) return;
+    if (pendientes.length === 0) {
+      ultimaHuella = huella;
+      return;
+    }
 
     const ok = await pedirPermiso();
     if (!ok) return;
@@ -55,8 +57,10 @@ export async function programarRecordatorioIACobros(
     try {
       const raw = await AsyncStorage.getItem(CACHE_IA_NOTIF);
       if (raw) {
-        const { ts, msg } = JSON.parse(raw);
-        if (Date.now() - ts < TTL_IA_NOTIF && msg) mensaje = msg as string;
+        const { ts, msg, h } = JSON.parse(raw);
+        // El caché solo vale para la misma lista de pendientes: es global (no por
+        // usuario) y contiene nombres de clientes de la cuenta que lo generó.
+        if (Date.now() - ts < TTL_IA_NOTIF && msg && h === huella) mensaje = msg as string;
       }
     } catch {}
 
@@ -82,7 +86,7 @@ export async function programarRecordatorioIACobros(
         const raw = (text ?? "").trim().replace(/^["'`«»]+|["'`«»]+$/g, "");
         if (raw) {
           mensaje = raw;
-          await AsyncStorage.setItem(CACHE_IA_NOTIF, JSON.stringify({ ts: Date.now(), msg: raw })).catch(() => {});
+          await AsyncStorage.setItem(CACHE_IA_NOTIF, JSON.stringify({ ts: Date.now(), msg: raw, h: huella })).catch(() => {});
         }
       } catch {}
     }
@@ -103,13 +107,14 @@ export async function programarRecordatorioIACobros(
         data:  { type: "pendientes_cobro_ia" },
       },
       trigger: {
-        hour:    10,
-        minute:  0,
-        repeats: true,
-      } as any,
+        type:   Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour:   10,
+        minute: 0,
+      },
     });
+    ultimaHuella = huella;
   } catch {
-    // Silencioso — no bloquear UI
+    // Silencioso — no bloquear UI (ultimaHuella sin fijar → se reintenta)
   }
 }
 
@@ -161,10 +166,10 @@ export async function programarRecordatoriosPendientes(
           data: { type: "pendientes_cobro" },
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: 9,
           minute: 0,
-          repeats: true,
-        } as any,
+        },
       });
     }
 
@@ -182,10 +187,10 @@ export async function programarRecordatoriosPendientes(
           data: { type: "pendientes_pago" },
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: 8,
           minute: 0,
-          repeats: true,
-        } as any,
+        },
       });
     }
   } catch {

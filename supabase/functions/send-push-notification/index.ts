@@ -38,7 +38,10 @@ serve(async (req) => {
 
     const { targetUserId, title, body, data } = await req.json();
 
-    if (!targetUserId || !title || !body) {
+    if (
+      typeof targetUserId !== "string" || typeof title !== "string" || typeof body !== "string" ||
+      !targetUserId || !title || !body || title.length > 100 || body.length > 500
+    ) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -114,7 +117,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

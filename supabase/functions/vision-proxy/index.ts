@@ -63,7 +63,7 @@ serve(async (req) => {
     }
 
     const { imageBase64 } = await req.json();
-    if (!imageBase64) {
+    if (!imageBase64 || typeof imageBase64 !== "string" || imageBase64.length > 12_000_000) {
       return new Response(JSON.stringify({ error: "imageBase64 requerido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -71,9 +71,9 @@ serve(async (req) => {
     }
 
     const visionKey = Deno.env.get("VISION_API_KEY") ?? "";
-    const visionRes = await fetch(`${VISION_ENDPOINT}?key=${visionKey}`, {
+    const visionRes = await fetch(VISION_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": visionKey },
       body: JSON.stringify({
         requests: [
           {
@@ -101,7 +101,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
