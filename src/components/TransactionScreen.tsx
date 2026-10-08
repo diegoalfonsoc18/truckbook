@@ -71,6 +71,12 @@ export interface Transaction {
   fecha: string;
   estado: string;
   cantidad?: number;
+  /** Columna `proveedor` del registro (Compras de mercancía en Gastos). */
+  proveedor?: string | null;
+  /** Línea extra bajo la descripción (p. ej. venta ligada a una compra). */
+  extraInfo?: string | null;
+  /** Mercancía: parte del ingreso que corresponde a flete. */
+  flete_monto?: number | null;
 }
 
 export interface TransactionScreenProps {
@@ -97,6 +103,14 @@ export interface TransactionScreenProps {
        * que si no lo tomarían como un segmento más.
        */
       esTelefono?: boolean;
+      /**
+       * El valor vive en su propia columna (no en la descripción): se excluye
+       * del armado/parseo de la descripción y se precarga desde
+       * `transaction[key]` al editar (hoy: `proveedor` en Compras).
+       */
+      fueraDeDescripcion?: boolean;
+      /** Campo de monto en pesos (texto con miles, teclado numérico). */
+      esMonto?: boolean;
     }>
   >;
   tipoCamionActual?: any;
@@ -127,6 +141,8 @@ export interface TransactionScreenProps {
   onCategoryAction?: (catId: string) => boolean; // retorna true si manejó el press externamente
   // Tipo de transacción para escanear factura con IA — si está presente, muestra botón Escanear
   tipoTransaccion?: "gasto" | "ingreso";
+  /** Contenido extra dentro del modal al EDITAR un registro (p. ej. ligar una compra a un ingreso). */
+  renderEditExtra?: (editId: string, catKey: string | null) => React.ReactNode;
 }
 
 // ─── Animated category card ───────────────────────────────────────────────────
@@ -430,6 +446,13 @@ function TransactionRow({
               </Text>
             ) : null;
           })()}
+          {item.extraInfo ? (
+            <Text
+              style={{ fontSize: 11, color: textMuted, marginTop: 1 }}
+              numberOfLines={2}>
+              {item.extraInfo}
+            </Text>
+          ) : null}
           <View style={s.rowMeta}>
             {/* Badge de estado — tappable si canToggle */}
             <TouchableOpacity accessibilityRole={canToggle ? "button" : "text"} accessibilityLabel={`Estado: ${getStatusLabel(item.estado)}`} accessibilityState={{ disabled: !canToggle }}
@@ -568,6 +591,7 @@ export default function TransactionScreen({
   emptyIcon = "💸",
   hasCustomDescription = false,
   camposExtra,
+  renderEditExtra,
   tipoCamionActual,
   getMercanciaIcon,
   onAdd,
@@ -806,9 +830,30 @@ export default function TransactionScreen({
       const campos = camposExtra[catKey];
       // Los campos de teléfono no son segmentos de la descripción: incluirlos
       // correría el mapeo posicional y metería el cliente en el campo de al lado.
-      const textCampos = campos.filter((c) => !c.numeric && !c.esTelefono);
+      const textCampos = campos.filter(
+        (c) => !c.numeric && !c.esTelefono && !c.fueraDeDescripcion,
+      );
+      // Campos con columna propia (proveedor de una compra): salen del
+      // registro, y su segmento se quita de la descripción antes del mapeo
+      // posicional para que no corra los demás campos.
+      const partesDesc = [...partes];
+      campos
+        .filter((c) => c.fueraDeDescripcion)
+        .forEach((campo) => {
+          const crudo = (t as any)[campo.key] as string | number | null | undefined;
+          if (crudo === null || crudo === undefined || crudo === "" || crudo === 0) return;
+          if (campo.esMonto) {
+            // Monto con formato de miles; no es un segmento de la descripción
+            extras[campo.key] = formatMontoInput(Math.round(Number(crudo)));
+            return;
+          }
+          const v = String(crudo);
+          extras[campo.key] = v;
+          const idx = partesDesc.findIndex((p) => p.trim() === v.trim());
+          if (idx >= 0) partesDesc.splice(idx, 1);
+        });
       textCampos.forEach((campo, i) => {
-        if (partes[i]) extras[campo.key] = partes[i].trim();
+        if (partesDesc[i]) extras[campo.key] = partesDesc[i].trim();
       });
       const numCampos = campos.filter((c) => c.numeric);
       numCampos.forEach((campo) => {
@@ -847,7 +892,7 @@ export default function TransactionScreen({
         // Sin el teléfono: va aparte, como tag [TEL:...] (lo re-adjunta la
         // pantalla en onUpdate). Si entrara acá quedaría dentro del texto.
         const campos = camposExtra[selectedCat].filter(
-          (c) => !c.numeric && !c.esTelefono,
+          (c) => !c.numeric && !c.esTelefono && !c.fueraDeDescripcion,
         );
         const partes = campos
           .map((c) => (extraValues[c.key] || "").trim())
@@ -1425,13 +1470,19 @@ export default function TransactionScreen({
                                     placeholder={campo.placeholder}
                                     placeholderTextColor={c.textMuted}
                                     keyboardType={
-                                      campo.esTelefono ? "phone-pad" : "default"
+                                      campo.esMonto
+                                        ? "numeric"
+                                        : campo.esTelefono
+                                          ? "phone-pad"
+                                          : "default"
                                     }
                                     value={extraValues[campo.key] || ""}
                                     onChangeText={(v) => {
                                       setExtraValues((prev) => ({
                                         ...prev,
-                                        [campo.key]: v,
+                                        [campo.key]: campo.esMonto
+                                          ? formatMontoInput(v)
+                                          : v,
                                       }));
                                       // Sugerir contactos del dispositivo al escribir
                                       if (campo.key === "cliente")
@@ -1523,6 +1574,10 @@ export default function TransactionScreen({
                             )}
                           </View>
                         ))}
+
+                      {isEditing && renderEditExtra
+                        ? renderEditExtra(editId!, selectedCat)
+                        : null}
 
                       {/* Monto */}
                       <View style={s.inputGroup}>

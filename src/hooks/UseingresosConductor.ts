@@ -2,6 +2,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { v4 as uuidv4 } from "uuid";
 import supabase from "../config/SupaBaseConfig";
 import { useIngresosStore, type Ingreso } from "../store/IngresosStore";
+import { useGastosStore } from "../store/GastosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
 import logger from "../utils/logger";
 
@@ -132,12 +133,14 @@ export const useIngresosConductor = (conductorId?: string | null) => {
         const { error: err } = await query;
         if (err) throw err;
         eliminarIngreso(id);
+        useGastosStore.getState().desligarIngreso(id);
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err.message };
       }
     } else {
       eliminarIngreso(id);
+      useGastosStore.getState().desligarIngreso(id);
       enqueue({
         table: "conductor_ingresos",
         action: "delete",

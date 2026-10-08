@@ -19,6 +19,8 @@ export interface Ingreso {
   fecha_vencimiento?: string | null;
   monto_pagado?: number | null;
   cliente?: string | null;
+  /** Ingreso mixto (Mercancía): parte que corresponde a flete. */
+  flete_monto?: number | null;
 }
 
 interface IngresosState {

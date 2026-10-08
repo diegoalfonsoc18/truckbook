@@ -25,6 +25,9 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { sanitizeText, sanitizePhone } from "../../utils/sanitize";
 import { H_PAD_COMPACT } from "../../constants/layout";
+import { useGastosStore } from "../../store/GastosStore";
+import { useGastosConductor } from "../../hooks/UseGastosConductor";
+import { esCompra } from "../FinanzasGeneral/finanzasUtils";
 
 // Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
 const H_PAD = H_PAD_COMPACT;
@@ -286,6 +289,10 @@ export default function CuentaCobro() {
   const ACCENT = c.accent;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
+  // Compras de mercancía: se leen del store (aislado por conductor_id) y se
+  // marcan como recuperadas con la actualización offline-aware de gastos.
+  const gastos = useGastosStore((st) => st.gastos);
+  const { actualizarGasto } = useGastosConductor(user?.id);
 
   const conductor =
     (user?.user_metadata as any)?.nombre ||
@@ -309,6 +316,8 @@ export default function CuentaCobro() {
   const [banco, setBanco] = useState("");
   const [numeroCuenta, setNumeroCuenta] = useState("");
   const [cargando, setCargando] = useState(false);
+  // gastoId -> id del renglón de servicios donde se agregó esa compra
+  const [comprasAgregadas, setComprasAgregadas] = useState<Record<string, string>>({});
 
   // Modal de contactos
   const [contactosModal, setContactosModal] = useState(false);
@@ -320,6 +329,37 @@ export default function CuentaCobro() {
     const cant = parseFloat(s.cantidad) || 1;
     return acc + precio * cant;
   }, 0);
+
+  // ── Compras por recuperar ──────────────────────────────────────────────────
+  // Todas las compras de mercancía del usuario que aún no se han recuperado
+  // (de cualquier proveedor): las compras no tienen cliente, así que una vez
+  // elegido el cliente de esta cuenta se ofrecen todas para agregarlas.
+  const hayCliente = cliente.nombre.trim().length > 0;
+  const comprasPorCobrar = useMemo(() => {
+    if (!hayCliente || !user?.id) return [];
+    return gastos.filter(
+      (g) => g.conductor_id === user.id && esCompra(g) && !g.recuperado,
+    );
+  }, [gastos, hayCliente, user?.id]);
+
+  const agregarCompra = (g: (typeof gastos)[number]) => {
+    if (comprasAgregadas[g.id]) return; // no duplicar
+    const nuevoId = `compra_${g.id}`;
+    const renglon: Servicio = {
+      id: nuevoId,
+      descripcion: sanitizeText(g.descripcion || "Compra de mercancía", 200),
+      // Precio inicial = lo que costó; editable para sumar la ganancia
+      precioUnitario: String(Math.round(g.monto)),
+      cantidad: "1",
+    };
+    setServicios((prev) => {
+      // Si el único renglón está vacío, se reemplaza en vez de dejar uno en blanco
+      const soloVacio =
+        prev.length === 1 && !prev[0].descripcion.trim() && !prev[0].precioUnitario;
+      return soloVacio ? [renglon] : [...prev, renglon];
+    });
+    setComprasAgregadas((prev) => ({ ...prev, [g.id]: nuevoId }));
+  };
 
   // ── Contactos ──────────────────────────────────────────────────────────────
   const contactosFiltrados = useMemo(() => {
@@ -374,6 +414,10 @@ export default function CuentaCobro() {
   const eliminarServicio = (id: string) => {
     if (servicios.length === 1) return;
     setServicios((prev) => prev.filter((s) => s.id !== id));
+    // Si era una compra, vuelve a quedar disponible para agregarla
+    setComprasAgregadas((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([, sid]) => sid !== id)),
+    );
   };
 
   // ── Compartir ──────────────────────────────────────────────────────────────
@@ -412,6 +456,23 @@ export default function CuentaCobro() {
         dialogTitle: "Compartir cuenta de cobro",
         UTI: "com.adobe.pdf",
       });
+
+      // La cuenta ya salió: las compras incluidas en renglones válidos pasan a
+      // "recuperado" (no se vuelven a ofrecer ni se cobran dos veces).
+      const idsValidos = new Set(validos.map((v) => v.id));
+      const porMarcar = comprasPorCobrar.filter((g) => {
+        const sid = comprasAgregadas[g.id];
+        return !!sid && idsValidos.has(sid);
+      });
+      const resultados = await Promise.all(
+        porMarcar.map((g) => actualizarGasto(g.id, { recuperado: true })),
+      );
+      if (resultados.some((r) => !r.success)) {
+        Alert.alert(
+          "Compras sin marcar",
+          "La cuenta se generó, pero no se pudieron marcar algunas compras como recuperadas. Revísalas en Gastos.",
+        );
+      }
     } catch (err) {
       Alert.alert("Error", "No se pudo generar el documento.");
     } finally {
@@ -601,6 +662,50 @@ export default function CuentaCobro() {
                 />
               </View>
             </View>
+
+            {/* COMPRAS POR COBRAR DEL CLIENTE */}
+            {comprasPorCobrar.length > 0 && (
+              <>
+                <Text style={[s.sectionLabel, { color: c.textSecondary }]}>
+                  Compras por recuperar
+                </Text>
+                <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+                  {comprasPorCobrar.map((g, idx) => {
+                    const agregada = !!comprasAgregadas[g.id];
+                    return (
+                      <View key={g.id}>
+                        {idx > 0 && <View style={[s.divider, { backgroundColor: c.divider }]} />}
+                        <View style={s.compraRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[s.compraDesc, { color: c.text }]} numberOfLines={2}>
+                              {g.descripcion}
+                            </Text>
+                            <Text style={[s.compraMonto, { color: c.textMuted }]}>
+                              {formatCOP(g.monto)}{g.fecha ? ` · ${g.fecha}` : ""}
+                            </Text>
+                          </View>
+                          <TouchableOpacity accessibilityRole="button"
+                            accessibilityLabel={agregada ? `Compra ya agregada: ${g.descripcion}` : `Agregar compra a la cuenta: ${g.descripcion}`}
+                            accessibilityState={{ disabled: agregada }}
+                            disabled={agregada}
+                            onPress={() => agregarCompra(g)}
+                            style={[s.compraBtn, { borderColor: ACCENT + "40", backgroundColor: ACCENT + (agregada ? "00" : "0D") }]}
+                            activeOpacity={0.7}>
+                            <Ionicons name={agregada ? "checkmark" : "add"} size={16} color={agregada ? c.textMuted : ACCENT} />
+                            <Text style={[s.addBtnText, { color: agregada ? c.textMuted : ACCENT }]}>
+                              {agregada ? "Agregada" : "Agregar"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  <Text style={[s.compraNota, { color: c.textMuted }]}>
+                    El precio inicial es lo que pagaste; edítalo para sumar tu ganancia. Al compartir la cuenta, estas compras se marcan como recuperadas.
+                  </Text>
+                </View>
+              </>
+            )}
 
             {/* SERVICIOS */}
             <View style={s.sectionRow}>
@@ -866,6 +971,11 @@ const s = StyleSheet.create({
     marginTop: 20,
     marginBottom: 8,
   },
+  compraRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
+  compraDesc: { fontSize: 14, fontWeight: "600" },
+  compraMonto: { fontSize: 12, marginTop: 2 },
+  compraBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  compraNota: { fontSize: 11, paddingHorizontal: 14, paddingBottom: 10, paddingTop: 4 },
   addBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   addBtnText: { fontSize: 14, fontWeight: "600" },
 

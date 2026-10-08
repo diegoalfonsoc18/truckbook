@@ -15,6 +15,8 @@ import {
   fletesPendientes,
 } from "../../services/fleteNotifications";
 import { extraerTelDesc } from "../../utils/telefono";
+import { useGananciaCompras } from "../../hooks/useGananciaCompras";
+import { formatCurrency } from "../FinanzasGeneral/finanzasUtils";
 
 // El teléfono no se guarda como parte de la descripción sino como tag
 // [TEL:...]; `esTelefono` es lo que le avisa al modal que no lo mezcle.
@@ -40,6 +42,9 @@ const MERCANCIA_CAMPOS = [
   CAMPO_TELEFONO,
   { key: "tipo",        label: "Tipo de mercancía", placeholder: "Cemento, Arena, Ganado, etc." },
   { key: "descripcion", label: "Descripción",       placeholder: "Detalles, peso, cantidad (opcional)" },
+  // Si el valor de la mercancía ya incluye el flete: cuánto es flete. Va en su
+  // propia columna (no en la descripción) y alimenta la ganancia sin flete.
+  { key: "flete_monto", label: "Del cual flete",    placeholder: "Opcional — parte del monto que es flete", esMonto: true, fueraDeDescripcion: true },
 ];
 
 const ANTICIPO_CAMPOS = [
@@ -106,6 +111,21 @@ export default function Ingresos() {
     actualizarRecordatorioFletes(pendientes.length);
   }, [ingresos]);
 
+  const { porIngreso } = useGananciaCompras(user?.id);
+
+  // Línea bajo el ingreso si tiene compras ligadas: ganancia del grupo. Si el
+  // propio ingreso está por cobrar no hay ganancia que mostrar todavía.
+  const infoIngreso = (i: (typeof ingresos)[number]): string | null => {
+    const grupo = porIngreso[i.id];
+    if (!grupo) return null;
+    const base = `Compras ligadas: ${formatCurrency(grupo.compras)}`;
+    if (i.estado === "pendiente" || grupo.cobrados === 0) return `${base} · por cobrar`;
+    return (
+      `${base} · ganancia sin flete ${formatCurrency(grupo.gananciaSin)} · con flete ${formatCurrency(grupo.gananciaCon)}` +
+      (grupo.porCobrar > 0 ? ` · incluye ${formatCurrency(grupo.porCobrar)} por cobrar` : "")
+    );
+  };
+
   // Normalise to the shared Transaction shape
   const transactions = ingresos.map((i) => ({
     id: i.id,
@@ -116,6 +136,8 @@ export default function Ingresos() {
     fecha: i.fecha,
     estado: i.estado,
     cantidad: i.cantidad ?? 1,
+    flete_monto: i.flete_monto ?? null,
+    extraInfo: infoIngreso(i),
   }));
 
   const onAdd = useCallback(
@@ -197,6 +219,16 @@ export default function Ingresos() {
         if (telLimpio) desc = `${desc}[TEL:${telLimpio}]`;
       }
 
+      // "Del cual flete" (solo Mercancía): opcional, monto válido y sin pasar del total
+      let fleteMonto: number | undefined;
+      if (catId === "mercancia" && extras?.flete_monto?.trim()) {
+        const fr = validarMonto(extras.flete_monto);
+        if (!fr.valido) return { success: false, error: "Del cual flete: " + fr.error };
+        fleteMonto = parsearMonto(extras.flete_monto);
+        if (fleteMonto > parsearMonto(monto))
+          return { success: false, error: "El flete no puede ser mayor que el monto" };
+      }
+
       // Cantidad de fletes — 1 registro con campo cantidad (no N registros)
       const rawCantidad = parseInt(extras?.cantidad || "1", 10);
       if (isNaN(rawCantidad) || rawCantidad < 1) return { success: false, error: "Cantidad inválida" };
@@ -212,6 +244,7 @@ export default function Ingresos() {
         estado: estadoInicial,
         cantidad,
         cliente: extras?.cliente ? sanitizarInput(extras.cliente) : undefined,
+        flete_monto: fleteMonto,
       });
     },
     [placaActual, user?.id, agregarIngreso],
@@ -252,6 +285,20 @@ export default function Ingresos() {
       if (extras?.cantidad) {
         const cant = parseInt(extras.cantidad, 10);
         if (!isNaN(cant) && cant >= 1 && cant <= 20) payload.cantidad = cant;
+      }
+      // "Del cual flete": vacío lo borra; si viene con valor debe ser válido y
+      // no pasar del monto. Si la clave no vino (otras categorías) no se toca.
+      if (extras?.flete_monto !== undefined) {
+        if (!extras.flete_monto.trim()) {
+          payload.flete_monto = null;
+        } else {
+          const fr = validarMonto(extras.flete_monto);
+          if (!fr.valido) return { success: false, error: "Del cual flete: " + fr.error };
+          const flete = parsearMonto(extras.flete_monto);
+          if (flete > parsearMonto(monto))
+            return { success: false, error: "El flete no puede ser mayor que el monto" };
+          payload.flete_monto = flete;
+        }
       }
       // Mantener el campo `cliente` sincronizado con la descripción editada
       // (antes solo cambiaba la descripción y el filtro por cliente en Reportes
