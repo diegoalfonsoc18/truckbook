@@ -29,7 +29,8 @@ import { useGastosStore, type Gasto } from "../../store/GastosStore";
 import { useIngresosStore, type Ingreso } from "../../store/IngresosStore";
 import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "../../hooks/useAuth";
-import { fetchTransaccionesRango } from "../../services/reporteService";
+import { fetchTransaccionesRango, fetchComprasLigadas } from "../../services/reporteService";
+import { calcularGanancias, sumarGanancias } from "../../utils/comprasGanancia";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,11 +41,13 @@ import { generarReporteHTML } from "./reporteHTML";
 import {
   CATEGORIAS_EXPORT,
   HORIZONTAL_PADDING,
+  cuentaComoGasto,
   esPendiente,
   filtrarPorRango,
   formatCurrency,
   formatLabel,
   groupBy,
+  resumenCompras,
   type EstadoFiltro,
   type ViewType,
 } from "./finanzasUtils";
@@ -56,7 +59,7 @@ export default function FinanzasGenerales() {
 
   const [exportando, setExportando] = useState(false);
   const [exportModal, setExportModal] = useState(false);
-  const [view, setView] = useState<ViewType>("meses");
+  const [view, setView] = useState<ViewType>("dias");
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [selectingDate, setSelectingDate] = useState<"inicio" | "fin">(
     "inicio",
@@ -255,16 +258,18 @@ export default function FinanzasGenerales() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [ingresos, setIngresos] = useState<Ingreso[]>([]);
   const [cargandoRango, setCargandoRango] = useState(false);
+  // Compras ligadas a ingresos + esos ingresos (sin límite de fecha) para la
+  // ganancia de compras; si la consulta falla se usa el caché del store.
+  const [ligadas, setLigadas] = useState<{ compras: Gasto[]; ingresos: Ingreso[] } | null>(null);
 
   const cargarRango = useCallback(async () => {
     if (!placaActual || !user?.id) return;
     setCargandoRango(true);
-    const res = await fetchTransaccionesRango(
-      placaActual,
-      user.id,
-      rango.inicio,
-      rango.fin,
-    );
+    const [res, lig] = await Promise.all([
+      fetchTransaccionesRango(placaActual, user.id, rango.inicio, rango.fin),
+      fetchComprasLigadas(placaActual, user.id),
+    ]);
+    setLigadas(lig.error ? null : { compras: lig.compras, ingresos: lig.ingresos });
     if (res.error) {
       // Sin conexión: usar el caché del store (recorta a 200, pero muestra algo)
       setGastos(useGastosStore.getState().gastos);
@@ -299,6 +304,7 @@ export default function FinanzasGenerales() {
     balance,
     rentabilidad,
     formattedLabels,
+    compras,
   } = React.useMemo(() => {
     const placasSet = new Set(placasActivas);
     // Filtro por categoría: una categoría de gasto vacía los ingresos y
@@ -309,6 +315,8 @@ export default function FinanzasGenerales() {
       : null;
     const gPorPlaca = gastos
       .filter((g) => placasSet.has(g.placa))
+      // Compras sin pagar al proveedor aún no son un gasto de caja
+      .filter(cuentaComoGasto)
       .filter(
         (g) =>
           !catPantalla ||
@@ -382,6 +390,16 @@ export default function FinanzasGenerales() {
       balance: bal,
       rentabilidad: rent,
       formattedLabels: labels,
+      // Compras de mercancía del rango (ya filtradas por placa/categoría y
+      // por criterio de caja arriba): total, por recuperar y recuperado.
+      // No dependen de ningún filtro de cliente (las compras no tienen cliente).
+      compras: resumenCompras(
+        gPorPlaca.filter(
+          (g) =>
+            (!rango.inicio || g.fecha >= rango.inicio) &&
+            (!rango.fin || g.fecha <= rango.fin),
+        ),
+      ),
     };
   }, [
     gastos,
@@ -392,6 +410,34 @@ export default function FinanzasGenerales() {
     view,
     catPantalla,
   ]);
+
+  // Ganancia de las compras ligadas: por grupo (compras↔ingresos conectados),
+  // solo ingresos cobrados. Un grupo cuenta en el período si alguno de sus
+  // ingresos cae en el rango. Sin conexión usa el caché del store.
+  const gananciaCompras = React.useMemo(() => {
+    const comprasBase = ligadas
+      ? ligadas.compras
+      : gastosStore.filter(
+          (g) =>
+            g.tipo_gasto === "Compras" &&
+            g.conductor_id === user?.id &&
+            g.placa === placaActual &&
+            (g.ingreso_ids?.length ?? 0) > 0,
+        );
+    const ingresosBase = ligadas
+      ? ligadas.ingresos
+      : ingresosStore.filter((i) => i.conductor_id === user?.id);
+    const { grupos } = calcularGanancias(comprasBase, ingresosBase);
+    return sumarGanancias(
+      grupos.filter((g) =>
+        g.fechas.some(
+          (f) =>
+            (!rango.inicio || f >= rango.inicio) &&
+            (!rango.fin || f <= rango.fin),
+        ),
+      ),
+    );
+  }, [ligadas, gastosStore, ingresosStore, user?.id, placaActual, rango.inicio, rango.fin]);
 
   // Categoría seleccionada en pantalla: define si el resumen se muestra en
   // modo "enfocado" (un solo rubro) o el general de ingresos/gastos/balance.
@@ -425,11 +471,11 @@ export default function FinanzasGenerales() {
   // principal (Modal propio) y por el modal de exportar (overlay interno —
   // en iOS no se puede montar un segundo Modal sobre el de exportar).
   const renderCalendarSheet = () => (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityViewIsModal
       style={[styles.modalOverlay, { backgroundColor: c.overlay }]}
       activeOpacity={1}
       onPress={() => setCalendarVisible(false)}>
-      <TouchableOpacity activeOpacity={1}>
+      <TouchableOpacity accessible={false} activeOpacity={1}>
         <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
           <View
             style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
@@ -592,7 +638,10 @@ export default function FinanzasGenerales() {
     const gastosDetalle =
       exportCliente || catMeta?.grupo === "ingreso" || exportEstado !== null
         ? []
-        : datos.gastos.filter((g) => filtrarCat(g.tipo_gasto));
+        : datos.gastos
+            .filter((g) => filtrarCat(g.tipo_gasto))
+            // Compras sin pagar al proveedor aún no son un gasto de caja
+            .filter(cuentaComoGasto);
     const getClienteIngreso = (i: any): string | null => {
       if (i.cliente) return i.cliente;
       const desc: string = i.descripcion || "";
@@ -665,6 +714,31 @@ export default function FinanzasGenerales() {
       return;
     }
 
+    // Ganancia de compras ligadas (por grupo, solo ingresos cobrados) para el
+    // período del informe. Sin conexión / error: caché del store.
+    const lig = await fetchComprasLigadas(placaActual, user.id);
+    const { grupos: gruposPdf } = calcularGanancias(
+      lig.error
+        ? useGastosStore
+            .getState()
+            .gastos.filter(
+              (g) =>
+                g.tipo_gasto === "Compras" &&
+                g.conductor_id === user.id &&
+                g.placa === placaActual &&
+                (g.ingreso_ids?.length ?? 0) > 0,
+            )
+        : lig.compras,
+      lig.error
+        ? useIngresosStore.getState().ingresos.filter((i) => i.conductor_id === user.id)
+        : lig.ingresos,
+    );
+    const gananciaLigadas = sumarGanancias(
+      gruposPdf.filter((g) =>
+        g.fechas.some((f) => f >= r.inicio && f <= r.fin),
+      ),
+    );
+
     const gFilt = gastosDetalle.map((g) => ({
       fecha: g.fecha,
       value: g.monto,
@@ -704,6 +778,7 @@ export default function FinanzasGenerales() {
         gastosPorPeriodo: gasPeriodo,
         gastosDetalle,
         ingresosDetalle,
+        gananciaLigadas,
         view: diasRango <= 31 ? "dias" : "meses",
         clienteFiltro: clienteReal,
         categoriaFiltro: exportCategoria,
@@ -831,7 +906,7 @@ export default function FinanzasGenerales() {
                 { backgroundColor: c.cardBg, borderColor: c.border },
                 getShadow(isDark, "sm"),
               ]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
                 onPress={() => openCalendar("inicio")}
                 activeOpacity={0.8}>
@@ -845,7 +920,7 @@ export default function FinanzasGenerales() {
               <View style={styles.rangeDivider}>
                 <Ionicons name="arrow-forward" size={16} color={c.textMuted} />
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
                 onPress={() => openCalendar("fin")}
                 activeOpacity={0.8}>
@@ -1056,7 +1131,7 @@ export default function FinanzasGenerales() {
                 { backgroundColor: c.cardBg, borderColor: c.border },
               ]}>
               {(["dias", "meses", "años"] as ViewType[]).map((v) => (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: view === v }}
                   key={v}
                   style={[
                     styles.viewTab,
@@ -1131,8 +1206,79 @@ export default function FinanzasGenerales() {
               </View>
             </View>
 
+            {/* COMPRAS DE MERCANCÍA — dinero propio puesto en mercancía para
+                revender. Solo cifras reales de los registros: no hay enlace
+                compra↔venta, así que no se calcula ganancia por reventa. */}
+            {(compras.cantidad > 0 || gananciaCompras.hayLigadas) && (
+              <View
+                accessible
+                accessibilityLabel={`Compras de mercancía. Total comprado ${formatCurrency(compras.total)}. Por recuperar ${formatCurrency(compras.porRecuperar)}. Ya recuperado ${formatCurrency(compras.recuperado)}.${gananciaCompras.cantidad > 0 ? ` Ganancia de compras ligadas sin flete ${formatCurrency(gananciaCompras.gananciaSin)}, con flete ${formatCurrency(gananciaCompras.gananciaCon)}.` : ""}`}
+                style={[
+                  styles.detailsSection,
+                  { backgroundColor: c.cardBg, borderColor: c.border },
+                  getShadow(isDark, "sm"),
+                ]}>
+                <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
+                  Compras de mercancía
+                </Text>
+                <View style={[styles.detailRow, { borderBottomColor: c.border }]}>
+                  <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
+                    Total comprado
+                  </Text>
+                  <Text style={[styles.detailValue, { color: c.expense }]}>
+                    {formatCurrency(compras.total)}
+                  </Text>
+                </View>
+                <View style={[styles.detailRow, { borderBottomColor: c.border }]}>
+                  <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
+                    Por recuperar
+                  </Text>
+                  <Text style={[styles.detailValue, { color: "#B45309" }]}>
+                    {formatCurrency(compras.porRecuperar)}
+                  </Text>
+                </View>
+                <View style={[styles.detailRow, gananciaCompras.cantidad === 0 && { borderBottomWidth: 0 }]}>
+                  <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
+                    Ya recuperado
+                  </Text>
+                  <Text style={[styles.detailValue, { color: c.income }]}>
+                    {formatCurrency(compras.recuperado)}
+                  </Text>
+                </View>
+                {gananciaCompras.cantidad > 0 && (
+                  <>
+                    <View style={[styles.detailRow, { borderBottomColor: c.border }]}>
+                      <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
+                        Ganancia sin flete
+                      </Text>
+                      <Text style={[styles.detailValue, { color: gananciaCompras.gananciaSin >= 0 ? c.income : c.expense }]}>
+                        {formatCurrency(gananciaCompras.gananciaSin)}
+                      </Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={[styles.detailLabel, { color: c.textSecondary }]}>
+                        Ganancia con flete
+                      </Text>
+                      <Text style={[styles.detailValue, { color: gananciaCompras.gananciaCon >= 0 ? c.income : c.expense }]}>
+                        {formatCurrency(gananciaCompras.gananciaCon)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.balanceSubtext, { color: c.textMuted, marginTop: 8 }]}>
+                      Ganancia de compras ligadas a ingresos cobrados
+                      {gananciaCompras.porCobrar > 0
+                        ? ` (no suma ${formatCurrency(gananciaCompras.porCobrar)} por cobrar)`
+                        : ""}
+                    </Text>
+                  </>
+                )}
+                <Text style={[styles.balanceSubtext, { color: c.textMuted, marginTop: 8 }]}>
+                  Solo compras ya pagadas al proveedor
+                </Text>
+              </View>
+            )}
+
             {/* BOTÓN EXPORTAR */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.exportarBtn, { backgroundColor: c.accent }]}
               onPress={() => {
                 seleccionarPeriodo("mes");
@@ -1192,6 +1338,8 @@ export default function FinanzasGenerales() {
       <Modal
         visible={calendarVisible && calendarTarget === "main"}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}>
         {renderCalendarSheet()}

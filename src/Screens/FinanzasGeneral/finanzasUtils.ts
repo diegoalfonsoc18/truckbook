@@ -49,12 +49,58 @@ export const CATEGORIAS_EXPORT: Array<{
   { tipo: "Llantas", icon: "tire", grupo: "gasto" },
   { tipo: "Lavado", icon: "wash", grupo: "gasto" },
   { tipo: "Aceite", icon: "oil", grupo: "gasto" },
+  { tipo: "Compras", icon: "mercancia_box", grupo: "gasto" },
   { tipo: "Flete", icon: "freight", grupo: "ingreso" },
   { tipo: "Mercancía", icon: "mercancia_box", grupo: "ingreso" },
   { tipo: "Anticipo", icon: "advance", grupo: "ingreso" },
   { tipo: "Reembolso", icon: "refund", grupo: "ingreso" },
   { tipo: "Cobro", icon: "factura", grupo: "ingreso" },
 ];
+
+// ─── Compras de mercancía ────────────────────────────────────────────────────
+// Gasto tipo "Compras": mercancía comprada con dinero propio para revenderla.
+// `estado` = si ya se le pagó al proveedor; `recuperado` = si ya se incluyó en
+// una cuenta de cobro a un cliente. Son cosas distintas. Toda compra nace
+// "por recuperar" (recuperado = false).
+export const TIPO_COMPRAS = "Compras";
+
+type GastoCompra = {
+  tipo_gasto?: string | null;
+  estado?: string | null;
+  monto: number;
+  recuperado?: boolean | null;
+};
+
+export const esCompra = (g: { tipo_gasto?: string | null }) =>
+  g.tipo_gasto === TIPO_COMPRAS;
+
+/**
+ * Criterio de caja para Compras: una compra todavía sin pagar al proveedor no
+ * ha sacado plata del bolsillo, así que no cuenta como gasto del período.
+ * (El resto de gastos conserva su criterio de siempre.)
+ */
+export const cuentaComoGasto = (g: GastoCompra) =>
+  !(esCompra(g) && g.estado === "pendiente");
+
+/**
+ * Resumen de compras de mercancía (solo cifras reales de los registros):
+ * total comprado, por recuperar y ya recuperado.
+ */
+export function resumenCompras(gastos: GastoCompra[]) {
+  let total = 0;
+  let porRecuperar = 0;
+  let recuperado = 0;
+  let cantidad = 0;
+  for (const g of gastos) {
+    if (!esCompra(g) || !cuentaComoGasto(g)) continue;
+    const m = Number(g.monto) || 0;
+    cantidad += 1;
+    total += m;
+    if (g.recuperado) recuperado += m;
+    else porRecuperar += m;
+  }
+  return { total, porRecuperar, recuperado, cantidad };
+}
 
 export function groupBy<T extends { fecha: string; value: number | string }>(
   items: T[],

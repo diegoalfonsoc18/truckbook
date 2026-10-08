@@ -37,7 +37,7 @@ export default function ChipsCategoria({
         const selected = value === cat.tipo;
         const isTodas = cat.tipo === null;
         return (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: selected }}
             key={cat.tipo ?? "__todas"}
             style={[
               st.chip,

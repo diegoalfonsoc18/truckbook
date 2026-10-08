@@ -4,7 +4,7 @@
 // Vive aparte de la pantalla porque es una función pura y larga: no toca
 // estado, hooks ni React, solo recibe datos y devuelve el HTML. Todo lo que
 // se interpole aquí viene del usuario, así que pasa por `esc()`.
-import { contarServicios, formatCurrency, type EstadoFiltro, type ViewType } from "./finanzasUtils";
+import { contarServicios, formatCurrency, resumenCompras, type EstadoFiltro, type ViewType } from "./finanzasUtils";
 
 // ─── Generación del informe PDF ───────────────────────────────────────────────
 export function generarReporteHTML(params: {
@@ -21,6 +21,8 @@ export function generarReporteHTML(params: {
     tipo_gasto: string;
     descripcion: string;
     monto: number;
+    estado?: string | null;
+    recuperado?: boolean | null;
   }>;
   ingresosDetalle: Array<{
     fecha: string;
@@ -31,6 +33,13 @@ export function generarReporteHTML(params: {
     cantidad?: number | null;
     estado?: string | null;
   }>;
+  /** Ganancia de compras ligadas a ingresos cobrados (ver comprasGanancia.ts). */
+  gananciaLigadas?: {
+    cantidad: number;
+    gananciaCon: number;
+    gananciaSin: number;
+    porCobrar: number;
+  } | null;
   clienteFiltro?: string | null;
   categoriaFiltro?: string | null;
   categoriaEsGasto?: boolean;
@@ -193,6 +202,47 @@ export function generarReporteHTML(params: {
     </tr>`,
     )
     .join("");
+
+  // Compras de mercancía (dinero propio puesto en mercancía para revender).
+  // Solo cifras de los registros; sin ganancia por reventa (no hay enlace
+  // compra↔venta). gastosDetalle ya excluye las compras sin pagar.
+  const compras = resumenCompras(params.gastosDetalle);
+  const gl = params.gananciaLigadas;
+  const seccionCompras =
+    compras.cantidad > 0
+      ? `
+  <div class="section-title">Compras de mercancía (${compras.cantidad})</div>
+  <div class="summary" style="grid-template-columns:repeat(3,1fr)">
+    <div class="s-card" style="border-color:#EF444440">
+      <div class="s-label">Total comprado</div>
+      <div class="s-value red">${esc(fmt(compras.total))}</div>
+    </div>
+    <div class="s-card" style="border-color:#F59E0B40">
+      <div class="s-label">Por recuperar</div>
+      <div class="s-value amber">${esc(fmt(compras.porRecuperar))}</div>
+    </div>
+    <div class="s-card" style="border-color:#16A34A40">
+      <div class="s-label">Ya recuperado</div>
+      <div class="s-value green">${esc(fmt(compras.recuperado))}</div>
+    </div>
+  </div>
+  ${
+    gl && gl.cantidad > 0
+      ? `<div class="summary" style="grid-template-columns:repeat(2,1fr)">
+    <div class="s-card" style="border-color:#E2E8F0">
+      <div class="s-label">Ganancia sin flete</div>
+      <div class="s-value ${gl.gananciaSin >= 0 ? "green" : "red"}">${esc(fmt(gl.gananciaSin))}</div>
+    </div>
+    <div class="s-card" style="border-color:#E2E8F0">
+      <div class="s-label">Ganancia con flete</div>
+      <div class="s-value ${gl.gananciaCon >= 0 ? "green" : "red"}">${esc(fmt(gl.gananciaCon))}</div>
+    </div>
+  </div>
+  <div class="summary-note">Ganancia de compras ligadas a ingresos cobrados${gl.porCobrar > 0 ? ` (no suma ${esc(fmt(gl.porCobrar))} por cobrar)` : ""}.</div>`
+      : ""
+  }
+  <div class="summary-note">Solo compras ya pagadas al proveedor. Por recuperar: compras que aún no van en una cuenta de cobro.</div>`
+      : "";
 
   const balColor = balanceReal >= 0 ? "#16A34A" : "#EF4444";
   const esCategoria = !!params.categoriaFiltro;
@@ -368,6 +418,8 @@ export function generarReporteHTML(params: {
   </div>
   <div class="summary-note">Rentabilidad: ${rentReal >= 0 ? "+" : ""}${rentReal.toFixed(1)}% · Balance de caja: solo ingresos recibidos${totalPorCobrar > 0 ? ` (no incluye ${fmt(totalPorCobrar)} por cobrar)` : ""}${notaEstado}</div>`
   }
+
+  ${seccionCompras}
 
   <!-- POR PERÍODO (solo informe general — sin sentido en estado de cuenta
        ni en informe filtrado por una sola categoría) -->

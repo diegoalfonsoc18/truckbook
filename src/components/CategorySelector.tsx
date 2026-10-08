@@ -96,7 +96,7 @@ function CategoryButton({
     : option.iconColor || defaultIconColor || "#1F2937";
 
   return (
-    <Pressable
+    <Pressable accessibilityRole="button" accessibilityState={{ selected: isSelected }}
       onPress={onPress}
       style={[
         styles.button,

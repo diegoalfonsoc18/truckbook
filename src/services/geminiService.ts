@@ -106,12 +106,24 @@ function extractJson(text: string): DatosFactura | null {
 
   try {
     const parsed = JSON.parse(match[0]);
+    // La salida del LLM es no confiable: validar tipo/rango antes de que llegue a la DB.
+    const montoOk =
+      typeof parsed.monto === "number" &&
+      Number.isFinite(parsed.monto) &&
+      parsed.monto > 0 &&
+      parsed.monto <= 999_999_999;
+    const fechaOk =
+      typeof parsed.fecha === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha) &&
+      !isNaN(new Date(parsed.fecha + "T00:00:00").getTime());
+    const txt = (v: unknown, max: number) =>
+      typeof v === "string" ? v.replace(/[<>]/g, "").trim().slice(0, max) : null;
     return {
-      monto: typeof parsed.monto === "number" ? parsed.monto : null,
-      fecha: typeof parsed.fecha === "string" ? parsed.fecha : null,
-      proveedor: typeof parsed.proveedor === "string" ? parsed.proveedor : null,
+      monto: montoOk ? parsed.monto : null,
+      fecha: fechaOk ? parsed.fecha : null,
+      proveedor: txt(parsed.proveedor, 100),
       categoria: typeof parsed.categoria === "string" ? parsed.categoria : null,
-      descripcion: typeof parsed.descripcion === "string" ? parsed.descripcion : null,
+      descripcion: txt(parsed.descripcion, 100),
       detalles: parsed.detalles && typeof parsed.detalles === "object" ? parsed.detalles : undefined,
       raw: text,
     };
@@ -164,15 +176,32 @@ export function componerDescripcion(data: DatosFactura): string {
   return data.descripcion ?? data.proveedor ?? cat ?? "";
 }
 
-const MAX_RETRIES = 3;
-const INITIAL_DELAY_MS = 10_000;
+const MAX_RETRIES = 2;
+const INITIAL_DELAY_MS = 2_000;
+const TIMEOUT_MS = 30_000;
+
+/** Evita que una llamada colgada deje la UI en "procesando" para siempre. */
+function conTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms);
+    p.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); },
+    );
+  });
+}
 
 async function callGeminiWithRetry(
   prompt: string,
   generationConfig: { temperature: number; maxOutputTokens: number },
   retries = MAX_RETRIES,
 ): Promise<{ text?: string; error?: string }> {
-  const result = await callGemini(prompt, generationConfig);
+  let result: { text?: string; error?: string };
+  try {
+    result = await conTimeout(callGemini(prompt, generationConfig), TIMEOUT_MS);
+  } catch (e: any) {
+    result = { error: e?.message ?? "Error desconocido" };
+  }
   if (result.error && retries > 0) {
     const delay = INITIAL_DELAY_MS * (MAX_RETRIES - retries + 1);
     logger.warn(`Gemini error — reintentando en ${delay / 1000}s (${retries} intentos restantes)`);

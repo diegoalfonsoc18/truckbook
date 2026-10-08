@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
 import supabase from "../config/SupaBaseConfig";
 import { useSyncManager } from "../hooks/useSyncManager";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
@@ -17,9 +18,22 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // getSession() lee la sesión local (sin red); getUser() la validaría contra
     // el servidor y dejaría userId=null offline, rompiendo carga y suscripciones.
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user?.id ?? null);
+    let activo = true;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (activo) setUserId(data.session?.user?.id ?? null);
+      })
+      .catch(() => {});
+    // Si la sesión cambia de usuario sin desmontar el provider, re-apuntar
+    // suscripciones y purga a la nueva cuenta.
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (activo) setUserId(session?.user?.id ?? null);
     });
+    return () => {
+      activo = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   // 🔒 Defensa: purgar cualquier fila persistida que no pertenezca al usuario
@@ -34,15 +48,19 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     const ingresosPropios = ingresos.filter((i) => i.conductor_id === userId);
     if (ingresosPropios.length !== ingresos.length) setIngresos(ingresosPropios);
   }, [userId]);
-  const { setGastosPorPlaca, agregarGasto, editarGasto, eliminarGasto } =
-    useGastosStore();
-  const {
-    setIngresosPorPlaca,
-    agregarIngreso,
-    editarIngreso,
-    eliminarIngreso,
-  } = useIngresosStore();
-  const { cargar: cargarVehiculos } = useVehiculosListStore();
+  // Selectores por acción: las acciones de Zustand son referencias estables, así
+  // que DataProvider no se re-renderiza en cada cambio de gasto/ingreso (que con
+  // realtime puede ser muy seguido). Con `useGastosStore()` sin selector sí lo
+  // haría, al suscribirse al store completo.
+  const setGastosPorPlaca = useGastosStore((s) => s.setGastosPorPlaca);
+  const agregarGasto = useGastosStore((s) => s.agregarGasto);
+  const editarGasto = useGastosStore((s) => s.editarGasto);
+  const eliminarGasto = useGastosStore((s) => s.eliminarGasto);
+  const setIngresosPorPlaca = useIngresosStore((s) => s.setIngresosPorPlaca);
+  const agregarIngreso = useIngresosStore((s) => s.agregarIngreso);
+  const editarIngreso = useIngresosStore((s) => s.editarIngreso);
+  const eliminarIngreso = useIngresosStore((s) => s.eliminarIngreso);
+  const cargarVehiculos = useVehiculosListStore((s) => s.cargar);
 
   // ✅ CARGAR VEHÍCULOS AL MONTAR
   useEffect(() => {
@@ -72,7 +90,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, [userId]);
 
@@ -80,6 +98,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!placa || !userId) return;
 
+    let cancelado = false;
     const cargar = async () => {
       try {
         const { data, error } = await supabase
@@ -94,19 +113,23 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           logger.warn("⚠️ DataProvider: sin conexión para gastos, usando caché:", error.message);
           return;
         }
-        if (data) setGastosPorPlaca(placa, data);
+        if (data && !cancelado) setGastosPorPlaca(placa, data);
       } catch (err: any) {
         logger.warn("⚠️ DataProvider: error cargando gastos:", err?.message ?? err);
       }
     };
 
     cargar();
+    return () => {
+      cancelado = true;
+    };
   }, [placa, userId, setGastosPorPlaca]);
 
   // ✅ CARGAR INGRESOS AL MONTAR
   useEffect(() => {
     if (!placa || !userId) return;
 
+    let cancelado = false;
     const cargar = async () => {
       try {
         const { data, error } = await supabase
@@ -121,13 +144,16 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           logger.warn("⚠️ DataProvider: sin conexión para ingresos, usando caché:", error.message);
           return;
         }
-        if (data) setIngresosPorPlaca(placa, data);
+        if (data && !cancelado) setIngresosPorPlaca(placa, data);
       } catch (err: any) {
         logger.warn("⚠️ DataProvider: error cargando ingresos:", err?.message ?? err);
       }
     };
 
     cargar();
+    return () => {
+      cancelado = true;
+    };
   }, [placa, userId, setIngresosPorPlaca]);
 
   // ✅ SUSCRIBIRSE A GASTOS + INGRESOS EN UN SOLO CANAL
@@ -136,6 +162,42 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   // de Supabase a la mitad para este flujo, clave con miles de usuarios.
   useEffect(() => {
     if (!placa || !userId) return;
+
+    let activo = true;
+    // Descarta respuestas tardías de refetch: solo la última consulta aplica.
+    let seqGastos = 0;
+    let seqIngresos = 0;
+    let huboCaida = false;
+
+    // Re-consulta de la placa activa (mismo tope de 200 filas que la carga inicial).
+    const refrescar = async () => {
+      const miGastos = ++seqGastos;
+      const miIngresos = ++seqIngresos;
+      try {
+        const { data, error } = await supabase
+          .from("conductor_gastos")
+          .select("*")
+          .eq("placa", placa)
+          .eq("conductor_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (!error && data && activo && miGastos === seqGastos) setGastosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error re-consultando gastos:", err?.message ?? err);
+      }
+      try {
+        const { data, error } = await supabase
+          .from("conductor_ingresos")
+          .select("*")
+          .eq("placa", placa)
+          .eq("conductor_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (!error && data && activo && miIngresos === seqIngresos) setIngresosPorPlaca(placa, data);
+      } catch (err: any) {
+        logger.warn("⚠️ DataProvider: error re-consultando ingresos:", err?.message ?? err);
+      }
+    };
 
     const subscription = supabase
       .channel(`data-${userId}-${placa}`)
@@ -147,6 +209,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           table: "conductor_gastos",
           // Filtrar por conductor_id (seguridad): evita recibir filas de otras
           // cuentas que comparten la misma placa. La placa se valida en el handler.
+          // OJO: realtime NO aplica filtros de columna a los DELETE; esos se
+          // manejan en el handler dedicado de abajo.
           filter: `conductor_id=eq.${userId}`,
         },
         (payload) => {
@@ -156,9 +220,21 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (payload.eventType === "UPDATE") {
             if (payload.new.placa !== placa) return;
             editarGasto(payload.new.id, payload.new);
-          } else if (payload.eventType === "DELETE") {
-            eliminarGasto(payload.old.id);
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "conductor_gastos" },
+        (payload) => {
+          // Sin filtro: llega cualquier borrado de la tabla (solo trae el id).
+          // Solo se aplica si el id existe en el store del usuario actual.
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (!id) return;
+          const propio = useGastosStore
+            .getState()
+            .gastos.some((g) => g.id === id && g.conductor_id === userId);
+          if (propio) eliminarGasto(id);
         }
       )
       .on(
@@ -176,15 +252,47 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (payload.eventType === "UPDATE") {
             if (payload.new.placa !== placa) return;
             editarIngreso(payload.new.id, payload.new);
-          } else if (payload.eventType === "DELETE") {
-            eliminarIngreso(payload.old.id);
           }
         }
       )
-      .subscribe();
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "conductor_ingresos" },
+        (payload) => {
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (!id) return;
+          const propio = useIngresosStore
+            .getState()
+            .ingresos.some((i) => i.id === id && i.conductor_id === userId);
+          if (propio) eliminarIngreso(id);
+        }
+      )
+      .subscribe((status) => {
+        // Tras una caída del canal, los eventos ocurridos mientras estuvo
+        // caído se perdieron: al volver a SUBSCRIBED se re-consulta todo.
+        if (status === "SUBSCRIBED") {
+          if (huboCaida) {
+            huboCaida = false;
+            refrescar();
+          }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          huboCaida = true;
+        }
+      });
+
+    // Al recuperar conexión también se re-consulta (el canal puede reconectar
+    // solo, pero los eventos del intervalo offline no se reenvían).
+    let estabaOnline: boolean | null = null;
+    const unsubNet = NetInfo.addEventListener((state) => {
+      const online = !!(state.isConnected && state.isInternetReachable);
+      if (online && estabaOnline === false) refrescar();
+      estabaOnline = online;
+    });
 
     return () => {
-      subscription.unsubscribe();
+      activo = false;
+      unsubNet();
+      supabase.removeChannel(subscription);
     };
   }, [placa, userId]);
 

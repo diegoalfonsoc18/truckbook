@@ -94,6 +94,7 @@ DROP POLICY IF EXISTS "vehiculos_update_own" ON vehiculos;
 DROP POLICY IF EXISTS "vehiculos_select_vinculado" ON vehiculos;
 DROP POLICY IF EXISTS "vehiculos_update_vinculado" ON vehiculos;
 DROP POLICY IF EXISTS "vehiculos_update_propietario" ON vehiculos;
+DROP POLICY IF EXISTS "vehiculos_select_own" ON vehiculos;
 
 -- ============================================================
 -- PASO 2: ASEGURAR QUE RLS ESTÁ ACTIVO
@@ -127,37 +128,21 @@ CREATE POLICY "usuarios_update_own" ON usuarios
   WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- ────────────────────────────────────────────────────────────
--- VEHICULOS — solo vehículos a los que estás vinculado
+-- VEHICULOS — una fila por (placa, conductor_id): cada usuario tiene la suya
 -- ────────────────────────────────────────────────────────────
-CREATE POLICY "vehiculos_select_vinculado" ON vehiculos
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM vehiculo_conductores vc
-      WHERE vc.vehiculo_placa = vehiculos.placa
-        AND vc.conductor_id = (SELECT auth.uid())
-    )
-  );
-
--- Cualquier autenticado puede registrar un vehículo nuevo.
+-- Dos usuarios pueden registrar la misma placa sin verse ni pisarse (ver
+-- migrations/vehiculos_por_usuario.sql). conductor_id lleva DEFAULT auth.uid().
 -- OJO (2026-07-13): el cliente debe usar INSERT plano, NUNCA upsert/ON CONFLICT
--- sobre vehiculos — con RLS, ON CONFLICT exige pasar también la política de
--- UPDATE (estar vinculado), lo que bloquea el registro de placas nuevas (42501).
-CREATE POLICY "vehiculos_insert_auth" ON vehiculos
-  AS PERMISSIVE
-  FOR INSERT
-  TO authenticated
-  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+-- sobre vehiculos; tolerar 23505 (la placa ya es tuya).
+CREATE POLICY "vehiculos_select_own" ON vehiculos
+  FOR SELECT USING ((SELECT auth.uid()) = conductor_id);
 
--- Un usuario vinculado al vehículo puede editarlo.
--- (Sin sistema de roles: vehiculo_conductores es una relación pura usuario↔placa.)
-CREATE POLICY "vehiculos_update_vinculado" ON vehiculos
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM vehiculo_conductores vc
-      WHERE vc.vehiculo_placa = vehiculos.placa
-        AND vc.conductor_id = (SELECT auth.uid())
-    )
-  );
+CREATE POLICY "vehiculos_insert_own" ON vehiculos
+  FOR INSERT WITH CHECK ((SELECT auth.uid()) = conductor_id);
+
+CREATE POLICY "vehiculos_update_own" ON vehiculos
+  FOR UPDATE USING ((SELECT auth.uid()) = conductor_id)
+  WITH CHECK ((SELECT auth.uid()) = conductor_id);
 
 -- ────────────────────────────────────────────────────────────
 -- VEHICULO_CONDUCTORES — relación pura: cada quien gestiona solo la suya

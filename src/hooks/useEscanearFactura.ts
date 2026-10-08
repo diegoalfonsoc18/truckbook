@@ -113,7 +113,7 @@ export function useEscanearFactura() {
     const fechaDefault = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
     const fecha = data.fecha ?? fechaDefault;
     const categoria = data.categoria ?? (tipo === "gasto" ? "Otros" : "Otro");
-    const descripcion = componerDescripcion(data) || categoria;
+    const descripcion = (componerDescripcion(data) || categoria).slice(0, 200);
 
     if (tipo === "gasto") {
       const { success, error } = await agregarGasto({

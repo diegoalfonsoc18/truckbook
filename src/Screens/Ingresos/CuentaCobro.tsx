@@ -16,7 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Contacts from "expo-contacts";
+import * as Contacts from "expo-contacts/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -25,6 +25,9 @@ import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useAuth } from "../../hooks/useAuth";
 import { sanitizeText, sanitizePhone } from "../../utils/sanitize";
 import { H_PAD_COMPACT } from "../../constants/layout";
+import { useGastosStore } from "../../store/GastosStore";
+import { useGastosConductor } from "../../hooks/UseGastosConductor";
+import { esCompra } from "../FinanzasGeneral/finanzasUtils";
 
 // Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
 const H_PAD = H_PAD_COMPACT;
@@ -79,6 +82,14 @@ function numeroALetras(num: number): string {
   return (conv(entero) || "Cero") + " de 00/100";
 }
 
+const esc = (v: unknown): string =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 function generarHTML(
   numero: string,
   fecha: string,
@@ -101,7 +112,7 @@ function generarHTML(
       const subtotal = precio * cant;
       return `
       <tr>
-        <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;">${s.descripcion}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;">${esc(s.descripcion)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:center;">${formatCOP(precio)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:center;">${cant % 1 === 0 ? cant.toFixed(0) : cant.toFixed(1)}</td>
         <td style="padding:9px 10px;border-bottom:1px solid #EBEBEB;font-size:13px;color:#333;text-align:right;font-weight:600;">${formatCOP(subtotal)}</td>
@@ -179,16 +190,16 @@ function generarHTML(
     <!-- ENCABEZADO: emisor izq / número der -->
     <div class="top">
       <div>
-        <div class="emisor-name">${conductor}${placa ? ` · ${placa}` : ""}</div>
-        ${nitConductor ? `<div class="emisor-detail">NIT / CC: ${nitConductor}</div>` : ""}
+        <div class="emisor-name">${esc(conductor)}${placa ? ` · ${esc(placa)}` : ""}</div>
+        ${nitConductor ? `<div class="emisor-detail">NIT / CC: ${esc(nitConductor)}</div>` : ""}
         <div class="emisor-detail">Régimen Simplificado</div>
-        ${ciudadConductor ? `<div class="emisor-detail">${ciudadConductor}</div>` : ""}
+        ${ciudadConductor ? `<div class="emisor-detail">${esc(ciudadConductor)}</div>` : ""}
       </div>
       <div class="doc-meta">
         <div class="label">Cuenta de Cobro</div>
-        <div class="num">${numero}</div>
-        <div style="margin-top:4px;">Ciudad: ${ciudadConductor || "—"}</div>
-        <div>Fecha: ${fecha}</div>
+        <div class="num">${esc(numero)}</div>
+        <div style="margin-top:4px;">Ciudad: ${esc(ciudadConductor) || "—"}</div>
+        <div>Fecha: ${esc(fecha)}</div>
       </div>
     </div>
 
@@ -198,28 +209,28 @@ function generarHTML(
     <div class="client-grid">
       <div class="client-cell">
         <div class="client-label">Nombre / Pagador</div>
-        <div class="client-value">${cliente.nombre || "—"}</div>
+        <div class="client-value">${esc(cliente.nombre) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Empresa</div>
-        <div class="client-value">${cliente.empresa || "—"}</div>
+        <div class="client-value">${esc(cliente.empresa) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">NIT / Documento</div>
-        <div class="client-value">${cliente.nit || "—"}</div>
+        <div class="client-value">${esc(cliente.nit) || "—"}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Teléfono</div>
-        <div class="client-value">${cliente.telefono || "—"}</div>
+        <div class="client-value">${esc(cliente.telefono) || "—"}</div>
       </div>
       ${cliente.direccion ? `
       <div class="client-cell">
         <div class="client-label">Dirección</div>
-        <div class="client-value">${cliente.direccion}</div>
+        <div class="client-value">${esc(cliente.direccion)}</div>
       </div>
       <div class="client-cell">
         <div class="client-label">Ciudad</div>
-        <div class="client-value">${cliente.ciudad || "—"}</div>
+        <div class="client-value">${esc(cliente.ciudad) || "—"}</div>
       </div>` : ""}
     </div>
 
@@ -227,7 +238,7 @@ function generarHTML(
     <div class="suma-row">
       <div class="suma-label">Pagar la Suma de:</div>
       <div class="suma-value">${formatCOP(total)}</div>
-      <div class="suma-letras">${letras}</div>
+      <div class="suma-letras">${esc(letras)}</div>
     </div>
 
     <!-- TABLA DE SERVICIOS -->
@@ -250,7 +261,7 @@ function generarHTML(
       </tbody>
     </table>
 
-    ${nota.trim() ? `<div class="nota-box">${nota}</div>` : ""}
+    ${nota.trim() ? `<div class="nota-box">${esc(nota)}</div>` : ""}
 
     <!-- PIE -->
     <div class="footer-section">
@@ -260,8 +271,8 @@ function generarHTML(
       <div style="font-size:12px;color:#555;margin-top:4px;">Cordialmente,</div>
       ${(banco || numeroCuenta) ? `
       <div class="bank-info">
-        Por favor consignar a la cuenta de ahorros: <span>${numeroCuenta || "—"}</span><br/>
-        Entidad Bancaria: <span>${banco || "—"}</span>
+        Por favor consignar a la cuenta de ahorros: <span>${esc(numeroCuenta) || "—"}</span><br/>
+        Entidad Bancaria: <span>${esc(banco) || "—"}</span>
       </div>` : ""}
     </div>
 
@@ -278,6 +289,10 @@ export default function CuentaCobro() {
   const ACCENT = c.accent;
   const { placa: placaActual } = useVehiculoStore();
   const { user } = useAuth();
+  // Compras de mercancía: se leen del store (aislado por conductor_id) y se
+  // marcan como recuperadas con la actualización offline-aware de gastos.
+  const gastos = useGastosStore((st) => st.gastos);
+  const { actualizarGasto } = useGastosConductor(user?.id);
 
   const conductor =
     (user?.user_metadata as any)?.nombre ||
@@ -301,6 +316,8 @@ export default function CuentaCobro() {
   const [banco, setBanco] = useState("");
   const [numeroCuenta, setNumeroCuenta] = useState("");
   const [cargando, setCargando] = useState(false);
+  // gastoId -> id del renglón de servicios donde se agregó esa compra
+  const [comprasAgregadas, setComprasAgregadas] = useState<Record<string, string>>({});
 
   // Modal de contactos
   const [contactosModal, setContactosModal] = useState(false);
@@ -312,6 +329,37 @@ export default function CuentaCobro() {
     const cant = parseFloat(s.cantidad) || 1;
     return acc + precio * cant;
   }, 0);
+
+  // ── Compras por recuperar ──────────────────────────────────────────────────
+  // Todas las compras de mercancía del usuario que aún no se han recuperado
+  // (de cualquier proveedor): las compras no tienen cliente, así que una vez
+  // elegido el cliente de esta cuenta se ofrecen todas para agregarlas.
+  const hayCliente = cliente.nombre.trim().length > 0;
+  const comprasPorCobrar = useMemo(() => {
+    if (!hayCliente || !user?.id) return [];
+    return gastos.filter(
+      (g) => g.conductor_id === user.id && esCompra(g) && !g.recuperado,
+    );
+  }, [gastos, hayCliente, user?.id]);
+
+  const agregarCompra = (g: (typeof gastos)[number]) => {
+    if (comprasAgregadas[g.id]) return; // no duplicar
+    const nuevoId = `compra_${g.id}`;
+    const renglon: Servicio = {
+      id: nuevoId,
+      descripcion: sanitizeText(g.descripcion || "Compra de mercancía", 200),
+      // Precio inicial = lo que costó; editable para sumar la ganancia
+      precioUnitario: String(Math.round(g.monto)),
+      cantidad: "1",
+    };
+    setServicios((prev) => {
+      // Si el único renglón está vacío, se reemplaza en vez de dejar uno en blanco
+      const soloVacio =
+        prev.length === 1 && !prev[0].descripcion.trim() && !prev[0].precioUnitario;
+      return soloVacio ? [renglon] : [...prev, renglon];
+    });
+    setComprasAgregadas((prev) => ({ ...prev, [g.id]: nuevoId }));
+  };
 
   // ── Contactos ──────────────────────────────────────────────────────────────
   const contactosFiltrados = useMemo(() => {
@@ -366,6 +414,10 @@ export default function CuentaCobro() {
   const eliminarServicio = (id: string) => {
     if (servicios.length === 1) return;
     setServicios((prev) => prev.filter((s) => s.id !== id));
+    // Si era una compra, vuelve a quedar disponible para agregarla
+    setComprasAgregadas((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([, sid]) => sid !== id)),
+    );
   };
 
   // ── Compartir ──────────────────────────────────────────────────────────────
@@ -404,6 +456,23 @@ export default function CuentaCobro() {
         dialogTitle: "Compartir cuenta de cobro",
         UTI: "com.adobe.pdf",
       });
+
+      // La cuenta ya salió: las compras incluidas en renglones válidos pasan a
+      // "recuperado" (no se vuelven a ofrecer ni se cobran dos veces).
+      const idsValidos = new Set(validos.map((v) => v.id));
+      const porMarcar = comprasPorCobrar.filter((g) => {
+        const sid = comprasAgregadas[g.id];
+        return !!sid && idsValidos.has(sid);
+      });
+      const resultados = await Promise.all(
+        porMarcar.map((g) => actualizarGasto(g.id, { recuperado: true })),
+      );
+      if (resultados.some((r) => !r.success)) {
+        Alert.alert(
+          "Compras sin marcar",
+          "La cuenta se generó, pero no se pudieron marcar algunas compras como recuperadas. Revísalas en Gastos.",
+        );
+      }
     } catch (err) {
       Alert.alert("Error", "No se pudo generar el documento.");
     } finally {
@@ -416,7 +485,7 @@ export default function CuentaCobro() {
       <SafeAreaView style={s.safe} edges={["top"]}>
         {/* HEADER */}
         <View style={s.header}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
             style={[s.backBtn, { backgroundColor: c.cardBg, borderColor: c.border }]}
             onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={20} color={c.text} />
@@ -425,7 +494,7 @@ export default function CuentaCobro() {
             <Text style={[s.headerTitle, { color: c.text }]}>Cuenta de Cobro</Text>
             <Text style={[s.headerSub, { color: c.textMuted }]}>{numero}</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[s.shareBtn, { backgroundColor: ACCENT }]}
             onPress={compartir}
             disabled={cargando}
@@ -451,7 +520,7 @@ export default function CuentaCobro() {
 
             {/* FECHA */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Fecha del documento</Text>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[s.card, s.fechaRow, { backgroundColor: c.cardBg, borderColor: c.border }]}
               onPress={() => setShowDatePicker(true)}
               activeOpacity={0.7}>
@@ -476,7 +545,7 @@ export default function CuentaCobro() {
             {/* CLIENTE */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Cliente</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[s.contactBtn, { borderColor: ACCENT + "40", backgroundColor: ACCENT + "0D" }]}
                 onPress={abrirContactos}
                 activeOpacity={0.7}>
@@ -490,7 +559,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="person-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Nombre de quien paga"
                   style={[s.input, { color: c.text }]}
                   placeholder="Nombre de quien paga"
                   placeholderTextColor={c.textMuted}
@@ -503,7 +572,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="business-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Empresa (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Empresa (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -516,7 +585,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="card-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="NIT o documento"
                   style={[s.input, { color: c.text }]}
                   placeholder="NIT o documento"
                   placeholderTextColor={c.textMuted}
@@ -530,7 +599,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="call-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Teléfono"
                   style={[s.input, { color: c.text }]}
                   placeholder="Teléfono"
                   placeholderTextColor={c.textMuted}
@@ -544,7 +613,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="location-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Dirección (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Dirección (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -557,7 +626,7 @@ export default function CuentaCobro() {
 
               <View style={s.inputRow}>
                 <Ionicons name="map-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Ciudad (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Ciudad (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -572,7 +641,7 @@ export default function CuentaCobro() {
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               <View style={s.inputRow}>
                 <Ionicons name="card-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Mi NIT o cédula"
                   style={[s.input, { color: c.text }]}
                   placeholder="Mi NIT o cédula"
                   placeholderTextColor={c.textMuted}
@@ -584,7 +653,7 @@ export default function CuentaCobro() {
               <View style={[s.divider, { backgroundColor: c.divider }]} />
               <View style={s.inputRow}>
                 <Ionicons name="map-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Mi ciudad"
                   style={[s.input, { color: c.text }]}
                   placeholder="Mi ciudad"
                   placeholderTextColor={c.textMuted}
@@ -594,10 +663,54 @@ export default function CuentaCobro() {
               </View>
             </View>
 
+            {/* COMPRAS POR COBRAR DEL CLIENTE */}
+            {comprasPorCobrar.length > 0 && (
+              <>
+                <Text style={[s.sectionLabel, { color: c.textSecondary }]}>
+                  Compras por recuperar
+                </Text>
+                <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
+                  {comprasPorCobrar.map((g, idx) => {
+                    const agregada = !!comprasAgregadas[g.id];
+                    return (
+                      <View key={g.id}>
+                        {idx > 0 && <View style={[s.divider, { backgroundColor: c.divider }]} />}
+                        <View style={s.compraRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[s.compraDesc, { color: c.text }]} numberOfLines={2}>
+                              {g.descripcion}
+                            </Text>
+                            <Text style={[s.compraMonto, { color: c.textMuted }]}>
+                              {formatCOP(g.monto)}{g.fecha ? ` · ${g.fecha}` : ""}
+                            </Text>
+                          </View>
+                          <TouchableOpacity accessibilityRole="button"
+                            accessibilityLabel={agregada ? `Compra ya agregada: ${g.descripcion}` : `Agregar compra a la cuenta: ${g.descripcion}`}
+                            accessibilityState={{ disabled: agregada }}
+                            disabled={agregada}
+                            onPress={() => agregarCompra(g)}
+                            style={[s.compraBtn, { borderColor: ACCENT + "40", backgroundColor: ACCENT + (agregada ? "00" : "0D") }]}
+                            activeOpacity={0.7}>
+                            <Ionicons name={agregada ? "checkmark" : "add"} size={16} color={agregada ? c.textMuted : ACCENT} />
+                            <Text style={[s.addBtnText, { color: agregada ? c.textMuted : ACCENT }]}>
+                              {agregada ? "Agregada" : "Agregar"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  <Text style={[s.compraNota, { color: c.textMuted }]}>
+                    El precio inicial es lo que pagaste; edítalo para sumar tu ganancia. Al compartir la cuenta, estas compras se marcan como recuperadas.
+                  </Text>
+                </View>
+              </>
+            )}
+
             {/* SERVICIOS */}
             <View style={s.sectionRow}>
               <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Servicios</Text>
-              <TouchableOpacity onPress={agregarServicio} style={s.addBtn}>
+              <TouchableOpacity accessibilityRole="button" onPress={agregarServicio} style={s.addBtn}>
                 <Ionicons name="add" size={16} color={ACCENT} />
                 <Text style={[s.addBtnText, { color: ACCENT }]}>Agregar</Text>
               </TouchableOpacity>
@@ -612,7 +725,7 @@ export default function CuentaCobro() {
                       Servicio {index + 1}
                     </Text>
                     {servicios.length > 1 && (
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Eliminar servicio"
                         onPress={() => eliminarServicio(item.id)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Ionicons name="trash-outline" size={16} color={c.danger} />
@@ -623,7 +736,7 @@ export default function CuentaCobro() {
                   {/* Descripción */}
                   <View style={s.inputRow}>
                     <Ionicons name="document-text-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                    <TextInput
+                    <TextInput accessibilityLabel="Descripción (ej. Flete Bogotá–Medellín)"
                       style={[s.input, { color: c.text }]}
                       placeholder="Descripción (ej. Flete Bogotá–Medellín)"
                       placeholderTextColor={c.textMuted}
@@ -640,7 +753,7 @@ export default function CuentaCobro() {
                       <Text style={[s.servicioMontoLabel, { color: c.textMuted }]}>Precio unitario</Text>
                       <View style={s.servicioMontoInput}>
                         <Text style={[s.currencySign, { color: c.textMuted, fontSize: 14 }]}>$</Text>
-                        <TextInput
+                        <TextInput accessibilityLabel="Precio unitario"
                           style={[s.input, { color: c.text, fontWeight: "600", flex: 1 }]}
                           placeholder="0"
                           placeholderTextColor={c.textMuted}
@@ -653,7 +766,7 @@ export default function CuentaCobro() {
                     <View style={s.servicioMontoCol}>
                       <Text style={[s.servicioMontoLabel, { color: c.textMuted }]}>Cantidad</Text>
                       <View style={s.servicioMontoInput}>
-                        <TextInput
+                        <TextInput accessibilityLabel="Cantidad"
                           style={[s.input, { color: c.text, flex: 1 }]}
                           placeholder="1"
                           placeholderTextColor={c.textMuted}
@@ -683,7 +796,7 @@ export default function CuentaCobro() {
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border }]}>
               <View style={s.inputRow}>
                 <Ionicons name="business-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Entidad bancaria (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Entidad bancaria (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -694,7 +807,7 @@ export default function CuentaCobro() {
               <View style={[s.divider, { backgroundColor: c.divider }]} />
               <View style={s.inputRow}>
                 <Ionicons name="wallet-outline" size={16} color={c.textMuted} style={s.inputIcon} />
-                <TextInput
+                <TextInput accessibilityLabel="Número de cuenta (opcional)"
                   style={[s.input, { color: c.text }]}
                   placeholder="Número de cuenta (opcional)"
                   placeholderTextColor={c.textMuted}
@@ -708,7 +821,7 @@ export default function CuentaCobro() {
             {/* NOTA */}
             <Text style={[s.sectionLabel, { color: c.textSecondary }]}>Nota (opcional)</Text>
             <View style={[s.card, { backgroundColor: c.cardBg, borderColor: c.border, padding: 14 }]}>
-              <TextInput
+              <TextInput accessibilityLabel="Nota (opcional)"
                 style={[s.notaInput, { color: c.text }]}
                 placeholder="Ej. Pago contra entrega, transferencia a cuenta..."
                 placeholderTextColor={c.textMuted}
@@ -721,7 +834,7 @@ export default function CuentaCobro() {
             </View>
 
             {/* BOTÓN COMPARTIR (bottom) */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[s.shareBtnBottom, { backgroundColor: ACCENT }]}
               onPress={compartir}
               disabled={cargando}
@@ -746,11 +859,11 @@ export default function CuentaCobro() {
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setContactosModal(false)}>
-        <View style={[s.contactModal, { backgroundColor: c.primary }]}>
+        <View accessibilityViewIsModal style={[s.contactModal, { backgroundColor: c.primary }]}>
           {/* Header modal */}
           <View style={[s.contactModalHeader, { borderBottomColor: c.border }]}>
             <Text style={[s.contactModalTitle, { color: c.text }]}>Contactos</Text>
-            <TouchableOpacity onPress={() => setContactosModal(false)}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setContactosModal(false)}>
               <Ionicons name="close" size={24} color={c.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -758,7 +871,7 @@ export default function CuentaCobro() {
           {/* Búsqueda */}
           <View style={[s.searchBox, { backgroundColor: c.surface }]}>
             <Ionicons name="search-outline" size={16} color={c.textMuted} />
-            <TextInput
+            <TextInput accessibilityLabel="Buscar contacto"
               style={[s.searchInput, { color: c.text }]}
               placeholder="Buscar contacto..."
               placeholderTextColor={c.textMuted}
@@ -782,7 +895,7 @@ export default function CuentaCobro() {
               const inicial = item.name?.charAt(0).toUpperCase() || "?";
               const telefono = item.phoneNumbers?.[0]?.number || "";
               return (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={s.contactRow}
                   onPress={() => seleccionarContacto(item)}
                   activeOpacity={0.6}>
@@ -858,6 +971,11 @@ const s = StyleSheet.create({
     marginTop: 20,
     marginBottom: 8,
   },
+  compraRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
+  compraDesc: { fontSize: 14, fontWeight: "600" },
+  compraMonto: { fontSize: 12, marginTop: 2 },
+  compraBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  compraNota: { fontSize: 11, paddingHorizontal: 14, paddingBottom: 10, paddingTop: 4 },
   addBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   addBtnText: { fontSize: 14, fontWeight: "600" },
 

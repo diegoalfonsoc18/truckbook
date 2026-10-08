@@ -52,7 +52,7 @@ export default function ActividadReciente({ onVerTodas }: Props) {
           <Text style={s.panelLabel} numberOfLines={1}>
             Actividad reciente
           </Text>
-          <Pressable onPress={verTodas} hitSlop={8}>
+          <Pressable accessibilityRole="button" onPress={verTodas} hitSlop={8}>
             <Text style={s.verTodas}>Ver todas</Text>
           </Pressable>
         </View>

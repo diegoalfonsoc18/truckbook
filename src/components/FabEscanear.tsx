@@ -93,9 +93,11 @@ export default function FabEscanear() {
       <Modal
         visible={selectorVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={cerrarTodo}>
-        <Pressable
+        <Pressable accessibilityViewIsModal
           style={[s.overlay, { backgroundColor: c.overlay }]}
           onPress={cerrarTodo}>
           <Pressable
@@ -114,7 +116,7 @@ export default function FabEscanear() {
             </Text>
 
             <View style={s.tipoRow}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[
                   s.tipoCard,
                   {
@@ -134,7 +136,7 @@ export default function FabEscanear() {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[
                   s.tipoCard,
                   {
@@ -155,7 +157,7 @@ export default function FabEscanear() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={s.cancelBtn} onPress={cerrarTodo}>
+            <TouchableOpacity accessibilityRole="button" style={s.cancelBtn} onPress={cerrarTodo}>
               <Text style={[s.cancelText, { color: c.textSecondary }]}>
                 Cancelar
               </Text>
@@ -168,10 +170,12 @@ export default function FabEscanear() {
       <Modal
         visible={fuenteVisible}
         transparent
+        statusBarTranslucent
+        navigationBarTranslucent
         animationType="fade"
         onRequestClose={() => setFuenteVisible(false)}
         onDismiss={Platform.OS === "ios" ? onFuenteDismiss : undefined}>
-        <Pressable
+        <Pressable accessibilityViewIsModal
           style={[s.overlay, { backgroundColor: c.overlay }]}
           onPress={() => setFuenteVisible(false)}>
           <Pressable
@@ -190,7 +194,7 @@ export default function FabEscanear() {
                 : "Foto del ingreso"}
             </Text>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.fuenteRow,
                 { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
@@ -201,7 +205,7 @@ export default function FabEscanear() {
               <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.fuenteRow,
                 { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
@@ -214,7 +218,7 @@ export default function FabEscanear() {
               <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={s.cancelBtn}
               onPress={() => setFuenteVisible(false)}>
               <Text style={[s.cancelText, { color: c.textSecondary }]}>

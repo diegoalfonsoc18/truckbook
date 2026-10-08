@@ -27,7 +27,7 @@ export async function registrarVehiculoPropietario(
   //    el duplicado (23505) se tolera como "ya existe, no tocar su tipo".
   const { error: insertError } = await supabase
     .from("vehiculos")
-    .insert([{ placa, tipo_camion: tipoCamion }]);
+    .insert([{ placa, tipo_camion: tipoCamion, conductor_id: userId }]);
   if (insertError && insertError.code !== "23505") {
     logger.error("❌ insert vehiculos:", {
       placa,
@@ -66,12 +66,16 @@ export async function registrarVehiculoPropietario(
  * Eliminar la relación usuario↔vehículo por su id.
  */
 export async function removerConductorDeVehiculo(
-  relacionId: string
+  relacionId: string,
+  conductorId?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
+  let query = supabase
     .from("vehiculo_conductores")
     .delete()
     .eq("id", relacionId);
+  // Defensa en profundidad (además de RLS): solo borra vínculos del propio usuario.
+  if (conductorId) query = query.eq("conductor_id", conductorId);
+  const { error } = await query;
 
   if (error) return { success: false, error: error.message };
   return { success: true };

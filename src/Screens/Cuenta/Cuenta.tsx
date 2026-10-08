@@ -645,7 +645,7 @@ export default function Cuenta() {
             </Text>
 
             {MENU_ITEMS.map((item) => (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 key={item.id}
                 style={[s.menuRow, card]}
                 onPress={() => handleItemPress(item.id)}
@@ -691,7 +691,7 @@ export default function Cuenta() {
             </Text>
 
             {LEGAL_ITEMS.map((item) => (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 key={item.id}
                 style={[s.menuRow, card]}
                 onPress={() => handleItemPress(item.id)}
@@ -737,7 +737,7 @@ export default function Cuenta() {
                   ]}>
                   Zona de peligro
                 </Text>
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={[
                     s.menuRow,
                     card,
@@ -789,7 +789,7 @@ export default function Cuenta() {
                 Zona de peligro
               </Text>
             ) : null}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.menuRow,
                 card,
@@ -817,7 +817,7 @@ export default function Cuenta() {
             </TouchableOpacity>
 
             {/* LOGOUT */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.logoutBtn,
                 card,
@@ -861,8 +861,8 @@ export default function Cuenta() {
         onRequestClose={() => setProfileVisible(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={s.modalOverlay}>
-          <Pressable
+          style={s.modalOverlay} accessibilityViewIsModal>
+          <Pressable accessible={false}
             style={s.modalBackdrop}
             onPress={() => setProfileVisible(false)}
           />
@@ -894,7 +894,7 @@ export default function Cuenta() {
                   Datos personales
                 </Text>
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
                 onPress={() => setProfileVisible(false)}
                 hitSlop={12}>
                 <Ionicons name="close-circle" size={24} color={c.textMuted} />
@@ -939,7 +939,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Tu nombre"
                 style={[s.input, { color: c.text }]}
                 placeholder="Tu nombre"
                 placeholderTextColor={c.textMuted}
@@ -958,7 +958,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Tu apellido"
                 style={[s.input, { color: c.text }]}
                 placeholder="Tu apellido"
                 placeholderTextColor={c.textMuted}
@@ -977,7 +977,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Número de teléfono"
                 style={[s.input, { color: c.text }]}
                 placeholder="Número de teléfono"
                 placeholderTextColor={c.textMuted}
@@ -987,7 +987,7 @@ export default function Cuenta() {
               />
             </View>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.saveBtn,
                 { backgroundColor: c.accent, opacity: savingProfile ? 0.7 : 1 },
@@ -1015,8 +1015,8 @@ export default function Cuenta() {
         onRequestClose={() => setSecurityVisible(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={s.modalOverlay}>
-          <Pressable
+          style={s.modalOverlay} accessibilityViewIsModal>
+          <Pressable accessible={false}
             style={s.modalBackdrop}
             onPress={() => setSecurityVisible(false)}
           />
@@ -1054,7 +1054,7 @@ export default function Cuenta() {
                   Mínimo 8 caracteres
                 </Text>
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
                 onPress={() => setSecurityVisible(false)}
                 hitSlop={12}>
                 <Ionicons name="close-circle" size={24} color={c.textMuted} />
@@ -1070,7 +1070,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Contraseña actual"
                 style={[s.input, { color: c.text }]}
                 placeholder="••••••••"
                 placeholderTextColor={c.textMuted}
@@ -1080,7 +1080,7 @@ export default function Cuenta() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={showCurrent ? "Ocultar contraseña" : "Mostrar contraseña"}
                 onPress={() => setShowCurrent((v) => !v)}
                 hitSlop={10}>
                 <Ionicons
@@ -1103,7 +1103,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Nueva contraseña"
                 style={[s.input, { color: c.text }]}
                 placeholder="••••••••"
                 placeholderTextColor={c.textMuted}
@@ -1113,7 +1113,7 @@ export default function Cuenta() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={showNew ? "Ocultar contraseña" : "Mostrar contraseña"}
                 onPress={() => setShowNew((v) => !v)}
                 hitSlop={10}>
                 <Ionicons
@@ -1133,7 +1133,7 @@ export default function Cuenta() {
                 s.inputRow,
                 { backgroundColor: inputBg, borderColor: c.border },
               ]}>
-              <TextInput
+              <TextInput accessibilityLabel="Confirmar nueva contraseña"
                 style={[s.input, { color: c.text }]}
                 placeholder="••••••••"
                 placeholderTextColor={c.textMuted}
@@ -1143,7 +1143,7 @@ export default function Cuenta() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirm ? "Ocultar contraseña" : "Mostrar contraseña"}
                 onPress={() => setShowConfirm((v) => !v)}
                 hitSlop={10}>
                 <Ionicons
@@ -1154,7 +1154,7 @@ export default function Cuenta() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 s.saveBtn,
                 {
@@ -1182,8 +1182,8 @@ export default function Cuenta() {
         animationType="slide"
         transparent
         onRequestClose={() => setLegalVisible(false)}>
-        <View style={s.modalOverlay}>
-          <Pressable
+        <View style={s.modalOverlay} accessibilityViewIsModal>
+          <Pressable accessible={false}
             style={s.modalBackdrop}
             onPress={() => setLegalVisible(false)}
           />
@@ -1204,7 +1204,7 @@ export default function Cuenta() {
                 numberOfLines={2}>
                 {LEGAL_CONTENT[legalDoc].title}
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
                 onPress={() => setLegalVisible(false)}
                 hitSlop={12}>
                 <Ionicons name="close-circle" size={24} color={c.textMuted} />
@@ -1316,7 +1316,7 @@ const s = StyleSheet.create({
   // ── MODAL SHARED ──
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
   modalSheet: {

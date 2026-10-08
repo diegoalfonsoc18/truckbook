@@ -136,7 +136,7 @@ export default function Movimientos() {
     <View style={[st.root, { backgroundColor: c.surface }]}>
       {/* HEADER */}
       <View style={[st.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver"
           onPress={() => navigation.goBack()}
           hitSlop={10}
           style={st.backBtn}>
@@ -149,7 +149,7 @@ export default function Movimientos() {
 
       {/* SELECTOR DE MES */}
       <View style={st.mesRow}>
-        <Pressable
+        <Pressable accessibilityRole="button" accessibilityLabel="Mes anterior"
           onPress={() => cambiarMes(-1)}
           hitSlop={10}
           style={[st.mesBtn, { backgroundColor: c.cardBg }]}>
@@ -158,7 +158,7 @@ export default function Movimientos() {
         <Text style={[st.mesLabel, { color: c.text }]}>
           {MESES_LARGOS[mes]} {anio}
         </Text>
-        <Pressable
+        <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente"
           onPress={() => !esMesActual && cambiarMes(1)}
           hitSlop={10}
           disabled={esMesActual}
@@ -206,7 +206,7 @@ export default function Movimientos() {
         {FILTROS.map((f) => {
           const activo = filtro === f.key;
           return (
-            <Pressable
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: activo }}
               key={f.key}
               onPress={() => setFiltro(f.key)}
               style={[

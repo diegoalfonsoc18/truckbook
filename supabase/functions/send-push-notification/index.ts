@@ -38,7 +38,10 @@ serve(async (req) => {
 
     const { targetUserId, title, body, data } = await req.json();
 
-    if (!targetUserId || !title || !body) {
+    if (
+      typeof targetUserId !== "string" || typeof title !== "string" || typeof body !== "string" ||
+      !targetUserId || !title || !body || title.length > 100 || body.length > 500
+    ) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,30 +53,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Verificar que emisor y destinatario comparten al menos un vehículo.
-    // Esto evita que cualquier usuario autenticado pueda enviar push a cualquier otro.
-    const { data: placasEmisor } = await supabaseAdmin
-      .from("vehiculo_conductores")
-      .select("vehiculo_placa")
-      .eq("conductor_id", user.id);
-
-    const placas = (placasEmisor || []).map((r: any) => r.vehiculo_placa);
-
-    if (placas.length === 0) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: relacionCompartida } = await supabaseAdmin
-      .from("vehiculo_conductores")
-      .select("vehiculo_placa")
-      .eq("conductor_id", targetUserId)
-      .in("vehiculo_placa", placas)
-      .limit(1);
-
-    if (!relacionCompartida || relacionCompartida.length === 0) {
+    // Sin sistema de roles no existe relación entre usuarios: solo se permite
+    // notificar al propio usuario autenticado (el id sale del JWT, no del body).
+    if (targetUserId !== user.id) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -95,6 +77,7 @@ serve(async (req) => {
     // Enviar notificación a Expo Push API
     const expoPushRes = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
+      signal: AbortSignal.timeout(10_000),
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -114,7 +97,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

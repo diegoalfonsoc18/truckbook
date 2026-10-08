@@ -1,4 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
+import { v4 as uuidv4 } from "uuid";
 import supabase from "../config/SupaBaseConfig";
 import { useGastosStore, type Gasto } from "../store/GastosStore";
 import { useOfflineQueueStore } from "../store/OfflineQueueStore";
@@ -9,8 +10,14 @@ import logger from "../utils/logger";
  * La carga inicial y el realtime viven en DataProvider — única fuente de datos.
  */
 export const useGastosConductor = (conductorId?: string | null) => {
-  const { agregarGasto, editarGasto, eliminarGasto } = useGastosStore();
-  const { enqueue } = useOfflineQueueStore();
+  // Selectores por acción (referencias estables): evita que el componente que
+  // usa este hook se re-renderice en cada cambio del store de gastos.
+  const agregarGasto = useGastosStore((s) => s.agregarGasto);
+  const editarGasto = useGastosStore((s) => s.editarGasto);
+  const eliminarGasto = useGastosStore((s) => s.eliminarGasto);
+  const enqueue = useOfflineQueueStore((s) => s.enqueue);
+  const removerPorRecordId = useOfflineQueueStore((s) => s.removerPorRecordId);
+  const actualizarInsertPendiente = useOfflineQueueStore((s) => s.actualizarInsertPendiente);
 
   const agregarGastoAsync = async (
     gasto: Omit<Gasto, "id" | "created_at">
@@ -18,12 +25,16 @@ export const useGastosConductor = (conductorId?: string | null) => {
     const netState = await NetInfo.fetch();
     const isOnline = netState.isConnected && netState.isInternetReachable;
 
+    // Clave de idempotencia: viaja en el insert (online u offline) para que un
+    // reintento tras perder la respuesta no duplique el registro.
+    const clientId = uuidv4();
+
     if (isOnline) {
       // Online: guardar directo en Supabase
       try {
         const { data, error: err } = await supabase
           .from("conductor_gastos")
-          .insert([gasto])
+          .insert([{ ...gasto, client_id: clientId }])
           .select();
 
         if (err) throw err;
@@ -37,6 +48,7 @@ export const useGastosConductor = (conductorId?: string | null) => {
       const tempId = `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const gastoLocal: Gasto = {
         ...gasto,
+        client_id: clientId,
         id: tempId,
         created_at: new Date().toISOString(),
       };
@@ -62,6 +74,9 @@ export const useGastosConductor = (conductorId?: string | null) => {
     // Si es un ID temporal (offline), solo actualizar localmente
     if (id.startsWith("offline_")) {
       editarGasto(id, updates);
+      // Reflejar la edición en el insert encolado; si no, al sincronizar se
+      // subirían los datos viejos.
+      actualizarInsertPendiente(id, updates);
       return { success: true };
     }
 
@@ -101,6 +116,8 @@ export const useGastosConductor = (conductorId?: string | null) => {
 
     if (id.startsWith("offline_")) {
       eliminarGasto(id);
+      // Cancelar el insert encolado; si no, el registro borrado "resucita" al sincronizar.
+      removerPorRecordId(id);
       return { success: true };
     }
 

@@ -69,3 +69,49 @@ export async function fetchTransaccionesRango(
     return { gastos: [], ingresos: [], error: true };
   }
 }
+
+export interface GrupoComprasDatos {
+  compras: Gasto[];
+  ingresos: Ingreso[];
+  error: boolean;
+}
+
+/**
+ * Compras de mercancía ligadas a ingresos (ingreso_ids no vacío) de una
+ * placa+conductor, junto con los ingresos a los que apuntan — sin importar su
+ * fecha, para que la ganancia de un grupo no quede a medias si compra e
+ * ingreso caen en meses distintos. Siempre filtrado por conductor_id.
+ */
+export async function fetchComprasLigadas(
+  placa: string,
+  conductorId: string,
+): Promise<GrupoComprasDatos> {
+  try {
+    const g = await supabase
+      .from("conductor_gastos")
+      .select("*")
+      .eq("placa", placa)
+      .eq("conductor_id", conductorId)
+      .eq("tipo_gasto", "Compras")
+      .limit(MAX_ROWS);
+    if (g.error) throw g.error;
+    const compras = ((g.data ?? []) as Gasto[]).filter(
+      (c) => (c.ingreso_ids?.length ?? 0) > 0,
+    );
+    const ids = Array.from(new Set(compras.flatMap((c) => c.ingreso_ids ?? [])));
+    const ingresos: Ingreso[] = [];
+    for (let k = 0; k < ids.length; k += 100) {
+      const r = await supabase
+        .from("conductor_ingresos")
+        .select("*")
+        .eq("conductor_id", conductorId)
+        .in("id", ids.slice(k, k + 100));
+      if (r.error) throw r.error;
+      ingresos.push(...((r.data ?? []) as Ingreso[]));
+    }
+    return { compras, ingresos, error: false };
+  } catch (err: any) {
+    logger.warn("⚠️ fetchComprasLigadas:", err?.message ?? err);
+    return { compras: [], ingresos: [], error: true };
+  }
+}

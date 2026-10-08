@@ -31,9 +31,17 @@ import { ThemeProvider, useTheme } from "./src/constants/Themecontext";
 import { useVehiculoStore } from "./src/store/VehiculoStore";
 import { useGastosStore } from "./src/store/GastosStore";
 import { useIngresosStore } from "./src/store/IngresosStore";
+import { useOfflineQueueStore } from "./src/store/OfflineQueueStore";
+import { useVehiculosListStore } from "./src/store/VehiculosListStore";
 import logger from "./src/utils/logger";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 import { consumirLogoutIntencional } from "./src/utils/authIntent";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
+import { leerSesionGuardada } from "./src/config/sesionGuardada";
+import { cancelarRecordatoriosPendientes } from "./src/services/pendientesNotificacionService";
+import { cancelarRecordatorioFletes } from "./src/services/fleteNotifications";
+import { limpiarCacheClientes } from "./src/hooks/useClientType";
 
 // Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
 // visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
@@ -96,18 +104,33 @@ function AppContent() {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);
+  // true cuando se entró con la sesión guardada porque no se pudo renovar sin red
+  const sesionOfflineRef = useRef(false);
 
   // Ocultar el splash nativo cuando la sesión terminó de cargar
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
   }, [loading]);
   const recoveryModeRef = useRef(false);
+  // Último enlace de recuperación procesado: en iOS el mismo enlace puede llegar
+  // por getInitialURL y por el evento "url"; el token es de un solo uso.
+  const ultimoLinkRef = useRef<string | null>(null);
 
   // Mantener ref de recoveryMode sincronizado para leerlo en callbacks con
   // closure stale (listener de onAuthStateChange)
   const enterRecoveryMode = useCallback(() => {
     recoveryModeRef.current = true;
     setRecoveryMode(true);
+  }, []);
+
+  const exitRecoveryMode = useCallback(() => {
+    recoveryModeRef.current = false;
+    setRecoveryMode(false);
+    // Sin sesión, ResetPassword ya se mostró antes de verificar el enlace: si
+    // era inválido, volver al login en vez de dejar al usuario atascado.
+    if (!sessionRef.current && authNavigationRef.isReady()) {
+      authNavigationRef.navigate("Login");
+    }
   }, []);
 
   // Mantener ref sincronizado para acceder en callbacks sin re-renders
@@ -167,8 +190,13 @@ function AppContent() {
   // ─── Deep link handler (password recovery) ────────────────────────────
   useEffect(() => {
     const handleUrl = async (url: string) => {
+      // Solo nuestro scheme / el de Expo Go: evita procesar URLs https ajenas.
+      if (!/^(truckbook|exp|exps):\/\//.test(url)) return;
       if (!url.includes("auth/callback")) return;
-      logger.log("🔗 Deep link recibido:", url);
+      if (ultimoLinkRef.current === url) return;
+      ultimoLinkRef.current = url;
+      // NO loguear la URL completa: lleva token_hash / code / access_token.
+      logger.log("🔗 Deep link auth/callback recibido");
       try {
         // Unir params de query (?a=b) y de hash (#a=b) en un solo objeto
         const params: Record<string, string> = {};
@@ -185,8 +213,6 @@ function AppContent() {
 
         const code         = params["code"];
         const tokenHash    = params["token_hash"];
-        const accessToken  = params["access_token"];
-        const refreshToken = params["refresh_token"];
         const type         = params["type"];
 
         // El link de recuperación es de un solo uso: si expiró o ya fue
@@ -203,11 +229,16 @@ function AppContent() {
         // verifyOtp NO necesita code-verifier guardado en el dispositivo, así
         // que funciona sin importar desde qué instalación se pidió el reset.
         if (tokenHash) {
+          const esRecovery = (type || "recovery") === "recovery";
+          // Entrar al modo recuperación ANTES de verificar: así, con o sin
+          // sesión abierta, nunca se ve el Home mientras se valida el enlace.
+          if (esRecovery) enterRecoveryMode();
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: (type as any) || "recovery",
           });
           if (error) {
+            if (esRecovery) exitRecoveryMode();
             logger.error("❌ verifyOtp:", error.message);
             Alert.alert(
               "Enlace inválido",
@@ -217,40 +248,28 @@ function AppContent() {
           }
           logger.log("✅ verifyOtp OK, type:", type);
           if (data.session) updateSession(data.session);
-          if ((type || "recovery") === "recovery") enterRecoveryMode();
           return;
         }
 
         // Flujo PKCE: ?code=xxx — pasar SOLO el código, no la URL completa
         if (code) {
+          enterRecoveryMode();
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
+            exitRecoveryMode();
             logger.error("❌ exchangeCodeForSession:", error.message);
             return;
           }
           logger.log("✅ PKCE exchange OK");
           if (data.session) updateSession(data.session);
-          enterRecoveryMode();
           return;
         }
 
-        // Flujo implícito: #access_token=xxx&refresh_token=yyy&type=recovery
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token:  accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) {
-            logger.error("❌ setSession:", error.message);
-            return;
-          }
-          logger.log("✅ setSession OK, type:", type);
-          if (data.session) updateSession(data.session);
-          if (type === "recovery") enterRecoveryMode();
-          return;
-        }
+        // El flujo implícito (#access_token&refresh_token) NO se acepta: el
+        // cliente usa PKCE, y setSession con tokens de un deep link permitiría
+        // que otra app instale una sesión ajena (session fixation).
 
-        logger.error("❌ Deep link sin tokens ni code:", url);
+        logger.error("❌ Deep link sin token_hash ni code");
       } catch (e: any) {
         logger.error("❌ deep link handler:", e?.message);
       }
@@ -262,7 +281,7 @@ function AppContent() {
     // App ya abierta, llega el link
     const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
     return () => sub.remove();
-  }, [updateSession, enterRecoveryMode]);
+  }, [updateSession, enterRecoveryMode, exitRecoveryMode]);
 
   // ─── Inicialización de sesión + listener ───────────────────────────────
   useEffect(() => {
@@ -277,38 +296,57 @@ function AppContent() {
       }
     }, 15000);
 
+    // Sin red no se puede renovar un access token vencido y getSession()
+    // devuelve null aunque la sesión siga guardada: entrar con ella en vez de
+    // mostrar el login. Al volver la conexión Supabase la renueva sola.
+    const entrarConSesionGuardada = async (): Promise<boolean> => {
+      const guardada = await leerSesionGuardada();
+      if (!guardada || !mounted) return false;
+      logger.log("📴 Sin red — entrando con la sesión guardada");
+      sesionOfflineRef.current = true;
+      updateSession(guardada);
+      setLoading(false);
+      return true;
+    };
+
     // Cargar sesión persistida
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: s }, error }) => {
       clearTimeout(timeout);
       if (!mounted) return;
       if (s) {
         updateSession(s);
         setLoading(false);
         syncBackground(s.user);
-      } else {
-        NetInfo.fetch().then((state) => {
-          if (!mounted) return;
-          if (!hayInternetConfirmado(state)) {
-            // Sin red: mantener loading=true y esperar a que vuelva la conexión.
-            // El listener de NetInfo reintentará getSession automáticamente.
-            // Fallback: si sigue offline tras 30s, mostrar login.
-            logger.log("⚠️ getSession null + offline — esperando conexión");
-            offlineTimeout = setTimeout(() => {
-              if (mounted && !sessionRef.current) {
-                logger.log("⚠️ Timeout offline (30s) — mostrando login");
-                setLoading(false);
-              }
-            }, 30000);
-          } else {
-            updateSession(null);
+        return;
+      }
+      const state = await NetInfo.fetch();
+      if (!mounted) return;
+      const sinRed = !hayInternetConfirmado(state);
+      // Fallo de red (no una sesión realmente inválida): usar la guardada
+      if ((sinRed || (error && isAuthRetryableFetchError(error))) &&
+          (await entrarConSesionGuardada())) {
+        return;
+      }
+      if (sinRed) {
+        // Sin sesión guardada y sin red: esperar a que vuelva la conexión.
+        // El listener de NetInfo reintentará getSession automáticamente.
+        // Fallback: si sigue offline tras 30s, mostrar login.
+        logger.log("⚠️ getSession null + offline — esperando conexión");
+        offlineTimeout = setTimeout(() => {
+          if (mounted && !sessionRef.current) {
+            logger.log("⚠️ Timeout offline (30s) — mostrando login");
             setLoading(false);
           }
-        });
+        }, 30000);
+      } else {
+        updateSession(null);
+        setLoading(false);
       }
-    }).catch((err) => {
+    }).catch(async (err) => {
       clearTimeout(timeout);
       if (!mounted) return;
       logger.error("❌ getSession error:", err?.message);
+      if (await entrarConSesionGuardada()) return;
       setLoading(false);
     });
 
@@ -330,6 +368,7 @@ function AppContent() {
           case "TOKEN_REFRESHED":
           case "USER_UPDATED":
             if (newSession?.user) {
+              sesionOfflineRef.current = false;
               updateSession(newSession);
               if (!recoveryModeRef.current) syncBackground(newSession.user);
             }
@@ -340,6 +379,16 @@ function AppContent() {
               useVehiculoStore.getState().clearVehiculo();
               useGastosStore.getState().limpiarGastos();
               useIngresosStore.getState().limpiarIngresos();
+              // Evita que operaciones offline / vehículos de esta cuenta
+              // queden en el dispositivo para la siguiente.
+              useOfflineQueueStore.getState().clearQueue();
+              useVehiculosListStore.getState().limpiar();
+              // Las notificaciones locales programadas son de la cuenta anterior.
+              cancelarRecordatoriosPendientes().catch(() => {});
+              cancelarRecordatorioFletes().catch(() => {});
+              AsyncStorage.removeItem("@truckbook_pend_ia_notif_v1").catch(() => {});
+              limpiarCacheClientes().catch(() => {});
+              sesionOfflineRef.current = false;
               updateSession(null);
               recoveryModeRef.current = false;
               setRecoveryMode(false);
@@ -396,7 +445,8 @@ function AppContent() {
 
     // Reintentar sesión cuando vuelve la conexión
     const unsubNetInfo = NetInfo.addEventListener((state) => {
-      if (!mounted || sessionRef.current) return;
+      if (!mounted) return;
+      if (sessionRef.current && !sesionOfflineRef.current) return;
       if (state.isConnected) {
         logger.log("🌐 Conexión restaurada — reintentando getSession");
         if (offlineTimeout) {
@@ -405,11 +455,19 @@ function AppContent() {
         }
         supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (!mounted) return;
-          updateSession(s);
-          setLoading(false);
-          if (s?.user) syncBackground(s.user);
+          if (s) {
+            sesionOfflineRef.current = false;
+            updateSession(s);
+            setLoading(false);
+            syncBackground(s.user);
+          } else if (!sesionOfflineRef.current) {
+            updateSession(null);
+            setLoading(false);
+          }
+          // Con la sesión guardada en uso y sin poder renovar aún: se mantiene.
+          // Si el refresh token es inválido, Supabase emite SIGNED_OUT solo.
         }).catch(() => {
-          if (!mounted) return;
+          if (!mounted || sesionOfflineRef.current) return;
           updateSession(null);
           setLoading(false);
         });
@@ -434,8 +492,6 @@ function AppContent() {
     <View style={[styles.container, { backgroundColor: colors.primary }]}>
       <StatusBar
         style={isDark ? "light" : "dark"}
-        translucent={Platform.OS === "android"}
-        backgroundColor="transparent"
       />
       {session && !recoveryMode ? (
         <DataProvider>

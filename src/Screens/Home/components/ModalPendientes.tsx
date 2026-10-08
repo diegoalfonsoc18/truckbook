@@ -279,8 +279,9 @@ export function ModalPendientes({
       transparent
       animationType="slide"
       statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={onClose}>
-      <View style={[st.overlay, { backgroundColor: c.overlay }]}>
+      <View accessibilityViewIsModal style={[st.overlay, { backgroundColor: c.overlay }]}>
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={st.flex} />
         </TouchableWithoutFeedback>
@@ -307,7 +308,7 @@ export function ModalPendientes({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={[st.cerrar, { backgroundColor: c.surface }]}>
@@ -475,7 +476,7 @@ export function ModalPendientes({
                                 ]}>
                                 {fmtI(montoTotal(item))}
                               </Text>
-                              <TouchableOpacity
+                              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Marcar como cobrado"
                                 onPress={() =>
                                   confirmarCobro(
                                     item.id,
@@ -514,7 +515,7 @@ export function ModalPendientes({
                     {/* Acciones. Llamar y la cuenta de cobro son del cliente;
                         con un solo flete, "Cobrado" cabe aquí también. */}
                     <View style={[st.acciones, { borderTopColor: c.divider }]}>
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button"
                         onPress={() => llamar(g.tel)}
                         style={[
                           st.btn,
@@ -529,7 +530,7 @@ export function ModalPendientes({
                         </Text>
                       </TouchableOpacity>
 
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button"
                         onPress={() => enviarWhatsApp(g)}
                         style={[
                           st.btn,
@@ -549,7 +550,7 @@ export function ModalPendientes({
                       </TouchableOpacity>
 
                       {!varios && (
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button"
                           onPress={() =>
                             confirmarCobro(
                               g.items[0].id,

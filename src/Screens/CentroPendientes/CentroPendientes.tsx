@@ -198,7 +198,7 @@ export default function CentroPendientes() {
                 Resumen IA
               </Text>
             </View>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Actualizar"
               onPress={() => cargarInsights(true)}
               disabled={loadingIA}
               style={styles.iaRefresh}>
@@ -228,7 +228,7 @@ export default function CentroPendientes() {
                 </View>
               )}
               {insights.mensajeCobro && (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={[
                     styles.iaMensajeBtn,
                     { borderColor: c.accent + "40" },
@@ -292,7 +292,7 @@ export default function CentroPendientes() {
         {/* Tabs */}
         <View style={styles.tabs}>
           {(["cobrar", "pagar"] as Tab[]).map((t) => (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: tab === t }}
               key={t}
               style={[
                 styles.tabBtn,
@@ -429,7 +429,7 @@ function CardCobro({
           </View>
         </View>
 
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={[cardStyles.accionBtn, { borderColor: c.accent + "60" }]}
           onPress={onCobrar}
           activeOpacity={0.7}>

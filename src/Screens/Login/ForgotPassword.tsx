@@ -81,7 +81,7 @@ export default function ForgotPassword({ navigation }: Props) {
             <View style={styles.content}>
               {/* HEADER */}
               <View style={styles.header}>
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
                   style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => navigation.goBack()}>
                   <Ionicons name="chevron-back" size={20} color={colors.text} />
@@ -117,7 +117,7 @@ export default function ForgotPassword({ navigation }: Props) {
                       ds.inputBg,
                       { borderColor: colors.border },
                     ]}>
-                    <TextInput
+                    <TextInput accessibilityLabel="Correo electrónico"
                   keyboardAppearance="light"
                       style={[styles.input, ds.text]}
                       placeholder="tu@correo.com"
@@ -131,7 +131,7 @@ export default function ForgotPassword({ navigation }: Props) {
                   </View>
                 </View>
 
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                   style={[
                     styles.submitButton,
                     { backgroundColor: colors.accent },
@@ -149,7 +149,7 @@ export default function ForgotPassword({ navigation }: Props) {
               </View>
 
               {/* FOOTER */}
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={styles.loginLink}
                 onPress={() => navigation.goBack()}>
                 <Text style={[styles.loginLinkText, ds.textSecondary]}>

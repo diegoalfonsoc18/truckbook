@@ -82,9 +82,9 @@ serve(async (req) => {
       });
     }
 
-    const geminiRes = await fetch(`${GEMINI_ENDPOINT}?key=${geminiKey}`, {
+    const geminiRes = await fetch(GEMINI_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: generationConfig ?? { temperature: 0.7, maxOutputTokens: 800 },
@@ -92,8 +92,9 @@ serve(async (req) => {
     });
 
     if (!geminiRes.ok) {
-      const txt = await geminiRes.text();
-      return new Response(JSON.stringify({ error: `Gemini error ${geminiRes.status}`, detail: txt }), {
+      // No reenviar el cuerpo del error de Google al cliente.
+      console.error("Gemini error", geminiRes.status, await geminiRes.text());
+      return new Response(JSON.stringify({ error: `Gemini error ${geminiRes.status}` }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -107,7 +108,8 @@ serve(async (req) => {
     });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
