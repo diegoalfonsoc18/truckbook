@@ -281,10 +281,6 @@ export default function ResumenSemanal({ isDark }: Props) {
             />
           </Pressable>
         </View>
-        <Text style={s.heroSub}>
-          {viajes30} {viajes30 === 1 ? "viaje" : "viajes"} · {clientes30}{" "}
-          {clientes30 === 1 ? "cliente" : "clientes"}
-        </Text>
         <View style={s.heroBtns}>
           <Pressable
             accessibilityRole="button"
@@ -334,6 +330,24 @@ export default function ResumenSemanal({ isDark }: Props) {
             {hayPendientes ? ocultar(fmtPesos(totalPend)) : "Al día"}
           </Text>
         </Pressable>
+      </View>
+
+      {/* VIAJES Y CLIENTES del mes */}
+      <View style={[s.mini, { marginTop: 10 }]}>
+        <View style={s.statCard}>
+          <ItemIcon name="trip" size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.statValor}>{viajes30}</Text>
+            <Text style={s.miniLabel}>{viajes30 === 1 ? "Viaje en el mes" : "Viajes en el mes"}</Text>
+          </View>
+        </View>
+        <View style={s.statCard}>
+          <ItemIcon name="conductor" size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.statValor}>{clientes30}</Text>
+            <Text style={s.miniLabel}>{clientes30 === 1 ? "Cliente en el mes" : "Clientes en el mes"}</Text>
+          </View>
+        </View>
       </View>
 
       <ModalPendientes
@@ -414,6 +428,23 @@ const s = StyleSheet.create({
     borderCurve: "continuous",
     padding: 12,
     gap: 4,
+  },
+  statCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#ECECEE",
+    borderRadius: 20,
+    borderCurve: "continuous",
+    padding: 12,
+  },
+  statValor: {
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    color: COLORS.ink,
+    fontVariant: ["tabular-nums"],
   },
   miniLabel: { fontSize: 11, fontWeight: "500", color: COLORS.muted, marginTop: 4 },
   miniValor: {

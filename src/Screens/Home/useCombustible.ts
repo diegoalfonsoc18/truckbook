@@ -1,5 +1,5 @@
 // Combustible del mes de la placa activa: galones (gasto del mes / precio del
-// galón) y ratio contra el mes pico, para la barra del Home.
+// galón) y variación contra el mes anterior, para el banner del Home.
 import React from "react";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
@@ -11,7 +11,7 @@ export function useCombustible() {
   const { precio: precioGalon } = usePrecioDiesel();
 
   return React.useMemo(() => {
-    // Gasto de combustible por mes → galones del mes actual y ratio vs. mes pico
+    // Gasto de combustible por mes → galones del mes actual y variación vs. mes anterior
     const porMes = new Map<string, number>();
     for (const g of gastos) {
       if (g.placa !== placa) continue;
@@ -23,11 +23,20 @@ export function useCombustible() {
     const now = new Date();
     const mesActual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const gastoMes = porMes.get(mesActual) ?? 0;
-    const gastoPico = Math.max(0, ...porMes.values());
+    const ant = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const mesAnterior = `${ant.getFullYear()}-${String(ant.getMonth() + 1).padStart(2, "0")}`;
+    const gastoAnterior = porMes.get(mesAnterior) ?? 0;
 
     const galones = precioGalon > 0 ? Math.round(gastoMes / precioGalon) : 0;
-    const ratio = gastoPico > 0 ? gastoMes / gastoPico : 0;
+    // Variación en % contra el mes anterior (null si ese mes no tiene gasto)
+    const delta =
+      gastoAnterior > 0
+        ? Math.round(((gastoMes - gastoAnterior) / gastoAnterior) * 100)
+        : null;
+    // Barra: este mes frente al mayor de los dos (llena si no baja)
+    const mayor = Math.max(gastoMes, gastoAnterior);
+    const pct = mayor > 0 ? Math.round((gastoMes / mayor) * 100) : 0;
 
-    return { galones, ratio, pct: Math.round(Math.max(0, Math.min(1, ratio)) * 100) };
+    return { galones, delta, pct };
   }, [gastos, precioGalon, placa]);
 }

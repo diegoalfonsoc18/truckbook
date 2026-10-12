@@ -3,6 +3,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import ItemIcon from "../../../components/ItemIcon";
 import { useCombustible } from "../useCombustible";
 
@@ -18,7 +19,25 @@ export default function BannerCombustible() {
         <View style={s.track}>
           <View style={[s.fill, { width: `${fuel.pct}%` }]} />
         </View>
-        <Text style={s.nota}>{fuel.pct}% del mes pico</Text>
+        {fuel.delta === null ? (
+          <Text style={[s.nota, { marginTop: 6 }]}>Sin datos del mes anterior</Text>
+        ) : (
+          <View style={s.deltaRow}>
+            <Ionicons
+              name={fuel.delta > 0 ? "arrow-up" : fuel.delta < 0 ? "arrow-down" : "remove"}
+              size={12}
+              color={fuel.delta > 0 ? "#F87171" : fuel.delta < 0 ? "#4ADE80" : "rgba(255,255,255,0.55)"}
+            />
+            <Text
+              style={[
+                s.deltaTexto,
+                { color: fuel.delta > 0 ? "#F87171" : fuel.delta < 0 ? "#4ADE80" : "rgba(255,255,255,0.55)" },
+              ]}>
+              {Math.abs(fuel.delta)}%
+            </Text>
+            <Text style={s.nota}> vs mes anterior</Text>
+          </View>
+        )}
         <Pressable
           accessibilityRole="button"
           onPress={() => navigation.navigate("Gastos")}
@@ -60,7 +79,9 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
   fill: { height: "100%", borderRadius: 3, backgroundColor: "#E31937" },
-  nota: { fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 6 },
+  nota: { fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 0 },
+  deltaRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 6 },
+  deltaTexto: { fontSize: 11, fontWeight: "700" },
   btn: {
     alignSelf: "flex-start",
     backgroundColor: "#FFFFFF",

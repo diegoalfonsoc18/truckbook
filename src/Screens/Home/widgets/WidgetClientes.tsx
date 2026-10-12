@@ -121,7 +121,12 @@ export default function WidgetClientes(_props: WProps) {
   // ── Widget principal ──────────────────────────────────────────────────────
   return (
     <View style={s.wrap}>
-      <Text style={s.sectionLabel}>Top clientes</Text>
+      <View style={s.tituloRow}>
+        <ItemIcon name="cup" size={36} />
+        <Text style={[s.sectionLabel, { marginBottom: 0, marginLeft: 0 }]}>
+          Top clientes
+        </Text>
+      </View>
 
       <View style={s.listCard}>
         {/* ── Encabezados de columna ── */}
@@ -201,6 +206,7 @@ const s = StyleSheet.create({
   },
   // Las filas van directo sobre el panel gris, como en Actividad reciente
   // (sin tarjeta blanca interna).
+  tituloRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, marginLeft: 2 },
   listCard: {},
   emptyBox:    { alignItems: "center", paddingVertical: 14, gap: 7 },
   emptyText:   { fontSize: 12, textAlign: "center", lineHeight: 17 },
