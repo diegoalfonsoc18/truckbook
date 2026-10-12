@@ -50,16 +50,15 @@ export default function VehicleCard({
 
   // Ancho real de la fila → foto responsiva que nunca tapa el texto.
   const [rowW, setRowW] = React.useState(0);
-  const BLEED = 12; // cuánto sangra la foto por el borde derecho (recortada por overflow)
+  const BLEED = 0; // cuánto sangra la foto por el borde derecho (recortada por overflow)
   // En iOS el camión se muestra ~10% más grande (pantalla más ancha)
-  const PHOTO_FRAC = Platform.OS === "ios" ? 0.605 : 0.55;
+  const PHOTO_FRAC = Platform.OS === "ios" ? 0.64 : 0.6;
   const photoW = rowW
     ? Math.round(rowW * PHOTO_FRAC)
     : Platform.OS === "ios"
-      ? 178
-      : 162;
+      ? 190
+      : 175;
   const photoH = Math.round((photoW * 156) / 260);
-  const photoReserve = rowW ? Math.max(96, photoW - BLEED + 6) : 150;
 
   // Normalizar: el valor persistido puede ser una variante nueva
   // ("estacasTresEjes") o un valor viejo ("estacas") de antes de este cambio;
@@ -94,6 +93,8 @@ export default function VehicleCard({
 
     return { galones, ratio };
   }, [gastos, precioGalon, placaActual]);
+
+  const fuelPct = Math.round(Math.max(0, Math.min(1, fuel.ratio)) * 100);
 
   // ── SF Symbol helper ──
   const SFIcon = ({
@@ -144,104 +145,80 @@ export default function VehicleCard({
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Botón circular con chevron (arriba a la derecha) */}
-      <View
-        style={[
-          s.chevronBtn,
-          { borderColor: "rgba(255,255,255,0.18)" },
-        ]}>
-        <SFIcon
-          name="chevron.right"
-          fallback="chevron-forward"
-          size={18}
-          color={"#FFFFFF"}
-        />
-      </View>
-
       <View style={s.content}>
         {placaActual ? (
-          <View
-            style={s.row}
-            onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
-            {/* Columna de texto */}
-            <View style={[s.textCol, foto ? { marginRight: photoReserve } : null]}>
+          <View onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
+            {/* Encabezado: placa + chip de combustible */}
+            <View style={s.topRow}>
               <Text
-                style={[s.placa, { color: "#FFFFFF" }]}
+                style={s.placa}
                 numberOfLines={1}
                 adjustsFontSizeToFit>
                 {placaActual}
               </Text>
-
-              {!!subtitulo && (
-                <Text
-                  style={[
-                    s.subtitulo,
-                    { color: "rgba(255,255,255,0.78)" },
-                  ]}>
-                  {subtitulo}
-                </Text>
-              )}
-
-              {/* Chip de combustible */}
-              <View style={s.fuelChip}>
-                <View style={s.fuelRow}>
-                  <SFIcon
-                    name="fuelpump.fill"
-                    fallback="flame"
-                    size={16}
-                    color={"#FFFFFF"}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        s.fuelValue,
-                        { color: "#FFFFFF" },
-                      ]}
-                      numberOfLines={1}>
-                      {fuel.galones} gal
-                    </Text>
-                    <Text
-                      style={[
-                        s.fuelLabel,
-                        { color: "rgba(255,255,255,0.6)" },
-                      ]}
-                      numberOfLines={1}>
-                      Combustible
-                    </Text>
-                  </View>
-                </View>
-                <View style={s.fuelTrack}>
-                  <View
-                    style={[
-                      s.fuelFill,
-                      {
-                        width: `${Math.round(Math.max(0, Math.min(1, fuel.ratio)) * 100)}%`,
-                      },
-                    ]}
-                  />
-                </View>
+              {/* Botón: ir a cambiar de camión */}
+              <View style={s.swapBtn}>
+                <SFIcon
+                  name="arrow.left.arrow.right"
+                  fallback="swap-horizontal"
+                  size={15}
+                  color="#FFFFFF"
+                />
               </View>
             </View>
 
-            {/* Foto del camión por tipo (con fallback al ícono vectorial) */}
-            {foto ? (
-              <View
-                style={[s.photoWrap, { width: photoW, right: -BLEED }]}
-                pointerEvents="none">
-                <Image
-                  source={foto}
-                  style={{ width: photoW, height: photoH }}
-                  resizeMode="contain"
-                />
+            {/* Porcentaje grande + foto del camión */}
+            <View style={s.midRow}>
+              <View style={s.fuelBlock}>
+                <View style={s.fuelIcon}>
+                  <SFIcon
+                    name="fuelpump.fill"
+                    fallback="flame"
+                    size={20}
+                    color={FUEL_BAR_COLOR}
+                  />
+                </View>
+                <Text style={s.pct} numberOfLines={1} adjustsFontSizeToFit>
+                  {fuel.galones}
+                  <Text style={s.pctSign}> gal</Text>
+                </Text>
               </View>
-            ) : (
-              <View style={s.iconCol}>
+              {foto ? (
+                <View
+                  style={{ width: photoW, marginRight: 8, marginVertical: -10 }}
+                  pointerEvents="none">
+                  <Image
+                    source={foto}
+                    style={{ width: photoW, height: photoH }}
+                    resizeMode="contain"
+                  />
+                </View>
+              ) : (
                 <ItemIcon
                   name={camionIconName}
                   size={HOME_COLORS.vehicleIconSize}
                 />
-              </View>
-            )}
+              )}
+            </View>
+
+            {/* Barra de combustible */}
+            <View style={s.fuelTrack}>
+              <LinearGradient
+                colors={[FUEL_BAR_COLOR, "#A3E635"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[s.fuelFill, { width: `${fuelPct}%` }]}
+              />
+            </View>
+
+            <View style={s.footRow}>
+              <Text style={s.footText} numberOfLines={1}>
+                {subtitulo}
+              </Text>
+              <Text style={s.footText} numberOfLines={1}>
+                Combustible · {fuelPct}% del mes pico
+              </Text>
+            </View>
           </View>
         ) : (
           <View style={s.row}>
@@ -277,8 +254,8 @@ const s = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.07)",
   },
   content: {
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   row: {
     flexDirection: "row",
@@ -308,25 +285,86 @@ const s = StyleSheet.create({
     width: 260,
     height: 156,
   },
-  chevronBtn: {
-    position: "absolute",
-    top: 14,
-    right: 14,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  placa: {
+    flexShrink: 1,
+    fontSize: 22,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+    color: "#FFFFFF",
+  },
+  swapBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderCurve: "continuous",
     borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
     backgroundColor: "rgba(255,255,255,0.10)",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2,
   },
-  placa: {
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    marginBottom: 2,
+  midRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 0,
+  },
+  fuelBlock: {
+    flexShrink: 1,
+    gap: 6,
+  },
+  fuelIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(34,197,94,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pct: {
+    flexShrink: 1,
+    fontSize: 54,
+    fontWeight: "600",
+    letterSpacing: -1.5,
+    color: "#FFFFFF",
+  },
+  pctSign: {
+    fontSize: 22,
+    fontWeight: "500",
+    letterSpacing: 0,
+    color: "rgba(255,255,255,0.6)",
+  },
+  fuelTrack: {
+    marginTop: 2,
+    height: 8,
+    borderRadius: 4,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    overflow: "hidden",
+  },
+  fuelFill: {
+    height: "100%",
+    borderRadius: 4,
+    borderCurve: "continuous",
+  },
+  footRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 6,
+  },
+  footText: {
+    flexShrink: 1,
+    fontSize: 11,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.55)",
   },
   placaEmpty: {
     fontSize: 28,
@@ -334,54 +372,7 @@ const s = StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: 4,
   },
-  subtitulo: {
-    fontSize: 17,
-    fontWeight: "500",
-    letterSpacing: -0.2,
-  },
   hint: {
     fontSize: HOME_COLORS.vehicleHintSize,
-  },
-  fuelChip: {
-    marginTop: 14,
-    // Se ajusta al contenido (ancho de "Combustible"), con holgura para no cortar
-    alignSelf: "flex-start",
-    minWidth: 110,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    borderRadius: 12,
-    borderCurve: "continuous",
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  fuelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  fuelValue: {
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
-  fuelLabel: {
-    fontSize: 10,
-    fontWeight: "500",
-    marginTop: 1,
-  },
-  fuelTrack: {
-    marginTop: 7,
-    height: 4,
-    borderRadius: 2,
-    borderCurve: "continuous",
-    backgroundColor: "rgba(255,255,255,0.14)",
-    overflow: "hidden",
-  },
-  fuelFill: {
-    height: "100%",
-    borderRadius: 3,
-    borderCurve: "continuous",
-    backgroundColor: FUEL_BAR_COLOR,
   },
 });
