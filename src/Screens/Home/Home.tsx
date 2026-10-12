@@ -205,7 +205,7 @@ export default function HomeBaseAdapted({
   );
 }
 
-const FONDO_BLANCO = "#ECECEE";
+const FONDO_BLANCO = "#FFFFFF";
 
 const ACCESOS: {
   label: string;
@@ -245,7 +245,7 @@ const s = StyleSheet.create({
     height: 54,
     borderRadius: 18,
     borderCurve: "continuous",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEE",
     alignItems: "center",
     justifyContent: "center",
   },

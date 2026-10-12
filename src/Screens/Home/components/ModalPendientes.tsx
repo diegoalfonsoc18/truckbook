@@ -288,7 +288,7 @@ export function ModalPendientes({
         </TouchableWithoutFeedback>
 
         {/* ── Bottom sheet ── */}
-        <View style={[st.hoja, { backgroundColor: "#ECECEE" }]}>
+        <View style={[st.hoja, { backgroundColor: "#FFFFFF" }]}>
           <View style={st.handleWrap}>
             <View style={[st.handle, { backgroundColor: c.border }]} />
           </View>
@@ -312,7 +312,7 @@ export function ModalPendientes({
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={[st.cerrar, { backgroundColor: "#FFFFFF" }]}>
+              style={[st.cerrar, { backgroundColor: "#ECECEE" }]}>
               <Feather name="x" size={18} color={c.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -338,7 +338,7 @@ export function ModalPendientes({
             <View
               style={[
                 st.gemini,
-                { backgroundColor: "#FFFFFF", borderLeftColor: "#111111" },
+                { backgroundColor: "#ECECEE", borderLeftColor: "#111111" },
               ]}>
               {loadingGem ? (
                 <ActivityIndicator size="small" color={AMBER} />
@@ -378,13 +378,13 @@ export function ModalPendientes({
                 return (
                   <View
                     key={g.cliente}
-                    style={[st.card, { backgroundColor: "#FFFFFF" }]}>
+                    style={[st.card, { backgroundColor: "#ECECEE" }]}>
                     {/* Cabecera del cliente */}
                     <View style={st.cardHeader}>
                       <View
                         style={[
                           st.avatar,
-                          { backgroundColor: "#F3F4F6" },
+                          { backgroundColor: "#FFFFFF" },
                         ]}>
                         <Feather
                           name={esEmpresa ? "briefcase" : "user"}
@@ -507,7 +507,7 @@ export function ModalPendientes({
                         onPress={() => llamar(g.tel)}
                         style={[
                           st.btn,
-                          { backgroundColor: "#F3F4F6" },
+                          { backgroundColor: "#FFFFFF" },
                         ]}>
                         <Feather name="phone" size={13} color="#111111" />
                         <Text style={[st.btnTexto, { color: "#111111" }]}>

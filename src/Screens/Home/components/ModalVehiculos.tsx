@@ -255,9 +255,9 @@ export default function ModalVehiculos({
   };
 
   // Hoja gris con tarjetas blancas, igual que el resto de la app.
-  const sheet = { backgroundColor: "#ECECEE" };
+  const sheet = { backgroundColor: "#FFFFFF" };
 
-  const chipCard = { backgroundColor: "#FFFFFF" };
+  const chipCard = { backgroundColor: "#ECECEE" };
 
   // Selector de tipo de camión agrupado por número de ejes (2 ejes / 3 ejes /
   // Tractocamión). Lo usan el alta y la edición, por eso está factorizado aquí.
@@ -397,7 +397,7 @@ export default function ModalVehiculos({
                             <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: isActive }}
                               style={[
                                 s.vehicleOption,
-                                { backgroundColor: "#FFFFFF" },
+                                { backgroundColor: "#ECECEE" },
                                 isActive && {
                                   borderWidth: 2,
                                   borderColor: "#111111",
@@ -466,7 +466,7 @@ export default function ModalVehiculos({
                         style={[
                           s.placaInputField,
                           {
-                            backgroundColor: "#FFFFFF",
+                            backgroundColor: "#ECECEE",
                             color: c.text,
                             borderColor: "#111111",
                             marginTop: 12,
@@ -526,9 +526,9 @@ export default function ModalVehiculos({
                       style={[
                         s.placaInputField,
                         {
-                          backgroundColor: "#FFFFFF",
+                          backgroundColor: "#ECECEE",
                           color: c.text,
-                          borderColor: "#FFFFFF",
+                          borderColor: "#ECECEE",
                         },
                       ]}
                       placeholder="Placa — Ej: EKA854"
@@ -636,7 +636,7 @@ const s = StyleSheet.create({
     fontWeight: "700" as const,
   },
   placaBadge: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     borderCurve: "continuous",
     paddingHorizontal: 14,

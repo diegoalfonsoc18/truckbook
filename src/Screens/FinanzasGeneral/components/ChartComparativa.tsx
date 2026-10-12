@@ -82,8 +82,8 @@ function ChartComparativa({
       formatYLabel={abreviarNumero}
       chartConfig={{
         backgroundColor: "transparent",
-        backgroundGradientFrom: c.cardBg,
-        backgroundGradientTo: c.cardBg,
+        backgroundGradientFrom: "#ECECEE",
+        backgroundGradientTo: "#ECECEE",
         decimalPlaces: 0,
         color: (opacity = 1) =>
           `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
@@ -95,7 +95,7 @@ function ChartComparativa({
         propsForDots: {
           r: "4",
           strokeWidth: "2",
-          stroke: c.cardBg,
+          stroke: "#ECECEE",
         },
         propsForBackgroundLines: {
           strokeDasharray: "",
@@ -112,7 +112,7 @@ function ChartComparativa({
     <Reanimated.View
       style={[
         styles.chartContainer,
-        { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
+        { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
         chartAnimStyle,
       ]}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}

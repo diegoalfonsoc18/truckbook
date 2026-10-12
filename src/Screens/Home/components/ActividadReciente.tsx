@@ -17,7 +17,7 @@ import {
 
 const COLORS = {
   muted: MOV_COLORS.muted,
-  panelBg: "#FFFFFF",
+  panelBg: "#ECECEE",
   link: "#CC0000",
 };
 

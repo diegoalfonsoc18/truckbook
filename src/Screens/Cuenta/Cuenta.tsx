@@ -594,18 +594,14 @@ export default function Cuenta() {
     : (user?.email?.charAt(0).toUpperCase() ?? "U");
 
   const card = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
-    borderRadius: 20,
-    ...(isDark
-      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
-      : {}),
-    ...shadow,
+    backgroundColor: "#ECECEE",
+    borderRadius: 24,
   };
 
-  const inputBg = isDark ? "rgba(255,255,255,0.06)" : c.surface;
+  const inputBg = "#ECECEE";
 
   return (
-    <View style={[s.container, { backgroundColor: c.primary }]}>
+    <View style={[s.container, { backgroundColor: "#FFFFFF" }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
         {/* HEADER */}
         <Animated.View
@@ -622,10 +618,7 @@ export default function Cuenta() {
               style={[
                 s.profileCard,
                 cardStyle,
-                { backgroundColor: isDark ? `${AVATAR_COLOR}14` : c.cardBg },
-                isDark
-                  ? { borderWidth: 1, borderColor: `${AVATAR_COLOR}33` }
-                  : shadow,
+                { backgroundColor: "#ECECEE" },
               ]}>
               <View
                 style={[s.avatarRing, { borderColor: `${AVATAR_COLOR}40` }]}>
@@ -654,9 +647,7 @@ export default function Cuenta() {
                   style={[
                     s.menuIconWrap,
                     {
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.08)"
-                        : c.surface,
+                      backgroundColor: "#FFFFFF",
                     },
                   ]}>
                   <Ionicons
@@ -700,9 +691,7 @@ export default function Cuenta() {
                   style={[
                     s.menuIconWrap,
                     {
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.08)"
-                        : c.surface,
+                      backgroundColor: "#FFFFFF",
                     },
                   ]}>
                   <Ionicons
@@ -870,20 +859,18 @@ export default function Cuenta() {
             style={[
               s.modalSheet,
               {
-                backgroundColor: c.cardBg,
-                borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+                backgroundColor: "#FFFFFF",
+                borderColor: "#FFFFFF",
               },
             ]}>
-            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+            <View style={[s.modalHandle, { backgroundColor: "#C9C9CD" }]} />
 
             <View style={s.modalHeader}>
               <View
                 style={[
                   s.modalIconWrap,
                   {
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.08)"
-                      : c.surface,
+                    backgroundColor: "#FFFFFF",
                   },
                 ]}>
                 <Ionicons name="person-outline" size={20} color="#0F172A" />
@@ -937,7 +924,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Tu nombre"
                 style={[s.input, { color: c.text }]}
@@ -956,7 +943,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Tu apellido"
                 style={[s.input, { color: c.text }]}
@@ -975,7 +962,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Número de teléfono"
                 style={[s.input, { color: c.text }]}
@@ -990,7 +977,7 @@ export default function Cuenta() {
             <TouchableOpacity accessibilityRole="button"
               style={[
                 s.saveBtn,
-                { backgroundColor: c.accent, opacity: savingProfile ? 0.7 : 1 },
+                { backgroundColor: "#111111", opacity: savingProfile ? 0.7 : 1 },
               ]}
               onPress={handleSaveProfile}
               disabled={savingProfile}
@@ -1024,20 +1011,18 @@ export default function Cuenta() {
             style={[
               s.modalSheet,
               {
-                backgroundColor: c.cardBg,
-                borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+                backgroundColor: "#FFFFFF",
+                borderColor: "#FFFFFF",
               },
             ]}>
-            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+            <View style={[s.modalHandle, { backgroundColor: "#C9C9CD" }]} />
 
             <View style={s.modalHeader}>
               <View
                 style={[
                   s.modalIconWrap,
                   {
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.08)"
-                      : c.surface,
+                    backgroundColor: "#FFFFFF",
                   },
                 ]}>
                 <Ionicons
@@ -1068,7 +1053,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Contraseña actual"
                 style={[s.input, { color: c.text }]}
@@ -1101,7 +1086,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Nueva contraseña"
                 style={[s.input, { color: c.text }]}
@@ -1131,7 +1116,7 @@ export default function Cuenta() {
             <View
               style={[
                 s.inputRow,
-                { backgroundColor: inputBg, borderColor: c.border },
+                { backgroundColor: inputBg, borderColor: "#ECECEE" },
               ]}>
               <TextInput accessibilityLabel="Confirmar nueva contraseña"
                 style={[s.input, { color: c.text }]}
@@ -1158,7 +1143,7 @@ export default function Cuenta() {
               style={[
                 s.saveBtn,
                 {
-                  backgroundColor: c.accent,
+                  backgroundColor: "#111111",
                   opacity: savingPassword ? 0.7 : 1,
                 },
               ]}
@@ -1191,11 +1176,11 @@ export default function Cuenta() {
             style={[
               s.legalSheet,
               {
-                backgroundColor: c.cardBg,
-                borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+                backgroundColor: "#FFFFFF",
+                borderColor: "#FFFFFF",
               },
             ]}>
-            <View style={[s.modalHandle, { backgroundColor: c.border }]} />
+            <View style={[s.modalHandle, { backgroundColor: "#C9C9CD" }]} />
 
             {/* Header */}
             <View style={s.legalHeader}>
@@ -1245,7 +1230,8 @@ const s = StyleSheet.create({
 
   // PROFILE CARD
   profileCard: {
-    borderRadius: 22,
+    borderRadius: 28,
+    borderCurve: "continuous",
     padding: 24,
     alignItems: "center",
     marginBottom: 24,
@@ -1370,7 +1356,7 @@ const s = StyleSheet.create({
   divider: { height: 1, marginBottom: 16 },
 
   saveBtn: {
-    borderRadius: 28,
+    borderRadius: 16,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 4,

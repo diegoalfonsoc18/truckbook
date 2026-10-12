@@ -174,7 +174,7 @@ export default function Movimientos() {
         <View
           style={[
             st.resumenCard,
-            { backgroundColor: "#FFFFFF" },
+            { backgroundColor: "#ECECEE" },
           ]}>
           <Text style={[st.resumenLabel, { color: c.textSecondary }]}>
             Ingresos
@@ -186,7 +186,7 @@ export default function Movimientos() {
         <View
           style={[
             st.resumenCard,
-            { backgroundColor: "#FFFFFF" },
+            { backgroundColor: "#ECECEE" },
           ]}>
           <Text style={[st.resumenLabel, { color: c.textSecondary }]}>
             Gastos
@@ -251,7 +251,7 @@ export default function Movimientos() {
             { paddingBottom: insets.bottom + 24 },
           ]}
           showsVerticalScrollIndicator={false}>
-          <View style={[st.listaPanel, { backgroundColor: "#FFFFFF" }]}>
+          <View style={[st.listaPanel, { backgroundColor: "#ECECEE" }]}>
             {visibles.map((m) => (
               <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} neutro />
             ))}
@@ -264,7 +264,7 @@ export default function Movimientos() {
 
 // Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
 const H_PAD = H_PAD_COMPACT;
-const FONDO = "#ECECEE";
+const FONDO = "#FFFFFF";
 
 const st = StyleSheet.create({
   root: { flex: 1 },
@@ -279,7 +279,7 @@ const st = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEE",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -296,7 +296,7 @@ const st = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEE",
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,

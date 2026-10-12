@@ -104,12 +104,12 @@ export default function FabEscanear() {
             style={[
               s.sheet,
               {
-                backgroundColor: c.modalBg,
+                backgroundColor: "#FFFFFF",
                 paddingBottom: insets.bottom + 20,
               },
             ]}
             onPress={(e) => e.stopPropagation()}>
-            <View style={[s.handle, { backgroundColor: c.border }]} />
+            <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
             <Text style={[s.title, { color: c.text }]}>Escanear factura</Text>
             <Text style={[s.subtitle, { color: c.textSecondary }]}>
               ¿Qué tipo de transacción es?
@@ -120,8 +120,8 @@ export default function FabEscanear() {
                 style={[
                   s.tipoCard,
                   {
-                    backgroundColor: isDark ? "#2A0E10" : "#FEE8EA",
-                    borderColor: c.expense,
+                    backgroundColor: "#ECECEE",
+                    borderColor: "#ECECEE",
                   },
                 ]}
                 onPress={() => elegirTipo("gasto")}
@@ -140,8 +140,8 @@ export default function FabEscanear() {
                 style={[
                   s.tipoCard,
                   {
-                    backgroundColor: isDark ? "#0D2E1A" : "#E6F8EE",
-                    borderColor: c.income,
+                    backgroundColor: "#ECECEE",
+                    borderColor: "#ECECEE",
                   },
                 ]}
                 onPress={() => elegirTipo("ingreso")}
@@ -182,12 +182,12 @@ export default function FabEscanear() {
             style={[
               s.sheet,
               {
-                backgroundColor: c.modalBg,
+                backgroundColor: "#FFFFFF",
                 paddingBottom: insets.bottom + 20,
               },
             ]}
             onPress={(e) => e.stopPropagation()}>
-            <View style={[s.handle, { backgroundColor: c.border }]} />
+            <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
             <Text style={[s.title, { color: c.text }]}>
               {tipoSeleccionado === "gasto"
                 ? "Foto del gasto"
@@ -197,7 +197,7 @@ export default function FabEscanear() {
             <TouchableOpacity accessibilityRole="button"
               style={[
                 s.fuenteRow,
-                { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
+                { backgroundColor: "#ECECEE" },
               ]}
               onPress={() => elegirFoto("camara")}>
               <Ionicons name="camera-outline" size={24} color={c.accent} />
@@ -208,7 +208,7 @@ export default function FabEscanear() {
             <TouchableOpacity accessibilityRole="button"
               style={[
                 s.fuenteRow,
-                { backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7" },
+                { backgroundColor: "#ECECEE" },
               ]}
               onPress={() => elegirFoto("galeria")}>
               <Ionicons name="image-outline" size={24} color={c.accent} />

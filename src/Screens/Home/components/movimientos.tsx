@@ -231,7 +231,7 @@ export function MovimientoRow({
   const meta = metaDe(mov.tipo, tipoCamion);
   return (
     <View style={s.movRow}>
-      <View style={[s.movIcon, { backgroundColor: neutro ? "#F2F2F7" : meta.color + "22" }]}>
+      <View style={[s.movIcon, { backgroundColor: neutro ? "#FFFFFF" : meta.color + "22" }]}>
         <ItemIcon name={meta.icon} size={22} />
       </View>
       <View style={s.movMid}>

@@ -409,7 +409,7 @@ const s = StyleSheet.create({
   mini: { flexDirection: "row", gap: 10 },
   miniCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEE",
     borderRadius: 20,
     borderCurve: "continuous",
     padding: 12,

@@ -198,7 +198,7 @@ function CatCard({
       <View
         style={[
           s.catCircle,
-          { backgroundColor: "#F3F4F6" },
+          { backgroundColor: "#FFFFFF" },
         ]}>
         <ItemIcon name={cat.iconName} size={cat.size} />
       </View>
@@ -416,7 +416,7 @@ function TransactionRow({
           style={[
             s.rowIconWrap,
             {
-              backgroundColor: "#F3F4F6",
+              backgroundColor: "#FFFFFF",
             },
           ]}>
           {cat?.iconName ? (
@@ -969,13 +969,13 @@ export default function TransactionScreen({
 
   // ─── Card style ────────────────────────────────────────────────────────────
   const card = {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEE",
     borderRadius: 24,
   };
 
   const inputStyle = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface,
-    borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+    backgroundColor: "#ECECEE",
+    borderColor: "#ECECEE",
   };
 
   // ─── Empty state ────────────────────────────────────────────────────────────
@@ -1041,7 +1041,7 @@ export default function TransactionScreen({
                 style={[
                   s.placaBadge,
                   {
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#ECECEE",
                   },
                 ]}>
                 <Text style={[s.placaText, { color: "#111111" }]}>
@@ -1056,7 +1056,7 @@ export default function TransactionScreen({
             activeOpacity={0.7}
             style={[
               s.dateBtn,
-              { backgroundColor: "#FFFFFF", borderColor: "transparent" },
+              { backgroundColor: "#ECECEE", borderColor: "transparent" },
             ]}>
             {Platform.OS === "ios" ? (
               <SymbolView
@@ -1089,7 +1089,7 @@ export default function TransactionScreen({
             <Reanimated.View
               style={[
                 s.summaryCard,
-                { backgroundColor: "#FFFFFF" },
+                { backgroundColor: "#ECECEE" },
                 summaryStyle,
               ]}>
               <View style={s.summaryTop}>
@@ -1135,7 +1135,7 @@ export default function TransactionScreen({
             {/* LIST */}
             <View style={s.listHeader}>
               <Text style={[s.listTitle, { color: c.text }]}>Registros</Text>
-              <View style={[s.listBadge, { backgroundColor: "#FFFFFF" }]}>
+              <View style={[s.listBadge, { backgroundColor: "#ECECEE" }]}>
                 <Text style={[s.listBadgeText, { color: c.textSecondary }]}>
                   {filtered.length}
                 </Text>
@@ -1209,12 +1209,12 @@ export default function TransactionScreen({
           <View
             style={[
               s.sheet,
-              { backgroundColor: c.modalBg },
+              { backgroundColor: "#FFFFFF" },
               isDark
                 ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                 : {},
             ]}>
-            <View style={[s.handle, { backgroundColor: c.border }]} />
+            <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
             <Text style={[s.sheetTitle, { color: c.text }]}>
               Seleccionar fecha
             </Text>
@@ -1228,8 +1228,8 @@ export default function TransactionScreen({
                 [selectedDate]: { selected: true, selectedColor: accentColor },
               }}
               theme={{
-                backgroundColor: c.modalBg,
-                calendarBackground: c.modalBg,
+                backgroundColor: "#FFFFFF",
+                calendarBackground: "#FFFFFF",
                 textSectionTitleColor: c.textSecondary,
                 selectedDayBackgroundColor: accentColor,
                 selectedDayTextColor: "#FFF",
@@ -1262,12 +1262,12 @@ export default function TransactionScreen({
               <View
                 style={[
                   s.sheet,
-                  { backgroundColor: c.modalBg },
+                  { backgroundColor: "#FFFFFF" },
                   isDark
                     ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                     : {},
                 ]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
+                <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>Taller</Text>
                 <View style={s.subGrid}>
                   {subcategorias.map((sub) => (
@@ -1283,7 +1283,7 @@ export default function TransactionScreen({
                         style={[
                           s.subCircle,
                           {
-                            backgroundColor: `${sub.color}${isDark ? "25" : "15"}`,
+                            backgroundColor: "#ECECEE",
                           },
                         ]}>
                         <ItemIcon name={sub.iconName} size={sub.size} />
@@ -1320,12 +1320,12 @@ export default function TransactionScreen({
               <View
                 style={[
                   s.sheet,
-                  { backgroundColor: c.modalBg, maxHeight: "90%" },
+                  { backgroundColor: "#FFFFFF", maxHeight: "90%" },
                   isDark
                     ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                     : {},
                 ]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
+                <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
 
                 {/* ── Formulario ── */}
                 <>
@@ -1355,7 +1355,7 @@ export default function TransactionScreen({
                                 style={[
                                   s.selectedCatCircle,
                                   {
-                                    backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}`,
+                                    backgroundColor: "#ECECEE",
                                   },
                                 ]}>
                                 {cat?.iconName ? (
@@ -1491,10 +1491,8 @@ export default function TransactionScreen({
                                       style={[
                                         s.sugerenciasBox,
                                         {
-                                          backgroundColor: c.modalBg,
-                                          borderColor: isDark
-                                            ? "rgba(255,255,255,0.1)"
-                                            : c.border,
+                                          backgroundColor: "#ECECEE",
+                                          borderColor: "#ECECEE",
                                         },
                                       ]}>
                                       {contactsList.map((ct, i) => (
@@ -1645,12 +1643,8 @@ export default function TransactionScreen({
                             style={[
                               s.estadoToggle,
                               {
-                                backgroundColor: isDark
-                                  ? "rgba(255,255,255,0.06)"
-                                  : c.surface,
-                                borderColor: isDark
-                                  ? "rgba(255,255,255,0.1)"
-                                  : c.border,
+                                backgroundColor: "#ECECEE",
+                                borderColor: "#ECECEE",
                               },
                             ]}>
                             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Pagado" accessibilityState={{ selected: editEstado === "pagado" }}
@@ -1725,7 +1719,7 @@ export default function TransactionScreen({
                       <TouchableOpacity accessibilityRole="button"
                         style={[
                           s.cancelBtn,
-                          { backgroundColor: c.surface, borderColor: c.border },
+                          { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                         ]}
                         onPress={closeModal}>
                         <Text
@@ -1736,7 +1730,7 @@ export default function TransactionScreen({
                       <TouchableOpacity accessibilityRole="button" accessibilityState={{ busy: loading }}
                         style={[
                           s.saveBtn,
-                          { backgroundColor: accentColor },
+                          { backgroundColor: "#111111" },
                           (!editValue ||
                             loading ||
                             (hasCustomDescription &&
@@ -1777,7 +1771,7 @@ export default function TransactionScreen({
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 // Fondo gris claro (estilo app de control de vehículo)
-const FONDO = "#ECECEE";
+const FONDO = "#FFFFFF";
 
 const s = StyleSheet.create({
   container: { flex: 1 },
@@ -1956,8 +1950,8 @@ const s = StyleSheet.create({
   // MODALS
   overlay: { flex: 1, justifyContent: "flex-end" },
   sheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingTop: 10,
     paddingBottom: 36,
     paddingHorizontal: 20,
@@ -2079,7 +2073,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
-  saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
+  saveBtn: { flex: 1, borderRadius: 16, padding: 16, alignItems: "center" },
   saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
 
   // SUGERENCIAS DE CONTACTOS (inline bajo el campo cliente)

@@ -10,8 +10,8 @@ import { useClientType } from "../../../hooks/useClientType";
 import ItemIcon from "../../../components/ItemIcon";
 
 const PANEL = {
-  bg: "#FFFFFF",
-  cardBg: "#FFFFFF",
+  bg: "#ECECEE",
+  cardBg: "#ECECEE",
   ink: "#111827",
   muted: "#6B7280",
   divider: "#EEF0F2",
@@ -142,7 +142,7 @@ export default function WidgetClientes(_props: WProps) {
             <View key={nombre}>
               <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 }}>
                 {/* Avatar */}
-                <View style={[s.avatar, { backgroundColor: primero ? "#111111" : "#F3F4F6" }]}>
+                <View style={[s.avatar, { backgroundColor: primero ? "#111111" : "#FFFFFF" }]}>
                   {idx < 3 ? (
                     <Text style={{ fontSize: 14, fontWeight: "700", color: primero ? "#FFFFFF" : ink }}>{idx + 1}</Text>
                   ) : (
