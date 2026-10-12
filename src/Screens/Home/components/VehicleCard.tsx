@@ -25,7 +25,7 @@ import { usePrecioDiesel } from "../../../hooks/usePrecioDiesel";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
-const FUEL_BAR_COLOR = "#F5A623";
+const FUEL_BAR_COLOR = "#22C55E";
 
 interface VehicleCardProps {
   vehicleCardTitle?: string;
@@ -116,8 +116,7 @@ export default function VehicleCard({
     <AnimatedPressable
       style={[
         s.card,
-        { backgroundColor: isDark ? `${c.accent}14` : "#F4F5F7" },
-        isDark ? { borderWidth: 1, borderColor: `${c.accent}33` } : vcShadow,
+        { backgroundColor: "#17171A" },
         vcAnimStyle,
       ]}
       onPressIn={() => {
@@ -138,13 +137,13 @@ export default function VehicleCard({
       <View
         style={[
           s.chevronBtn,
-          { borderColor: HOME_COLORS.vehicleCardBorderColor },
+          { borderColor: "rgba(255,255,255,0.18)" },
         ]}>
         <SFIcon
           name="chevron.right"
           fallback="chevron-forward"
           size={18}
-          color={HOME_COLORS.vehicleCardText}
+          color={"#FFFFFF"}
         />
       </View>
 
@@ -156,12 +155,12 @@ export default function VehicleCard({
             {/* Columna de texto */}
             <View style={[s.textCol, foto ? { marginRight: photoReserve } : null]}>
               <Text
-                style={[s.label, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+                style={[s.label, { color: "rgba(255,255,255,0.6)" }]}>
                 VEHÍCULO ACTIVO
               </Text>
 
               <Text
-                style={[s.placa, { color: HOME_COLORS.vehicleCardText }]}
+                style={[s.placa, { color: "#FFFFFF" }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit>
                 {placaActual}
@@ -171,7 +170,7 @@ export default function VehicleCard({
                 <Text
                   style={[
                     s.subtitulo,
-                    { color: HOME_COLORS.vehicleCardSubtitle },
+                    { color: "rgba(255,255,255,0.78)" },
                   ]}>
                   {subtitulo}
                 </Text>
@@ -184,13 +183,13 @@ export default function VehicleCard({
                     name="fuelpump.fill"
                     fallback="flame"
                     size={16}
-                    color={HOME_COLORS.vehicleCardText}
+                    color={"#FFFFFF"}
                   />
                   <View style={{ flex: 1 }}>
                     <Text
                       style={[
                         s.fuelValue,
-                        { color: HOME_COLORS.vehicleCardText },
+                        { color: "#FFFFFF" },
                       ]}
                       numberOfLines={1}>
                       {fuel.galones} gal
@@ -198,7 +197,7 @@ export default function VehicleCard({
                     <Text
                       style={[
                         s.fuelLabel,
-                        { color: HOME_COLORS.vehicleCardTextMuted },
+                        { color: "rgba(255,255,255,0.6)" },
                       ]}
                       numberOfLines={1}>
                       Combustible
@@ -242,11 +241,11 @@ export default function VehicleCard({
           <View style={s.row}>
             <View style={s.textCol}>
               <Text
-                style={[s.placaEmpty, { color: HOME_COLORS.vehicleCardText }]}>
+                style={[s.placaEmpty, { color: "#FFFFFF" }]}>
                 Sin vehículo
               </Text>
               <Text
-                style={[s.hint, { color: HOME_COLORS.vehicleCardTextMuted }]}>
+                style={[s.hint, { color: "rgba(255,255,255,0.6)" }]}>
                 Toca para seleccionar un camión
               </Text>
             </View>
@@ -262,7 +261,8 @@ export default function VehicleCard({
 
 const s = StyleSheet.create({
   card: {
-    borderRadius: 22,
+    borderRadius: 28,
+    borderCurve: "continuous",
     marginBottom: 20,
     overflow: "hidden",
   },
@@ -305,8 +305,9 @@ const s = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
+    borderCurve: "continuous",
     borderWidth: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255,255,255,0.10)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
@@ -342,15 +343,13 @@ const s = StyleSheet.create({
     // Se ajusta al contenido (ancho de "Combustible"), con holgura para no cortar
     alignSelf: "flex-start",
     minWidth: 110,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
     borderRadius: 12,
+    borderCurve: "continuous",
     paddingHorizontal: 10,
     paddingVertical: 7,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   fuelRow: {
     flexDirection: "row",
@@ -371,12 +370,14 @@ const s = StyleSheet.create({
     marginTop: 7,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#E5E7EB",
+    borderCurve: "continuous",
+    backgroundColor: "rgba(255,255,255,0.14)",
     overflow: "hidden",
   },
   fuelFill: {
     height: "100%",
     borderRadius: 3,
+    borderCurve: "continuous",
     backgroundColor: FUEL_BAR_COLOR,
   },
 });

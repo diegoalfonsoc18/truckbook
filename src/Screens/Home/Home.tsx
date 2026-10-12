@@ -57,7 +57,7 @@ export default function HomeBaseAdapted({
   }, []);
 
   return (
-    <View style={[s.container, { backgroundColor: c.primary }]}>
+    <View style={[s.container, { backgroundColor: FONDO_BLANCO }]}>
       <SafeAreaView style={s.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
           <ScrollView
@@ -80,6 +80,14 @@ export default function HomeBaseAdapted({
                 alignSelf: "center",
               },
             ]}>
+            {/* ENCABEZADO */}
+            <View style={s.header}>
+              <Text style={[s.titulo, { color: "#111111" }]}>Tu camión</Text>
+              <Text style={[s.tituloSuave, { color: "#8A8A85" }]}>
+                al día, en la carretera
+              </Text>
+            </View>
+
             {/* VEHICLE CARD */}
             {showCamionHeader && (
               <View
@@ -169,12 +177,18 @@ export default function HomeBaseAdapted({
   );
 }
 
+const FONDO_BLANCO = "#F2F2F7";
+
 const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   // Sin padding horizontal: el margen lo pone el contentContainer del
   // ScrollView, para que la sombra de las tarjetas no quede contra el borde.
   content: { flex: 1 },
+
+  header: { marginTop: 4, marginBottom: 18, paddingHorizontal: 2 },
+  titulo: { fontSize: 34, fontWeight: "800", letterSpacing: -1, lineHeight: 38 },
+  tituloSuave: { fontSize: 34, fontWeight: "400", letterSpacing: -1, lineHeight: 38 },
 
   gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
@@ -194,6 +208,7 @@ const s = StyleSheet.create({
 
   onboardingCard: {
     borderRadius: 22,
+    borderCurve: "continuous",
     paddingVertical: 36,
     paddingHorizontal: 20,
     alignItems: "center",
@@ -203,5 +218,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 13,
     borderRadius: 99,
+    borderCurve: "continuous",
   },
 });

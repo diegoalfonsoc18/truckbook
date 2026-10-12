@@ -17,7 +17,6 @@ import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { inicioSemana, fmtI } from "../homeUtils";
-import { HOME_COLORS } from "../HomeConstants";
 import { ModalPendientes } from "./ModalPendientes";
 import ItemIcon from "../../../components/ItemIcon";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
@@ -30,7 +29,7 @@ const COLORS = {
   ink: "#111827",
   muted: "#6B7280",
   cardBg: "#FFFFFF",
-  panelBg: "#F4F5F7",
+  panelBg: "#FFFFFF",
   panelLabel: "#6B7280",
 };
 
@@ -319,7 +318,7 @@ export default function ResumenSemanal({ isDark }: Props) {
               name="chevron.right"
               fallback="chevron-forward"
               size={18}
-              color={HOME_COLORS.vehicleCardText}
+              color="#FFFFFF"
             />
           </View>
         )}
@@ -337,17 +336,13 @@ export default function ResumenSemanal({ isDark }: Props) {
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.panelBg,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-    color: COLORS.panelLabel,
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    color: COLORS.ink,
     marginBottom: 12,
     marginLeft: 2,
   },
@@ -358,12 +353,13 @@ const s = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
+    borderRadius: 18,
+    borderCurve: "continuous",
     padding: 9,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.03,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 3 },
       },
@@ -374,6 +370,7 @@ const s = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 10,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
@@ -408,13 +405,14 @@ const s = StyleSheet.create({
     gap: 10,
     marginTop: 14,
     backgroundColor: COLORS.cardBg,
-    borderRadius: 18,
+    borderRadius: 22,
+    borderCurve: "continuous",
     paddingVertical: 10,
     paddingHorizontal: 16,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.03,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 3 },
       },
@@ -447,7 +445,8 @@ const s = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: COLORS.panelBg,
+    borderCurve: "continuous",
+    backgroundColor: "#111111",
     alignItems: "center",
     justifyContent: "center",
   },

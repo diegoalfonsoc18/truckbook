@@ -611,6 +611,7 @@ const s = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
+    borderCurve: "continuous",
     alignSelf: "center",
     marginBottom: 22,
   },
@@ -624,6 +625,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 28,
+    borderCurve: "continuous",
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 8,
@@ -650,6 +652,7 @@ const s = StyleSheet.create({
   placaBadge: {
     backgroundColor: "#FACC15",
     borderRadius: 8,
+    borderCurve: "continuous",
     paddingHorizontal: 14,
     paddingVertical: 5,
   },
@@ -672,6 +675,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     width: 56,
     borderRadius: 14,
+    borderCurve: "continuous",
     alignSelf: "stretch",
   },
   editSectionHeader: {
@@ -686,6 +690,7 @@ const s = StyleSheet.create({
   },
   placaInputField: {
     borderRadius: 14,
+    borderCurve: "continuous",
     borderWidth: 1.5,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -707,6 +712,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     borderRadius: 14,
+    borderCurve: "continuous",
     paddingHorizontal: 10,
     paddingVertical: 10,
     width: 108,
@@ -726,6 +732,7 @@ const s = StyleSheet.create({
   },
   confirmBtn: {
     borderRadius: 14,
+    borderCurve: "continuous",
     paddingVertical: 15,
     alignItems: "center",
     marginBottom: 8,

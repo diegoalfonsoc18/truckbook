@@ -17,8 +17,8 @@ import {
 
 const COLORS = {
   muted: MOV_COLORS.muted,
-  panelBg: "#F4F5F7",
-  link: "#F5A623",
+  panelBg: "#FFFFFF",
+  link: "#111111",
 };
 
 interface Props {
@@ -72,7 +72,7 @@ export default function ActividadReciente({ onVerTodas }: Props) {
 const panelShadow = Platform.select({
   ios: {
     shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
   },
@@ -85,8 +85,9 @@ const s = StyleSheet.create({
   },
   panel: {
     backgroundColor: COLORS.panelBg,
-    borderRadius: 20,
-    padding: 14,
+    borderRadius: 22,
+    borderCurve: "continuous",
+    padding: 16,
     ...panelShadow,
   },
   panelHeader: {
@@ -96,10 +97,10 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   panelLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-    color: COLORS.muted,
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    color: "#111111",
     flexShrink: 1,
   },
   verTodas: {
