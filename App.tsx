@@ -42,6 +42,10 @@ import { leerSesionGuardada } from "./src/config/sesionGuardada";
 import { cancelarRecordatoriosPendientes } from "./src/services/pendientesNotificacionService";
 import { cancelarRecordatorioFletes } from "./src/services/fleteNotifications";
 import { limpiarCacheClientes } from "./src/hooks/useClientType";
+import { useFonts } from "expo-font";
+import { FUENTES_JAKARTA, aplicarFuenteGlobal } from "./src/constants/fuente";
+
+aplicarFuenteGlobal();
 
 // Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
 // visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
@@ -101,6 +105,7 @@ function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fuentesListas, errorFuentes] = useFonts(FUENTES_JAKARTA);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);
@@ -109,8 +114,9 @@ function AppContent() {
 
   // Ocultar el splash nativo cuando la sesión terminó de cargar
   useEffect(() => {
-    if (!loading) SplashScreen.hideAsync().catch(() => {});
-  }, [loading]);
+    if (!loading && (fuentesListas || errorFuentes))
+      SplashScreen.hideAsync().catch(() => {});
+  }, [loading, fuentesListas, errorFuentes]);
   const recoveryModeRef = useRef(false);
   // Último enlace de recuperación procesado: en iOS el mismo enlace puede llegar
   // por getInitialURL y por el evento "url"; el token es de un solo uso.
@@ -484,7 +490,7 @@ function AppContent() {
 
   // Mientras carga, el splash nativo (idéntico: grille negro + TruckBook)
   // sigue visible — no renderizar un segundo splash en JS.
-  if (loading) {
+  if (loading || !(fuentesListas || errorFuentes)) {
     return null;
   }
 
