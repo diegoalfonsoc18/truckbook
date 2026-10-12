@@ -254,18 +254,10 @@ export default function ModalVehiculos({
     setTipoCamionInput(null);
   };
 
-  const sheet = {
-    backgroundColor: isDark ? c.surface : "#FFFFFF",
-  };
+  // Hoja gris con tarjetas blancas, igual que el resto de la app.
+  const sheet = { backgroundColor: "#ECECEE" };
 
-  const chipCard = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
-    ...(isDark
-      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
-      : Platform.OS === "android"
-        ? { borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }
-        : getShadow(false, "sm")),
-  };
+  const chipCard = { backgroundColor: "#FFFFFF" };
 
   // Selector de tipo de camión agrupado por número de ejes (2 ejes / 3 ejes /
   // Tractocamión). Lo usan el alta y la edición, por eso está factorizado aquí.
@@ -296,9 +288,7 @@ export default function ModalVehiculos({
                       chipCard,
                       selected && {
                         borderWidth: 1.5,
-                        borderColor: c.accent,
-                        shadowOpacity: 0,
-                        elevation: 0,
+                        borderColor: "#111111",
                       },
                     ]}
                     onPress={() => onChange(tipo.id)}>
@@ -316,7 +306,7 @@ export default function ModalVehiculos({
                     <Text
                       style={[
                         s.tipoChipLabel,
-                        { color: selected ? tipo.color : c.textSecondary },
+                        { color: selected ? "#111111" : c.textSecondary },
                       ]}>
                       {tipo.label}
                     </Text>
@@ -345,7 +335,7 @@ export default function ModalVehiculos({
           <View accessibilityViewIsModal style={[s.overlay, { backgroundColor: c.overlay }]}>
             <TouchableWithoutFeedback>
               <View style={[s.sheetBase, sheet]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
+                <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
 
                 <ScrollView
                   showsVerticalScrollIndicator={false}
@@ -354,7 +344,7 @@ export default function ModalVehiculos({
                   {/* ── Título ── */}
                   <Text
                     style={[s.sheetTitle, { color: c.text, marginBottom: 20 }]}>
-                    Mis Vehículos
+                    Mis vehículos
                   </Text>
 
                   {/* ── Lista de vehículos ── */}
@@ -381,7 +371,7 @@ export default function ModalVehiculos({
                                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Editar vehículo"
                                   style={[
                                     s.swipeActionBtn,
-                                    { backgroundColor: "#3B82F6" },
+                                    { backgroundColor: "#111111" },
                                   ]}
                                   onPress={() => abrirEdicion(v)}>
                                   <Ionicons
@@ -407,14 +397,10 @@ export default function ModalVehiculos({
                             <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: isActive }}
                               style={[
                                 s.vehicleOption,
-                                {
-                                  backgroundColor: isDark
-                                    ? "#1C1C1E"
-                                    : "#F2F2F7",
-                                },
+                                { backgroundColor: "#FFFFFF" },
                                 isActive && {
                                   borderWidth: 2,
-                                  borderColor: c.accent,
+                                  borderColor: "#111111",
                                 },
                               ]}
                               onPress={() => handleSeleccionarVehiculo(v)}
@@ -440,7 +426,7 @@ export default function ModalVehiculos({
                                 <Text
                                   style={[
                                     s.vehicleOptionType,
-                                    { color: c.textSecondary },
+                                    { color: "#111111" },
                                   ]}>
                                   {tipo?.label || "Vehículo"}
                                 </Text>
@@ -457,7 +443,7 @@ export default function ModalVehiculos({
 
                   {/* ── Formulario edición ── */}
                   {vehiculoEditando && (
-                    <View style={[s.addSection, { borderTopColor: c.divider }]}>
+                    <View style={[s.addSection, { borderTopColor: "#D9D9DD" }]}>
                       <View style={s.editSectionHeader}>
                         <Text
                           style={[
@@ -480,9 +466,9 @@ export default function ModalVehiculos({
                         style={[
                           s.placaInputField,
                           {
-                            backgroundColor: c.surface,
+                            backgroundColor: "#FFFFFF",
                             color: c.text,
-                            borderColor: c.accent,
+                            borderColor: "#111111",
                             marginTop: 12,
                           },
                         ]}
@@ -504,7 +490,7 @@ export default function ModalVehiculos({
                       <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: !placaEditInput.trim() || !tipoCamionEditInput }}
                         style={[
                           s.confirmBtn,
-                          { backgroundColor: "#3B82F6" },
+                          { backgroundColor: "#111111" },
                           (!placaEditInput.trim() || !tipoCamionEditInput) && {
                             opacity: 0.4,
                           },
@@ -527,7 +513,7 @@ export default function ModalVehiculos({
                   )}
 
                   {/* ── Separador + sección agregar ── */}
-                  <View style={[s.addSection, { borderTopColor: c.divider }]}>
+                  <View style={[s.addSection, { borderTopColor: "#D9D9DD" }]}>
                     <Text
                       style={[
                         s.selectorLabel,
@@ -540,9 +526,9 @@ export default function ModalVehiculos({
                       style={[
                         s.placaInputField,
                         {
-                          backgroundColor: c.surface,
+                          backgroundColor: "#FFFFFF",
                           color: c.text,
-                          borderColor: c.border,
+                          borderColor: "#FFFFFF",
                         },
                       ]}
                       placeholder="Placa — Ej: EKA854"
@@ -560,7 +546,7 @@ export default function ModalVehiculos({
                     <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: !placaInput.trim() || !tipoCamionInput }}
                       style={[
                         s.confirmBtn,
-                        { backgroundColor: c.accent },
+                        { backgroundColor: "#111111" },
                         (!placaInput.trim() || !tipoCamionInput) && {
                           opacity: 0.4,
                         },
@@ -570,10 +556,10 @@ export default function ModalVehiculos({
                         !placaInput.trim() || !tipoCamionInput || guardando
                       }>
                       {guardando ? (
-                        <ActivityIndicator size="small" color={c.accentText} />
+                        <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
                         <Text
-                          style={[s.confirmBtnText, { color: c.accentText }]}>
+                          style={[s.confirmBtnText, { color: "#FFFFFF" }]}>
                           Registrar vehículo
                         </Text>
                       )}
@@ -617,17 +603,17 @@ const s = StyleSheet.create({
   },
   sheetTitle: {
     ...TYPOGRAPHY.subtitle,
-    fontWeight: "800" as const,
-    letterSpacing: -0.3,
+    fontWeight: "600" as const,
+    letterSpacing: -0.2,
   },
   loadingBox: { padding: 40, alignItems: "center" },
   vehicleOption: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 28,
+    borderRadius: 24,
     borderCurve: "continuous",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     marginBottom: 8,
     position: "relative" as const,
   },
@@ -650,8 +636,8 @@ const s = StyleSheet.create({
     fontWeight: "700" as const,
   },
   placaBadge: {
-    backgroundColor: "#FACC15",
-    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 10,
     borderCurve: "continuous",
     paddingHorizontal: 14,
     paddingVertical: 5,
@@ -689,7 +675,7 @@ const s = StyleSheet.create({
     paddingTop: 20,
   },
   placaInputField: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderCurve: "continuous",
     borderWidth: 1.5,
     paddingHorizontal: 16,
@@ -711,7 +697,7 @@ const s = StyleSheet.create({
   tipoChip: {
     alignItems: "center",
     gap: 4,
-    borderRadius: 14,
+    borderRadius: 18,
     borderCurve: "continuous",
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -731,7 +717,7 @@ const s = StyleSheet.create({
     textAlign: "center",
   },
   confirmBtn: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderCurve: "continuous",
     paddingVertical: 15,
     alignItems: "center",
