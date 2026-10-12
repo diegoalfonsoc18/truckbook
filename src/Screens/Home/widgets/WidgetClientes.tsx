@@ -7,13 +7,14 @@ import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { normalizarMercancias } from "../../../services/mercanciaService";
 import { formatCOP, WProps } from "../homeUtils";
 import { useClientType } from "../../../hooks/useClientType";
+import ItemIcon from "../../../components/ItemIcon";
 
 const PANEL = {
   bg: "#FFFFFF",
   cardBg: "#FFFFFF",
   ink: "#111827",
   muted: "#6B7280",
-  divider: "#EBEBEB",
+  divider: "#EEF0F2",
 };
 
 export default function WidgetClientes(_props: WProps) {
@@ -99,9 +100,6 @@ export default function WidgetClientes(_props: WProps) {
   const muted  = PANEL.muted;
   const divClr = PANEL.divider;
 
-  // Tonos más oscuros que oro/plata/bronce puros: sobre fondo claro el amarillo
-  // y el gris plata no contrastan para leer el total.
-  const MEDAL = ["#B7791F", "#64748B", "#9A5B24"];
   const clientNames = React.useMemo(() => clienteData.map(([nombre]) => nombre), [clienteData]);
   const clientTypes = useClientType(clientNames);
 
@@ -111,7 +109,7 @@ export default function WidgetClientes(_props: WProps) {
       <View style={s.wrap}>
         <Text style={s.sectionLabel}>Top clientes</Text>
         <View style={[s.listCard, s.emptyBox]}>
-          <Ionicons name="person-add-outline" size={24} color={muted} />
+          <ItemIcon name="conductor" size={56} />
           <Text style={[s.emptyText, { color: muted }]}>
             Registra fletes para ver tus clientes frecuentes
           </Text>
@@ -126,21 +124,16 @@ export default function WidgetClientes(_props: WProps) {
       <Text style={s.sectionLabel}>Top clientes</Text>
 
       <View style={s.listCard}>
-        {/* ── Column headers ── */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-          {/* Espacio de la columna de nombres (el título ya dice "Top clientes") */}
+        {/* ── Encabezados de columna ── */}
+        <View style={s.colHead}>
           <View style={{ flex: 1 }} />
-          <Text style={{ width: 55, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
-            Viajes
-          </Text>
-          <Text style={{ width: 75, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
-            Total
-          </Text>
+          <Text style={[s.colTexto, { width: 52 }]}>Viajes</Text>
+          <Text style={[s.colTexto, { width: 92 }]}>Total</Text>
         </View>
-        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginBottom: 4 }} />
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr }} />
 
         {clienteData.map(([nombre, info], idx) => {
-          const medalColor = MEDAL[idx] ?? ink;
+          const primero = idx === 0;
           const topCargaCliente = info.cargas.size > 0
             ? [...info.cargas.entries()].sort((a, b) => b[1] - a[1])[0][0]
             : null;
@@ -149,11 +142,11 @@ export default function WidgetClientes(_props: WProps) {
             <View key={nombre}>
               <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 }}>
                 {/* Avatar */}
-                <View style={[s.avatar, { backgroundColor: medalColor + "1A", borderColor: medalColor + "40" }]}>
+                <View style={[s.avatar, { backgroundColor: primero ? "#111111" : "#F3F4F6" }]}>
                   {idx < 3 ? (
-                    <Text style={{ fontSize: 15, fontWeight: "900", color: medalColor }}>{idx + 1}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: primero ? "#FFFFFF" : ink }}>{idx + 1}</Text>
                   ) : (
-                    <Feather name={clientTypes[nombre] === "empresa" ? "briefcase" : "user"} size={15} color={medalColor} />
+                    <Feather name={clientTypes[nombre] === "empresa" ? "briefcase" : "user"} size={15} color={ink} />
                   )}
                 </View>
 
@@ -166,12 +159,15 @@ export default function WidgetClientes(_props: WProps) {
                 </View>
 
                 {/* Viajes */}
-                <Text style={{ width: 55, fontSize: 15, fontWeight: "800", color: ink, textAlign: "right" }}>
+                <Text style={{ width: 52, fontSize: 14, fontWeight: "700", color: ink, textAlign: "right", fontVariant: ["tabular-nums"] }}>
                   {info.viajes}
                 </Text>
 
                 {/* Total */}
-                <Text style={{ width: 75, fontSize: 13, fontWeight: "800", color: medalColor, textAlign: "right" }}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={{ width: 92, fontSize: 13, fontWeight: "700", color: ink, textAlign: "right", fontVariant: ["tabular-nums"] }}>
                   {formatCOP(info.total)}
                 </Text>
               </View>
@@ -190,7 +186,7 @@ const s = StyleSheet.create({
   // Panel idéntico al de Resumen semanal
   wrap: {
     backgroundColor: PANEL.bg,
-    borderRadius: 22,
+    borderRadius: 28,
     borderCurve: "continuous",
     padding: 16,
     marginBottom: 12,
@@ -210,7 +206,9 @@ const s = StyleSheet.create({
   emptyText:   { fontSize: 12, textAlign: "center", lineHeight: 17 },
 
   row:    { flexDirection: "row", alignItems: "center", paddingVertical: 9, gap: 10 },
-  avatar: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  colHead: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  colTexto: { fontSize: 10, fontWeight: "600", color: PANEL.muted, textAlign: "right", letterSpacing: 0.6 },
   avatarText: { fontSize: 12, fontWeight: "800" },
   info:   { flex: 1, gap: 2 },
   nombre: { fontSize: 13, fontWeight: "700" },

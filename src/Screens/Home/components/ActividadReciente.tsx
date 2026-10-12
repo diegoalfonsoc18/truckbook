@@ -4,7 +4,7 @@
 // La presentación de cada fila vive en ./movimientos, compartida con la
 // pantalla de Movimientos que abre "Ver todas".
 import React from "react";
-import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
@@ -18,7 +18,7 @@ import {
 const COLORS = {
   muted: MOV_COLORS.muted,
   panelBg: "#FFFFFF",
-  link: "#111111",
+  link: "#CC0000",
 };
 
 interface Props {
@@ -61,7 +61,7 @@ export default function ActividadReciente({ onVerTodas }: Props) {
           <Text style={s.vacio}>Sin movimientos aún</Text>
         ) : (
           recientes.map((m) => (
-            <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} />
+            <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} neutro />
           ))
         )}
       </View>
@@ -69,26 +69,15 @@ export default function ActividadReciente({ onVerTodas }: Props) {
   );
 }
 
-const panelShadow = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  android: { elevation: 2 },
-});
-
 const s = StyleSheet.create({
   wrap: {
     marginBottom: 12,
   },
   panel: {
     backgroundColor: COLORS.panelBg,
-    borderRadius: 22,
+    borderRadius: 28,
     borderCurve: "continuous",
     padding: 16,
-    ...panelShadow,
   },
   panelHeader: {
     flexDirection: "row",

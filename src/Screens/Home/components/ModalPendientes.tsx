@@ -29,6 +29,7 @@ import { fmtI, diasDesde, extraerTelDesc, formatearTel } from "../homeUtils";
 import { mensajeCuentaCobro } from "../../../utils/cuentaCobro";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import { useClientType } from "../../../hooks/useClientType";
+import ItemIcon from "../../../components/ItemIcon";
 
 const CACHE_PEND_IA = "@truckbook_pend_modal_ia_v1";
 
@@ -287,7 +288,7 @@ export function ModalPendientes({
         </TouchableWithoutFeedback>
 
         {/* ── Bottom sheet ── */}
-        <View style={[st.hoja, { backgroundColor: c.modalBg }]}>
+        <View style={[st.hoja, { backgroundColor: "#ECECEE" }]}>
           <View style={st.handleWrap}>
             <View style={[st.handle, { backgroundColor: c.border }]} />
           </View>
@@ -297,7 +298,7 @@ export function ModalPendientes({
             <View style={st.flex}>
               <Text style={[st.titulo, { color: c.text }]}>Por cobrar</Text>
               <View style={st.subtituloRow}>
-                <Text style={[st.total, { color: AMBER }]}>
+                <Text style={[st.total, { color: "#111111" }]}>
                   {fmtI(totalPend)}
                 </Text>
                 <Text style={[st.subtitulo, { color: c.textSecondary }]}>
@@ -311,7 +312,7 @@ export function ModalPendientes({
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar"
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={[st.cerrar, { backgroundColor: c.surface }]}>
+              style={[st.cerrar, { backgroundColor: "#FFFFFF" }]}>
               <Feather name="x" size={18} color={c.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -337,7 +338,7 @@ export function ModalPendientes({
             <View
               style={[
                 st.gemini,
-                { backgroundColor: c.warningLight, borderLeftColor: AMBER },
+                { backgroundColor: "#FFFFFF", borderLeftColor: "#111111" },
               ]}>
               {loadingGem ? (
                 <ActivityIndicator size="small" color={AMBER} />
@@ -353,13 +354,7 @@ export function ModalPendientes({
           {/* Lista agrupada por cliente */}
           {grupos.length === 0 ? (
             <View style={st.vacio}>
-              <View
-                style={[
-                  st.vacioIcono,
-                  { backgroundColor: c.successLight },
-                ]}>
-                <Feather name="check" size={26} color={c.success} />
-              </View>
+              <ItemIcon name="check" size={72} />
               <Text style={[st.vacioTitulo, { color: c.text }]}>
                 Todo cobrado
               </Text>
@@ -383,25 +378,18 @@ export function ModalPendientes({
                 return (
                   <View
                     key={g.cliente}
-                    style={[
-                      st.card,
-                      { backgroundColor: c.cardBg, borderColor: c.border },
-                      getShadow(isDark, "sm"),
-                    ]}>
+                    style={[st.card, { backgroundColor: "#FFFFFF" }]}>
                     {/* Cabecera del cliente */}
                     <View style={st.cardHeader}>
                       <View
                         style={[
                           st.avatar,
-                          {
-                            backgroundColor: color + "18",
-                            borderColor: color,
-                          },
+                          { backgroundColor: "#F3F4F6" },
                         ]}>
                         <Feather
                           name={esEmpresa ? "briefcase" : "user"}
                           size={17}
-                          color={color}
+                          color="#111111"
                         />
                       </View>
 
@@ -519,13 +507,10 @@ export function ModalPendientes({
                         onPress={() => llamar(g.tel)}
                         style={[
                           st.btn,
-                          {
-                            backgroundColor: TEL_AZUL + "14",
-                            borderColor: TEL_AZUL + "30",
-                          },
+                          { backgroundColor: "#F3F4F6" },
                         ]}>
-                        <Feather name="phone" size={13} color={TEL_AZUL} />
-                        <Text style={[st.btnTexto, { color: TEL_AZUL }]}>
+                        <Feather name="phone" size={13} color="#111111" />
+                        <Text style={[st.btnTexto, { color: "#111111" }]}>
                           Llamar
                         </Text>
                       </TouchableOpacity>
@@ -534,17 +519,14 @@ export function ModalPendientes({
                         onPress={() => enviarWhatsApp(g)}
                         style={[
                           st.btn,
-                          {
-                            backgroundColor: WHATSAPP + "14",
-                            borderColor: WHATSAPP + "30",
-                          },
+                          { backgroundColor: "#111111" },
                         ]}>
                         <MaterialCommunityIcons
                           name="whatsapp"
                           size={14}
-                          color={WHATSAPP}
+                          color="#FFFFFF"
                         />
-                        <Text style={[st.btnTexto, { color: WHATSAPP }]}>
+                        <Text style={[st.btnTexto, { color: "#FFFFFF" }]}>
                           {varios ? "Cuenta de cobro" : "WhatsApp"}
                         </Text>
                       </TouchableOpacity>
@@ -599,8 +581,8 @@ const st = StyleSheet.create({
   flex: { flex: 1 },
   overlay: { flex: 1, justifyContent: "flex-end" },
   hoja: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     maxHeight: "85%",
   },
   handleWrap: { alignItems: "center", paddingTop: 10, paddingBottom: 2 },
@@ -666,7 +648,7 @@ const st = StyleSheet.create({
     paddingBottom: 32,
     gap: 10,
   },
-  card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
+  card: { borderRadius: 22, borderCurve: "continuous", overflow: "hidden" },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -679,7 +661,6 @@ const st = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderCurve: "continuous",
-    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -737,9 +718,10 @@ const st = StyleSheet.create({
     justifyContent: "center",
     gap: 5,
     borderWidth: 1,
-    borderRadius: 10,
+    borderColor: "transparent",
+    borderRadius: 14,
     borderCurve: "continuous",
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   btnTexto: { fontSize: 12, fontWeight: "600" },
 

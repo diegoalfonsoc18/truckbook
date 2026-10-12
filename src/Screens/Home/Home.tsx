@@ -3,6 +3,7 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   Animated,
   ScrollView,
@@ -12,6 +13,9 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import Reanimated, { FadeInDown } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useTheme } from "../../constants/Themecontext";
 import { useContentLayout } from "../../constants/layout";
@@ -21,6 +25,9 @@ import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
 import ActividadReciente from "./components/ActividadReciente";
+import BannerCombustible from "./components/BannerCombustible";
+import { infoTipo, normalizarTipo } from "./vehicleConstants";
+import ItemIcon, { IconName } from "../../components/ItemIcon";
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -42,8 +49,10 @@ export default function HomeBaseAdapted({
 }: HomeBaseAdaptedProps) {
   const { colors: c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const { hPad, maxWidth } = useContentLayout();
-  const { placa: placaActual } = useVehiculoStore();
+  const { placa: placaActual, tipoCamion } = useVehiculoStore();
+  const tipoLabel = tipoCamion ? infoTipo(normalizarTipo(tipoCamion))?.label : "";
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -80,32 +89,57 @@ export default function HomeBaseAdapted({
                 alignSelf: "center",
               },
             ]}>
-            {/* VEHICLE CARD */}
+            {/* VEHÍCULO ACTIVO — protagonista */}
             {showCamionHeader && (
-              <View
-                style={
-                  Platform.OS === "android"
-                    ? { paddingVertical: 2 }
-                    : undefined
-                }>
+              <Reanimated.View entering={FadeInDown.duration(480)}>
                 <VehicleCard
                   vehicleCardTitle={vehicleCardTitle}
                   onPress={() => setModalVehiculosVisible(true)}
                 />
-              </View>
+              </Reanimated.View>
             )}
 
-            {/* RESUMEN SEMANAL — Ingresos / Gastos / Viajes / Clientes */}
+            {/* BALANCE (tarjeta negra) + RESUMEN */}
             {placaActual && (
-              <View>
+              <Reanimated.View entering={FadeInDown.delay(90).duration(480)}>
                 <ResumenSemanal isDark={isDark} />
+              </Reanimated.View>
+            )}
+
+            {placaActual && (
+              <Reanimated.View entering={FadeInDown.delay(140).duration(480)}>
+                {/* ACCESOS RÁPIDOS */}
+                <Text style={s.seccionTitulo}>Accesos rápidos</Text>
+                <View style={s.accesos}>
+                  {ACCESOS.map((a) => (
+                    <Pressable
+                      key={a.label}
+                      accessibilityRole="button"
+                      accessibilityLabel={a.label}
+                      onPress={() => navigation.navigate(a.destino)}
+                      style={s.acceso}>
+                      <View style={s.accesoCaja}>
+                        <ItemIcon name={a.icono} size={32} />
+                      </View>
+                      <Text style={s.accesoLabel} numberOfLines={1}>
+                        {a.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* COMBUSTIBLE */}
+                <BannerCombustible />
+
+                {/* MOVIMIENTOS RECIENTES */}
                 <ActividadReciente isDark={isDark} />
-              </View>
+              </Reanimated.View>
             )}
 
             {!placaActual ? (
               /* ONBOARDING — sin vehículo */
-              <TouchableOpacity accessibilityRole="button"
+              <TouchableOpacity
+                accessibilityRole="button"
                 activeOpacity={0.82}
                 onPress={() => setModalVehiculosVisible(true)}
                 style={[
@@ -154,7 +188,9 @@ export default function HomeBaseAdapted({
               </TouchableOpacity>
             ) : (
               /* CLIENTES FRECUENTES */
-              <WidgetClientes isDark={isDark} />
+              <Reanimated.View entering={FadeInDown.delay(180).duration(480)}>
+                <WidgetClientes isDark={isDark} />
+              </Reanimated.View>
             )}
           </ScrollView>
         </Animated.View>
@@ -169,7 +205,20 @@ export default function HomeBaseAdapted({
   );
 }
 
-const FONDO_BLANCO = "#F2F2F7";
+const FONDO_BLANCO = "#ECECEE";
+
+const ACCESOS: {
+  label: string;
+  icono: IconName;
+  destino: string;
+}[] = [
+  { label: "Gasto", icono: "fuel", destino: "Gastos" },
+  { label: "Ingreso", icono: "freight", destino: "Ingresos" },
+  { label: "Movimientos", icono: "factura", destino: "Movimientos" },
+  { label: "Reportes", icono: "report", destino: "Reportes" },
+  { label: "Cuenta", icono: "shield", destino: "Cuenta" },
+];
+
 
 const s = StyleSheet.create({
   container: { flex: 1 },
@@ -178,6 +227,29 @@ const s = StyleSheet.create({
   // ScrollView, para que la sombra de las tarjetas no quede contra el borde.
   content: { flex: 1 },
 
+  seccionTitulo: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111111",
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  accesos: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  acceso: { alignItems: "center", gap: 6, flex: 1 },
+  accesoCaja: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    borderCurve: "continuous",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accesoLabel: { fontSize: 11, fontWeight: "500", color: "#3F3F46" },
   gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
   sectionHeader: {

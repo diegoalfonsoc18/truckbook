@@ -18,6 +18,10 @@ import {
   renderCuenta,
 } from "../assets/icons/icons";
 
+// Los íconos del tab bar son siempre negros (el activo se distingue por el
+// ícono relleno vs. contorno).
+const TAB_ICONO = "#000000";
+
 const IS_IOS = Platform.OS === "ios";
 // react-native-bottom-tabs es nativo → NO existe en Expo Go. Ahí caemos al
 // tab bar JS. El Liquid Glass nativo se ve solo en dev/prod build.
@@ -84,8 +88,8 @@ export default function AppStack() {
         <NativeTab.Navigator
           initialRouteName="Home"
           translucent
-          tabBarActiveTintColor={colors.accent}
-          tabBarInactiveTintColor={colors.textSecondary}
+          tabBarActiveTintColor={TAB_ICONO}
+          tabBarInactiveTintColor={TAB_ICONO}
           hapticFeedbackEnabled
           screenOptions={({ route }: { route: { name: string } }) => ({
             tabBarIcon: ({ focused }: { focused: boolean }) =>
@@ -139,8 +143,8 @@ export default function AppStack() {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarStyle: tabBarStyle,
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarActiveTintColor: TAB_ICONO,
+          tabBarInactiveTintColor: TAB_ICONO,
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarIcon: ({ focused, color, size }) => {
             switch (route.name) {
