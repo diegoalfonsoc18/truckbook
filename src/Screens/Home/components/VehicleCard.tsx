@@ -8,6 +8,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
@@ -116,7 +117,7 @@ export default function VehicleCard({
     <AnimatedPressable
       style={[
         s.card,
-        { backgroundColor: "#17171A" },
+        s.cardGlass,
         vcAnimStyle,
       ]}
       onPressIn={() => {
@@ -133,6 +134,16 @@ export default function VehicleCard({
           : "Seleccionar vehículo"
       }
       accessibilityHint="Toca para cambiar de vehículo">
+      {/* Fondo grafito translúcido, casi uniforme, con un leve brillo arriba */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(58,58,62,0.90)", "rgba(34,34,37,0.92)", "rgba(24,24,27,0.94)"]}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
       {/* Botón circular con chevron (arriba a la derecha) */}
       <View
         style={[
@@ -154,11 +165,6 @@ export default function VehicleCard({
             onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
             {/* Columna de texto */}
             <View style={[s.textCol, foto ? { marginRight: photoReserve } : null]}>
-              <Text
-                style={[s.label, { color: "rgba(255,255,255,0.6)" }]}>
-                VEHÍCULO ACTIVO
-              </Text>
-
               <Text
                 style={[s.placa, { color: "#FFFFFF" }]}
                 numberOfLines={1}
@@ -266,6 +272,10 @@ const s = StyleSheet.create({
     marginBottom: 20,
     overflow: "hidden",
   },
+  cardGlass: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+  },
   content: {
     paddingVertical: 18,
     paddingHorizontal: 20,
@@ -311,12 +321,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: 4,
   },
   placa: {
     fontSize: 24,

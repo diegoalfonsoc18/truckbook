@@ -25,6 +25,13 @@ export function inicioSemana(offsetSemanas = 0): string {
   return localDateStr(d);
 }
 
+/** Hace `dias` días (local YYYY-MM-DD). Ventana móvil: hoy cuenta como día 1. */
+export function haceDias(dias: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return localDateStr(d);
+}
+
 /** Formateador compacto COP */
 export function formatCOP(amount: number): string {
   const abs  = Math.abs(amount);

@@ -1,6 +1,6 @@
 // src/Screens/Home/components/ResumenSemanal.tsx
-// Panel "RESUMEN SEMANAL" — 4 tarjetas (Ingresos, Gastos, Viajes, Clientes)
-// comparando esta semana vs. la anterior, más la card "Por cobrar" (total de
+// Panel "Último mes" — 4 tarjetas (Ingresos, Gastos, Viajes, Clientes)
+// comparando los últimos 30 días vs. los 30 anteriores, más la card "Por cobrar" (total de
 // ingresos pendientes). Lee los stores igual que WidgetResumen / WidgetInsightIA.
 import React, { useState, useEffect } from "react";
 import {
@@ -16,7 +16,7 @@ import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
-import { inicioSemana, fmtI } from "../homeUtils";
+import { haceDias, fmtI } from "../homeUtils";
 import { ModalPendientes } from "./ModalPendientes";
 import ItemIcon from "../../../components/ItemIcon";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
@@ -130,29 +130,31 @@ export default function ResumenSemanal({ isDark }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const cards = React.useMemo<CardData[]>(() => {
-    const iniEsta = inicioSemana(0); // lunes de esta semana
-    const iniAnt = inicioSemana(1); // lunes de la semana anterior
+    // Ventana móvil: últimos 30 días vs. los 30 anteriores. Así el panel nunca
+    // arranca en blanco (como pasaba el lunes con la semana en curso).
+    const iniEsta = haceDias(29);
+    const iniAnt = haceDias(59);
 
     const gs = gastos.filter((g) => g.placa === placa);
     const is = ingresos.filter((i) => i.placa === placa);
 
     const fecha = (r: { fecha?: string | null; created_at?: string | null }) =>
       r.fecha ?? r.created_at ?? "";
-    const estaSemana = <
+    const ultimoMes = <
       T extends { fecha?: string | null; created_at?: string | null },
     >(
       arr: T[],
     ) => arr.filter((r) => fecha(r) >= iniEsta);
-    const semanaAnterior = <
+    const mesAnterior = <
       T extends { fecha?: string | null; created_at?: string | null },
     >(
       arr: T[],
     ) => arr.filter((r) => fecha(r) >= iniAnt && fecha(r) < iniEsta);
 
-    const gAct = estaSemana(gs);
-    const gAnt = semanaAnterior(gs);
-    const iAct = estaSemana(is);
-    const iAnt = semanaAnterior(is);
+    const gAct = ultimoMes(gs);
+    const gAnt = mesAnterior(gs);
+    const iAct = ultimoMes(is);
+    const iAnt = mesAnterior(is);
 
     const sumG = (arr: typeof gs) =>
       arr.reduce((a, g) => a + (g.monto ?? 0), 0);
@@ -261,7 +263,7 @@ export default function ResumenSemanal({ isDark }: Props) {
 
   return (
     <View style={s.wrap}>
-      <Text style={s.sectionLabel}>Resumen semanal</Text>
+      <Text style={s.sectionLabel}>Último mes</Text>
 
       <View style={s.cardsRow}>
         {cards.map((card) => (

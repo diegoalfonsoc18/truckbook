@@ -80,14 +80,6 @@ export default function HomeBaseAdapted({
                 alignSelf: "center",
               },
             ]}>
-            {/* ENCABEZADO */}
-            <View style={s.header}>
-              <Text style={[s.titulo, { color: "#111111" }]}>Tu camión</Text>
-              <Text style={[s.tituloSuave, { color: "#8A8A85" }]}>
-                al día, en la carretera
-              </Text>
-            </View>
-
             {/* VEHICLE CARD */}
             {showCamionHeader && (
               <View
@@ -185,10 +177,6 @@ const s = StyleSheet.create({
   // Sin padding horizontal: el margen lo pone el contentContainer del
   // ScrollView, para que la sombra de las tarjetas no quede contra el borde.
   content: { flex: 1 },
-
-  header: { marginTop: 4, marginBottom: 18, paddingHorizontal: 2 },
-  titulo: { fontSize: 34, fontWeight: "800", letterSpacing: -1, lineHeight: 38 },
-  tituloSuave: { fontSize: 34, fontWeight: "400", letterSpacing: -1, lineHeight: 38 },
 
   gridContainer: { paddingTop: 8, paddingBottom: 0 },
 
