@@ -1089,24 +1089,24 @@ export default function TransactionScreen({
             <Reanimated.View
               style={[
                 s.summaryCard,
-                { backgroundColor: "#0B0B0C" },
+                { backgroundColor: "#FFFFFF" },
                 summaryStyle,
               ]}>
               <View style={s.summaryTop}>
                 <View>
-                  <Text style={[s.summaryLabel, { color: "rgba(255,255,255,0.65)" }]}>
+                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>
                     Total del día
                   </Text>
-                  <Text style={[s.summaryTotal, { color: "#FFFFFF" }]}>
+                  <Text style={[s.summaryTotal, { color: c.text }]}>
                     {formatCurrency(total)}
                   </Text>
                 </View>
                 <View
                   style={[
                     s.countBadge,
-                    { backgroundColor: "#FFFFFF" },
+                    { backgroundColor: "#111111" },
                   ]}>
-                  <Text style={[s.countText, { color: "#111111" }]}>
+                  <Text style={[s.countText, { color: "#FFFFFF" }]}>
                     {filtered.length}
                   </Text>
                 </View>

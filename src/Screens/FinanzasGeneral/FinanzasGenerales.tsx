@@ -940,12 +940,12 @@ export default function FinanzasGenerales() {
               <Reanimated.View
                 style={[
                   styles.balanceCard,
-                  { backgroundColor: "#0B0B0C", borderColor: "#0B0B0C" },
+                  { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
                   balStyle,
                 ]}>
                 <View style={styles.balanceHeader}>
                   <Text
-                    style={[styles.balanceLabel, { color: "rgba(255,255,255,0.65)" }]}>
+                    style={[styles.balanceLabel, { color: c.textSecondary }]}>
                     Balance neto
                   </Text>
                   <View
@@ -954,8 +954,8 @@ export default function FinanzasGenerales() {
                       {
                         backgroundColor:
                           Number(rentabilidad) >= 0
-                            ? "rgba(74,222,128,0.18)"
-                            : "rgba(248,113,113,0.18)",
+                            ? c.income + "20"
+                            : c.expense + "20",
                       },
                     ]}>
                     <Text
@@ -963,7 +963,7 @@ export default function FinanzasGenerales() {
                         styles.rentabilidadText,
                         {
                           color:
-                            Number(rentabilidad) >= 0 ? "#4ADE80" : "#F87171",
+                            Number(rentabilidad) >= 0 ? c.income : c.expense,
                         },
                       ]}>
                       {Number(rentabilidad) >= 0 ? "+" : ""}
@@ -974,11 +974,11 @@ export default function FinanzasGenerales() {
                 <Text
                   style={[
                     styles.balanceValue,
-                    { color: "#FFFFFF" },
+                    { color: balance >= 0 ? c.income : c.expense },
                   ]}>
                   {formatCurrency(balance)}
                 </Text>
-                <Text style={[styles.balanceSubtext, { color: balance >= 0 ? "#4ADE80" : "#F87171" }]}>
+                <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
                   {balance >= 0
                     ? "Ganancia en el período"
                     : "Pérdida en el período"}
