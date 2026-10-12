@@ -1,37 +1,37 @@
-// Sora en toda la app.
+// Exo 2 en toda la app.
 // Las fuentes de Google no sintetizan negrita: cada peso es una familia aparte,
 // así que se traduce `fontWeight` a la familia correspondiente al renderizar.
 import { StyleSheet, Text, TextInput } from "react-native";
 import {
-  Sora_400Regular,
-  Sora_500Medium,
-  Sora_600SemiBold,
-  Sora_700Bold,
-  Sora_800ExtraBold,
-} from "@expo-google-fonts/sora";
+  Exo2_400Regular,
+  Exo2_500Medium,
+  Exo2_600SemiBold,
+  Exo2_700Bold,
+  Exo2_800ExtraBold,
+} from "@expo-google-fonts/exo-2";
 
 export const FUENTES_APP = {
-  Sora_400Regular,
-  Sora_500Medium,
-  Sora_600SemiBold,
-  Sora_700Bold,
-  Sora_800ExtraBold,
+  Exo2_400Regular,
+  Exo2_500Medium,
+  Exo2_600SemiBold,
+  Exo2_700Bold,
+  Exo2_800ExtraBold,
 };
 
 const familiaPorPeso = (peso: unknown): string => {
   switch (String(peso ?? "400")) {
     case "500":
-      return "Sora_500Medium";
+      return "Exo2_500Medium";
     case "600":
-      return "Sora_600SemiBold";
+      return "Exo2_600SemiBold";
     case "700":
     case "bold":
-      return "Sora_700Bold";
+      return "Exo2_700Bold";
     case "800":
     case "900":
-      return "Sora_800ExtraBold";
+      return "Exo2_800ExtraBold";
     default:
-      return "Sora_400Regular";
+      return "Exo2_400Regular";
   }
 };
 
