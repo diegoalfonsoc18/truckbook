@@ -90,6 +90,7 @@ export default function AppStack() {
           translucent
           tabBarActiveTintColor={TAB_ICONO}
           tabBarInactiveTintColor={TAB_ICONO}
+          tabLabelStyle={{ fontFamily: "Inter_500Medium" }}
           hapticFeedbackEnabled
           screenOptions={({ route }: { route: { name: string } }) => ({
             tabBarIcon: ({ focused }: { focused: boolean }) =>
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   },
   tabBarLabel: {
     fontSize: 11,
-    fontWeight: "500",
+    fontFamily: "Inter_500Medium",
     marginTop: 2,
   },
 });

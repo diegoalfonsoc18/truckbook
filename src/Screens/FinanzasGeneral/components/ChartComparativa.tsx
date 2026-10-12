@@ -88,6 +88,9 @@ function ChartComparativa({
         color: (opacity = 1) =>
           `rgba(${isDark ? "255,255,255" : "0,0,0"},${opacity * 0.3})`,
         labelColor: () => c.textSecondary,
+        // Las etiquetas del gráfico son SVG: no pasan por el parche global de
+        // fuente, así que se fija la misma familia aquí.
+        propsForLabels: { fontFamily: "Inter_500Medium" },
         style: { borderRadius: 28 },
         propsForDots: {
           r: "4",

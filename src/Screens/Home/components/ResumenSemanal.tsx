@@ -404,7 +404,7 @@ const s = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 2,
   },
-  seccionTitulo: { fontSize: 15, fontWeight: "700", color: COLORS.ink },
+  seccionTitulo: { fontSize: 15, fontWeight: "600", color: COLORS.ink },
   seccionLink: { fontSize: 12, fontWeight: "500", color: COLORS.muted },
   mini: { flexDirection: "row", gap: 10 },
   miniCard: {

@@ -229,7 +229,7 @@ const s = StyleSheet.create({
 
   seccionTitulo: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#111111",
     marginBottom: 10,
     paddingHorizontal: 2,

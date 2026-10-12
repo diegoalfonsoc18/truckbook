@@ -86,9 +86,9 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   panelLabel: {
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: -0.3,
+    fontSize: 17,
+    fontWeight: "600",
+    letterSpacing: -0.2,
     color: "#111111",
     flexShrink: 1,
   },

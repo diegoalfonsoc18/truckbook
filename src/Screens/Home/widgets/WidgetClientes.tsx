@@ -192,9 +192,9 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   sectionLabel: {
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: -0.3,
+    fontSize: 17,
+    fontWeight: "600",
+    letterSpacing: -0.2,
     color: PANEL.ink,
     marginBottom: 12,
     marginLeft: 2,
