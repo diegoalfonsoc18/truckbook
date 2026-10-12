@@ -43,7 +43,7 @@ import { cancelarRecordatoriosPendientes } from "./src/services/pendientesNotifi
 import { cancelarRecordatorioFletes } from "./src/services/fleteNotifications";
 import { limpiarCacheClientes } from "./src/hooks/useClientType";
 import { useFonts } from "expo-font";
-import { FUENTES_JAKARTA, aplicarFuenteGlobal } from "./src/constants/fuente";
+import { FUENTES_APP, aplicarFuenteGlobal } from "./src/constants/fuente";
 
 aplicarFuenteGlobal();
 
@@ -105,7 +105,7 @@ function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fuentesListas, errorFuentes] = useFonts(FUENTES_JAKARTA);
+  const [fuentesListas, errorFuentes] = useFonts(FUENTES_APP);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);

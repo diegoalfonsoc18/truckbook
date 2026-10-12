@@ -1,37 +1,37 @@
-// Plus Jakarta Sans en toda la app (misma fuente que Korre).
+// Sora en toda la app.
 // Las fuentes de Google no sintetizan negrita: cada peso es una familia aparte,
 // así que se traduce `fontWeight` a la familia correspondiente al renderizar.
 import { StyleSheet, Text, TextInput } from "react-native";
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-} from "@expo-google-fonts/plus-jakarta-sans";
+  Sora_400Regular,
+  Sora_500Medium,
+  Sora_600SemiBold,
+  Sora_700Bold,
+  Sora_800ExtraBold,
+} from "@expo-google-fonts/sora";
 
-export const FUENTES_JAKARTA = {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
+export const FUENTES_APP = {
+  Sora_400Regular,
+  Sora_500Medium,
+  Sora_600SemiBold,
+  Sora_700Bold,
+  Sora_800ExtraBold,
 };
 
 const familiaPorPeso = (peso: unknown): string => {
   switch (String(peso ?? "400")) {
     case "500":
-      return "PlusJakartaSans_500Medium";
+      return "Sora_500Medium";
     case "600":
-      return "PlusJakartaSans_600SemiBold";
+      return "Sora_600SemiBold";
     case "700":
     case "bold":
-      return "PlusJakartaSans_700Bold";
+      return "Sora_700Bold";
     case "800":
     case "900":
-      return "PlusJakartaSans_800ExtraBold";
+      return "Sora_800ExtraBold";
     default:
-      return "PlusJakartaSans_400Regular";
+      return "Sora_400Regular";
   }
 };
 
