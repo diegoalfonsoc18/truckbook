@@ -68,7 +68,7 @@ export default function LoginScreen({ navigation }: Props) {
   const { width, height } = useWindowDimensions();
   const COMPACT = height < 680;
   const s = useMemo(() => makeStyles(width, height), [width, height]);
-  const shadow = getShadow(isDark, "sm");
+  const shadow = {};
   const inputSty = getInputStyles(isDark, c);
 
   const [email, setEmail] = useState("");
@@ -357,7 +357,7 @@ export default function LoginScreen({ navigation }: Props) {
                 }}
                 disabled={loading}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={[s.forgotText, { color: c.accent }]}>
+                <Text style={[s.forgotText, { color: "#111111" }]}>
                   ¿Olvidaste tu contraseña?
                 </Text>
               </TouchableOpacity>
@@ -366,16 +366,16 @@ export default function LoginScreen({ navigation }: Props) {
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                 style={[
                   s.cta,
-                  { backgroundColor: c.accent },
+                  { backgroundColor: "#111111" },
                   loading && s.ctaOff,
                 ]}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}>
                 {loading ? (
-                  <ActivityIndicator color={c.accentText} size="small" />
+                  <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={[s.ctaText, { color: c.accentText }]}>
+                  <Text style={[s.ctaText, { color: "#FFFFFF" }]}>
                     Iniciar sesión
                   </Text>
                 )}
@@ -396,7 +396,7 @@ export default function LoginScreen({ navigation }: Props) {
                   <TouchableOpacity accessibilityRole="button"
                     style={[
                       s.socialBtn,
-                      { backgroundColor: c.cardBg, borderColor: c.border },
+                      { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                       shadow,
                     ]}
                     onPress={handleAppleLogin}
@@ -410,7 +410,7 @@ export default function LoginScreen({ navigation }: Props) {
                 <TouchableOpacity accessibilityRole="button"
                   style={[
                     s.socialBtn,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
+                    { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                     shadow,
                   ]}
                   onPress={handleGoogleLogin}
@@ -429,7 +429,7 @@ export default function LoginScreen({ navigation }: Props) {
                 <Text style={[s.footerText, { color: c.textSecondary }]}>
                   ¿No tienes cuenta?{" "}
                   <Text
-                    style={[s.footerLink, { color: c.accent }]}
+                    style={[s.footerLink, { color: "#111111" }]}
                     onPress={() => {
                       Keyboard.dismiss();
                       navigation.navigate("Register");
@@ -478,7 +478,7 @@ return StyleSheet.create({
   },
   heroTitle: {
     fontSize: COMPACT ? 24 : 28,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
     lineHeight: COMPACT ? 30 : 36,
     letterSpacing: -0.5,
@@ -497,7 +497,7 @@ return StyleSheet.create({
   forgotText: { fontSize: 13, fontWeight: "600" },
 
   cta: {
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: COMPACT ? 14 : 17,
     alignItems: "center",
     marginBottom: COMPACT ? 18 : 24,
@@ -505,7 +505,7 @@ return StyleSheet.create({
   ctaOff: { opacity: 0.6 },
   ctaText: {
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 0.3,
   },
 
@@ -523,7 +523,7 @@ return StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 13,
+    borderRadius: 16,
     borderWidth: 1,
     paddingVertical: COMPACT ? 11 : 13,
     gap: 8,

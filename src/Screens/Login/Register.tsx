@@ -65,7 +65,7 @@ type ValidationErrors = {
 
 export default function Register({ navigation }: Props) {
   const { colors: c, isDark } = useTheme();
-  const shadow = getShadow(isDark, "sm");
+  const shadow = {};
   const inputSty = getInputStyles(isDark, c);
 
   const [nombre,          setNombre]          = useState("");
@@ -297,7 +297,7 @@ export default function Register({ navigation }: Props) {
               {/* HEADER */}
               <View style={s.header}>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver al inicio de sesión"
-                  style={[s.backBtn, { backgroundColor: c.surface, borderColor: c.border }]}
+                  style={[s.backBtn, { backgroundColor: "#ECECEE", borderColor: "#ECECEE" }]}
                   onPress={() => navigation.navigate("Login")}
                   disabled={loading}>
                   <Ionicons name="chevron-back" size={20} color={c.text} />
@@ -429,7 +429,7 @@ export default function Register({ navigation }: Props) {
               <Text style={[s.privacy, { color: c.textMuted }]}>
                 Al registrarte aceptas nuestra{" "}
                 <Text
-                  style={{ color: c.accent, fontWeight: "600" }}
+                  style={{ color: "#111111", fontWeight: "600" }}
                   onPress={() => Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html")}>
                   Política de Privacidad
                 </Text>
@@ -437,13 +437,13 @@ export default function Register({ navigation }: Props) {
 
               {/* CTA */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
-                style={[s.cta, { backgroundColor: c.accent }, loading && s.ctaOff]}
+                style={[s.cta, { backgroundColor: "#111111" }, loading && s.ctaOff]}
                 onPress={register}
                 disabled={loading}
                 activeOpacity={0.85}>
                 {loading
-                  ? <ActivityIndicator color={c.accentText} size="small" />
-                  : <Text style={[s.ctaText, { color: c.accentText }]}>Crear cuenta</Text>}
+                  ? <ActivityIndicator color="#FFFFFF" size="small" />
+                  : <Text style={[s.ctaText, { color: "#FFFFFF" }]}>Crear cuenta</Text>}
               </TouchableOpacity>
 
               {/* DIVIDER */}
@@ -457,7 +457,7 @@ export default function Register({ navigation }: Props) {
               <View style={s.socialRow}>
                 {Platform.OS === "ios" && (
                   <TouchableOpacity accessibilityRole="button"
-                    style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
+                    style={[s.socialBtn, { backgroundColor: "#ECECEE", borderColor: "#ECECEE" }, shadow]}
                     onPress={handleAppleLogin}
                     disabled={loading} activeOpacity={0.8}>
                     <Ionicons name="logo-apple" size={19} color={c.text} />
@@ -465,7 +465,7 @@ export default function Register({ navigation }: Props) {
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity accessibilityRole="button"
-                  style={[s.socialBtn, { backgroundColor: c.cardBg, borderColor: c.border }, shadow]}
+                  style={[s.socialBtn, { backgroundColor: "#ECECEE", borderColor: "#ECECEE" }, shadow]}
                   onPress={handleGoogleLogin}
                   disabled={loading} activeOpacity={0.8}>
                   <Image source={require("../../assets/img/google.png")} style={s.socialIcon} />
@@ -477,7 +477,7 @@ export default function Register({ navigation }: Props) {
               <TouchableOpacity accessibilityRole="button" style={s.footer} onPress={() => navigation.navigate("Login")} disabled={loading}>
                 <Text style={[s.footerText, { color: c.textSecondary }]}>
                   ¿Ya tienes cuenta?{" "}
-                  <Text style={{ color: c.accent, fontWeight: "700" }}>Inicia sesión</Text>
+                  <Text style={{ color: "#111111", fontWeight: "700" }}>Inicia sesión</Text>
                 </Text>
               </TouchableOpacity>
 

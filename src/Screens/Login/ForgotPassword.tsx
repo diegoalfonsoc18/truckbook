@@ -64,11 +64,11 @@ export default function ForgotPassword({ navigation }: Props) {
 
   const ds = {
     container: { backgroundColor: colors.primary },
-    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
+    cardBg: { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
     text: { color: colors.text },
     textSecondary: { color: colors.textSecondary },
     textMuted: { color: colors.textMuted },
-    inputBg: { backgroundColor: isDark ? "#252540" : "#F5F5F7" },
+    inputBg: { backgroundColor: "#FFFFFF" },
   };
 
   return (
@@ -82,7 +82,7 @@ export default function ForgotPassword({ navigation }: Props) {
               {/* HEADER */}
               <View style={styles.header}>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
-                  style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  style={[styles.backButton, { backgroundColor: "#ECECEE", borderColor: "#ECECEE" }]}
                   onPress={() => navigation.goBack()}>
                   <Ionicons name="chevron-back" size={20} color={colors.text} />
                 </TouchableOpacity>
@@ -106,7 +106,7 @@ export default function ForgotPassword({ navigation }: Props) {
 
               {/* FORM */}
               <View
-                style={[styles.formCard, ds.cardBg, getShadow(isDark, "md")]}>
+                style={[styles.formCard, ds.cardBg]}>
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>
                     Correo electrónico
@@ -134,7 +134,7 @@ export default function ForgotPassword({ navigation }: Props) {
                 <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
                   style={[
                     styles.submitButton,
-                    { backgroundColor: colors.accent },
+                    { backgroundColor: "#111111" },
                     loading && styles.buttonDisabled,
                   ]}
                   onPress={handlePasswordReset}
