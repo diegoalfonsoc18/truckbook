@@ -198,7 +198,7 @@ function CatCard({
       <View
         style={[
           s.catCircle,
-          { backgroundColor: `${cat.color}${isDark ? "28" : "18"}` },
+          { backgroundColor: "#F3F4F6" },
         ]}>
         <ItemIcon name={cat.iconName} size={cat.size} />
       </View>
@@ -416,7 +416,7 @@ function TransactionRow({
           style={[
             s.rowIconWrap,
             {
-              backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}`,
+              backgroundColor: "#F3F4F6",
             },
           ]}>
           {cat?.iconName ? (
@@ -969,12 +969,8 @@ export default function TransactionScreen({
 
   // ─── Card style ────────────────────────────────────────────────────────────
   const card = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
-    borderRadius: 20,
-    ...(isDark
-      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
-      : {}),
-    ...shadow,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
   };
 
   const inputStyle = {
@@ -985,7 +981,7 @@ export default function TransactionScreen({
   // ─── Empty state ────────────────────────────────────────────────────────────
   if (!placaActual) {
     return (
-      <View style={[s.container, { backgroundColor: c.primary }]}>
+      <View style={[s.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
           <View style={s.emptyState}>
             <View style={[s.emptyIconWrap]}>
@@ -1010,7 +1006,7 @@ export default function TransactionScreen({
 
   // ─── Main render ───────────────────────────────────────────────────────────
   return (
-    <View style={[s.container, { backgroundColor: c.primary }]}>
+    <View style={[s.container, { backgroundColor: FONDO }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
         {/* HEADER */}
         <Animated.View
@@ -1045,12 +1041,10 @@ export default function TransactionScreen({
                 style={[
                   s.placaBadge,
                   {
-                    backgroundColor: c.plateYellow,
-                    borderColor: c.plateBorder,
-                    borderWidth: 1,
+                    backgroundColor: "#FFFFFF",
                   },
                 ]}>
-                <Text style={[s.placaText, { color: c.plateText }]}>
+                <Text style={[s.placaText, { color: "#111111" }]}>
                   {placaActual}
                 </Text>
               </View>
@@ -1062,7 +1056,7 @@ export default function TransactionScreen({
             activeOpacity={0.7}
             style={[
               s.dateBtn,
-              { backgroundColor: c.cardBg, borderColor: c.border },
+              { backgroundColor: "#FFFFFF", borderColor: "transparent" },
             ]}>
             {Platform.OS === "ios" ? (
               <SymbolView
@@ -1095,29 +1089,24 @@ export default function TransactionScreen({
             <Reanimated.View
               style={[
                 s.summaryCard,
-                {
-                  backgroundColor: isDark ? `${accentColor}14` : c.cardBg,
-                },
-                isDark
-                  ? { borderWidth: 1, borderColor: `${accentColor}33` }
-                  : shadow,
+                { backgroundColor: "#0B0B0C" },
                 summaryStyle,
               ]}>
               <View style={s.summaryTop}>
                 <View>
-                  <Text style={[s.summaryLabel, { color: c.textSecondary }]}>
+                  <Text style={[s.summaryLabel, { color: "rgba(255,255,255,0.65)" }]}>
                     Total del día
                   </Text>
-                  <Text style={[s.summaryTotal, { color: c.text }]}>
+                  <Text style={[s.summaryTotal, { color: "#FFFFFF" }]}>
                     {formatCurrency(total)}
                   </Text>
                 </View>
                 <View
                   style={[
                     s.countBadge,
-                    { backgroundColor: `${accentColor}20` },
+                    { backgroundColor: "#FFFFFF" },
                   ]}>
-                  <Text style={[s.countText, { color: accentColor }]}>
+                  <Text style={[s.countText, { color: "#111111" }]}>
                     {filtered.length}
                   </Text>
                 </View>
@@ -1146,7 +1135,7 @@ export default function TransactionScreen({
             {/* LIST */}
             <View style={s.listHeader}>
               <Text style={[s.listTitle, { color: c.text }]}>Registros</Text>
-              <View style={[s.listBadge, { backgroundColor: c.surface }]}>
+              <View style={[s.listBadge, { backgroundColor: "#FFFFFF" }]}>
                 <Text style={[s.listBadgeText, { color: c.textSecondary }]}>
                   {filtered.length}
                 </Text>
@@ -1787,6 +1776,9 @@ export default function TransactionScreen({
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
+// Fondo gris claro (estilo app de control de vehículo)
+const FONDO = "#ECECEE";
+
 const s = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
@@ -1842,7 +1834,7 @@ const s = StyleSheet.create({
   },
 
   // SUMMARY
-  summaryCard: { borderRadius: 22, padding: 20, marginBottom: 24 },
+  summaryCard: { borderRadius: 28, padding: 20, marginBottom: 24 },
   summaryTop: {
     flexDirection: "row",
     justifyContent: "space-between",

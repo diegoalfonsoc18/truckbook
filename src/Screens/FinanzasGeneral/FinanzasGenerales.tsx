@@ -33,6 +33,7 @@ import { fetchTransaccionesRango, fetchComprasLigadas } from "../../services/rep
 import { calcularGanancias, sumarGanancias } from "../../utils/comprasGanancia";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import ItemIcon from "../../components/ItemIcon";
 import { Ionicons } from "@expo/vector-icons";
 import ChartComparativa from "./components/ChartComparativa";
 import ChipsCategoria from "./components/ChipsCategoria";
@@ -823,7 +824,7 @@ export default function FinanzasGenerales() {
 
   if (!placaActual) {
     return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
+      <View style={[styles.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <View style={styles.emptyState}>
             <View
@@ -854,7 +855,7 @@ export default function FinanzasGenerales() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: c.primary }]}>
+    <View style={[styles.container, { backgroundColor: FONDO }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* HEADER FIJO */}
         <Animated.View
@@ -881,12 +882,10 @@ export default function FinanzasGenerales() {
               style={[
                 styles.placaBadge,
                 {
-                  backgroundColor: c.plateYellow,
-                  borderColor: c.plateBorder,
-                  borderWidth: 1,
+                  backgroundColor: "#FFFFFF",
                 },
               ]}>
-              <Text style={[styles.placaText, { color: c.plateText }]}>
+              <Text style={[styles.placaText, { color: "#111111" }]}>
                 {placaActual}
               </Text>
             </View>
@@ -903,8 +902,7 @@ export default function FinanzasGenerales() {
             <View
               style={[
                 styles.rangeSelector,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "sm"),
+                { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
               ]}>
               <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
@@ -936,6 +934,58 @@ export default function FinanzasGenerales() {
             {/* FILTRO POR CATEGORÍA */}
             <ChipsCategoria value={catPantalla} onChange={setCatPantalla} />
 
+            {/* BALANCE CARD — solo sin filtro de categoría: un balance de un
+                único rubro (gastos sin ingresos, o al revés) no significa nada */}
+            {!catPantalla && (
+              <Reanimated.View
+                style={[
+                  styles.balanceCard,
+                  { backgroundColor: "#0B0B0C", borderColor: "#0B0B0C" },
+                  balStyle,
+                ]}>
+                <View style={styles.balanceHeader}>
+                  <Text
+                    style={[styles.balanceLabel, { color: "rgba(255,255,255,0.65)" }]}>
+                    Balance neto
+                  </Text>
+                  <View
+                    style={[
+                      styles.rentabilidadBadge,
+                      {
+                        backgroundColor:
+                          Number(rentabilidad) >= 0
+                            ? "rgba(74,222,128,0.18)"
+                            : "rgba(248,113,113,0.18)",
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.rentabilidadText,
+                        {
+                          color:
+                            Number(rentabilidad) >= 0 ? "#4ADE80" : "#F87171",
+                        },
+                      ]}>
+                      {Number(rentabilidad) >= 0 ? "+" : ""}
+                      {rentabilidad}%
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  style={[
+                    styles.balanceValue,
+                    { color: "#FFFFFF" },
+                  ]}>
+                  {formatCurrency(balance)}
+                </Text>
+                <Text style={[styles.balanceSubtext, { color: balance >= 0 ? "#4ADE80" : "#F87171" }]}>
+                  {balance >= 0
+                    ? "Ganancia en el período"
+                    : "Pérdida en el período"}
+                </Text>
+              </Reanimated.View>
+            )}
+
             {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
             {/* Con una categoría activa el resumen se enfoca en ese rubro:
                 mostrar "Ingresos $0" y un balance negativo sería engañoso. */}
@@ -945,10 +995,9 @@ export default function FinanzasGenerales() {
                   style={[
                     styles.summaryCard,
                     {
-                      backgroundColor: c.cardBg,
-                      borderColor: (catEsIngreso ? c.income : c.expense) + "40",
+                      backgroundColor: "#FFFFFF",
+                      borderColor: "#FFFFFF",
                     },
-                    getShadow(isDark, "sm"),
                     card1Style,
                   ]}>
                   <Text
@@ -971,22 +1020,12 @@ export default function FinanzasGenerales() {
                       + {formatCurrency(totalPorCobrar)} por cobrar
                     </Text>
                   )}
-                  <Ionicons
-                    name={
-                      catEsIngreso
-                        ? "trending-up-outline"
-                        : "trending-down-outline"
-                    }
-                    size={22}
-                    color={catEsIngreso ? c.income : c.expense}
-                    style={styles.cardIcon}
-                  />
+                  <ItemIcon name={catEsIngreso ? "freight" : "toll"} size={34} style={styles.cardIcon} />
                 </Reanimated.View>
                 <Reanimated.View
                   style={[
                     styles.summaryCard,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
-                    getShadow(isDark, "sm"),
+                    { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
                     card2Style,
                   ]}>
                   <Text
@@ -999,12 +1038,7 @@ export default function FinanzasGenerales() {
                   <Text style={[styles.summaryCardValue, { color: c.text }]}>
                     {movimientosCategoria}
                   </Text>
-                  <Ionicons
-                    name="receipt-outline"
-                    size={22}
-                    color={c.textMuted}
-                    style={styles.cardIcon}
-                  />
+                  <ItemIcon name="factura" size={34} style={styles.cardIcon} />
                 </Reanimated.View>
               </View>
             ) : (
@@ -1012,8 +1046,7 @@ export default function FinanzasGenerales() {
                 <Reanimated.View
                   style={[
                     styles.summaryCard,
-                    { backgroundColor: c.cardBg, borderColor: c.income + "40" },
-                    getShadow(isDark, "sm"),
+                    { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
                     card1Style,
                   ]}>
                   <Text
@@ -1031,21 +1064,15 @@ export default function FinanzasGenerales() {
                       + {formatCurrency(totalPorCobrar)} por cobrar
                     </Text>
                   )}
-                  <Ionicons
-                    name="trending-up-outline"
-                    size={22}
-                    color={c.income}
-                    style={styles.cardIcon}
-                  />
+                  <ItemIcon name="freight" size={34} style={styles.cardIcon} />
                 </Reanimated.View>
                 <Reanimated.View
                   style={[
                     styles.summaryCard,
                     {
-                      backgroundColor: c.cardBg,
-                      borderColor: c.expense + "40",
+                      backgroundColor: "#FFFFFF",
+                      borderColor: "#FFFFFF",
                     },
-                    getShadow(isDark, "sm"),
                     card2Style,
                   ]}>
                   <Text
@@ -1058,84 +1085,23 @@ export default function FinanzasGenerales() {
                   <Text style={[styles.summaryCardValue, { color: c.expense }]}>
                     {formatCurrency(totalGastos)}
                   </Text>
-                  <Ionicons
-                    name="trending-down-outline"
-                    size={22}
-                    color={c.expense}
-                    style={styles.cardIcon}
-                  />
+                  <ItemIcon name="toll" size={34} style={styles.cardIcon} />
                 </Reanimated.View>
               </View>
-            )}
-
-            {/* BALANCE CARD — solo sin filtro de categoría: un balance de un
-                único rubro (gastos sin ingresos, o al revés) no significa nada */}
-            {!catPantalla && (
-              <Reanimated.View
-                style={[
-                  styles.balanceCard,
-                  {
-                    backgroundColor: c.cardBg,
-                    borderColor: balance >= 0 ? c.income : c.expense,
-                  },
-                  getShadow(isDark, "md"),
-                  balStyle,
-                ]}>
-                <View style={styles.balanceHeader}>
-                  <Text
-                    style={[styles.balanceLabel, { color: c.textSecondary }]}>
-                    Balance neto
-                  </Text>
-                  <View
-                    style={[
-                      styles.rentabilidadBadge,
-                      {
-                        backgroundColor:
-                          Number(rentabilidad) >= 0
-                            ? c.income + "20"
-                            : c.expense + "20",
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.rentabilidadText,
-                        {
-                          color:
-                            Number(rentabilidad) >= 0 ? c.income : c.expense,
-                        },
-                      ]}>
-                      {Number(rentabilidad) >= 0 ? "+" : ""}
-                      {rentabilidad}%
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={[
-                    styles.balanceValue,
-                    { color: balance >= 0 ? c.income : c.expense },
-                  ]}>
-                  {formatCurrency(balance)}
-                </Text>
-                <Text style={[styles.balanceSubtext, { color: c.textMuted }]}>
-                  {balance >= 0
-                    ? "Ganancia en el período"
-                    : "Pérdida en el período"}
-                </Text>
-              </Reanimated.View>
             )}
 
             {/* TABS DE VISTA */}
             <View
               style={[
                 styles.viewTabs,
-                { backgroundColor: c.cardBg, borderColor: c.border },
+                { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
               ]}>
               {(["dias", "meses", "años"] as ViewType[]).map((v) => (
                 <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: view === v }}
                   key={v}
                   style={[
                     styles.viewTab,
-                    view === v && { backgroundColor: c.accent },
+                    view === v && { backgroundColor: "#111111" },
                   ]}
                   onPress={() => setView(v)}
                   activeOpacity={0.7}>
@@ -1143,7 +1109,7 @@ export default function FinanzasGenerales() {
                     style={[
                       styles.viewTabText,
                       { color: c.textSecondary },
-                      view === v && { color: c.accentText },
+                      view === v && { color: "#FFFFFF" },
                     ]}>
                     {v.charAt(0).toUpperCase() + v.slice(1)}
                   </Text>
@@ -1163,8 +1129,7 @@ export default function FinanzasGenerales() {
             <View
               style={[
                 styles.detailsSection,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "sm"),
+                { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
               ]}>
               <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
                 Detalles del período
@@ -1215,8 +1180,7 @@ export default function FinanzasGenerales() {
                 accessibilityLabel={`Compras de mercancía. Total comprado ${formatCurrency(compras.total)}. Por recuperar ${formatCurrency(compras.porRecuperar)}. Ya recuperado ${formatCurrency(compras.recuperado)}.${gananciaCompras.cantidad > 0 ? ` Ganancia de compras ligadas sin flete ${formatCurrency(gananciaCompras.gananciaSin)}, con flete ${formatCurrency(gananciaCompras.gananciaCon)}.` : ""}`}
                 style={[
                   styles.detailsSection,
-                  { backgroundColor: c.cardBg, borderColor: c.border },
-                  getShadow(isDark, "sm"),
+                  { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
                 ]}>
                 <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
                   Compras de mercancía
@@ -1279,7 +1243,7 @@ export default function FinanzasGenerales() {
 
             {/* BOTÓN EXPORTAR */}
             <TouchableOpacity accessibilityRole="button"
-              style={[styles.exportarBtn, { backgroundColor: c.accent }]}
+              style={[styles.exportarBtn, { backgroundColor: "#111111" }]}
               onPress={() => {
                 seleccionarPeriodo("mes");
                 setExportCliente(null);
@@ -1348,6 +1312,9 @@ export default function FinanzasGenerales() {
   );
 }
 
+// Fondo gris claro (estilo app de control de vehículo)
+const FONDO = "#ECECEE";
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
@@ -1401,7 +1368,7 @@ const styles = StyleSheet.create({
   rangeSelector: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 22,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
@@ -1415,7 +1382,7 @@ const styles = StyleSheet.create({
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },
   summaryCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
     position: "relative",
@@ -1438,7 +1405,8 @@ const styles = StyleSheet.create({
   // BALANCE CARD
   balanceCard: {
     borderRadius: 28,
-    padding: 16,
+    borderCurve: "continuous",
+    padding: 20,
     marginBottom: 16,
     borderWidth: 2,
   },
@@ -1461,7 +1429,7 @@ const styles = StyleSheet.create({
   // VIEW TABS
   viewTabs: {
     flexDirection: "row",
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 4,
     marginBottom: 16,
   },
@@ -1469,14 +1437,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 13,
   },
   viewTabText: { fontSize: 13, fontWeight: "600" },
 
   // CHART — moved to ChartComparativa component
 
   // DETAILS
-  detailsSection: { borderRadius: 14, padding: 14, borderWidth: 1 },
+  detailsSection: { borderRadius: 22, padding: 14, borderWidth: 1 },
   sectionTitle: {
     fontSize: 11,
     fontWeight: "600",

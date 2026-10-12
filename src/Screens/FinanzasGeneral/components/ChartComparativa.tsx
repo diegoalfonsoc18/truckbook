@@ -109,8 +109,7 @@ function ChartComparativa({
     <Reanimated.View
       style={[
         styles.chartContainer,
-        { backgroundColor: c.cardBg, borderColor: c.border },
-        getShadow(isDark, "sm"),
+        { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
         chartAnimStyle,
       ]}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}

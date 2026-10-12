@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme, getShadow } from "../../constants/Themecontext";
+import { useTheme } from "../../constants/Themecontext";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
 import { useIngresosStore } from "../../store/IngresosStore";
@@ -133,42 +133,40 @@ export default function Movimientos() {
   };
 
   return (
-    <View style={[st.root, { backgroundColor: c.surface }]}>
+    <View style={[st.root, { backgroundColor: FONDO }]}>
       {/* HEADER */}
       <View style={[st.header, { paddingTop: insets.top + 8 }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Volver"
           onPress={() => navigation.goBack()}
           hitSlop={10}
           style={st.backBtn}>
-          <Ionicons name="chevron-back" size={26} color={c.text} />
+          <Ionicons name="arrow-back" size={20} color="#111111" />
         </Pressable>
         <Text style={[st.title, { color: c.text }]}>Movimientos</Text>
         {/* Espaciador del mismo ancho que el botón para centrar el título */}
         <View style={st.backBtn} />
       </View>
 
-      {/* SELECTOR DE MES */}
+      {/* SELECTOR DE MES — una sola píldora, distinta al botón de volver */}
       <View style={st.mesRow}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Mes anterior"
-          onPress={() => cambiarMes(-1)}
-          hitSlop={10}
-          style={[st.mesBtn, { backgroundColor: c.cardBg }]}>
-          <Ionicons name="chevron-back" size={20} color={c.text} />
-        </Pressable>
-        <Text style={[st.mesLabel, { color: c.text }]}>
-          {MESES_LARGOS[mes]} {anio}
-        </Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente"
-          onPress={() => !esMesActual && cambiarMes(1)}
-          hitSlop={10}
-          disabled={esMesActual}
-          style={[
-            st.mesBtn,
-            { backgroundColor: c.cardBg },
-            esMesActual && { opacity: 0.3 },
-          ]}>
-          <Ionicons name="chevron-forward" size={20} color={c.text} />
-        </Pressable>
+        <View style={st.mesPill}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mes anterior"
+            onPress={() => cambiarMes(-1)}
+            hitSlop={10}
+            style={st.mesBtn}>
+            <Ionicons name="chevron-back" size={16} color="#111111" />
+          </Pressable>
+          <Text style={[st.mesLabel, { color: c.text }]}>
+            {MESES_LARGOS[mes]} {anio}
+          </Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente"
+            onPress={() => !esMesActual && cambiarMes(1)}
+            hitSlop={10}
+            disabled={esMesActual}
+            style={[st.mesBtn, esMesActual && { opacity: 0.3 }]}>
+            <Ionicons name="chevron-forward" size={16} color="#111111" />
+          </Pressable>
+        </View>
       </View>
 
       {/* RESUMEN DEL MES */}
@@ -176,8 +174,7 @@ export default function Movimientos() {
         <View
           style={[
             st.resumenCard,
-            { backgroundColor: c.cardBg, borderColor: MOV_COLORS.ingreso + "40" },
-            getShadow(isDark, "sm"),
+            { backgroundColor: "#FFFFFF" },
           ]}>
           <Text style={[st.resumenLabel, { color: c.textSecondary }]}>
             Ingresos
@@ -189,8 +186,7 @@ export default function Movimientos() {
         <View
           style={[
             st.resumenCard,
-            { backgroundColor: c.cardBg, borderColor: MOV_COLORS.gasto + "40" },
-            getShadow(isDark, "sm"),
+            { backgroundColor: "#FFFFFF" },
           ]}>
           <Text style={[st.resumenLabel, { color: c.textSecondary }]}>
             Gastos
@@ -212,14 +208,14 @@ export default function Movimientos() {
               style={[
                 st.filtroChip,
                 {
-                  backgroundColor: activo ? c.accent : c.cardBg,
-                  borderColor: activo ? c.accent : c.border,
+                  backgroundColor: activo ? "#111111" : "#FFFFFF",
+                  borderColor: activo ? "#111111" : "#FFFFFF",
                 },
               ]}>
               <Text
                 style={[
                   st.filtroTexto,
-                  { color: activo ? c.accentText : c.textSecondary },
+                  { color: activo ? "#FFFFFF" : c.textSecondary },
                 ]}>
                 {f.label}
               </Text>
@@ -255,9 +251,9 @@ export default function Movimientos() {
             { paddingBottom: insets.bottom + 24 },
           ]}
           showsVerticalScrollIndicator={false}>
-          <View style={[st.listaPanel, { backgroundColor: c.cardBg }]}>
+          <View style={[st.listaPanel, { backgroundColor: "#FFFFFF" }]}>
             {visibles.map((m) => (
-              <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} />
+              <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} neutro />
             ))}
           </View>
         </ScrollView>
@@ -268,6 +264,7 @@ export default function Movimientos() {
 
 // Margen estándar de contenido (iOS HIG / Material 3). Ver constants/layout.
 const H_PAD = H_PAD_COMPACT;
+const FONDO = "#ECECEE";
 
 const st = StyleSheet.create({
   root: { flex: 1 },
@@ -278,20 +275,36 @@ const st = StyleSheet.create({
     paddingHorizontal: H_PAD,
     paddingBottom: 8,
   },
-  backBtn: { width: 32, alignItems: "flex-start" },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: { fontSize: 18, fontWeight: "700", letterSpacing: -0.3 },
   mesRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: H_PAD,
-    marginTop: 4,
+    marginTop: 8,
     marginBottom: 12,
   },
+  mesPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   mesBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -304,9 +317,8 @@ const st = StyleSheet.create({
   },
   resumenCard: {
     flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
+    borderRadius: 22,
+    padding: 14,
   },
   resumenLabel: { fontSize: 11, fontWeight: "600", marginBottom: 3 },
   resumenValor: { fontSize: 17, fontWeight: "800", letterSpacing: -0.4 },
@@ -332,5 +344,5 @@ const st = StyleSheet.create({
   centro: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   vacio: { fontSize: 14, textAlign: "center" },
   lista: { paddingHorizontal: H_PAD },
-  listaPanel: { borderRadius: 18, paddingHorizontal: 12, paddingVertical: 6 },
+  listaPanel: { borderRadius: 24, paddingHorizontal: 12, paddingVertical: 6 },
 });
