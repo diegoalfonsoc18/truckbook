@@ -6,6 +6,8 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { LineChart } from "react-native-chart-kit";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
+import EmptyState from "../../../components/EmptyState";
+import { Skeleton } from "../../../components/Skeleton";
 
 /** Puntos que caben cómodamente sin scroll */
 const POINTS_PER_SCREEN = 7;
@@ -24,6 +26,8 @@ interface ChartComparativaProps {
   labels: string[];
   ingresosData: number[];
   gastosData: number[];
+  /** Primera carga: muestra un bloque fantasma en lugar del gráfico. */
+  cargando?: boolean;
   animatedStyle?: {
     opacity: SharedValue<number>;
     translateY: SharedValue<number>;
@@ -34,6 +38,7 @@ function ChartComparativa({
   labels,
   ingresosData,
   gastosData,
+  cargando = false,
   animatedStyle,
 }: ChartComparativaProps) {
   const { colors: c, isDark } = useTheme();
@@ -43,6 +48,10 @@ function ChartComparativa({
     opacity: animatedStyle?.opacity.value ?? 1,
     transform: [{ translateY: animatedStyle?.translateY.value ?? 0 }],
   }));
+
+  // Sin ningún monto no hay nada que graficar: estado vacío en vez de una línea plana
+  const sinDatos =
+    ingresosData.every((v) => !v) && gastosData.every((v) => !v);
 
   const totalPoints = labels.length;
   const needsScroll = totalPoints > POINTS_PER_SCREEN;
@@ -137,7 +146,16 @@ function ChartComparativa({
         </View>
       </View>
 
-      {needsScroll ? (
+      {cargando ? (
+        <Skeleton height={200} radius={16} />
+      ) : sinDatos ? (
+        <EmptyState
+          compact
+          icon="report"
+          title="Sin datos en este período"
+          subtitle="Cambia el rango de fechas o registra movimientos para ver la comparativa."
+        />
+      ) : needsScroll ? (
         <View style={styles.chartWrapper}>
           <ScrollView
             horizontal

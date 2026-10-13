@@ -4,6 +4,7 @@
 // La presentación de cada fila vive en ./movimientos, compartida con la
 // pantalla de Movimientos que abre "Ver todas".
 import React from "react";
+import EmptyState from "../../../components/EmptyState";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
@@ -58,7 +59,12 @@ export default function ActividadReciente({ onVerTodas }: Props) {
         </View>
 
         {recientes.length === 0 ? (
-          <Text style={s.vacio}>Sin movimientos aún</Text>
+          <EmptyState
+            compact
+            icon="factura"
+            title="Sin movimientos aún"
+            subtitle="Registra tu primer gasto o ingreso y aparecerá aquí."
+          />
         ) : (
           recientes.map((m) => (
             <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} neutro />

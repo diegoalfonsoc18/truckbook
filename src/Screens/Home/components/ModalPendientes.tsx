@@ -30,6 +30,7 @@ import { mensajeCuentaCobro } from "../../../utils/cuentaCobro";
 import { useTheme, getShadow } from "../../../constants/Themecontext";
 import { useClientType } from "../../../hooks/useClientType";
 import ItemIcon from "../../../components/ItemIcon";
+import EmptyState from "../../../components/EmptyState";
 
 const CACHE_PEND_IA = "@truckbook_pend_modal_ia_v1";
 
@@ -353,15 +354,11 @@ export function ModalPendientes({
 
           {/* Lista agrupada por cliente */}
           {grupos.length === 0 ? (
-            <View style={st.vacio}>
-              <ItemIcon name="check" size={72} />
-              <Text style={[st.vacioTitulo, { color: c.text }]}>
-                Todo cobrado
-              </Text>
-              <Text style={[st.vacioTexto, { color: c.textSecondary }]}>
-                No tienes cuentas pendientes por cobrar.
-              </Text>
-            </View>
+            <EmptyState
+              icon="check"
+              title="Todo cobrado"
+              subtitle="No tienes cuentas pendientes por cobrar."
+            />
           ) : (
             <ScrollView
               showsVerticalScrollIndicator={false}

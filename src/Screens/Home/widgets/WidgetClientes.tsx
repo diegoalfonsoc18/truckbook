@@ -8,6 +8,7 @@ import { normalizarMercancias } from "../../../services/mercanciaService";
 import { formatCOP, WProps } from "../homeUtils";
 import { useClientType } from "../../../hooks/useClientType";
 import ItemIcon from "../../../components/ItemIcon";
+import EmptyState from "../../../components/EmptyState";
 
 const PANEL = {
   bg: "#ECECEE",
@@ -108,12 +109,12 @@ export default function WidgetClientes(_props: WProps) {
     return (
       <View style={s.wrap}>
         <Text style={s.sectionLabel}>Top clientes</Text>
-        <View style={[s.listCard, s.emptyBox]}>
-          <ItemIcon name="conductor" size={56} />
-          <Text style={[s.emptyText, { color: muted }]}>
-            Registra fletes para ver tus clientes frecuentes
-          </Text>
-        </View>
+        <EmptyState
+          compact
+          icon="cup"
+          title="Aún no hay clientes"
+          subtitle="Registra fletes para ver tus clientes frecuentes."
+        />
       </View>
     );
   }

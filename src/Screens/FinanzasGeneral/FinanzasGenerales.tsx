@@ -34,6 +34,7 @@ import { calcularGanancias, sumarGanancias } from "../../utils/comprasGanancia";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
 import ItemIcon from "../../components/ItemIcon";
+import EmptyState from "../../components/EmptyState";
 import { Ionicons } from "@expo/vector-icons";
 import ChartComparativa from "./components/ChartComparativa";
 import ChipsCategoria from "./components/ChipsCategoria";
@@ -860,29 +861,11 @@ export default function FinanzasGenerales() {
     return (
       <View style={[styles.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.emptyState}>
-            <View
-              style={[
-                styles.emptyIconWrap,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.06)"
-                    : c.surface,
-                },
-              ]}>
-              <Image
-                source={require("../../assets/icons/report.webp")}
-                style={{ width: 64, height: 64 }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={[styles.emptyTitle, { color: c.text }]}>
-              Sin vehículo seleccionado
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
-              Ve a Cuenta y selecciona una placa para ver tus finanzas
-            </Text>
-          </View>
+          <EmptyState
+            icon="report"
+            title="Sin vehículo seleccionado"
+            subtitle="Ve a Cuenta y selecciona una placa para ver tus finanzas."
+          />
         </SafeAreaView>
       </View>
     );
@@ -1153,6 +1136,7 @@ export default function FinanzasGenerales() {
 
             {/* GRÁFICO */}
             <ChartComparativa
+              cargando={cargandoRango && gastos.length === 0 && ingresos.length === 0}
               labels={formattedLabels}
               ingresosData={chartIngresosData}
               gastosData={chartGastosData}

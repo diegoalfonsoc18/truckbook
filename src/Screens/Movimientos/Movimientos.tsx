@@ -13,6 +13,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import EmptyState from "../../components/EmptyState";
+import { SkeletonFilas } from "../../components/Skeleton";
 import { useTheme } from "../../constants/Themecontext";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useGastosStore } from "../../store/GastosStore";
@@ -233,16 +235,28 @@ export default function Movimientos() {
 
       {/* LISTA */}
       {cargando ? (
-        <View style={st.centro}>
-          <ActivityIndicator size="large" color={c.accent} />
+        <View style={[st.listaPanel, { backgroundColor: "#ECECEE", marginHorizontal: H_PAD }]}>
+          <SkeletonFilas filas={6} />
         </View>
       ) : visibles.length === 0 ? (
         <View style={st.centro}>
-          <Text style={[st.vacio, { color: c.textMuted }]}>
-            {!placa
-              ? "Selecciona un vehículo para ver sus movimientos."
-              : `Sin movimientos en ${MESES_LARGOS[mes].toLowerCase()}.`}
-          </Text>
+          {!placa ? (
+            <EmptyState
+              icon="truck"
+              title="Sin vehículo seleccionado"
+              subtitle="Selecciona un vehículo para ver sus movimientos."
+            />
+          ) : (
+            <EmptyState
+              icon="factura"
+              title={`Sin movimientos en ${MESES_LARGOS[mes].toLowerCase()}`}
+              subtitle={
+                filtro === "todos"
+                  ? "Cuando registres gastos o ingresos en este mes aparecerán aquí."
+                  : `No hay ${filtro} en este mes. Prueba con otro filtro o mes.`
+              }
+            />
+          )}
         </View>
       ) : (
         <ScrollView

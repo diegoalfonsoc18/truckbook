@@ -31,6 +31,7 @@ import {
   TYPOGRAPHY,
   getShadow,
 } from "../../../constants/Themecontext";
+import { SkeletonFilas } from "../../../components/Skeleton";
 import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { validarPlaca } from "../../../utils/validacion";
 import { sanitizePlaca } from "../../../utils/sanitize";
@@ -349,9 +350,7 @@ export default function ModalVehiculos({
 
                   {/* ── Lista de vehículos ── */}
                   {cargando && vehiculosStore.length === 0 ? (
-                    <View style={s.loadingBox}>
-                      <ActivityIndicator size="large" color={c.accent} />
-                    </View>
+                    <SkeletonFilas filas={3} style={{ marginBottom: 8 }} />
                   ) : vehiculos.length > 0 ? (
                     <>
                       {vehiculos.map((v) => {

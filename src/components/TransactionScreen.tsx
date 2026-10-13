@@ -42,11 +42,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
 import { SymbolView } from "expo-symbols";
+import EmptyState from "./EmptyState";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
 import * as Contacts from "expo-contacts/legacy";
-import { useEscanearFactura } from "../hooks/useEscanearFactura";
-import { TipoTransaccion } from "../services/geminiService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -506,78 +505,6 @@ function TransactionRow({
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─── Escanear factura con IA ─────────────────────────────────────────────────
-function EscanearButton({
-  tipo,
-  accentColor,
-  isDark,
-  onDone,
-}: {
-  tipo: TipoTransaccion;
-  accentColor: string;
-  isDark: boolean;
-  onDone: () => void;
-}) {
-  const { escanear, procesando } = useEscanearFactura();
-
-  const handlePress = () => {
-    Alert.alert("Escanear factura", "¿De dónde viene la foto?", [
-      {
-        text: "Tomar foto",
-        onPress: async () => {
-          await escanear(tipo, "camara");
-          onDone();
-        },
-      },
-      {
-        text: "Galería",
-        onPress: async () => {
-          await escanear(tipo, "galeria");
-          onDone();
-        },
-      },
-      { text: "Cancelar", style: "cancel" },
-    ]);
-  };
-
-  return (
-    <TouchableOpacity accessibilityRole="button"
-      style={[
-        {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          marginBottom: 16,
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderRadius: 14,
-          borderWidth: 1.5,
-          borderColor: accentColor,
-          backgroundColor: accentColor + (isDark ? "1A" : "0F"),
-        },
-      ]}
-      onPress={handlePress}
-      disabled={procesando}
-      activeOpacity={0.8}>
-      {procesando ? (
-        <ActivityIndicator size="small" color={accentColor} />
-      ) : (
-        <Ionicons name="sparkles" size={18} color={accentColor} />
-      )}
-      <Text
-        style={{
-          color: accentColor,
-          fontSize: 14,
-          fontWeight: "700",
-          letterSpacing: -0.1,
-        }}>
-        {procesando ? "Analizando factura..." : "Escanear factura con IA"}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TransactionScreen({
@@ -983,22 +910,11 @@ export default function TransactionScreen({
     return (
       <View style={[s.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
-          <View style={s.emptyState}>
-            <View style={[s.emptyIconWrap]}>
-              <Image
-                source={require("../assets/icons/truck.webp")}
-                style={{ width: 100, height: 100 }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={[s.emptyTitle, { color: c.text }]}>
-              Sin vehículo seleccionado
-            </Text>
-            <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
-              Ve a Cuenta y vincula un vehículo para registrar{" "}
-              {title.toLowerCase()}
-            </Text>
-          </View>
+          <EmptyState
+            icon="truck"
+            title="Sin vehículo seleccionado"
+            subtitle={`Ve a Cuenta y vincula un vehículo para registrar ${title.toLowerCase()}.`}
+          />
         </SafeAreaView>
       </View>
     );
@@ -1143,19 +1059,12 @@ export default function TransactionScreen({
             </View>
 
             {filtered.length === 0 ? (
-              <View style={[s.emptyList, card, { padding: 36 }]}>
-                <Image
-                  source={require("../assets/icons/sinRegistrosIngresos.webp")}
-                  style={{ width: 80, height: 80, marginBottom: 12 }}
-                  resizeMode="contain"
-                />
-                <Text style={[s.emptyListTitle, { color: c.text }]}>
-                  Sin registros
-                </Text>
-                <Text style={[s.emptyListText, { color: c.textSecondary }]}>
-                  No hay {title.toLowerCase()} en este período
-                </Text>
-              </View>
+              <EmptyState
+                icon={tipoTransaccion === "gasto" ? "toll" : "freight"}
+                title={`Sin ${title.toLowerCase()} en este día`}
+                subtitle={`Toca una categoría de arriba para registrar ${tipoTransaccion === "gasto" ? "tu primer gasto" : "tu primer ingreso"}.`}
+                style={[card, { marginBottom: 8 }]}
+              />
             ) : (
               filtered.map((item, index) => {
                 const cat = allCategorias.find(

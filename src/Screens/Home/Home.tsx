@@ -24,6 +24,7 @@ import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
 import ActividadReciente from "./components/ActividadReciente";
+import EmptyState from "../../components/EmptyState";
 import BannerCombustible from "./components/BannerCombustible";
 import { infoTipo, normalizarTipo } from "./vehicleConstants";
 
@@ -115,54 +116,13 @@ export default function HomeBaseAdapted({
 
             {!placaActual ? (
               /* ONBOARDING — sin vehículo */
-              <TouchableOpacity
-                accessibilityRole="button"
-                activeOpacity={0.82}
-                onPress={() => setModalVehiculosVisible(true)}
-                style={[
-                  s.onboardingCard,
-                  {
-                    backgroundColor: isDark ? `${c.accent}14` : c.cardBg,
-                    borderWidth: 1.5,
-                    borderColor: isDark ? `${c.accent}40` : `${c.accent}30`,
-                    borderStyle: "dashed",
-                  },
-                ]}>
-                <Text style={{ fontSize: 36, marginBottom: 10 }}>🚛</Text>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: c.text,
-                    marginBottom: 6,
-                    letterSpacing: -0.3,
-                  }}>
-                  Vincula tu vehículo
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: isDark
-                      ? "rgba(255,255,255,0.5)"
-                      : "rgba(0,0,0,0.45)",
-                    textAlign: "center",
-                    lineHeight: 19,
-                    paddingHorizontal: 16,
-                  }}>
-                  Para registrar gastos, ingresos y ver tu actividad semanal,
-                  primero selecciona un vehículo.
-                </Text>
-                <View
-                  style={[
-                    s.onboardingBtn,
-                    { backgroundColor: c.accent, marginTop: 18 },
-                  ]}>
-                  <Text
-                    style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
-                    Seleccionar vehículo
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <EmptyState
+                icon="truck"
+                title="Vincula tu vehículo"
+                subtitle="Para registrar gastos, ingresos y ver tu actividad, primero selecciona un vehículo."
+                actionLabel="Seleccionar vehículo"
+                onAction={() => setModalVehiculosVisible(true)}
+              />
             ) : (
               /* CLIENTES FRECUENTES */
               <Reanimated.View entering={FadeInDown.delay(180).duration(480)}>
