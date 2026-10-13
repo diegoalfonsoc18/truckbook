@@ -6,7 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_MODEL    = "gemini-2.0-flash";
+// El modelo se puede cambiar con el secreto GEMINI_MODEL (sin redesplegar), por si
+// Google retira uno.
+const GEMINI_MODEL    = Deno.env.get("GEMINI_MODEL") || "gemini-2.0-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // ── Rate limiting in-memory (por usuario, por minuto) ─────────────────────────
@@ -64,9 +66,16 @@ serve(async (req) => {
     }
 
     // ── 3. Leer payload del cliente ────────────────────────────────────────────
+    // Tope de tamaño ANTES de parsear: evita que un cuerpo enorme consuma memoria.
+    if (Number(req.headers.get("content-length") ?? 0) > 100_000) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { prompt, generationConfig } = await req.json();
 
-    if (!prompt || typeof prompt !== "string" || prompt.length > 50_000) {
+    if (!prompt || typeof prompt !== "string" || prompt.length > 20_000) {
       return new Response(JSON.stringify({ error: "Invalid prompt" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -82,18 +91,34 @@ serve(async (req) => {
       });
     }
 
+    // El cliente solo puede ajustar temperatura y tokens, y dentro de un rango:
+    // reenviar generationConfig tal cual permitía pedir respuestas enormes (costo)
+    // o activar opciones arbitrarias del modelo.
+    const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+    const gc = (generationConfig && typeof generationConfig === "object") ? generationConfig : {};
+    const cfg = {
+      temperature: clamp(Number(gc.temperature ?? 0.7) || 0, 0, 1),
+      maxOutputTokens: clamp(Math.floor(Number(gc.maxOutputTokens ?? 800)) || 800, 1, 1024),
+    };
+
     const geminiRes = await fetch(GEMINI_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: generationConfig ?? { temperature: 0.7, maxOutputTokens: 800 },
+        generationConfig: cfg,
       }),
     });
 
     if (!geminiRes.ok) {
       // No reenviar el cuerpo del error de Google al cliente.
-      console.error("Gemini error", geminiRes.status, await geminiRes.text());
+      // Status + mensaje de error de Google (p. ej. "model not found", "API key not
+      // valid"). No se registra el prompt ni la respuesta, solo error.message.
+      let motivo = "";
+      try {
+        motivo = String((await geminiRes.json())?.error?.message ?? "").slice(0, 160);
+      } catch { /* sin cuerpo JSON */ }
+      console.error("Gemini error", geminiRes.status, GEMINI_MODEL, motivo);
       return new Response(JSON.stringify({ error: `Gemini error ${geminiRes.status}` }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -102,6 +127,14 @@ serve(async (req) => {
 
     const geminiData = await geminiRes.json();
     const text: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    // Diagnóstico sin contenido: largo de la respuesta y motivo de fin / bloqueo.
+    console.log(
+      "Gemini ok",
+      GEMINI_MODEL,
+      "len=" + text.length,
+      "finish=" + (geminiData?.candidates?.[0]?.finishReason ?? "none"),
+      "block=" + (geminiData?.promptFeedback?.blockReason ?? "none"),
+    );
 
     return new Response(JSON.stringify({ text }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

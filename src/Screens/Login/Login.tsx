@@ -112,7 +112,9 @@ export default function LoginScreen({ navigation }: Props) {
             `Cuenta bloqueada temporalmente. Intenta en ${Math.round(lockTime / 1000)} segundos.`,
           );
         } else {
-          Alert.alert("Error", error.message);
+          // Mensaje genérico: el texto de Supabase distingue "correo no
+          // confirmado" de "credenciales inválidas" y permite enumerar cuentas.
+          Alert.alert("Error", "Correo o contraseña incorrectos.");
         }
       } else {
         setLoginAttempts(0);

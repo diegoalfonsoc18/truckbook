@@ -525,15 +525,27 @@ export default function Cuenta() {
                       const userId = user?.id;
                       if (!userId) throw new Error("Sin sesión");
 
-                      // Anonimizar datos personales de forma irreversible.
-                      // No se borran filas para no romper FKs en gastos/ingresos/vehículos.
-                      // Solo columnas que existen en usuarios — incluir una inexistente
-                      // (p. ej. telefono) hace fallar todo el update con 42703.
+                      // Eliminación real: la Edge Function borra los datos del usuario
+                      // y su cuenta de Auth (el id sale del JWT).
+                      const { error: delError } = await supabase.functions.invoke(
+                        "delete-account",
+                      );
+                      if (!delError) {
+                        marcarLogoutIntencional();
+                        await supabase.auth.signOut();
+                        return;
+                      }
+                      logger.error("❌ delete-account:", delError.message);
+
+                      // Respaldo si la función no responde (p. ej. aún sin desplegar):
+                      // anonimizar datos personales. Solo columnas que existen en
+                      // usuarios — una inexistente hace fallar todo con 42703.
                       const { error: anonError } = await supabase
                         .from("usuarios")
                         .update({
                           nombre: "Usuario eliminado",
                           email: `deleted_${userId}@deleted.truckbook`,
+                          cedula: null,
                           push_token: null,
                           deleted: true,
                           deleted_at: new Date().toISOString(),

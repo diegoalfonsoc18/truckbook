@@ -40,7 +40,8 @@ serve(async (req) => {
 
     if (
       typeof targetUserId !== "string" || typeof title !== "string" || typeof body !== "string" ||
-      !targetUserId || !title || !body || title.length > 100 || body.length > 500
+      !targetUserId || !title || !body || title.length > 100 || body.length > 500 ||
+      (data !== undefined && JSON.stringify(data ?? {}).length > 2000)
     ) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -68,7 +69,11 @@ serve(async (req) => {
       .eq("user_id", targetUserId)
       .maybeSingle();
 
-    if (!usuario?.push_token) {
+    // Solo tokens con el formato de Expo: nada más se reenvía a exp.host
+    const tokenValido =
+      typeof usuario?.push_token === "string" &&
+      /^Expo(nent)?PushToken\[[A-Za-z0-9_-]+\]$/.test(usuario.push_token);
+    if (!tokenValido) {
       return new Response(JSON.stringify({ success: true, skipped: "no_token" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -91,9 +96,8 @@ serve(async (req) => {
       }),
     });
 
-    const expoPushData = await expoPushRes.json();
-
-    return new Response(JSON.stringify({ success: true, result: expoPushData }), {
+    // No devolver la respuesta cruda de Expo al cliente
+    return new Response(JSON.stringify({ success: expoPushRes.ok }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
