@@ -5,6 +5,7 @@ import {
   Text,
   Alert,
   TouchableOpacity,
+  Pressable,
   Image,
   ActivityIndicator,
   Keyboard,
@@ -22,6 +23,7 @@ import * as Linking from "expo-linking";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useTheme, getShadow, getInputStyles } from "../../constants/Themecontext";
+import { EDAD_MINIMA, errorNacimiento, formatearNacimiento } from "../../utils/edad";
 import { sanitizeText, sanitizeEmail, sanitizePassword } from "../../utils/sanitize";
 
 let GoogleSignin: any = null;
@@ -59,6 +61,8 @@ type ValidationErrors = {
   nombre?: string;
   apellido?: string;
   email?: string;
+  nacimiento?: string;
+  datos?: string;
   password?: string;
   confirmPassword?: string;
 };
@@ -71,6 +75,8 @@ export default function Register({ navigation }: Props) {
   const [nombre,          setNombre]          = useState("");
   const [apellido,        setApellido]        = useState("");
   const [email,           setEmail]           = useState("");
+  const [nacimiento,      setNacimiento]      = useState("");
+  const [aceptaDatos,     setAceptaDatos]     = useState(false);
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPwd,         setShowPwd]         = useState(false);
@@ -100,6 +106,9 @@ export default function Register({ navigation }: Props) {
     if (!apellido.trim())         e.apellido = "El apellido es requerido";
     if (!email.trim())            e.email = "El email es requerido";
     else if (!validateEmail(email)) e.email = "Email inválido";
+    const eNac = errorNacimiento(nacimiento);
+    if (eNac)                     e.nacimiento = eNac;
+    if (!aceptaDatos)             e.datos = MENSAJE_DATOS;
     if (!password.trim())         e.password = "La contraseña es requerida";
     else if (!validatePasswordStrength(password).isStrong) e.password = "Contraseña muy débil";
     if (!confirmPassword.trim())  e.confirmPassword = "Confirma tu contraseña";
@@ -133,7 +142,7 @@ export default function Register({ navigation }: Props) {
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
-        options: { data: { nombre: nombreSafe, apellido: apellidoSafe } },
+        options: { data: { nombre: nombreSafe, apellido: apellidoSafe, mayor_de_edad: true, ...evidenciaAceptacion() } },
       });
 
       if (error?.message.includes("compromised")) {
@@ -174,8 +183,38 @@ export default function Register({ navigation }: Props) {
     }
   };
 
+  // El registro con Apple/Google también exige ser mayor de edad: se pide la
+  // fecha de nacimiento antes de abrir el proveedor.
+  const exigirEdad = (): boolean => {
+    const eNac = errorNacimiento(nacimiento);
+    if (eNac) {
+      setErrors((prev) => ({ ...prev, nacimiento: eNac }));
+      Alert.alert("Confirma tu edad", eNac);
+      return false;
+    }
+    if (!aceptaDatos) {
+      setErrors((prev) => ({ ...prev, datos: MENSAJE_DATOS }));
+      Alert.alert("Autorización requerida", MENSAJE_DATOS);
+      return false;
+    }
+    return true;
+  };
+
+  // Con Apple/Google la cuenta se crea al iniciar sesión: la evidencia de la
+  // edad y de la autorización se guarda en los datos del usuario después.
+  const registrarAceptacion = async () => {
+    try {
+      await supabase.auth.updateUser({
+        data: { mayor_de_edad: true, ...evidenciaAceptacion() },
+      });
+    } catch {
+      // No bloquea el ingreso; la cuenta ya está creada.
+    }
+  };
+
   const handleAppleLogin = async () => {
     Keyboard.dismiss();
+    if (!exigirEdad()) return;
     setLoading(true);
     try {
       const credential = await AppleAuthentication.signInAsync({
@@ -194,7 +233,10 @@ export default function Register({ navigation }: Props) {
       });
       if (error) {
         Alert.alert("Error", error.message);
-      } else if (data.user && credential.fullName) {
+      } else if (data.user) {
+        await registrarAceptacion();
+      }
+      if (!error && data.user && credential.fullName) {
         const nombre = credential.fullName.givenName ?? "";
         const apellido = credential.fullName.familyName ?? "";
         if (nombre || apellido) {
@@ -222,6 +264,7 @@ export default function Register({ navigation }: Props) {
 
   const handleGoogleLogin = async () => {
     Keyboard.dismiss();
+    if (!exigirEdad()) return;
     setLoading(true);
 
     if (GoogleSignin) {
@@ -240,6 +283,7 @@ export default function Register({ navigation }: Props) {
             token: idToken,
           });
           if (error) Alert.alert("Error", error.message);
+          else await registrarAceptacion();
         }
       } catch (e: any) {
         if (e?.code === "SIGN_IN_CANCELLED") return;
@@ -269,6 +313,7 @@ export default function Register({ navigation }: Props) {
         if (codeMatch) {
           const { error: ex } = await supabase.auth.exchangeCodeForSession(codeMatch[1]);
           if (ex) Alert.alert("Error", ex.message);
+          else await registrarAceptacion();
         }
       }
     } catch (e: any) {
@@ -337,6 +382,16 @@ export default function Register({ navigation }: Props) {
                   error={errors.email} autoCapitalize="none" keyboardType="email-address" editable={!loading}
                   icon="mail-outline" c={c} shadow={shadow} inputSty={inputSty}
                 />
+
+                <Field
+                  label="Fecha de nacimiento" placeholder="DD/MM/AAAA"
+                  value={nacimiento} onChangeText={(t) => { setNacimiento(formatearNacimiento(t)); if (errors.nacimiento) setErrors({ ...errors, nacimiento: undefined }); }}
+                  error={errors.nacimiento} keyboardType="number-pad" editable={!loading}
+                  icon="calendar-outline" c={c} shadow={shadow} inputSty={inputSty}
+                />
+                <Text style={[s.edadNota, { color: c.textMuted }]}>
+                  TruckBook es solo para mayores de {EDAD_MINIMA} años. No guardamos tu fecha de nacimiento.
+                </Text>
 
                 {/* PASSWORD */}
                 <View>
@@ -425,15 +480,31 @@ export default function Register({ navigation }: Props) {
 
               </View>
 
-              {/* PRIVACY */}
-              <Text style={[s.privacy, { color: c.textMuted }]}>
-                Al registrarte aceptas nuestra{" "}
-                <Text
-                  style={{ color: "#111111", fontWeight: "600" }}
-                  onPress={() => Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html")}>
-                  Política de Privacidad
+              {/* AUTORIZACIÓN DE DATOS (Ley 1581 de 2012) */}
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: aceptaDatos }}
+                onPress={() => {
+                  setAceptaDatos((v) => !v);
+                  if (errors.datos) setErrors({ ...errors, datos: undefined });
+                }}
+                style={s.consentRow}>
+                <Ionicons
+                  name={aceptaDatos ? "checkbox" : "square-outline"}
+                  size={22}
+                  color={errors.datos ? "#FF3B30" : "#111111"}
+                />
+                <Text style={[s.consentTexto, { color: c.textSecondary }]}>
+                  Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 y acepto la{" "}
+                  <Text
+                    style={{ color: "#111111", fontWeight: "600" }}
+                    onPress={() => Linking.openURL("https://diegoalfonsoc18.github.io/truckbook/privacy-policy.html")}>
+                    Política de Privacidad
+                  </Text>
+                  .
                 </Text>
-              </Text>
+              </Pressable>
+              {errors.datos && <Text style={s.errorText} accessibilityRole="alert" accessibilityLiveRegion="polite">{errors.datos}</Text>}
 
               {/* CTA */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
@@ -525,7 +596,19 @@ function Field({
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
+const MENSAJE_DATOS = "Debes autorizar el tratamiento de tus datos personales para continuar";
+const VERSION_POLITICA = "1";
+
+/** Evidencia de la autorización (Ley 1581): cuándo y con qué versión de la política. */
+const evidenciaAceptacion = () => ({
+  acepto_datos_at: new Date().toISOString(),
+  politica_version: VERSION_POLITICA,
+});
+
 const s = StyleSheet.create({
+  consentRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 4, marginBottom: 6 },
+  consentTexto: { flex: 1, fontSize: 12, lineHeight: 18 },
+  edadNota: { fontSize: 11, marginTop: -6, marginBottom: 12, marginLeft: 2 },
   container: { flex: 1 },
   safeArea:  { flex: 1 },
   flex:      { flex: 1 },
