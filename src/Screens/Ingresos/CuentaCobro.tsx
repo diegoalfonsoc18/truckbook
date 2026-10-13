@@ -859,9 +859,9 @@ export default function CuentaCobro() {
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setContactosModal(false)}>
-        <View accessibilityViewIsModal style={[s.contactModal, { backgroundColor: c.primary }]}>
+        <View accessibilityViewIsModal style={[s.contactModal, { backgroundColor: "#FFFFFF" }]}>
           {/* Header modal */}
-          <View style={[s.contactModalHeader, { borderBottomColor: c.border }]}>
+          <View style={[s.contactModalHeader, { borderBottomColor: "#D9D9DD" }]}>
             <Text style={[s.contactModalTitle, { color: c.text }]}>Contactos</Text>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setContactosModal(false)}>
               <Ionicons name="close" size={24} color={c.textSecondary} />
@@ -869,7 +869,7 @@ export default function CuentaCobro() {
           </View>
 
           {/* Búsqueda */}
-          <View style={[s.searchBox, { backgroundColor: c.surface }]}>
+          <View style={[s.searchBox, { backgroundColor: "#ECECEE" }]}>
             <Ionicons name="search-outline" size={16} color={c.textMuted} />
             <TextInput accessibilityLabel="Buscar contacto"
               style={[s.searchInput, { color: c.text }]}
@@ -889,7 +889,7 @@ export default function CuentaCobro() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: 40 }}
             ItemSeparatorComponent={() => (
-              <View style={[s.contactSep, { backgroundColor: c.divider }]} />
+              <View style={[s.contactSep, { backgroundColor: "#D9D9DD" }]} />
             )}
             renderItem={({ item }) => {
               const inicial = item.name?.charAt(0).toUpperCase() || "?";
@@ -899,7 +899,7 @@ export default function CuentaCobro() {
                   style={s.contactRow}
                   onPress={() => seleccionarContacto(item)}
                   activeOpacity={0.6}>
-                  <View style={[s.contactAvatar, { backgroundColor: ACCENT + "22" }]}>
+                  <View style={[s.contactAvatar, { backgroundColor: "#ECECEE" }]}>
                     <Text style={[s.contactAvatarText, { color: ACCENT }]}>{inicial}</Text>
                   </View>
                   <View style={s.contactInfo}>

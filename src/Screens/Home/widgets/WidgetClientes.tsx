@@ -1,19 +1,26 @@
 // src/Screens/Home/widgets/WidgetClientes.tsx
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useIngresosStore } from "../../../store/IngresosStore";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
-import { useTheme, getShadow } from "../../../constants/Themecontext";
 import { normalizarMercancias } from "../../../services/mercanciaService";
 import { formatCOP, WProps } from "../homeUtils";
 import { useClientType } from "../../../hooks/useClientType";
+import ItemIcon from "../../../components/ItemIcon";
+import EmptyState from "../../../components/EmptyState";
 
-export default function WidgetClientes({ isDark }: WProps) {
+const PANEL = {
+  bg: "#ECECEE",
+  cardBg: "#ECECEE",
+  ink: "#111827",
+  muted: "#6B7280",
+  divider: "#EEF0F2",
+};
+
+export default function WidgetClientes(_props: WProps) {
   const ingresos    = useIngresosStore((s) => s.ingresos);
   const { placa, tipoCamion } = useVehiculoStore();
-  const { colors: c } = useTheme();
 
   const [topCarga, setTopCarga] = useState<Array<[string, number]>>([]);
 
@@ -88,137 +95,127 @@ export default function WidgetClientes({ isDark }: WProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawFingerprint]);
 
-  // ── Estilos compartidos ────────────────────────────────────────────────────
-  const cardShadow = getShadow(isDark, "md");
-  const lightStyle = Platform.OS === "android"
-    ? { borderWidth: 1, borderColor: c.border, ...cardShadow }
-    : cardShadow;
-  const gradColors: [string, string] = isDark ? [`${c.accent}14`, `${c.accent}14`] : ["#111111", "#0A0A0A"];
-  const cardBorderStyle = isDark
-    ? { borderWidth: 1, borderColor: `${c.accent}33` }
-    : lightStyle;
-  const ink    = "#FFFFFF";
-  const muted  = "rgba(255,255,255,0.50)";
-  const divClr = "rgba(255,255,255,0.10)";
+  // ── Estilos: mismo panel que Resumen semanal / Actividad reciente ─────────
+  // Panel gris claro con título pequeño y las filas directo encima.
+  const ink    = PANEL.ink;
+  const muted  = PANEL.muted;
+  const divClr = PANEL.divider;
 
-  const MEDAL = ["#FFB800", "#94A3B8", "#CD7F32"];
   const clientNames = React.useMemo(() => clienteData.map(([nombre]) => nombre), [clienteData]);
   const clientTypes = useClientType(clientNames);
 
   // ── Estado vacío ──────────────────────────────────────────────────────────
   if (clienteData.length === 0) {
     return (
-      <View style={[s.card, cardBorderStyle, { height: 110, paddingHorizontal: 0, paddingVertical: 0 }]}>
-        <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 28, paddingHorizontal: 16, paddingVertical: 14 }}>
-          <View style={s.header}>
-            <Ionicons name="people-outline" size={15} color="#FFFFFF" />
-            <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
-          </View>
-          <View style={s.emptyBox}>
-            <Ionicons name="person-add-outline" size={24} color="#FFFFFF" />
-            <Text style={[s.emptyText, { color: muted }]}>
-              Registra fletes para ver tus clientes frecuentes
-            </Text>
-          </View>
-        </LinearGradient>
+      <View style={s.wrap}>
+        <Text style={s.sectionLabel}>Top clientes</Text>
+        <EmptyState
+          compact
+          icon="cup"
+          title="Aún no hay clientes"
+          subtitle="Registra fletes para ver tus clientes frecuentes."
+        />
       </View>
     );
   }
 
   // ── Widget principal ──────────────────────────────────────────────────────
   return (
-    <View style={[s.card, cardBorderStyle, { overflow: "hidden", paddingHorizontal: 0, paddingVertical: 0 }]}>
-      <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 28, paddingHorizontal: 16, paddingVertical: 14 }}>
-
-      {/* ── Título ── */}
-      <View style={s.header}>
-        <Ionicons name="people-outline" size={15} color="#FFFFFF" />
-        <Text style={[s.headerTitle, { color: ink }]}>Top Clientes</Text>
-      </View>
-
-      {/* ── Column headers ── */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-        <Text style={{ flex: 1, fontSize: 10, fontWeight: "700", color: muted, letterSpacing: 0.8 }}>
-          Cliente
-        </Text>
-        <Text style={{ width: 55, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
-          Viajes
-        </Text>
-        <Text style={{ width: 75, fontSize: 10, fontWeight: "700", color: muted, textAlign: "right", letterSpacing: 0.8 }}>
-          Total
+    <View style={s.wrap}>
+      <View style={s.tituloRow}>
+        <ItemIcon name="cup" size={36} />
+        <Text style={[s.sectionLabel, { marginBottom: 0, marginLeft: 0 }]}>
+          Top clientes
         </Text>
       </View>
-      <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginBottom: 4 }} />
 
-      {clienteData.map(([nombre, info], idx) => {
-        const medalColor = MEDAL[idx] ?? "#FFFFFF";
-        const topCargaCliente = info.cargas.size > 0
-          ? [...info.cargas.entries()].sort((a, b) => b[1] - a[1])[0][0]
-          : null;
+      <View style={s.listCard}>
+        {/* ── Encabezados de columna ── */}
+        <View style={s.colHead}>
+          <View style={{ flex: 1 }} />
+          <Text style={[s.colTexto, { width: 52 }]}>Viajes</Text>
+          <Text style={[s.colTexto, { width: 92 }]}>Total</Text>
+        </View>
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr }} />
 
-        return (
-          <View key={nombre}>
-            <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 }}>
-              {/* Avatar */}
-              <View style={[s.avatar, { backgroundColor: medalColor + "18", borderColor: medalColor + "40" }]}>
-                {idx < 3 ? (
-                  <Text style={{ fontSize: 15, fontWeight: "900", color: medalColor }}>{idx + 1}</Text>
-                ) : (
-                  <Feather name={clientTypes[nombre] === "empresa" ? "briefcase" : "user"} size={15} color={medalColor} />
-                )}
+        {clienteData.map(([nombre, info], idx) => {
+          const primero = idx === 0;
+          const topCargaCliente = info.cargas.size > 0
+            ? [...info.cargas.entries()].sort((a, b) => b[1] - a[1])[0][0]
+            : null;
+
+          return (
+            <View key={nombre}>
+              <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 }}>
+                {/* Avatar */}
+                <View style={[s.avatar, { backgroundColor: primero ? "#111111" : "#FFFFFF" }]}>
+                  {idx < 3 ? (
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: primero ? "#FFFFFF" : ink }}>{idx + 1}</Text>
+                  ) : (
+                    <Feather name={clientTypes[nombre] === "empresa" ? "briefcase" : "user"} size={15} color={ink} />
+                  )}
+                </View>
+
+                {/* Name + cargo */}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: ink }} numberOfLines={1}>{nombre}</Text>
+                  {topCargaCliente && (
+                    <Text style={{ fontSize: 10, color: muted, marginTop: 1 }} numberOfLines={1}>{topCargaCliente}</Text>
+                  )}
+                </View>
+
+                {/* Viajes */}
+                <Text style={{ width: 52, fontSize: 14, fontWeight: "700", color: ink, textAlign: "right", fontVariant: ["tabular-nums"] }}>
+                  {info.viajes}
+                </Text>
+
+                {/* Total */}
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={{ width: 92, fontSize: 13, fontWeight: "700", color: ink, textAlign: "right", fontVariant: ["tabular-nums"] }}>
+                  {formatCOP(info.total)}
+                </Text>
               </View>
-
-              {/* Name + cargo */}
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: ink }} numberOfLines={1}>{nombre}</Text>
-                {topCargaCliente && (
-                  <Text style={{ fontSize: 10, color: muted, marginTop: 1 }} numberOfLines={1}>{topCargaCliente}</Text>
-                )}
-              </View>
-
-              {/* Viajes */}
-              <Text style={{ width: 55, fontSize: 15, fontWeight: "800", color: ink, textAlign: "right" }}>
-                {info.viajes}
-              </Text>
-
-              {/* Total */}
-              <Text style={{ width: 75, fontSize: 13, fontWeight: "800", color: medalColor, textAlign: "right" }}>
-                {formatCOP(info.total)}
-              </Text>
+              {idx < clienteData.length - 1 && (
+                <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginLeft: 48 }} />
+              )}
             </View>
-            {idx < clienteData.length - 1 && (
-              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: divClr, marginLeft: 48 }} />
-            )}
-          </View>
-        );
-      })}
-
-      </LinearGradient>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  card: {
+  // Panel idéntico al de Resumen semanal
+  wrap: {
+    backgroundColor: PANEL.bg,
     borderRadius: 28,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderCurve: "continuous",
+    padding: 16,
     marginBottom: 12,
-    width: "100%",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginBottom: 10,
+  sectionLabel: {
+    fontSize: 17,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+    color: PANEL.ink,
+    marginBottom: 12,
+    marginLeft: 2,
   },
-  headerTitle: { fontSize: 13, fontWeight: "700", letterSpacing: 0.8 },
-  headerSub:   { fontSize: 11, fontWeight: "500", marginLeft: 2 },
+  // Las filas van directo sobre el panel gris, como en Actividad reciente
+  // (sin tarjeta blanca interna).
+  tituloRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, marginLeft: 2 },
+  listCard: {},
   emptyBox:    { alignItems: "center", paddingVertical: 14, gap: 7 },
   emptyText:   { fontSize: 12, textAlign: "center", lineHeight: 17 },
 
   row:    { flexDirection: "row", alignItems: "center", paddingVertical: 9, gap: 10 },
-  avatar: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  colHead: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  colTexto: { fontSize: 10, fontWeight: "600", color: PANEL.muted, textAlign: "right", letterSpacing: 0.6 },
   avatarText: { fontSize: 12, fontWeight: "800" },
   info:   { flex: 1, gap: 2 },
   nombre: { fontSize: 13, fontWeight: "700" },

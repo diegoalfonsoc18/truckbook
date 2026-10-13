@@ -258,7 +258,7 @@ export function generarReporteHTML(params: {
   const tituloDoc = esCuentaCliente
     ? "Estado de cuenta"
     : esCategoria
-      ? `Informe — ${params.categoriaFiltro}`
+      ? `Informe — ${esc(String(params.categoriaFiltro))}`
       : "Informe de Finanzas";
 
   // Nota al pie del resumen cuando se exportó solo una parte de las cuentas.

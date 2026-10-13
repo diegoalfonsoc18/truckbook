@@ -76,10 +76,10 @@ export default function ResetPassword({ navigation }: Props) {
 
   const ds = {
     container: { backgroundColor: colors.primary },
-    cardBg: { backgroundColor: colors.cardBg, borderColor: colors.border },
+    cardBg: { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
     text: { color: colors.text },
     textSecondary: { color: colors.textSecondary },
-    inputBg: { backgroundColor: isDark ? "#252540" : "#F5F5F7" },
+    inputBg: { backgroundColor: "#FFFFFF" },
   };
 
   return (
@@ -102,7 +102,7 @@ export default function ResetPassword({ navigation }: Props) {
                 </Text>
               </View>
 
-              <View style={[styles.formCard, ds.cardBg, getShadow(isDark, "md")]}>
+              <View style={[styles.formCard, ds.cardBg]}>
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, ds.textSecondary]}>Nueva contraseña</Text>
                   <View style={[styles.inputWrapper, ds.inputBg, { borderColor: colors.border }]}>
@@ -148,7 +148,7 @@ export default function ResetPassword({ navigation }: Props) {
                 </View>
 
                 <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }}
-                  style={[styles.submitButton, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
+                  style={[styles.submitButton, { backgroundColor: "#111111" }, loading && styles.buttonDisabled]}
                   onPress={handleReset}
                   disabled={loading}
                   activeOpacity={0.8}>

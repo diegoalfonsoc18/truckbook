@@ -221,14 +221,17 @@ export function construirMovimientos(
 export function MovimientoRow({
   mov,
   tipoCamion,
+  neutro = false,
 }: {
   mov: Mov;
   tipoCamion: string | null;
+  /** Círculo del ícono en gris neutro, sin el tinte de cada categoría. */
+  neutro?: boolean;
 }) {
   const meta = metaDe(mov.tipo, tipoCamion);
   return (
     <View style={s.movRow}>
-      <View style={[s.movIcon, { backgroundColor: meta.color + "22" }]}>
+      <View style={[s.movIcon, { backgroundColor: neutro ? "#FFFFFF" : meta.color + "22" }]}>
         <ItemIcon name={meta.icon} size={22} />
       </View>
       <View style={s.movMid}>
@@ -272,6 +275,7 @@ const s = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -289,6 +293,7 @@ const s = StyleSheet.create({
   },
   movRight: { alignItems: "flex-end" },
   movMonto: {
+    fontVariant: ["tabular-nums"],
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,

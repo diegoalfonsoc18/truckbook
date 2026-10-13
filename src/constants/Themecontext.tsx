@@ -356,12 +356,15 @@ export const TYPOGRAPHY = {
 };
 
 // Estilos de input compartidos (usados en TransactionScreen, Login, Register, etc.)
+// Gris de las tarjetas y campos (fondo de la app: blanco)
+const G = "#ECECEE";
+
 export const getInputStyles = (isDark: boolean, colors: Colors) => ({
   // Fondo + borde del contenedor del input
   wrap: {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : colors.surface,
-    borderColor:     isDark ? "rgba(255,255,255,0.1)"  : colors.border,
-    borderRadius: BORDER_RADIUS.md,   // 12
+    backgroundColor: G,
+    borderColor:     G,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row"  as const,
     alignItems: "center"  as const,

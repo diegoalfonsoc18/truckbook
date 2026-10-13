@@ -43,8 +43,8 @@ export default function ChipsCategoria({
               st.chip,
               esPantalla ? st.chipPantalla : st.chipExport,
               {
-                backgroundColor: c.cardBg,
-                borderColor: selected ? c.accent : c.border,
+                backgroundColor: "#ECECEE",
+                borderColor: selected ? "#111111" : "#FFFFFF",
               },
               selected && { borderWidth: 1.5 },
             ]}

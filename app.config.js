@@ -5,7 +5,7 @@ export default {
     name: "TruckBook",
     slug: "TruckBook",
     scheme: "truckbook",
-    version: "1.0.4",
+    version: "1.0.5",
     orientation: "portrait",
     icon: "./assets/TruckBook/truckbook-iOS-Default-1024x1024@1x.png",
     userInterfaceStyle: "light",
@@ -44,7 +44,11 @@ export default {
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.SYSTEM_ALERT_WINDOW",
+        // Solo se leen contactos para sugerir clientes; nunca se escriben.
+        "android.permission.WRITE_CONTACTS",
       ],
+      // Evita que el backup de Android copie datos locales de la app.
+      allowBackup: false,
     },
     plugins: [
       "./plugins/withModularHeaders",

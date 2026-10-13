@@ -4,7 +4,8 @@
 // La presentación de cada fila vive en ./movimientos, compartida con la
 // pantalla de Movimientos que abre "Ver todas".
 import React from "react";
-import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
+import EmptyState from "../../../components/EmptyState";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
@@ -17,8 +18,8 @@ import {
 
 const COLORS = {
   muted: MOV_COLORS.muted,
-  panelBg: "#F4F5F7",
-  link: "#F5A623",
+  panelBg: "#ECECEE",
+  link: "#CC0000",
 };
 
 interface Props {
@@ -58,10 +59,15 @@ export default function ActividadReciente({ onVerTodas }: Props) {
         </View>
 
         {recientes.length === 0 ? (
-          <Text style={s.vacio}>Sin movimientos aún</Text>
+          <EmptyState
+            compact
+            icon="factura"
+            title="Sin movimientos aún"
+            subtitle="Registra tu primer gasto o ingreso y aparecerá aquí."
+          />
         ) : (
           recientes.map((m) => (
-            <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} />
+            <MovimientoRow key={m.id} mov={m} tipoCamion={tipoCamion} neutro />
           ))
         )}
       </View>
@@ -69,25 +75,15 @@ export default function ActividadReciente({ onVerTodas }: Props) {
   );
 }
 
-const panelShadow = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  android: { elevation: 2 },
-});
-
 const s = StyleSheet.create({
   wrap: {
     marginBottom: 12,
   },
   panel: {
     backgroundColor: COLORS.panelBg,
-    borderRadius: 20,
-    padding: 14,
-    ...panelShadow,
+    borderRadius: 28,
+    borderCurve: "continuous",
+    padding: 16,
   },
   panelHeader: {
     flexDirection: "row",
@@ -96,10 +92,10 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   panelLabel: {
-    fontSize: 12,
+    fontSize: 17,
     fontWeight: "600",
-    letterSpacing: 1,
-    color: COLORS.muted,
+    letterSpacing: -0.2,
+    color: "#111111",
     flexShrink: 1,
   },
   verTodas: {

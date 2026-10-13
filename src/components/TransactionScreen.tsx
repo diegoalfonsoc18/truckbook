@@ -42,11 +42,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { Ionicons } from "@expo/vector-icons";
 import { SymbolView } from "expo-symbols";
+import EmptyState from "./EmptyState";
 import ItemIcon, { IconName } from "./ItemIcon";
 import { useTheme, getShadow } from "../constants/Themecontext";
 import * as Contacts from "expo-contacts/legacy";
-import { useEscanearFactura } from "../hooks/useEscanearFactura";
-import { TipoTransaccion } from "../services/geminiService";
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
@@ -198,7 +197,7 @@ function CatCard({
       <View
         style={[
           s.catCircle,
-          { backgroundColor: `${cat.color}${isDark ? "28" : "18"}` },
+          { backgroundColor: "#FFFFFF" },
         ]}>
         <ItemIcon name={cat.iconName} size={cat.size} />
       </View>
@@ -416,7 +415,7 @@ function TransactionRow({
           style={[
             s.rowIconWrap,
             {
-              backgroundColor: `${cat?.color || accentColor}${isDark ? "28" : "18"}`,
+              backgroundColor: "#FFFFFF",
             },
           ]}>
           {cat?.iconName ? (
@@ -505,78 +504,6 @@ function TransactionRow({
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ─── Escanear factura con IA ─────────────────────────────────────────────────
-function EscanearButton({
-  tipo,
-  accentColor,
-  isDark,
-  onDone,
-}: {
-  tipo: TipoTransaccion;
-  accentColor: string;
-  isDark: boolean;
-  onDone: () => void;
-}) {
-  const { escanear, procesando } = useEscanearFactura();
-
-  const handlePress = () => {
-    Alert.alert("Escanear factura", "¿De dónde viene la foto?", [
-      {
-        text: "Tomar foto",
-        onPress: async () => {
-          await escanear(tipo, "camara");
-          onDone();
-        },
-      },
-      {
-        text: "Galería",
-        onPress: async () => {
-          await escanear(tipo, "galeria");
-          onDone();
-        },
-      },
-      { text: "Cancelar", style: "cancel" },
-    ]);
-  };
-
-  return (
-    <TouchableOpacity accessibilityRole="button"
-      style={[
-        {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          marginBottom: 16,
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderRadius: 14,
-          borderWidth: 1.5,
-          borderColor: accentColor,
-          backgroundColor: accentColor + (isDark ? "1A" : "0F"),
-        },
-      ]}
-      onPress={handlePress}
-      disabled={procesando}
-      activeOpacity={0.8}>
-      {procesando ? (
-        <ActivityIndicator size="small" color={accentColor} />
-      ) : (
-        <Ionicons name="sparkles" size={18} color={accentColor} />
-      )}
-      <Text
-        style={{
-          color: accentColor,
-          fontSize: 14,
-          fontWeight: "700",
-          letterSpacing: -0.1,
-        }}>
-        {procesando ? "Analizando factura..." : "Escanear factura con IA"}
-      </Text>
-    </TouchableOpacity>
-  );
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -969,40 +896,25 @@ export default function TransactionScreen({
 
   // ─── Card style ────────────────────────────────────────────────────────────
   const card = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.cardBg,
-    borderRadius: 20,
-    ...(isDark
-      ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }
-      : {}),
-    ...shadow,
+    backgroundColor: "#ECECEE",
+    borderRadius: 24,
   };
 
   const inputStyle = {
-    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : c.surface,
-    borderColor: isDark ? "rgba(255,255,255,0.1)" : c.border,
+    backgroundColor: "#ECECEE",
+    borderColor: "#ECECEE",
   };
 
   // ─── Empty state ────────────────────────────────────────────────────────────
   if (!placaActual) {
     return (
-      <View style={[s.container, { backgroundColor: c.primary }]}>
+      <View style={[s.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={s.safeArea} edges={["top"]}>
-          <View style={s.emptyState}>
-            <View style={[s.emptyIconWrap]}>
-              <Image
-                source={require("../assets/icons/truck.webp")}
-                style={{ width: 100, height: 100 }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={[s.emptyTitle, { color: c.text }]}>
-              Sin vehículo seleccionado
-            </Text>
-            <Text style={[s.emptySubtitle, { color: c.textSecondary }]}>
-              Ve a Cuenta y vincula un vehículo para registrar{" "}
-              {title.toLowerCase()}
-            </Text>
-          </View>
+          <EmptyState
+            icon="truck"
+            title="Sin vehículo seleccionado"
+            subtitle={`Ve a Cuenta y vincula un vehículo para registrar ${title.toLowerCase()}.`}
+          />
         </SafeAreaView>
       </View>
     );
@@ -1010,7 +922,7 @@ export default function TransactionScreen({
 
   // ─── Main render ───────────────────────────────────────────────────────────
   return (
-    <View style={[s.container, { backgroundColor: c.primary }]}>
+    <View style={[s.container, { backgroundColor: FONDO }]}>
       <SafeAreaView style={s.safeArea} edges={["top"]}>
         {/* HEADER */}
         <Animated.View
@@ -1045,12 +957,10 @@ export default function TransactionScreen({
                 style={[
                   s.placaBadge,
                   {
-                    backgroundColor: c.plateYellow,
-                    borderColor: c.plateBorder,
-                    borderWidth: 1,
+                    backgroundColor: "#ECECEE",
                   },
                 ]}>
-                <Text style={[s.placaText, { color: c.plateText }]}>
+                <Text style={[s.placaText, { color: "#111111" }]}>
                   {placaActual}
                 </Text>
               </View>
@@ -1062,7 +972,7 @@ export default function TransactionScreen({
             activeOpacity={0.7}
             style={[
               s.dateBtn,
-              { backgroundColor: c.cardBg, borderColor: c.border },
+              { backgroundColor: "#ECECEE", borderColor: "transparent" },
             ]}>
             {Platform.OS === "ios" ? (
               <SymbolView
@@ -1095,12 +1005,7 @@ export default function TransactionScreen({
             <Reanimated.View
               style={[
                 s.summaryCard,
-                {
-                  backgroundColor: isDark ? `${accentColor}14` : c.cardBg,
-                },
-                isDark
-                  ? { borderWidth: 1, borderColor: `${accentColor}33` }
-                  : shadow,
+                { backgroundColor: "#ECECEE" },
                 summaryStyle,
               ]}>
               <View style={s.summaryTop}>
@@ -1115,9 +1020,9 @@ export default function TransactionScreen({
                 <View
                   style={[
                     s.countBadge,
-                    { backgroundColor: `${accentColor}20` },
+                    { backgroundColor: "#111111" },
                   ]}>
-                  <Text style={[s.countText, { color: accentColor }]}>
+                  <Text style={[s.countText, { color: "#FFFFFF" }]}>
                     {filtered.length}
                   </Text>
                 </View>
@@ -1146,7 +1051,7 @@ export default function TransactionScreen({
             {/* LIST */}
             <View style={s.listHeader}>
               <Text style={[s.listTitle, { color: c.text }]}>Registros</Text>
-              <View style={[s.listBadge, { backgroundColor: c.surface }]}>
+              <View style={[s.listBadge, { backgroundColor: "#ECECEE" }]}>
                 <Text style={[s.listBadgeText, { color: c.textSecondary }]}>
                   {filtered.length}
                 </Text>
@@ -1154,19 +1059,12 @@ export default function TransactionScreen({
             </View>
 
             {filtered.length === 0 ? (
-              <View style={[s.emptyList, card, { padding: 36 }]}>
-                <Image
-                  source={require("../assets/icons/sinRegistrosIngresos.webp")}
-                  style={{ width: 80, height: 80, marginBottom: 12 }}
-                  resizeMode="contain"
-                />
-                <Text style={[s.emptyListTitle, { color: c.text }]}>
-                  Sin registros
-                </Text>
-                <Text style={[s.emptyListText, { color: c.textSecondary }]}>
-                  No hay {title.toLowerCase()} en este período
-                </Text>
-              </View>
+              <EmptyState
+                icon={tipoTransaccion === "gasto" ? "toll" : "freight"}
+                title={`Sin ${title.toLowerCase()} en este día`}
+                subtitle={`Toca una categoría de arriba para registrar ${tipoTransaccion === "gasto" ? "tu primer gasto" : "tu primer ingreso"}.`}
+                style={[card, { marginBottom: 8 }]}
+              />
             ) : (
               filtered.map((item, index) => {
                 const cat = allCategorias.find(
@@ -1220,12 +1118,12 @@ export default function TransactionScreen({
           <View
             style={[
               s.sheet,
-              { backgroundColor: c.modalBg },
+              { backgroundColor: "#FFFFFF" },
               isDark
                 ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                 : {},
             ]}>
-            <View style={[s.handle, { backgroundColor: c.border }]} />
+            <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
             <Text style={[s.sheetTitle, { color: c.text }]}>
               Seleccionar fecha
             </Text>
@@ -1239,8 +1137,8 @@ export default function TransactionScreen({
                 [selectedDate]: { selected: true, selectedColor: accentColor },
               }}
               theme={{
-                backgroundColor: c.modalBg,
-                calendarBackground: c.modalBg,
+                backgroundColor: "#FFFFFF",
+                calendarBackground: "#FFFFFF",
                 textSectionTitleColor: c.textSecondary,
                 selectedDayBackgroundColor: accentColor,
                 selectedDayTextColor: "#FFF",
@@ -1273,12 +1171,12 @@ export default function TransactionScreen({
               <View
                 style={[
                   s.sheet,
-                  { backgroundColor: c.modalBg },
+                  { backgroundColor: "#FFFFFF" },
                   isDark
                     ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                     : {},
                 ]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
+                <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
                 <Text style={[s.sheetTitle, { color: c.text }]}>Taller</Text>
                 <View style={s.subGrid}>
                   {subcategorias.map((sub) => (
@@ -1294,7 +1192,7 @@ export default function TransactionScreen({
                         style={[
                           s.subCircle,
                           {
-                            backgroundColor: `${sub.color}${isDark ? "25" : "15"}`,
+                            backgroundColor: "#ECECEE",
                           },
                         ]}>
                         <ItemIcon name={sub.iconName} size={sub.size} />
@@ -1331,12 +1229,12 @@ export default function TransactionScreen({
               <View
                 style={[
                   s.sheet,
-                  { backgroundColor: c.modalBg, maxHeight: "90%" },
+                  { backgroundColor: "#FFFFFF", maxHeight: "90%" },
                   isDark
                     ? { borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }
                     : {},
                 ]}>
-                <View style={[s.handle, { backgroundColor: c.border }]} />
+                <View style={[s.handle, { backgroundColor: "#C9C9CD" }]} />
 
                 {/* ── Formulario ── */}
                 <>
@@ -1366,7 +1264,7 @@ export default function TransactionScreen({
                                 style={[
                                   s.selectedCatCircle,
                                   {
-                                    backgroundColor: `${cat?.color || accentColor}${isDark ? "25" : "15"}`,
+                                    backgroundColor: "#ECECEE",
                                   },
                                 ]}>
                                 {cat?.iconName ? (
@@ -1502,10 +1400,8 @@ export default function TransactionScreen({
                                       style={[
                                         s.sugerenciasBox,
                                         {
-                                          backgroundColor: c.modalBg,
-                                          borderColor: isDark
-                                            ? "rgba(255,255,255,0.1)"
-                                            : c.border,
+                                          backgroundColor: "#ECECEE",
+                                          borderColor: "#ECECEE",
                                         },
                                       ]}>
                                       {contactsList.map((ct, i) => (
@@ -1656,12 +1552,8 @@ export default function TransactionScreen({
                             style={[
                               s.estadoToggle,
                               {
-                                backgroundColor: isDark
-                                  ? "rgba(255,255,255,0.06)"
-                                  : c.surface,
-                                borderColor: isDark
-                                  ? "rgba(255,255,255,0.1)"
-                                  : c.border,
+                                backgroundColor: "#ECECEE",
+                                borderColor: "#ECECEE",
                               },
                             ]}>
                             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Pagado" accessibilityState={{ selected: editEstado === "pagado" }}
@@ -1736,7 +1628,7 @@ export default function TransactionScreen({
                       <TouchableOpacity accessibilityRole="button"
                         style={[
                           s.cancelBtn,
-                          { backgroundColor: c.surface, borderColor: c.border },
+                          { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                         ]}
                         onPress={closeModal}>
                         <Text
@@ -1747,7 +1639,7 @@ export default function TransactionScreen({
                       <TouchableOpacity accessibilityRole="button" accessibilityState={{ busy: loading }}
                         style={[
                           s.saveBtn,
-                          { backgroundColor: accentColor },
+                          { backgroundColor: "#111111" },
                           (!editValue ||
                             loading ||
                             (hasCustomDescription &&
@@ -1786,6 +1678,9 @@ export default function TransactionScreen({
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
+
+// Fondo gris claro (estilo app de control de vehículo)
+const FONDO = "#FFFFFF";
 
 const s = StyleSheet.create({
   container: { flex: 1 },
@@ -1842,7 +1737,7 @@ const s = StyleSheet.create({
   },
 
   // SUMMARY
-  summaryCard: { borderRadius: 22, padding: 20, marginBottom: 24 },
+  summaryCard: { borderRadius: 28, padding: 20, marginBottom: 24 },
   summaryTop: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1964,8 +1859,8 @@ const s = StyleSheet.create({
   // MODALS
   overlay: { flex: 1, justifyContent: "flex-end" },
   sheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingTop: 10,
     paddingBottom: 36,
     paddingHorizontal: 20,
@@ -2087,7 +1982,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   cancelBtnText: { fontSize: 15, fontWeight: "600" },
-  saveBtn: { flex: 1, borderRadius: 14, padding: 16, alignItems: "center" },
+  saveBtn: { flex: 1, borderRadius: 16, padding: 16, alignItems: "center" },
   saveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFF" },
 
   // SUGERENCIAS DE CONTACTOS (inline bajo el campo cliente)

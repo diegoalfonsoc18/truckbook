@@ -47,3 +47,12 @@ google-service-account.json
 .agents/
 .claude/worktrees/
 google-services.json
+
+# Supabase CLI (estado local del proyecto)
+supabase/.temp/
+
+# Credenciales y archivos de firma
+GoogleService-Info.plist
+.env.*
+!.env.example
+*.keystore

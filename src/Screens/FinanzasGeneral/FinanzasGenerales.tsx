@@ -33,6 +33,8 @@ import { fetchTransaccionesRango, fetchComprasLigadas } from "../../services/rep
 import { calcularGanancias, sumarGanancias } from "../../utils/comprasGanancia";
 import { Calendar } from "react-native-calendars";
 import { useTheme, getShadow } from "../../constants/Themecontext";
+import ItemIcon from "../../components/ItemIcon";
+import EmptyState from "../../components/EmptyState";
 import { Ionicons } from "@expo/vector-icons";
 import ChartComparativa from "./components/ChartComparativa";
 import ChipsCategoria from "./components/ChipsCategoria";
@@ -262,13 +264,23 @@ export default function FinanzasGenerales() {
   // ganancia de compras; si la consulta falla se usa el caché del store.
   const [ligadas, setLigadas] = useState<{ compras: Gasto[]; ingresos: Ingreso[] } | null>(null);
 
+  // Serie del gráfico en Meses/Años: abarca los últimos 12 meses / 5 años y no
+  // depende del rango de fechas (que arranca en el mes actual y dejaba una
+  // sola barra). Los totales y el balance siguen usando el rango elegido.
+  const [serie, setSerie] = useState<{ gastos: Gasto[]; ingresos: Ingreso[] } | null>(null);
+
   const cargarRango = useCallback(async () => {
     if (!placaActual || !user?.id) return;
     setCargandoRango(true);
-    const [res, lig] = await Promise.all([
+    const ventana = ventanaGrafica(view);
+    const [res, lig, ser] = await Promise.all([
       fetchTransaccionesRango(placaActual, user.id, rango.inicio, rango.fin),
       fetchComprasLigadas(placaActual, user.id),
+      ventana
+        ? fetchTransaccionesRango(placaActual, user.id, ventana.inicio, ventana.fin)
+        : Promise.resolve(null),
     ]);
+    setSerie(ser && !ser.error ? { gastos: ser.gastos, ingresos: ser.ingresos } : null);
     setLigadas(lig.error ? null : { compras: lig.compras, ingresos: lig.ingresos });
     if (res.error) {
       // Sin conexión: usar el caché del store (recorta a 200, pero muestra algo)
@@ -279,7 +291,7 @@ export default function FinanzasGenerales() {
       setIngresos(res.ingresos);
     }
     setCargandoRango(false);
-  }, [placaActual, user?.id, rango.inicio, rango.fin]);
+  }, [placaActual, user?.id, rango.inicio, rango.fin, view]);
 
   // Recargar al enfocar la pantalla y cuando cambian placa/rango (así refleja
   // registros nuevos al volver a Reportes, sin depender del realtime del store)
@@ -313,23 +325,26 @@ export default function FinanzasGenerales() {
     const catMetaPantalla = catPantalla
       ? CATEGORIAS_EXPORT.find((cc) => cc.tipo === catPantalla)
       : null;
-    const gPorPlaca = gastos
-      .filter((g) => placasSet.has(g.placa))
-      // Compras sin pagar al proveedor aún no son un gasto de caja
-      .filter(cuentaComoGasto)
-      .filter(
-        (g) =>
-          !catPantalla ||
-          (catMetaPantalla?.grupo === "gasto" && g.tipo_gasto === catPantalla),
-      );
-    const iPorPlaca = ingresos
-      .filter((i) => placasSet.has(i.placa))
-      .filter(
-        (i) =>
-          !catPantalla ||
-          (catMetaPantalla?.grupo === "ingreso" &&
-            i.tipo_ingreso === catPantalla),
-      );
+    const preparar = (gs: Gasto[], is: Ingreso[]) => ({
+      gPorPlaca: gs
+        .filter((g) => placasSet.has(g.placa))
+        // Compras sin pagar al proveedor aún no son un gasto de caja
+        .filter(cuentaComoGasto)
+        .filter(
+          (g) =>
+            !catPantalla ||
+            (catMetaPantalla?.grupo === "gasto" && g.tipo_gasto === catPantalla),
+        ),
+      iPorPlaca: is
+        .filter((i) => placasSet.has(i.placa))
+        .filter(
+          (i) =>
+            !catPantalla ||
+            (catMetaPantalla?.grupo === "ingreso" &&
+              i.tipo_ingreso === catPantalla),
+        ),
+    });
+    const { gPorPlaca, iPorPlaca } = preparar(gastos, ingresos);
 
     const gTransf = gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto }));
     const iTransf = iPorPlaca.map((i) => ({
@@ -359,22 +374,42 @@ export default function FinanzasGenerales() {
       new Set([...Object.keys(groupedG), ...Object.keys(groupedI)]),
     ).sort();
 
-    const chartG = keys.map((k) => {
-      const v = Number(groupedG[k]);
-      return isFinite(v) ? v : 0;
-    });
-    const chartI = keys.map((k) => {
-      const v = Number(groupedI[k]);
-      return isFinite(v) ? v : 0;
-    });
+    // Totales del rango elegido
+    const totG = Object.values(groupedG).reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
+    const totI = Object.values(groupedI).reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
 
-    const totG = chartG.reduce((a, b) => a + b, 0);
-    const totI = chartI.reduce((a, b) => a + b, 0);
+    // Serie del gráfico: en Meses/Años sale de la ventana ampliada
+    let chartKeys = keys;
+    let chartG = keys.map((k) => (isFinite(Number(groupedG[k])) ? Number(groupedG[k]) : 0));
+    let chartI = keys.map((k) => (isFinite(Number(groupedI[k])) ? Number(groupedI[k]) : 0));
+    const ventana = ventanaGrafica(view);
+    if (ventana && serie) {
+      const sp = preparar(serie.gastos, serie.ingresos);
+      const sg = filtrarPorRango(
+        sp.gPorPlaca.map((g) => ({ fecha: g.fecha, value: g.monto })),
+        ventana.inicio,
+        ventana.fin,
+      );
+      const si = filtrarPorRango(
+        sp.iPorPlaca
+          .filter((i) => i.estado !== "pendiente")
+          .map((i) => ({ fecha: i.fecha, value: i.monto * ((i as any).cantidad ?? 1) })),
+        ventana.inicio,
+        ventana.fin,
+      );
+      const gg = groupBy(sg, keyFn);
+      const gi = groupBy(si, keyFn);
+      chartKeys = ventanaClaves(view);
+      chartG = chartKeys.map((k) => gg[k] ?? 0);
+      chartI = chartKeys.map((k) => gi[k] ?? 0);
+    }
     const bal = totI - totG;
     const rent = totI === 0 ? 0 : ((bal / totI) * 100).toFixed(1);
 
     const labels =
-      keys.length > 0 ? keys.map((k) => formatLabel(k, view)) : ["Sin datos"];
+      chartKeys.length > 0
+        ? chartKeys.map((k) => formatLabel(k, view))
+        : ["Sin datos"];
 
     return {
       gastosPorPlaca: gPorPlaca,
@@ -408,6 +443,7 @@ export default function FinanzasGenerales() {
     rango.inicio,
     rango.fin,
     view,
+    serie,
     catPantalla,
   ]);
 
@@ -476,9 +512,9 @@ export default function FinanzasGenerales() {
       activeOpacity={1}
       onPress={() => setCalendarVisible(false)}>
       <TouchableOpacity accessible={false} activeOpacity={1}>
-        <View style={[styles.calendarModal, { backgroundColor: c.modalBg }]}>
+        <View style={[styles.calendarModal, { backgroundColor: "#FFFFFF" }]}>
           <View
-            style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
+            style={[styles.modalHandle, { backgroundColor: "#C9C9CD" }]}
           />
           <Text style={[styles.modalTitle, { color: c.text }]}>
             fecha {selectingDate === "inicio" ? "inicial" : "final"}
@@ -532,8 +568,8 @@ export default function FinanzasGenerales() {
                   }
             }
             theme={{
-              backgroundColor: c.modalBg,
-              calendarBackground: c.modalBg,
+              backgroundColor: "#FFFFFF",
+              calendarBackground: "#FFFFFF",
               textSectionTitleColor: c.textSecondary,
               selectedDayBackgroundColor: c.accent,
               selectedDayTextColor: c.accentText,
@@ -823,38 +859,20 @@ export default function FinanzasGenerales() {
 
   if (!placaActual) {
     return (
-      <View style={[styles.container, { backgroundColor: c.primary }]}>
+      <View style={[styles.container, { backgroundColor: FONDO }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          <View style={styles.emptyState}>
-            <View
-              style={[
-                styles.emptyIconWrap,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.06)"
-                    : c.surface,
-                },
-              ]}>
-              <Image
-                source={require("../../assets/icons/report.webp")}
-                style={{ width: 64, height: 64 }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={[styles.emptyTitle, { color: c.text }]}>
-              Sin vehículo seleccionado
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
-              Ve a Cuenta y selecciona una placa para ver tus finanzas
-            </Text>
-          </View>
+          <EmptyState
+            icon="report"
+            title="Sin vehículo seleccionado"
+            subtitle="Ve a Cuenta y selecciona una placa para ver tus finanzas."
+          />
         </SafeAreaView>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: c.primary }]}>
+    <View style={[styles.container, { backgroundColor: FONDO }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* HEADER FIJO */}
         <Animated.View
@@ -881,12 +899,10 @@ export default function FinanzasGenerales() {
               style={[
                 styles.placaBadge,
                 {
-                  backgroundColor: c.plateYellow,
-                  borderColor: c.plateBorder,
-                  borderWidth: 1,
+                  backgroundColor: "#ECECEE",
                 },
               ]}>
-              <Text style={[styles.placaText, { color: c.plateText }]}>
+              <Text style={[styles.placaText, { color: "#111111" }]}>
                 {placaActual}
               </Text>
             </View>
@@ -903,8 +919,7 @@ export default function FinanzasGenerales() {
             <View
               style={[
                 styles.rangeSelector,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "sm"),
+                { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
               ]}>
               <TouchableOpacity accessibilityRole="button"
                 style={styles.dateButton}
@@ -936,149 +951,13 @@ export default function FinanzasGenerales() {
             {/* FILTRO POR CATEGORÍA */}
             <ChipsCategoria value={catPantalla} onChange={setCatPantalla} />
 
-            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
-            {/* Con una categoría activa el resumen se enfoca en ese rubro:
-                mostrar "Ingresos $0" y un balance negativo sería engañoso. */}
-            {catPantalla ? (
-              <View style={styles.summaryGrid}>
-                <Reanimated.View
-                  style={[
-                    styles.summaryCard,
-                    {
-                      backgroundColor: c.cardBg,
-                      borderColor: (catEsIngreso ? c.income : c.expense) + "40",
-                    },
-                    getShadow(isDark, "sm"),
-                    card1Style,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.summaryCardLabel,
-                      { color: c.textSecondary },
-                    ]}
-                    numberOfLines={1}>
-                    Total {catPantalla}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.summaryCardValue,
-                      { color: catEsIngreso ? c.income : c.expense },
-                    ]}>
-                    {formatCurrency(totalCategoria)}
-                  </Text>
-                  {catEsIngreso && totalPorCobrar > 0 && (
-                    <Text style={styles.porCobrarNote} numberOfLines={1}>
-                      + {formatCurrency(totalPorCobrar)} por cobrar
-                    </Text>
-                  )}
-                  <Ionicons
-                    name={
-                      catEsIngreso
-                        ? "trending-up-outline"
-                        : "trending-down-outline"
-                    }
-                    size={22}
-                    color={catEsIngreso ? c.income : c.expense}
-                    style={styles.cardIcon}
-                  />
-                </Reanimated.View>
-                <Reanimated.View
-                  style={[
-                    styles.summaryCard,
-                    { backgroundColor: c.cardBg, borderColor: c.border },
-                    getShadow(isDark, "sm"),
-                    card2Style,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.summaryCardLabel,
-                      { color: c.textSecondary },
-                    ]}>
-                    Movimientos
-                  </Text>
-                  <Text style={[styles.summaryCardValue, { color: c.text }]}>
-                    {movimientosCategoria}
-                  </Text>
-                  <Ionicons
-                    name="receipt-outline"
-                    size={22}
-                    color={c.textMuted}
-                    style={styles.cardIcon}
-                  />
-                </Reanimated.View>
-              </View>
-            ) : (
-              <View style={styles.summaryGrid}>
-                <Reanimated.View
-                  style={[
-                    styles.summaryCard,
-                    { backgroundColor: c.cardBg, borderColor: c.income + "40" },
-                    getShadow(isDark, "sm"),
-                    card1Style,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.summaryCardLabel,
-                      { color: c.textSecondary },
-                    ]}>
-                    Ingresos recibidos
-                  </Text>
-                  <Text style={[styles.summaryCardValue, { color: c.income }]}>
-                    {formatCurrency(totalIngresos)}
-                  </Text>
-                  {totalPorCobrar > 0 && (
-                    <Text style={styles.porCobrarNote} numberOfLines={1}>
-                      + {formatCurrency(totalPorCobrar)} por cobrar
-                    </Text>
-                  )}
-                  <Ionicons
-                    name="trending-up-outline"
-                    size={22}
-                    color={c.income}
-                    style={styles.cardIcon}
-                  />
-                </Reanimated.View>
-                <Reanimated.View
-                  style={[
-                    styles.summaryCard,
-                    {
-                      backgroundColor: c.cardBg,
-                      borderColor: c.expense + "40",
-                    },
-                    getShadow(isDark, "sm"),
-                    card2Style,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.summaryCardLabel,
-                      { color: c.textSecondary },
-                    ]}>
-                    Gastos
-                  </Text>
-                  <Text style={[styles.summaryCardValue, { color: c.expense }]}>
-                    {formatCurrency(totalGastos)}
-                  </Text>
-                  <Ionicons
-                    name="trending-down-outline"
-                    size={22}
-                    color={c.expense}
-                    style={styles.cardIcon}
-                  />
-                </Reanimated.View>
-              </View>
-            )}
-
             {/* BALANCE CARD — solo sin filtro de categoría: un balance de un
                 único rubro (gastos sin ingresos, o al revés) no significa nada */}
             {!catPantalla && (
               <Reanimated.View
                 style={[
                   styles.balanceCard,
-                  {
-                    backgroundColor: c.cardBg,
-                    borderColor: balance >= 0 ? c.income : c.expense,
-                  },
-                  getShadow(isDark, "md"),
+                  { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                   balStyle,
                 ]}>
                 <View style={styles.balanceHeader}>
@@ -1124,18 +1003,122 @@ export default function FinanzasGenerales() {
               </Reanimated.View>
             )}
 
+            {/* CARDS DE RESUMEN - GRID 2 COLUMNAS */}
+            {/* Con una categoría activa el resumen se enfoca en ese rubro:
+                mostrar "Ingresos $0" y un balance negativo sería engañoso. */}
+            {catPantalla ? (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    {
+                      backgroundColor: "#ECECEE",
+                      borderColor: "#ECECEE",
+                    },
+                    card1Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}
+                    numberOfLines={1}>
+                    Total {catPantalla}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryCardValue,
+                      { color: catEsIngreso ? c.income : c.expense },
+                    ]}>
+                    {formatCurrency(totalCategoria)}
+                  </Text>
+                  {catEsIngreso && totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <ItemIcon name={catEsIngreso ? "freight" : "toll"} size={34} style={styles.cardIcon} />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Movimientos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.text }]}>
+                    {movimientosCategoria}
+                  </Text>
+                  <ItemIcon name="factura" size={34} style={styles.cardIcon} />
+                </Reanimated.View>
+              </View>
+            ) : (
+              <View style={styles.summaryGrid}>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
+                    card1Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Ingresos recibidos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.income }]}>
+                    {formatCurrency(totalIngresos)}
+                  </Text>
+                  {totalPorCobrar > 0 && (
+                    <Text style={styles.porCobrarNote} numberOfLines={1}>
+                      + {formatCurrency(totalPorCobrar)} por cobrar
+                    </Text>
+                  )}
+                  <ItemIcon name="freight" size={34} style={styles.cardIcon} />
+                </Reanimated.View>
+                <Reanimated.View
+                  style={[
+                    styles.summaryCard,
+                    {
+                      backgroundColor: "#ECECEE",
+                      borderColor: "#ECECEE",
+                    },
+                    card2Style,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.summaryCardLabel,
+                      { color: c.textSecondary },
+                    ]}>
+                    Gastos
+                  </Text>
+                  <Text style={[styles.summaryCardValue, { color: c.expense }]}>
+                    {formatCurrency(totalGastos)}
+                  </Text>
+                  <ItemIcon name="toll" size={34} style={styles.cardIcon} />
+                </Reanimated.View>
+              </View>
+            )}
+
             {/* TABS DE VISTA */}
             <View
               style={[
                 styles.viewTabs,
-                { backgroundColor: c.cardBg, borderColor: c.border },
+                { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
               ]}>
               {(["dias", "meses", "años"] as ViewType[]).map((v) => (
                 <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: view === v }}
                   key={v}
                   style={[
                     styles.viewTab,
-                    view === v && { backgroundColor: c.accent },
+                    view === v && { backgroundColor: "#111111" },
                   ]}
                   onPress={() => setView(v)}
                   activeOpacity={0.7}>
@@ -1143,7 +1126,7 @@ export default function FinanzasGenerales() {
                     style={[
                       styles.viewTabText,
                       { color: c.textSecondary },
-                      view === v && { color: c.accentText },
+                      view === v && { color: "#FFFFFF" },
                     ]}>
                     {v.charAt(0).toUpperCase() + v.slice(1)}
                   </Text>
@@ -1153,6 +1136,7 @@ export default function FinanzasGenerales() {
 
             {/* GRÁFICO */}
             <ChartComparativa
+              cargando={cargandoRango && gastos.length === 0 && ingresos.length === 0}
               labels={formattedLabels}
               ingresosData={chartIngresosData}
               gastosData={chartGastosData}
@@ -1163,8 +1147,7 @@ export default function FinanzasGenerales() {
             <View
               style={[
                 styles.detailsSection,
-                { backgroundColor: c.cardBg, borderColor: c.border },
-                getShadow(isDark, "sm"),
+                { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
               ]}>
               <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
                 Detalles del período
@@ -1215,8 +1198,7 @@ export default function FinanzasGenerales() {
                 accessibilityLabel={`Compras de mercancía. Total comprado ${formatCurrency(compras.total)}. Por recuperar ${formatCurrency(compras.porRecuperar)}. Ya recuperado ${formatCurrency(compras.recuperado)}.${gananciaCompras.cantidad > 0 ? ` Ganancia de compras ligadas sin flete ${formatCurrency(gananciaCompras.gananciaSin)}, con flete ${formatCurrency(gananciaCompras.gananciaCon)}.` : ""}`}
                 style={[
                   styles.detailsSection,
-                  { backgroundColor: c.cardBg, borderColor: c.border },
-                  getShadow(isDark, "sm"),
+                  { backgroundColor: "#ECECEE", borderColor: "#ECECEE" },
                 ]}>
                 <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
                   Compras de mercancía
@@ -1279,7 +1261,7 @@ export default function FinanzasGenerales() {
 
             {/* BOTÓN EXPORTAR */}
             <TouchableOpacity accessibilityRole="button"
-              style={[styles.exportarBtn, { backgroundColor: c.accent }]}
+              style={[styles.exportarBtn, { backgroundColor: "#111111" }]}
               onPress={() => {
                 seleccionarPeriodo("mes");
                 setExportCliente(null);
@@ -1348,6 +1330,42 @@ export default function FinanzasGenerales() {
   );
 }
 
+// Fondo gris claro (estilo app de control de vehículo)
+const FONDO = "#FFFFFF";
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Ventana del gráfico: 12 meses o 5 años que terminan en el mes/año actual. */
+function ventanaGrafica(view: ViewType): { inicio: string; fin: string } | null {
+  if (view === "dias") return null;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const ultimo = new Date(y, m + 1, 0).getDate();
+  if (view === "meses") {
+    const ini = new Date(y, m - 11, 1);
+    return {
+      inicio: `${ini.getFullYear()}-${pad2(ini.getMonth() + 1)}-01`,
+      fin: `${y}-${pad2(m + 1)}-${pad2(ultimo)}`,
+    };
+  }
+  return { inicio: `${y - 4}-01-01`, fin: `${y}-12-31` };
+}
+
+/** Claves de cada barra de la ventana (también las vacías, para no dejar huecos). */
+function ventanaClaves(view: ViewType): string[] {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  if (view === "meses") {
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(y, m - 11 + i, 1);
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+    });
+  }
+  return Array.from({ length: 5 }, (_, i) => String(y - 4 + i));
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
@@ -1401,7 +1419,7 @@ const styles = StyleSheet.create({
   rangeSelector: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 22,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
@@ -1415,7 +1433,7 @@ const styles = StyleSheet.create({
   summaryGrid: { flexDirection: "row", gap: 12, marginBottom: 12 },
   summaryCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
     position: "relative",
@@ -1438,7 +1456,8 @@ const styles = StyleSheet.create({
   // BALANCE CARD
   balanceCard: {
     borderRadius: 28,
-    padding: 16,
+    borderCurve: "continuous",
+    padding: 20,
     marginBottom: 16,
     borderWidth: 2,
   },
@@ -1461,7 +1480,7 @@ const styles = StyleSheet.create({
   // VIEW TABS
   viewTabs: {
     flexDirection: "row",
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 4,
     marginBottom: 16,
   },
@@ -1469,14 +1488,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 13,
   },
   viewTabText: { fontSize: 13, fontWeight: "600" },
 
   // CHART — moved to ChartComparativa component
 
   // DETAILS
-  detailsSection: { borderRadius: 14, padding: 14, borderWidth: 1 },
+  detailsSection: { borderRadius: 22, padding: 14, borderWidth: 1 },
   sectionTitle: {
     fontSize: 11,
     fontWeight: "600",

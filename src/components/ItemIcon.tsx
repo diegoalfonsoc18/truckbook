@@ -14,6 +14,7 @@ const ICONS = {
   tool: require("../assets/icons/tool.webp"),
   comparendo: require("../assets/icons/comparendo.webp"),
   check: require("../assets/icons/check.webp"),
+  cup: require("../assets/icons/cup.webp"),
   volqueta2: require("../assets/icons/volqueta2.webp"),
   furgon: require("../assets/icons/furgon.webp"),
   grua: require("../assets/icons/grua.webp"),

@@ -3,6 +3,7 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   Animated,
   ScrollView,
@@ -12,6 +13,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import Reanimated, { FadeInDown } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
 import { useVehiculoStore } from "../../store/VehiculoStore";
 import { useTheme } from "../../constants/Themecontext";
 import { useContentLayout } from "../../constants/layout";
@@ -21,6 +24,9 @@ import ModalVehiculos from "./components/ModalVehiculos";
 import VehicleCard from "./components/VehicleCard";
 import ResumenSemanal from "./components/ResumenSemanal";
 import ActividadReciente from "./components/ActividadReciente";
+import EmptyState from "../../components/EmptyState";
+import BannerCombustible from "./components/BannerCombustible";
+import { infoTipo, normalizarTipo } from "./vehicleConstants";
 
 import type { Item } from "./Items";
 export type { Item } from "./Items";
@@ -43,7 +49,8 @@ export default function HomeBaseAdapted({
   const { colors: c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { hPad, maxWidth } = useContentLayout();
-  const { placa: placaActual } = useVehiculoStore();
+  const { placa: placaActual, tipoCamion } = useVehiculoStore();
+  const tipoLabel = tipoCamion ? infoTipo(normalizarTipo(tipoCamion))?.label : "";
   const [modalVehiculosVisible, setModalVehiculosVisible] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -57,7 +64,7 @@ export default function HomeBaseAdapted({
   }, []);
 
   return (
-    <View style={[s.container, { backgroundColor: c.primary }]}>
+    <View style={[s.container, { backgroundColor: FONDO_BLANCO }]}>
       <SafeAreaView style={s.safeArea} edges={["top", "left", "right"]}>
         <Animated.View style={[s.content, { opacity: fadeAnim }]}>
           <ScrollView
@@ -80,81 +87,47 @@ export default function HomeBaseAdapted({
                 alignSelf: "center",
               },
             ]}>
-            {/* VEHICLE CARD */}
+            {/* VEHÍCULO ACTIVO — protagonista */}
             {showCamionHeader && (
-              <View
-                style={
-                  Platform.OS === "android"
-                    ? { paddingVertical: 2 }
-                    : undefined
-                }>
+              <Reanimated.View entering={FadeInDown.duration(480)}>
                 <VehicleCard
                   vehicleCardTitle={vehicleCardTitle}
                   onPress={() => setModalVehiculosVisible(true)}
                 />
-              </View>
+              </Reanimated.View>
             )}
 
-            {/* RESUMEN SEMANAL — Ingresos / Gastos / Viajes / Clientes */}
+            {/* BALANCE (tarjeta negra) + RESUMEN */}
             {placaActual && (
-              <View>
+              <Reanimated.View entering={FadeInDown.delay(90).duration(480)}>
                 <ResumenSemanal isDark={isDark} />
+              </Reanimated.View>
+            )}
+
+            {placaActual && (
+              <Reanimated.View entering={FadeInDown.delay(140).duration(480)}>
+                {/* COMBUSTIBLE */}
+                <BannerCombustible />
+
+                {/* MOVIMIENTOS RECIENTES */}
                 <ActividadReciente isDark={isDark} />
-              </View>
+              </Reanimated.View>
             )}
 
             {!placaActual ? (
               /* ONBOARDING — sin vehículo */
-              <TouchableOpacity accessibilityRole="button"
-                activeOpacity={0.82}
-                onPress={() => setModalVehiculosVisible(true)}
-                style={[
-                  s.onboardingCard,
-                  {
-                    backgroundColor: isDark ? `${c.accent}14` : c.cardBg,
-                    borderWidth: 1.5,
-                    borderColor: isDark ? `${c.accent}40` : `${c.accent}30`,
-                    borderStyle: "dashed",
-                  },
-                ]}>
-                <Text style={{ fontSize: 36, marginBottom: 10 }}>🚛</Text>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: c.text,
-                    marginBottom: 6,
-                    letterSpacing: -0.3,
-                  }}>
-                  Vincula tu vehículo
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: isDark
-                      ? "rgba(255,255,255,0.5)"
-                      : "rgba(0,0,0,0.45)",
-                    textAlign: "center",
-                    lineHeight: 19,
-                    paddingHorizontal: 16,
-                  }}>
-                  Para registrar gastos, ingresos y ver tu actividad semanal,
-                  primero selecciona un vehículo.
-                </Text>
-                <View
-                  style={[
-                    s.onboardingBtn,
-                    { backgroundColor: c.accent, marginTop: 18 },
-                  ]}>
-                  <Text
-                    style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
-                    Seleccionar vehículo
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <EmptyState
+                icon="truck"
+                title="Vincula tu vehículo"
+                subtitle="Para registrar gastos, ingresos y ver tu actividad, primero selecciona un vehículo."
+                actionLabel="Seleccionar vehículo"
+                onAction={() => setModalVehiculosVisible(true)}
+              />
             ) : (
               /* CLIENTES FRECUENTES */
-              <WidgetClientes isDark={isDark} />
+              <Reanimated.View entering={FadeInDown.delay(180).duration(480)}>
+                <WidgetClientes isDark={isDark} />
+              </Reanimated.View>
             )}
           </ScrollView>
         </Animated.View>
@@ -168,6 +141,8 @@ export default function HomeBaseAdapted({
     </View>
   );
 }
+
+const FONDO_BLANCO = "#FFFFFF";
 
 const s = StyleSheet.create({
   container: { flex: 1 },
@@ -194,6 +169,7 @@ const s = StyleSheet.create({
 
   onboardingCard: {
     borderRadius: 22,
+    borderCurve: "continuous",
     paddingVertical: 36,
     paddingHorizontal: 20,
     alignItems: "center",
@@ -203,5 +179,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 13,
     borderRadius: 99,
+    borderCurve: "continuous",
   },
 });

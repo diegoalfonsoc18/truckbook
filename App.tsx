@@ -42,6 +42,10 @@ import { leerSesionGuardada } from "./src/config/sesionGuardada";
 import { cancelarRecordatoriosPendientes } from "./src/services/pendientesNotificacionService";
 import { cancelarRecordatorioFletes } from "./src/services/fleteNotifications";
 import { limpiarCacheClientes } from "./src/hooks/useClientType";
+import { useFonts } from "expo-font";
+import { FUENTES_APP, aplicarFuenteGlobal } from "./src/constants/fuente";
+
+aplicarFuenteGlobal();
 
 // Un solo splash: el nativo (icono negro + TruckBook, ver app.config.js) queda
 // visible mientras carga la sesión; se oculta en AppContent cuando loading=false.
@@ -101,6 +105,7 @@ function AppContent() {
   const { colors, isDark } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fuentesListas, errorFuentes] = useFonts(FUENTES_APP);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const pendingRecovery = useRef(false);
@@ -109,8 +114,9 @@ function AppContent() {
 
   // Ocultar el splash nativo cuando la sesión terminó de cargar
   useEffect(() => {
-    if (!loading) SplashScreen.hideAsync().catch(() => {});
-  }, [loading]);
+    if (!loading && (fuentesListas || errorFuentes))
+      SplashScreen.hideAsync().catch(() => {});
+  }, [loading, fuentesListas, errorFuentes]);
   const recoveryModeRef = useRef(false);
   // Último enlace de recuperación procesado: en iOS el mismo enlace puede llegar
   // por getInitialURL y por el evento "url"; el token es de un solo uso.
@@ -191,7 +197,11 @@ function AppContent() {
   useEffect(() => {
     const handleUrl = async (url: string) => {
       // Solo nuestro scheme / el de Expo Go: evita procesar URLs https ajenas.
-      if (!/^(truckbook|exp|exps):\/\//.test(url)) return;
+      // En producción solo el scheme propio: exp:// / exps:// son de Expo Go (dev).
+      const permitido = __DEV__
+        ? /^(truckbook|exp|exps):\/\//.test(url)
+        : /^truckbook:\/\//.test(url);
+      if (!permitido) return;
       if (!url.includes("auth/callback")) return;
       if (ultimoLinkRef.current === url) return;
       ultimoLinkRef.current = url;
@@ -215,6 +225,14 @@ function AppContent() {
         const tokenHash    = params["token_hash"];
         const type         = params["type"];
 
+        // Este enlace solo se usa para recuperar contraseña. Otros tipos
+        // (magiclink, signup, email…) permitirían que un enlace ajeno instale
+        // una sesión en este dispositivo.
+        if (type && type !== "recovery") {
+          logger.warn("🔗 Deep link con type no soportado — ignorado");
+          return;
+        }
+
         // El link de recuperación es de un solo uso: si expiró o ya fue
         // consumido (prefetch del correo), llega con error en vez de code/token
         if (params["error"] || params["error_code"]) {
@@ -235,7 +253,7 @@ function AppContent() {
           if (esRecovery) enterRecoveryMode();
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: (type as any) || "recovery",
+            type: "recovery",
           });
           if (error) {
             if (esRecovery) exitRecoveryMode();
@@ -289,9 +307,12 @@ function AppContent() {
     let offlineTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Timeout de seguridad — solo si SecureStore tarda mucho
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       if (mounted && loading) {
         logger.log("⚠️ Timeout getSession (15s)");
+        // Sin red getSession() se queda reintentando la renovación del token:
+        // antes de mostrar el login, entrar con la sesión guardada.
+        if (!sessionRef.current && (await entrarConSesionGuardada())) return;
         setLoading(false);
       }
     }, 15000);
@@ -309,11 +330,19 @@ function AppContent() {
       return true;
     };
 
+    // Sin internet confirmado no hay por qué esperar a getSession() (que se
+    // queda reintentando la renovación): entrar ya con la sesión guardada.
+    NetInfo.fetch().then(async (state) => {
+      if (!mounted || sessionRef.current) return;
+      if (!hayInternetConfirmado(state)) await entrarConSesionGuardada();
+    });
+
     // Cargar sesión persistida
     supabase.auth.getSession().then(async ({ data: { session: s }, error }) => {
       clearTimeout(timeout);
       if (!mounted) return;
       if (s) {
+        sesionOfflineRef.current = false;
         updateSession(s);
         setLoading(false);
         syncBackground(s.user);
@@ -387,6 +416,13 @@ function AppContent() {
               cancelarRecordatoriosPendientes().catch(() => {});
               cancelarRecordatorioFletes().catch(() => {});
               AsyncStorage.removeItem("@truckbook_pend_ia_notif_v1").catch(() => {});
+              // Cachés con nombres y montos de clientes (consejos de IA, insights)
+              // son de la cuenta anterior: no deben verse en la siguiente.
+              AsyncStorage.multiRemove([
+                "@truckbook_pend_modal_ia_v1",
+                "@truckbook_centro_insights_v1",
+                "@truckbook_mercancias_norm_v3",
+              ]).catch(() => {});
               limpiarCacheClientes().catch(() => {});
               sesionOfflineRef.current = false;
               updateSession(null);
@@ -484,7 +520,7 @@ function AppContent() {
 
   // Mientras carga, el splash nativo (idéntico: grille negro + TruckBook)
   // sigue visible — no renderizar un segundo splash en JS.
-  if (loading) {
+  if (loading || !(fuentesListas || errorFuentes)) {
     return null;
   }
 

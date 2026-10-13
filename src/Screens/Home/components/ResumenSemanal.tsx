@@ -1,36 +1,32 @@
-// src/Screens/Home/components/ResumenSemanal.tsx
-// Panel "RESUMEN SEMANAL" — 4 tarjetas (Ingresos, Gastos, Viajes, Clientes)
-// comparando esta semana vs. la anterior, más la card "Por cobrar" (total de
+// src/Screens/Home/components/ResumenMensual.tsx
+// Panel "Último mes" — 4 tarjetas (Ingresos, Gastos, Viajes, Clientes)
+// comparando los últimos 30 días vs. los 30 anteriores, más la card "Por cobrar" (total de
 // ingresos pendientes). Lee los stores igual que WidgetResumen / WidgetInsightIA.
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  Platform,
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SymbolView, type SFSymbol } from "expo-symbols";
+import { useNavigation } from "@react-navigation/native";
 import { useVehiculoStore } from "../../../store/VehiculoStore";
 import { useGastosStore } from "../../../store/GastosStore";
 import { useIngresosStore } from "../../../store/IngresosStore";
-import { inicioSemana, fmtI } from "../homeUtils";
-import { HOME_COLORS } from "../HomeConstants";
+import { haceDias, fmtI } from "../homeUtils";
 import { ModalPendientes } from "./ModalPendientes";
-import ItemIcon from "../../../components/ItemIcon";
+import ItemIcon, { IconName } from "../../../components/ItemIcon";
 import { programarRecordatorioIACobros } from "../../../services/pendientesNotificacionService";
 
 const COLORS = {
   green: "#16A34A",
   red: "#EF4444",
-  blue: "#3B82F6",
-  orange: "#F59E0B",
+  brand: "#E31937",
   ink: "#111827",
   muted: "#6B7280",
-  cardBg: "#FFFFFF",
-  panelBg: "#F4F5F7",
+  cardBg: "#F6F6F6",
+  panelBg: "#F6F6F6",
   panelLabel: "#6B7280",
 };
 
@@ -106,17 +102,18 @@ function pctDelta(
 function countDelta(actual: number, anterior: number): Delta {
   const diff = actual - anterior;
   const arrow = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
-  const color =
-    diff === 0 ? COLORS.muted : diff > 0 ? COLORS.green : COLORS.red;
-  return { arrow, text: `${Math.abs(diff)}`, color };
+  // Viajes y clientes no son estados financieros: sin verde/rojo.
+  return { arrow, text: `${Math.abs(diff)}`, color: COLORS.muted };
 }
 
 interface CardData {
   key: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   iconBg: string;
   value: string;
+  /** Valor numérico crudo (para el balance). */
+  raw: number;
   delta: Delta;
 }
 
@@ -129,31 +126,35 @@ export default function ResumenSemanal({ isDark }: Props) {
   const gastos = useGastosStore((s) => s.gastos);
   const ingresos = useIngresosStore((s) => s.ingresos);
   const [modalVisible, setModalVisible] = useState(false);
+  const [oculto, setOculto] = useState(false);
+  const navigation = useNavigation<any>();
 
   const cards = React.useMemo<CardData[]>(() => {
-    const iniEsta = inicioSemana(0); // lunes de esta semana
-    const iniAnt = inicioSemana(1); // lunes de la semana anterior
+    // Ventana móvil: últimos 30 días vs. los 30 anteriores. Así el panel nunca
+    // arranca en blanco (como pasaba el lunes con la semana en curso).
+    const iniEsta = haceDias(29);
+    const iniAnt = haceDias(59);
 
     const gs = gastos.filter((g) => g.placa === placa);
     const is = ingresos.filter((i) => i.placa === placa);
 
     const fecha = (r: { fecha?: string | null; created_at?: string | null }) =>
       r.fecha ?? r.created_at ?? "";
-    const estaSemana = <
+    const ultimoMes = <
       T extends { fecha?: string | null; created_at?: string | null },
     >(
       arr: T[],
     ) => arr.filter((r) => fecha(r) >= iniEsta);
-    const semanaAnterior = <
+    const mesAnterior = <
       T extends { fecha?: string | null; created_at?: string | null },
     >(
       arr: T[],
     ) => arr.filter((r) => fecha(r) >= iniAnt && fecha(r) < iniEsta);
 
-    const gAct = estaSemana(gs);
-    const gAnt = semanaAnterior(gs);
-    const iAct = estaSemana(is);
-    const iAnt = semanaAnterior(is);
+    const gAct = ultimoMes(gs);
+    const gAnt = mesAnterior(gs);
+    const iAct = ultimoMes(is);
+    const iAnt = mesAnterior(is);
 
     const sumG = (arr: typeof gs) =>
       arr.reduce((a, g) => a + (g.monto ?? 0), 0);
@@ -182,33 +183,37 @@ export default function ResumenSemanal({ isDark }: Props) {
       {
         key: "ingresos",
         label: "Ingresos",
-        icon: "trending-up",
-        iconBg: COLORS.green,
+        icon: "freight",
+        iconBg: COLORS.ink,
         value: fmtI(sumI(iAct)),
+        raw: sumI(iAct),
         delta: pctDelta(sumI(iAct), sumI(iAnt), true),
       },
       {
         key: "gastos",
         label: "Gastos",
-        icon: "trending-down",
-        iconBg: COLORS.red,
+        icon: "toll",
+        iconBg: COLORS.ink,
         value: fmtI(sumG(gAct)),
+        raw: sumG(gAct),
         delta: pctDelta(sumG(gAct), sumG(gAnt), false),
       },
       {
         key: "viajes",
         label: "Viajes",
-        icon: "clipboard",
-        iconBg: COLORS.blue,
+        icon: "trip",
+        iconBg: COLORS.ink,
         value: String(viajes(iAct)),
+        raw: viajes(iAct),
         delta: countDelta(viajes(iAct), viajes(iAnt)),
       },
       {
         key: "clientes",
         label: "Clientes",
-        icon: "people",
-        iconBg: COLORS.orange,
+        icon: "conductor",
+        iconBg: COLORS.ink,
         value: String(clientes(iAct)),
+        raw: clientes(iAct),
         delta: countDelta(clientes(iAct), clientes(iAnt)),
       },
     ];
@@ -243,87 +248,107 @@ export default function ResumenSemanal({ isDark }: Props) {
   const arrowIcon = (a: Delta["arrow"]) =>
     a === "up" ? "arrow-up" : a === "down" ? "arrow-down" : "remove";
 
-  const SFIcon = ({
-    name,
-    fallback,
-    size,
-    color,
-  }: {
-    name: SFSymbol;
-    fallback: string;
-    size: number;
-    color: string;
-  }) =>
-    Platform.OS === "ios" ? (
-      <SymbolView name={name} size={size} tintColor={color} weight="semibold" />
-    ) : (
-      <Ionicons name={fallback as any} size={size} color={color} />
-    );
+  const ingresos30 = cards.find((c) => c.key === "ingresos")?.raw ?? 0;
+  const gastos30 = cards.find((c) => c.key === "gastos")?.raw ?? 0;
+  const viajes30 = cards.find((c) => c.key === "viajes")?.raw ?? 0;
+  const clientes30 = cards.find((c) => c.key === "clientes")?.raw ?? 0;
+  const balance = ingresos30 - gastos30;
+  const ocultar = (v: string) => (oculto ? "••••••" : v);
 
   return (
     <View style={s.wrap}>
-      <Text style={s.sectionLabel}>Resumen semanal</Text>
-
-      <View style={s.cardsRow}>
-        {cards.map((card) => (
-          <View key={card.key} style={s.card}>
-            <View style={[s.iconSquare, { backgroundColor: card.iconBg }]}>
-              <Ionicons name={card.icon} size={17} color="#FFFFFF" />
-            </View>
-            <Text style={s.cardLabel}>{card.label}</Text>
-            <Text style={s.cardValue} numberOfLines={1}>
-              {card.value}
-            </Text>
-            <View style={s.deltaRow}>
-              <Ionicons
-                name={arrowIcon(card.delta.arrow)}
-                size={12}
-                color={card.delta.color}
-              />
-              <Text
-                style={[s.deltaText, { color: card.delta.color }]}
-                numberOfLines={1}>
-                {card.delta.text}
-              </Text>
-            </View>
+      {/* TARJETA NEGRA — balance de los últimos 30 días */}
+      <View style={s.hero}>
+        <View style={s.heroTop}>
+          <Text style={s.heroLabel}>Balance del último mes</Text>
+          <View style={s.heroPill}>
+            <Text style={s.heroPillTexto}>30 días</Text>
           </View>
-        ))}
+        </View>
+        <View style={s.heroMonto}>
+          <Text style={s.heroValor} numberOfLines={1} adjustsFontSizeToFit>
+            {ocultar(`${balance < 0 ? "−" : ""}${fmtPesos(Math.abs(balance))}`)}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={oculto ? "Mostrar montos" : "Ocultar montos"}
+            hitSlop={10}
+            onPress={() => setOculto((v) => !v)}>
+            <Ionicons
+              name={oculto ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color="rgba(255,255,255,0.7)"
+            />
+          </Pressable>
+        </View>
+        <View style={s.heroBtns}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate("Ingresos")}
+            style={({ pressed }) => [s.heroBtn, s.heroBtnBlanco, pressed && { opacity: 0.85 }]}>
+            <Ionicons name="add" size={18} color="#111111" />
+            <Text style={[s.heroBtnTexto, { color: "#111111" }]}>Ingreso</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate("Gastos")}
+            style={({ pressed }) => [s.heroBtn, s.heroBtnGris, pressed && { opacity: 0.85 }]}>
+            <Ionicons name="remove" size={18} color="#FFFFFF" />
+            <Text style={[s.heroBtnTexto, { color: "#FFFFFF" }]}>Gasto</Text>
+          </Pressable>
+        </View>
       </View>
 
-      {/* Por cobrar */}
-      <Pressable
-        style={({ pressed }) => [
-          s.porCobrar,
-          pressed && hayPendientes && { opacity: 0.9 },
-        ]}
-        onPress={() => hayPendientes && setModalVisible(true)}
-        accessibilityRole="button"
-        accessibilityLabel={`Por cobrar: ${fmtPesos(totalPend)}, ${numClientes} clientes`}>
-        <View style={s.pcTextCol}>
-          <Text style={s.pcLabel}>Por cobrar</Text>
-          <Text style={s.pcValue} numberOfLines={1} adjustsFontSizeToFit>
-            {hayPendientes ? fmtPesos(totalPend) : "Al día ✓"}
-          </Text>
-          <Text style={s.pcSub}>
-            {hayPendientes
-              ? `${numClientes} ${numClientes === 1 ? "cliente" : "clientes"}`
-              : "Sin cuentas por cobrar"}
+      {/* CUENTAS — tres tarjetas pequeñas */}
+      <View style={s.seccionHead}>
+        <Text style={s.seccionTitulo}>Resumen</Text>
+        <Text style={s.seccionLink}>Últimos 30 días</Text>
+      </View>
+      <View style={s.mini}>
+        <View style={s.miniCard}>
+          <ItemIcon name="freight" size={30} />
+          <Text style={s.miniLabel}>Ingresos</Text>
+          <Text style={s.miniValor} numberOfLines={1} adjustsFontSizeToFit>
+            {ocultar(fmtPesos(ingresos30))}
           </Text>
         </View>
+        <View style={s.miniCard}>
+          <ItemIcon name="toll" size={30} />
+          <Text style={s.miniLabel}>Gastos</Text>
+          <Text style={s.miniValor} numberOfLines={1} adjustsFontSizeToFit>
+            {ocultar(fmtPesos(gastos30))}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Por cobrar: ${fmtPesos(totalPend)}, ${numClientes} clientes`}
+          onPress={() => hayPendientes && setModalVisible(true)}
+          style={({ pressed }) => [s.miniCard, pressed && hayPendientes && { opacity: 0.7 }]}>
+          <ItemIcon name="advance" size={30} />
+          <Text style={s.miniLabel}>Por cobrar</Text>
+          <Text style={s.miniValor} numberOfLines={1} adjustsFontSizeToFit>
+            {hayPendientes ? ocultar(fmtPesos(totalPend)) : "Al día"}
+          </Text>
+        </Pressable>
+      </View>
 
-        <ItemIcon name="advance" size={56} />
-
-        {hayPendientes && (
-          <View style={s.chevronBtn}>
-            <SFIcon
-              name="chevron.right"
-              fallback="chevron-forward"
-              size={18}
-              color={HOME_COLORS.vehicleCardText}
-            />
+      {/* VIAJES Y CLIENTES del mes */}
+      <View style={[s.mini, { marginTop: 10 }]}>
+        <View style={s.statCard}>
+          <ItemIcon name="trip" size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.statValor}>{viajes30}</Text>
+            <Text style={s.miniLabel}>{viajes30 === 1 ? "Viaje en el mes" : "Viajes en el mes"}</Text>
           </View>
-        )}
-      </Pressable>
+        </View>
+        <View style={s.statCard}>
+          <ItemIcon name="conductor" size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.statValor}>{clientes30}</Text>
+            <Text style={s.miniLabel}>{clientes30 === 1 ? "Cliente en el mes" : "Clientes en el mes"}</Text>
+          </View>
+        </View>
+      </View>
 
       <ModalPendientes
         visible={modalVisible}
@@ -336,119 +361,97 @@ export default function ResumenSemanal({ isDark }: Props) {
 }
 
 const s = StyleSheet.create({
-  wrap: {
-    backgroundColor: COLORS.panelBg,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    marginBottom: 12,
+  wrap: { marginBottom: 6 },
+  hero: {
+    backgroundColor: "#0B0B0C",
+    borderRadius: 28,
+    borderCurve: "continuous",
+    padding: 18,
+    marginBottom: 20,
   },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-    color: COLORS.panelLabel,
-    marginBottom: 12,
-    marginLeft: 2,
-  },
-  cardsRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    padding: 9,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 3 },
-      },
-      android: { elevation: 2 },
-    }),
-  },
-  iconSquare: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  cardLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.muted,
-    marginBottom: 2,
-  },
-  cardValue: {
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: -0.4,
-    color: COLORS.ink,
-    marginBottom: 4,
-  },
-  deltaRow: {
+  heroTop: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    justifyContent: "space-between",
   },
-  deltaText: {
-    fontSize: 11,
-    fontWeight: "600",
+  heroLabel: { fontSize: 12, fontWeight: "500", color: "rgba(255,255,255,0.65)" },
+  heroPill: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-
-  // Por cobrar
-  porCobrar: {
+  heroPillTexto: { fontSize: 11, fontWeight: "600", color: "#FFFFFF" },
+  heroMonto: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginTop: 14,
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 18,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 3 },
-      },
-      android: { elevation: 2 },
-    }),
+    marginTop: 8,
   },
-  pcTextCol: {
+  heroValor: {
+    flexShrink: 1,
+    fontSize: 34,
+    fontWeight: "700",
+    letterSpacing: -1,
+    color: "#FFFFFF",
+    fontVariant: ["tabular-nums"],
+  },
+  heroSub: { fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 4 },
+  heroBtns: { flexDirection: "row", gap: 10, marginTop: 18 },
+  heroBtn: {
     flex: 1,
-  },
-  pcLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    color: COLORS.muted,
-    marginBottom: 2,
-  },
-  pcValue: {
-    fontSize: 23,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    color: COLORS.ink,
-    marginBottom: 1,
-  },
-  pcSub: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.muted,
-  },
-  chevronBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: COLORS.panelBg,
+    height: 44,
+    borderRadius: 14,
+    borderCurve: "continuous",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+  },
+  heroBtnBlanco: { backgroundColor: "#FFFFFF" },
+  heroBtnGris: { backgroundColor: "rgba(255,255,255,0.16)" },
+  heroBtnTexto: { fontSize: 14, fontWeight: "600" },
+  seccionHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  seccionTitulo: { fontSize: 15, fontWeight: "600", color: COLORS.ink },
+  seccionLink: { fontSize: 12, fontWeight: "500", color: COLORS.muted },
+  mini: { flexDirection: "row", gap: 10 },
+  miniCard: {
+    flex: 1,
+    backgroundColor: "#ECECEE",
+    borderRadius: 20,
+    borderCurve: "continuous",
+    padding: 12,
+    gap: 4,
+  },
+  statCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#ECECEE",
+    borderRadius: 20,
+    borderCurve: "continuous",
+    padding: 12,
+  },
+  statValor: {
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    color: COLORS.ink,
+    fontVariant: ["tabular-nums"],
+  },
+  miniLabel: { fontSize: 11, fontWeight: "500", color: COLORS.muted, marginTop: 4 },
+  miniValor: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    color: COLORS.ink,
+    fontVariant: ["tabular-nums"],
   },
 });

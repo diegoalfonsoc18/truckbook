@@ -133,9 +133,9 @@ export default function ModalExportar({
           onPress={onClose}>
           <TouchableOpacity accessible={false} activeOpacity={1}>
             <View
-              style={[styles.exportModalSheet, { backgroundColor: c.modalBg }]}>
+              style={[styles.exportModalSheet, { backgroundColor: "#FFFFFF" }]}>
               <View
-                style={[styles.modalHandle, { backgroundColor: c.textMuted }]}
+                style={[styles.modalHandle, { backgroundColor: "#C9C9CD" }]}
               />
               <View style={styles.exportModalHeader}>
                 <Text style={[styles.modalTitle, { color: c.text }]}>
